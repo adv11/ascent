@@ -2,7 +2,8 @@ import { el } from '../dom.js';
 import { createThemeToggle } from './themeToggle.js';
 
 export function authShell({ title, subtitle, children, footer, footnote }) {
-  return el('div', { className: 'auth-page fade-in' }, [
+  const toggleBtn = createThemeToggle();
+  const node = el('div', { className: 'auth-page fade-in' }, [
     el('div', { className: 'auth-page-bg' }),
     el('div', { className: 'auth-page-inner' }, [
       el('div', { className: 'auth-top-row' }, [
@@ -10,7 +11,7 @@ export function authShell({ title, subtitle, children, footer, footnote }) {
           el('span', { className: 'brand-mark', text: '✓' }),
           el('span', { className: 'brand-name', text: 'SwitchPrep' })
         ]),
-        createThemeToggle()
+        toggleBtn
       ]),
       el('div', { className: 'auth-card-lg' }, [
         el('header', { className: 'auth-card-head' }, [
@@ -23,4 +24,5 @@ export function authShell({ title, subtitle, children, footer, footnote }) {
       el('p', { className: 'auth-footnote', text: footnote })
     ])
   ]);
+  return { node, cleanup: toggleBtn._cleanup };
 }

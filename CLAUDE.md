@@ -116,6 +116,8 @@ to avoid a flash of the wrong theme. `src/services/theme.js` owns `getTheme()` /
 once under `:root` (light) and re-defined under `:root[data-theme='dark']` — never hardcode
 a color in a component rule; add or reuse a token instead so both themes stay correct.
 
+**Component subscription cleanup — always unsubscribe on DOM removal.** Any component that calls `onThemeChange()`, or subscribes to any other module-level store or service, must capture the returned unsubscribe function and call it when the component is torn down. The pattern: attach the unsubscribe to the element as `el._cleanup = unsubscribe`, have the component factory return `{ node, cleanup }` (or expose `_cleanup` for callers to collect), and wire the cleanup into the route's cleanup return in `main.js`. Failing to do this leaks dead DOM references and fires callbacks on removed nodes — see Issue #27. Never add a subscription without a paired teardown path.
+
 ## Verifying changes
 
 There's no test suite. To check a change:

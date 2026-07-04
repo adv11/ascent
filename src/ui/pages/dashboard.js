@@ -351,6 +351,8 @@ export function renderDashboard(app, { user, store }) {
     render(store.getSnapshot());
   }, 160));
 
+  const themeToggleBtn = createThemeToggle();
+
   const shell = el('div', { className: 'dashboard fade-in' }, [
     offlineBanner,
     el('header', { className: 'dashboard-header' }, [
@@ -363,7 +365,7 @@ export function renderDashboard(app, { user, store }) {
           ])
         ]),
         el('div', { className: 'header-actions' }, [
-          createThemeToggle(),
+          themeToggleBtn,
           syncPill,
           el('span', { className: 'user-chip', text: userLabel }),
           user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
@@ -426,6 +428,7 @@ export function renderDashboard(app, { user, store }) {
   setOnlineState();
 
   return () => {
+    themeToggleBtn._cleanup?.();
     unsubStore();
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);

@@ -62,7 +62,7 @@ export function renderSignUp(app, { user }) {
     submitBtn
   ]);
 
-  app.replaceChildren(authShell({
+  const { node, cleanup } = authShell({
     title: 'Create your account',
     subtitle: 'Track Java, Spring Boot, distributed systems, GenAI, and interview prep in one place.',
     children: [form],
@@ -71,5 +71,7 @@ export function renderSignUp(app, { user }) {
       el('a', { href: '#/signin', className: 'link', text: 'Sign in' })
     ]),
     footnote: 'Java · Spring Boot · Microservices · GenAI · System Design'
-  }));
+  });
+  app.replaceChildren(node);
+  return cleanup;
 }

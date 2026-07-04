@@ -75,7 +75,7 @@ export function renderSignIn(app, { user }) {
     guestBtn
   ]);
 
-  app.replaceChildren(authShell({
+  const { node, cleanup } = authShell({
     title: 'Welcome back',
     subtitle: 'Sign in to sync your switch-prep roadmap across devices.',
     children: [form],
@@ -84,5 +84,7 @@ export function renderSignIn(app, { user }) {
       el('a', { href: '#/signup', className: 'link', text: 'Create an account' })
     ]),
     footnote: 'Built for Java Spring Boot engineers preparing for product-company switches.'
-  }));
+  });
+  app.replaceChildren(node);
+  return cleanup;
 }
