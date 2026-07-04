@@ -181,7 +181,7 @@ the secrets are manual steps documented there).
 - **PR #38 (issue #30):** Stood up ESLint + Vitest + Playwright + secret scan + branch protection.
 - **PR #40 (issue #37):** Wired Firebase Emulator into E2E CI; made `test-e2e` a conditional required check.
 - **PR #41 (issue #3):** Added integration tests (12 Vitest tests), coverage thresholds, five `.claude/rules/` files, ADR-001.
-- **PR #N (issue #43):** Extended `pr-checklist` with CHANGELOG + architecture-doc checks; added `issues-label-check` workflow; added `docs-sync` rule.
+- **PR #45 (issue #43):** Extended `pr-checklist` with CHANGELOG + architecture-doc checks; added `issues-label-check` workflow; added `docs-sync` rule.
 
 ### Test structure
 
@@ -385,7 +385,7 @@ thresholds (20% baseline). Added five `.claude/rules/` JSON files
 (`structural-version`, `subscription-cleanup`, `store-pattern`). Added
 `docs/adr/ADR-001-current-architecture.md` and `docs/roadmap.md`.
 
-### 2026-07-05 — PR #N — Living architecture doc & doc-sync enforcement (issue #43)
+### 2026-07-05 — PR #45 — Living architecture doc & doc-sync enforcement (issue #43)
 
 Rewrote `docs/architecture.md` into this living guide with Build Log. Added four GitHub
 issue form templates (`.github/ISSUE_TEMPLATE/`). Upgraded PR template with Build Log
