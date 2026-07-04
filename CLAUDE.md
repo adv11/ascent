@@ -15,8 +15,58 @@ customer-facing, not a side project.
   — copy `src/services/firebase.config.example.js` to that path and fill in your own
   Firebase project's values before running locally. Never put real credentials back into
   a tracked file.
-- No test framework or linter is wired up yet. Verify changes by running the dev
-  server and exercising the flow in a browser — see "Verifying changes" below.
+- **Vitest** for unit/integration tests (`tests/unit/`, `tests/integration/`); **Playwright** for E2E (`tests/e2e/`). Run `npm test` before pushing — all checks must be green. Run `npm run lint` to enforce security and quality rules. Never merge a PR with failing checks.
+
+## MANDATORY WORKFLOW
+
+These rules apply to every issue and every PR. They are not optional — every step must be done, every time.
+
+### Label taxonomy (every GitHub issue must have all three)
+
+**Type** (≥ 1): `type:feat` `type:fix` `type:refactor` `type:test` `type:docs` `type:chore` `type:design` `type:security` `type:perf`
+
+**Priority** (exactly 1): `priority:critical` `priority:high` `priority:medium` `priority:low`
+
+**Domain** (≥ 1): `domain:auth` `domain:storage` `domain:roadmap` `domain:ui` `domain:import` `domain:a11y` `domain:brand` `domain:infra` `domain:security`
+
+### Raising a new GitHub issue
+
+1. First line of body: label category line — `` `type:X` `priority:Y` `domain:Z` ``
+2. Body must include: What/Why, Scope, Testing requirements, Doc changes checklist, Blocked by / Blocks / Safe to run in parallel, GitHub milestone
+3. **Immediately after** `gh issue create`: fetch the live tracker body (`gh issue view 11 --json body`) and add the new issue at the correct Step with status `⬜ Not started`
+
+### Starting work on an issue
+
+1. Fetch the live tracker body and set the issue status → `🔄 In progress`
+2. Branch off up-to-date main: `git fetch origin && git checkout -b <type>/issue-<N>-slug origin/main`
+
+### Before opening a PR — all four required, no exceptions
+
+1. `npm test` — zero failures
+2. `npm run lint` — zero errors
+3. `git fetch origin && git rebase origin/main` — branch must be on top of latest main
+4. `git push --force-with-lease origin <branch>`
+
+### Opening the PR
+
+1. Follow `.github/PULL_REQUEST_TEMPLATE.md` in full: What / How / Testing / Docs updated / Screenshots / Linked issue
+2. Use `Refs #N` (not `Closes #N`) when the issue spans multiple PRs; use `Closes #N` only when this PR fully resolves the issue
+3. **Immediately after** `gh pr create`: fetch the live tracker body and set status → `🔀 PR #N open`
+
+### After a PR merges
+
+1. Fetch the live tracker body and set status → `✅ Done — merged PR #N`
+2. Note in the tracker if any blocked issue in the next Step is now unblocked
+
+### Docs that must ship with every code PR
+
+| Doc | When required |
+|---|---|
+| `CHANGELOG.md` | Always — add an entry under `[Unreleased]` |
+| `CLAUDE.md` | If any convention, pattern, or rule changed |
+| `AGENTS.md` | Keep in sync with `CLAUDE.md` whenever `CLAUDE.md` changes |
+| `docs/architecture.md` | If structure, CI pipeline, data-flow, or test setup changed |
+| `docs/api.md` | If a public store or service contract changed |
 
 ## File map
 
@@ -120,13 +170,10 @@ a color in a component rule; add or reuse a token instead so both themes stay co
 
 ## Verifying changes
 
-There's no test suite. To check a change:
-
 ```
+npm run lint           # must exit 0
+npm test               # must exit 0
 npm run dev            # serves at http://localhost:4173
 ```
 
-Then in a browser: sign in as guest, exercise the checklist (toggle items with several
-phases expanded — confirm no flash of unrelated phase-cards), click a "N resources"
-badge (confirm it opens the edit panel and does not toggle the item), and toggle the
-theme button on both auth screens and the dashboard (confirm it persists across reload).
+Manual browser check: sign in as guest, toggle several checklist items across phases (confirm no unrelated phase-cards flash), click a "N resources" badge (confirm it opens the edit panel and does not toggle the item), toggle the theme button on both auth screens and the dashboard (confirm it persists across reload).

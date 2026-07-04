@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isValidUrl, escapeHtml, debounce } from '../ui/dom.js';
+import { isValidUrl, escapeHtml, debounce } from '../../src/ui/dom.js';
 
 describe('isValidUrl', () => {
   it('accepts http URLs', () => {

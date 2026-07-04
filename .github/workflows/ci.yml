@@ -1,0 +1,106 @@
+name: CI — PR Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  # ── Job 1: Lint ────────────────────────────────────────────────────────────
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm run lint
+
+  # ── Job 2: Security scan ───────────────────────────────────────────────────
+  security:
+    name: Secret & security scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Check firebase.config.js is not committed
+        run: |
+          if git ls-files --error-unmatch src/services/firebase.config.js 2>/dev/null; then
+            echo "❌ firebase.config.js must not be committed to the repo"
+            exit 1
+          fi
+          echo "✅ firebase.config.js is not tracked"
+      - name: Scan for secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Job 3: Unit & integration tests ───────────────────────────────────────
+  test-unit:
+    name: Unit & integration tests (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm test
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+
+  # ── Job 4: E2E tests ──────────────────────────────────────────────────────
+  test-e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Write Firebase config
+        env:
+          FIREBASE_CONFIG_TEST: ${{ secrets.FIREBASE_CONFIG_TEST }}
+        run: |
+          if [ -n "$FIREBASE_CONFIG_TEST" ]; then
+            echo "$FIREBASE_CONFIG_TEST" > src/services/firebase.config.js
+            echo "FIREBASE_CONFIGURED=true" >> $GITHUB_ENV
+          else
+            cp src/services/firebase.config.example.js src/services/firebase.config.js
+          fi
+      - name: Start Firebase emulators
+        if: env.FIREBASE_CONFIGURED == 'true'
+        run: npx firebase emulators:start --only auth,database &
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      - run: npm run test:e2e
+      - name: Upload Playwright report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+  # ── Job 5: PR checklist enforcement ───────────────────────────────────────
+  pr-checklist:
+    name: PR description check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check PR body is not empty template
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            if (body.trim().length < 50) {
+              core.setFailed('PR description is empty or too short. Fill in the PR template.');
+            }
+            if (!body.includes('Closes #') && !body.includes('Refs #') && !body.includes('N/A')) {
+              core.warning('PR does not reference a GitHub issue. Add "Closes #XX" or "Refs #XX".');
+            }

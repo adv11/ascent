@@ -8,7 +8,12 @@
     "dev": "python3 -m http.server 4173",
     "start": "python3 -m http.server 4173",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "description": "SwitchPrep is a preparation tracker for Java Spring Boot backend engineers moving toward product companies and startups.",
   "keywords": [
@@ -20,6 +25,11 @@
     "firebase"
   ],
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
+    "@vitest/coverage-v8": "^4.1.9",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
     "jsdom": "^29.1.1",
     "vitest": "^4.1.9"
   }

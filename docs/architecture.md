@@ -53,6 +53,50 @@ See `CLAUDE.md` / `AGENTS.md` at the repo root for conventions AI agents working
 this project should follow (the `el()` helper contract, the store's `structuralVersion`
 rendering rule, the `data-action` click-guard pattern, and the theme token system).
 
+## CI pipeline
+
+GitHub Actions runs on every PR and push to `main` (`.github/workflows/ci.yml`):
+
+| Job | Tool | What it checks |
+|---|---|---|
+| `lint` | ESLint (flat config) | Security rules (no `innerHTML`, no `eval`), unused vars, undefined refs |
+| `security` | gitleaks + git ls-files | No committed secrets; `firebase.config.js` not tracked |
+| `test-unit` | Vitest + jsdom | Unit and integration tests in `tests/unit/` and `tests/integration/` |
+| `test-e2e` | Playwright (Chromium) | End-to-end flows via Firebase Emulator |
+| `pr-checklist` | github-script | PR body is filled (≥ 50 chars, references an issue) |
+
+**Branch protection on `main` (active):** four jobs required — `ESLint`, `Secret & security scan`, `Unit & integration tests (Vitest)`, `PR description check`. `enforce_admins: true`. Branches must be up to date before merging. `E2E tests (Playwright)` will be added as a fifth required check once Firebase Emulator is set up (tracked in issue #37).
+
+**Required GitHub secrets:**
+- `FIREBASE_CONFIG_TEST` — Firebase config JSON for the CI test project (written to `src/services/firebase.config.js` during E2E job)
+- `FIREBASE_TOKEN` — Firebase CLI token for emulator start
+
+## Test structure
+
+```
+tests/
+  unit/             ← Vitest unit tests (jsdom environment)
+    dom.test.js
+    themeToggle.test.js
+  integration/      ← Vitest integration tests (store round-trips, pub-sub)
+  e2e/              ← Playwright E2E tests (real Chromium, Firebase Emulator)
+    auth.test.js
+  __mocks__/
+    firebase.js     ← vi.fn() stubs for authApi / dbApi (use with vi.mock())
+  setup.js          ← jsdom shims: matchMedia, localStorage
+```
+
+Scripts:
+
+| Command | What it runs |
+|---|---|
+| `npm test` | Vitest unit + integration (CI mode, no watch) |
+| `npm run test:watch` | Vitest in watch mode |
+| `npm run test:coverage` | Vitest with v8 coverage report |
+| `npm run test:e2e` | Playwright E2E (requires Firebase Emulator or real config) |
+| `npm run lint` | ESLint on `src/` |
+| `npm run lint:fix` | ESLint with auto-fix |
+
 ## Deploy checklist
 
 1. Create a Firebase project and copy `src/services/firebase.config.example.js` to

@@ -1,5 +1,4 @@
 const routes = new Map();
-let currentRoute = null;
 let currentCleanup = null;
 
 export function registerRoute(path, renderFn) {
@@ -25,7 +24,6 @@ export async function startRouter(fallback = '/signin') {
       currentCleanup();
       currentCleanup = null;
     }
-    currentRoute = route;
     if (renderFn) {
       const maybeCleanup = await renderFn(route);
       if (typeof maybeCleanup === 'function') currentCleanup = maybeCleanup;
