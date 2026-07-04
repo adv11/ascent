@@ -51,12 +51,13 @@ These rules apply to every issue and every PR. They are not optional — every s
 
 1. Follow `.github/PULL_REQUEST_TEMPLATE.md` in full: What / How / Testing / Docs updated / Screenshots / Linked issue
 2. Use `Refs #N` (not `Closes #N`) when the issue spans multiple PRs; use `Closes #N` only when this PR fully resolves the issue
-3. **Immediately after** `gh pr create`: fetch the live tracker body and set status → `🔀 PR #N open`
+3. The `tracker-sync.yml` workflow **automatically** updates the tracker table row and reference table when the PR is opened or merged — no manual update needed for those two events
 
 ### After a PR merges
 
-1. Fetch the live tracker body and set status → `✅ Done — merged PR #N`
-2. Note in the tracker if any blocked issue in the next Step is now unblocked
+1. The `tracker-sync.yml` workflow automatically sets status → `✅ Done — merged PR #N` and updates the reference table
+2. **Still manual**: update the Step banner text (the `> …` line above the table) if the step state changed — automation updates rows/refs only, not free-text banners
+3. Note in the tracker if any blocked issue in the next Step is now unblocked
 
 ### Docs that must ship with every code PR
 
