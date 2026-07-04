@@ -62,6 +62,13 @@ export function createRoadmapStore() {
     }));
   }
 
+  // Wipes all local state for the outgoing user — both roadmap data and UI prefs.
+  // Called whenever the active uid changes so the next user always starts clean.
+  function clearLocal() {
+    localStorage.removeItem(LOCAL_KEY);
+    localStorage.removeItem(UI_KEY);
+  }
+
   function mergeWithSeed(savedItems = {}) {
     return {
       ...buildSeedItems(),
@@ -102,14 +109,31 @@ export function createRoadmapStore() {
   }
 
   function setUser(nextUser) {
+    const nextUid = nextUser?.uid || null;
+
+    // Whenever the active uid changes (sign-out, sign-in as a different user),
+    // wipe local storage so the incoming user never sees the outgoing user's data.
+    // The initial boot call has uid=null, so this guard is skipped on first load.
+    if (uid !== null && uid !== nextUid) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      clearLocal();
+      items = buildSeedItems();
+      dirty = false;
+      lastFlushedStr = null;
+      structuralVersion += 1;
+    }
+
     if (unsubscribe) unsubscribe();
-    uid = nextUser?.uid || null;
-    loadLocal();
+    unsubscribe = null;
+    uid = nextUid;
 
     if (!uid) {
-      notify({ saveState: dirty ? 'local' : 'idle' });
+      notify({ saveState: 'idle' });
       return;
     }
+
+    loadLocal();
 
     unsubscribe = dbApi.listenRoadmap(uid, snapshot => {
       const remote = snapshot.exists() ? snapshot.val() : null;

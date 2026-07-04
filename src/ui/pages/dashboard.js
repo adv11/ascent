@@ -372,6 +372,9 @@ export function renderDashboard(app, { user, store }) {
             className: 'btn btn-ghost btn-sm',
             text: 'Sign out',
             onClick: async () => {
+              if (user.isAnonymous && store.getSnapshot().dirty) {
+                if (!confirm('You have unsaved changes. Sign out anyway?\n\nGuest session data is only stored on this device and will be cleared on sign-out.')) return;
+              }
               await authApi.signOut();
               navigate('/signin', true);
             }

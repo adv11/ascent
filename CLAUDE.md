@@ -85,6 +85,16 @@ row toggles `done` on click, but child controls that need their own click behavi
 row must follow this pattern or it will silently toggle the row's checkbox — this is
 exactly the bug that was fixed for the resource badge.
 
+**Sign-out contract — never load one user's localStorage into another user's session.**
+`roadmapStore.js`'s `setUser(nextUser)` detects when the active uid changes (sign-out,
+sign-in as a different user). Whenever `uid` transitions from a non-null value to any
+other value, it calls `clearLocal()` (removes both `LOCAL_KEY` and `UI_KEY`) and resets
+in-memory `items` to `buildSeedItems()` before the incoming user's session starts.
+`loadLocal()` is only called for the *incoming* user (after `uid` is updated to the
+new value). The initial boot call has `uid = null`, so the guard is skipped on first
+load. Do not restructure `setUser` in a way that removes this guard or that calls
+`loadLocal()` before clearing — that would silently re-introduce the privacy leak.
+
 **Theming**: `index.html` sets `data-theme` on `<html>` synchronously (before CSS loads)
 to avoid a flash of the wrong theme. `src/services/theme.js` owns `getTheme()` /
 `setTheme()` / `toggleTheme()` / `onThemeChange()`, persisted under the
