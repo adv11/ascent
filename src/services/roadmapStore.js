@@ -24,6 +24,7 @@ export function createRoadmapStore() {
   let dirty = false;
   let saveTimer = null;
   let structuralVersion = 0;
+  let lastFlushedStr = null;
   const subscribers = new Set();
 
   function notify(meta = {}) {
@@ -74,12 +75,14 @@ export function createRoadmapStore() {
       notify({ saveState: 'local' });
       return;
     }
+    const flushedStr = stableStringify(items);
     const payload = {
       version: ROADMAP_VERSION,
       updatedAt: firebaseClock(),
       items
     };
     await dbApi.saveRoadmap(uid, payload);
+    lastFlushedStr = flushedStr;
     dirty = false;
     persistLocal();
     notify({ saveState: 'saved' });
@@ -112,7 +115,13 @@ export function createRoadmapStore() {
       const remote = snapshot.exists() ? snapshot.val() : null;
       if (remote?.items) {
         const merged = mergeWithSeed(remote.items);
-        if (stableStringify(merged) !== stableStringify(items)) structuralVersion += 1;
+        const remoteStr = stableStringify(merged);
+        if (remoteStr === lastFlushedStr) {
+          // Confirmed echo of our own last write — local state may be newer; skip overwrite
+          notify({ saveState: 'synced' });
+          return;
+        }
+        if (remoteStr !== stableStringify(items)) structuralVersion += 1;
         items = merged;
         dirty = false;
         persistLocal();

@@ -131,12 +131,14 @@ export function renderDashboard(app, { user, store }) {
       dataset: { id: item.id },
       onClick: e => {
         if (e.target.closest('[data-action]')) return;
-        store.updateItem(item.id, { done: !item.done });
+        const live = store.getSnapshot().allItems[item.id];
+        if (live) store.updateItem(item.id, { done: !live.done });
       },
       onKeydown: e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          store.updateItem(item.id, { done: !item.done });
+          const live = store.getSnapshot().allItems[item.id];
+          if (live) store.updateItem(item.id, { done: !live.done });
         }
       }
     }, [
@@ -220,7 +222,7 @@ export function renderDashboard(app, { user, store }) {
         onClick: () => {
           activeFilter = activeFilter === p && p !== 'ALL' ? 'ALL' : p;
           persistUi();
-          render(snapshot);
+          render(store.getSnapshot());
         }
       }, [`${label} `, el('span', { className: 'chip-count', text: `${done}/${total}` })]);
     }));
@@ -251,7 +253,7 @@ export function renderDashboard(app, { user, store }) {
             if (openPhases.has(pi)) openPhases.delete(pi);
             else openPhases.add(pi);
             persistUi();
-            render(snapshot);
+            render(store.getSnapshot());
           }
         }, [
           el('span', { className: 'phase-index', text: String(pi + 1).padStart(2, '0') }),
@@ -306,6 +308,17 @@ export function renderDashboard(app, { user, store }) {
       if (!row) return;
       row.classList.toggle('done', !!item.done);
       row.setAttribute('aria-checked', String(!!item.done));
+    });
+
+    const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });
+    const filteredIds = new Set(filtered.map(i => i.id));
+    groupItems(allItems).forEach((phase, pi) => {
+      const phaseCard = content.querySelector(`.phase-card[data-phase="${pi}"]`);
+      if (!phaseCard) return;
+      const progressEl = phaseCard.querySelector('.phase-progress');
+      if (!progressEl) return;
+      const visible = phase.sections.flatMap(s => s.items.filter(i => filteredIds.has(i.id)));
+      progressEl.textContent = `${visible.filter(i => i.done).length}/${visible.length}`;
     });
   }
 
