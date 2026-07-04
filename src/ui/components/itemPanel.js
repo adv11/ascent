@@ -39,7 +39,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
           })
         ]),
         el('div', { className: 'resource-actions' }, [
-          el('a', { className: 'btn btn-ghost btn-sm', href: resource.url, target: '_blank', rel: 'noopener noreferrer', text: 'Open' }),
+          el('a', { className: 'btn btn-ghost btn-sm', href: isValidUrl(resource.url) ? resource.url : '#', target: '_blank', rel: 'noopener noreferrer', text: 'Open' }),
           el('button', {
             type: 'button',
             className: 'btn btn-danger btn-sm',
@@ -129,11 +129,15 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
               formError.textContent = 'Title cannot be empty.';
               return;
             }
-            onSave?.({
-              title,
-              priority: prioritySelect.value,
-              resources: resources.map(r => ({ label: r.label.trim(), url: r.url.trim() })).filter(r => r.label && r.url)
-            });
+            const cleanResources = resources
+              .map(r => ({ label: r.label.trim(), url: r.url.trim() }))
+              .filter(r => r.label && r.url);
+            const badUrl = cleanResources.find(r => !isValidUrl(r.url));
+            if (badUrl) {
+              formError.textContent = 'One or more resource URLs must be a valid http or https URL.';
+              return;
+            }
+            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources });
             close();
           }
         })

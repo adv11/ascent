@@ -46,9 +46,22 @@ firebase/database.rules.json  Realtime Database security rules
 ## Conventions to follow
 
 **`el(tag, attrs, children)`** (`src/ui/dom.js`) is the only DOM-construction helper —
-there's no JSX/templating. `attrs.className`/`dataset`/`text`/`html` are special-cased;
+there's no JSX/templating. `attrs.className`/`dataset`/`text` are special-cased;
 any `onX` key becomes an `addEventListener`. Build UI by composing `el()` calls, not by
 writing HTML strings.
+
+**Never use `innerHTML` — not directly, not via any helper.** All text must flow through
+`textContent` (via `el()`'s `text:` key or `node.textContent = …`). The `html` key was
+removed from `el()` (Issue #22) — it was an undocumented escape hatch that routed
+directly to `node.innerHTML`. If a future genuine need for trusted HTML arises (e.g.
+rendering sanitised Markdown), introduce a separate named helper with an explicit
+doc comment so the danger is visible at every call site. Never silently re-add `html:`
+to `el()`.
+
+**Resource URLs must be validated before use as `href`.** Any URL coming from the store
+(Firebase, localStorage) must pass `isValidUrl()` before being set as an anchor `href`.
+`isValidUrl()` accepts only `http:` and `https:` protocols — this blocks `javascript:`
+and `data:` URI injection. Apply this at both render time and save time.
 
 **Store pattern** (`src/services/roadmapStore.js`): a single mutable `items` map,
 `subscribe(callback)`/`notify()` for pub-sub, and a 500ms debounced `queueSave()` that

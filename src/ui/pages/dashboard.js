@@ -101,7 +101,7 @@ export function renderDashboard(app, { user, store }) {
     clearTimeout(saveBadgeTimer);
     saveBadge.className = 'save-badge';
     if (state === 'saving') {
-      saveBadge.innerHTML = '<span class="spin"></span> Saving…';
+      saveBadge.replaceChildren(el('span', { className: 'spin' }), ' Saving…');
       saveBadge.classList.add('show');
     } else if (state === 'saved' || state === 'synced') {
       saveBadge.textContent = user.isAnonymous ? 'Saved locally' : 'Saved to cloud';
