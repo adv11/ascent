@@ -39,7 +39,7 @@ jobs:
               issue_number: 11,
             });
 
-            let trackerBody = tracker.data.body;
+            let trackerBody = tracker.body;
 
             for (const n of issues) {
               const tableStatus = opened
