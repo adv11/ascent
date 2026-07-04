@@ -61,6 +61,18 @@ These rules apply to every issue and every PR. They are not optional — every s
 | `docs/architecture.md` | If structure, CI pipeline, data-flow, or test setup changed |
 | `docs/api.md` | If a public store or service contract changed |
 
+### Parallel work (running multiple issues at once)
+
+Claude Code supports working on multiple issues simultaneously using **git worktrees + parallel agents**. Each issue gets its own worktree (isolated directory + branch), so branches never share working files and there are no mid-work conflicts.
+
+**When it is safe**: issues that touch different files and have no "Blocked by" relationship in tracker #11. Check the "Blocked by / Safe to run in parallel" column before starting.
+
+**When it is NOT safe**: two issues that both modify the same file (e.g. both touching `app.css` or `dashboard.js`) will produce merge conflicts — do those sequentially.
+
+**How to invoke**: tell Claude _"work #X and #Y in parallel"_. Claude will spawn two worktree agents in a single message. Each agent runs the full workflow independently (lint → test → rebase → PR → tracker update) and returns its own PR.
+
+**Each parallel agent still follows every step of this MANDATORY WORKFLOW** — lint, test, rebase, PR template, tracker update. Parallel does not mean skipping steps.
+
 ---
 
 ## Stack
