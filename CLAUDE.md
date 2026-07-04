@@ -67,6 +67,17 @@ shape* of items (add/remove/reorder/edit fields other than `done`), bump
 `structuralVersion` for it. If you add a mutation that's purely cosmetic on an existing
 row, don't — and prefer extending `patchDoneStates()` over adding more full re-renders.
 
+**Watch the Firebase echo.** `dbApi.listenRoadmap`'s `onValue` callback fires on every
+write to the path, *including the echo of writes this client just made* (every debounced
+save round-trips back through the listener ~500ms-1s after a click). It must not bump
+`structuralVersion` on that echo — `roadmapStore.js` compares the incoming remote data
+against the current in-memory `items` with a key-order-independent `stableStringify`
+(Realtime Database returns keys sorted; our in-memory map is insertion-order, so a plain
+`JSON.stringify` compare produces false positives) and only bumps when they actually
+differ. If this comparison is ever removed or replaced with an unconditional bump, the
+checklist flicker comes back — it'll just be delayed by a save round-trip instead of
+happening immediately on click, which makes it easy to miss in casual testing.
+
 **`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist
 row toggles `done` on click, but child controls that need their own click behavior
 (Edit button, the resource-count badge) are marked `data-action="…"` and call

@@ -4,6 +4,19 @@ import { dbApi, firebaseClock } from './firebase.js';
 const LOCAL_KEY = 'switchprep-roadmap-v3';
 const UI_KEY = 'switchprep-ui-v3';
 
+// Firebase's onValue listener fires on every write to the path, including the
+// echo of writes this same client just made. Comparing with JSON.stringify
+// alone isn't enough because Realtime Database returns object keys sorted,
+// while our in-memory `items` map is in insertion order — this sorts keys at
+// every level first so an echo of unchanged data compares equal.
+function stableStringify(value) {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
 export function createRoadmapStore() {
   let uid = null;
   let unsubscribe = null;
@@ -97,13 +110,15 @@ export function createRoadmapStore() {
 
     unsubscribe = dbApi.listenRoadmap(uid, snapshot => {
       const remote = snapshot.exists() ? snapshot.val() : null;
-      structuralVersion += 1;
       if (remote?.items) {
-        items = mergeWithSeed(remote.items);
+        const merged = mergeWithSeed(remote.items);
+        if (stableStringify(merged) !== stableStringify(items)) structuralVersion += 1;
+        items = merged;
         dirty = false;
         persistLocal();
       } else {
         items = mergeWithSeed(items);
+        structuralVersion += 1;
         queueSave();
       }
       notify({ saveState: 'synced' });
