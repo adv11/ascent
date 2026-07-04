@@ -15,8 +15,7 @@ customer-facing, not a side project.
   — copy `src/services/firebase.config.example.js` to that path and fill in your own
   Firebase project's values before running locally. Never put real credentials back into
   a tracked file.
-- No test framework or linter is wired up yet. Verify changes by running the dev
-  server and exercising the flow in a browser — see "Verifying changes" below.
+- **Vitest** for unit/integration tests (`tests/unit/`, `tests/integration/`); **Playwright** for E2E (`tests/e2e/`). Run `npm test` before pushing — all checks must be green. Run `npm run lint` to enforce security and quality rules. Never merge a PR with failing checks.
 
 ## File map
 

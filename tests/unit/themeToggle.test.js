@@ -8,12 +8,12 @@ beforeEach(async () => {
 });
 
 async function freshToggle() {
-  const { createThemeToggle } = await import('../ui/components/themeToggle.js');
+  const { createThemeToggle } = await import('../../src/ui/components/themeToggle.js');
   return createThemeToggle();
 }
 
 async function freshTheme() {
-  return import('../services/theme.js');
+  return import('../../src/services/theme.js');
 }
 
 describe('createThemeToggle — aria-label', () => {
@@ -45,37 +45,30 @@ describe('createThemeToggle — subscriber cleanup', () => {
     const btn = await freshToggle();
     const { setTheme } = await freshTheme();
 
-    let textBefore = btn.textContent;
+    const textBefore = btn.textContent;
     btn._cleanup();
 
-    // After cleanup, toggling theme must NOT update this button's text
     setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     expect(btn.textContent).toBe(textBefore);
   });
 
   it('only 1 active subscriber remains after creating and cleaning up multiple toggles', async () => {
-    const { createThemeToggle } = await import('../ui/components/themeToggle.js');
+    const { createThemeToggle } = await import('../../src/ui/components/themeToggle.js');
     const { setTheme } = await freshTheme();
 
     const buttons = Array.from({ length: 5 }, () => createThemeToggle());
 
-    // Clean up all but the last one
     buttons.slice(0, -1).forEach(b => b._cleanup());
 
-    let callCount = 0;
-    const originalSet = setTheme;
-
-    // Switch theme and count how many buttons update
     const initialTexts = buttons.map(b => b.textContent);
     setTheme('dark');
 
     const updatedCount = buttons.filter((b, i) => b.textContent !== initialTexts[i]).length;
-    // Only the one surviving subscriber (last button) + the 4 cleaned up buttons should NOT have updated
     expect(updatedCount).toBe(1);
   });
 
   it('cleaned-up toggles do not fire after toggleTheme()', async () => {
-    const { createThemeToggle } = await import('../ui/components/themeToggle.js');
+    const { createThemeToggle } = await import('../../src/ui/components/themeToggle.js');
     const { toggleTheme } = await freshTheme();
 
     document.documentElement.dataset.theme = 'light';
