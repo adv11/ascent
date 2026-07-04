@@ -1,0 +1,6 @@
+{
+  "rule": "no-innerHTML",
+  "description": "Never use innerHTML, outerHTML, or insertAdjacentHTML. All DOM text must flow through el() helper or node.textContent.",
+  "severity": "error",
+  "rationale": "XSS prevention — issue #22"
+}

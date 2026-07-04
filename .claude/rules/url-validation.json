@@ -1,0 +1,6 @@
+{
+  "rule": "url-validation",
+  "description": "All URLs from the store (Firebase, localStorage) must pass isValidUrl() before being set as href. Only http: and https: protocols are accepted.",
+  "severity": "error",
+  "rationale": "Blocks javascript: and data: URI injection"
+}

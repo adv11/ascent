@@ -1,0 +1,6 @@
+{
+  "rule": "subscription-cleanup",
+  "description": "Every component that subscribes to a store or service must capture the unsubscribe function and call it on DOM removal. Pattern: el._cleanup = unsubscribe, exposed as { node, cleanup }.",
+  "severity": "error",
+  "rationale": "Memory leak prevention — issue #27"
+}

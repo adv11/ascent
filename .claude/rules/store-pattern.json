@@ -1,0 +1,5 @@
+{
+  "rule": "store-pattern",
+  "description": "New state belongs in roadmapStore.js or a new store in services/. No ad-hoc module-level mutable variables outside store files.",
+  "severity": "warning"
+}

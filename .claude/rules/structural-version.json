@@ -1,0 +1,6 @@
+{
+  "rule": "structural-version",
+  "description": "structuralVersion must be bumped for mutations that change the set or shape of items (add/remove/reorder/field edits other than done). It must NOT be bumped for done-only mutations. Check CLAUDE.md for the full contract.",
+  "severity": "error",
+  "rationale": "Prevents checklist flicker regression"
+}

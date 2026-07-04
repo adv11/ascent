@@ -11,6 +11,13 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['src/**/*.js'],
       exclude: ['src/data/roadmap.js', 'src/services/firebase.config*.js'],
+      // Threshold will increase to ≥80% when src/core/ and src/utils/ are extracted (issue #3 folder-restructure PR)
+      thresholds: {
+        statements: 20,
+        branches: 15,
+        functions: 20,
+        lines: 20,
+      },
     },
   },
 });
