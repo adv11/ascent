@@ -64,6 +64,11 @@ jobs:
         with: { node-version: '20', cache: 'npm' }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Set up Java 21 (required by Firebase Emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Write Firebase config
         env:
           FIREBASE_CONFIG_TEST: ${{ secrets.FIREBASE_CONFIG_TEST }}
