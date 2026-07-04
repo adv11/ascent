@@ -8,3 +8,15 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
   }))
 });
+
+// localStorage is present in jsdom but broken in some vitest versions — provide a reliable in-memory stub
+const _store = {};
+Object.defineProperty(window, 'localStorage', {
+  writable: true,
+  value: {
+    getItem: k => _store[k] ?? null,
+    setItem: (k, v) => { _store[k] = String(v); },
+    removeItem: k => { delete _store[k]; },
+    clear: () => { Object.keys(_store).forEach(k => delete _store[k]); },
+  }
+});
