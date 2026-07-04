@@ -65,7 +65,7 @@ GitHub Actions runs on every PR and push to `main` (`.github/workflows/ci.yml`):
 | `test-e2e` | Playwright (Chromium) | End-to-end flows via Firebase Emulator |
 | `pr-checklist` | github-script | PR body is filled (≥ 50 chars, references an issue) |
 
-**Branch protection on `main` (active):** four jobs required — `ESLint`, `Secret & security scan`, `Unit & integration tests (Vitest)`, `PR description check`. `enforce_admins: true`. Branches must be up to date before merging. `E2E tests (Playwright)` will be added as a fifth required check once Firebase Emulator is set up (tracked in issue #37).
+**Branch protection on `main` (active):** four jobs required — `ESLint`, `Secret & security scan`, `Unit & integration tests (Vitest)`, `PR description check`. `enforce_admins: true`. Branches must be up to date before merging. `E2E tests (Playwright)` will be added as a fifth required check once the `FIREBASE_TOKEN` and `FIREBASE_CONFIG_TEST` secrets are configured in GitHub (see issue #37 for the manual steps).
 
 **Required GitHub secrets:**
 - `FIREBASE_CONFIG_TEST` — Firebase config JSON for the CI test project (written to `src/services/firebase.config.js` during E2E job)
@@ -81,6 +81,7 @@ tests/
   integration/      ← Vitest integration tests (store round-trips, pub-sub)
   e2e/              ← Playwright E2E tests (real Chromium, Firebase Emulator)
     auth.test.js
+    fixtures.js     ← custom `page` fixture that injects __USE_FIREBASE_EMULATOR__
   __mocks__/
     firebase.js     ← vi.fn() stubs for authApi / dbApi (use with vi.mock())
   setup.js          ← jsdom shims: matchMedia, localStorage

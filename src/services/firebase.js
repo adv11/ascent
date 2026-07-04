@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   EmailAuthProvider,
-  linkWithCredential
+  linkWithCredential,
+  connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import {
   getDatabase,
@@ -15,7 +16,8 @@ import {
   onValue,
   off,
   set,
-  serverTimestamp
+  serverTimestamp,
+  connectDatabaseEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 import { firebaseConfig } from './firebase.config.js';
 
@@ -23,6 +25,12 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const database = getDatabase(app);
+
+// In Playwright E2E tests the fixture injects this flag before any page scripts run.
+if (typeof window !== 'undefined' && window.__USE_FIREBASE_EMULATOR__) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectDatabaseEmulator(database, '127.0.0.1', 9000);
+}
 export const firebaseClock = serverTimestamp;
 
 export const authApi = {
