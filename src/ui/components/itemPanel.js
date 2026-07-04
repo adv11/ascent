@@ -1,4 +1,4 @@
-import { el } from '../dom.js';
+import { el, isValidUrl } from '../dom.js';
 
 export function openItemPanel({ item, onSave, onDelete, onClose }) {
   const overlay = el('div', { className: 'panel-overlay', onClick: e => { if (e.target === overlay) close(); } });
