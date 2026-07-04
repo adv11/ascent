@@ -34,8 +34,9 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
   await page.locator('.phase-head').nth(0).click();
-  await page.locator('text=Edit').nth(0).click();
-  await page.fill('input[placeholder="Resource label"]', 'Test resource');
+  await page.locator('[data-action="edit"]').nth(0).click();
+  await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
+  await page.fill('input[placeholder*="Resource label"]', 'Test resource');
   await page.fill('input[type="url"]', 'https://spring.io');
   await page.click('text=Add resource');
   await expect(page.locator('.resource-row')).toHaveCount(1);
