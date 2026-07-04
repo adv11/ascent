@@ -16,8 +16,13 @@
 ## Docs updated
 - [ ] `CHANGELOG.md`
 - [ ] `CLAUDE.md` (if a convention changed)
+- [ ] `AGENTS.md` (keep in sync with CLAUDE.md whenever it changes)
 - [ ] `docs/api.md` (if a public contract changed)
-- [ ] `docs/architecture.md` (if structure changed)
+- [ ] `docs/architecture.md` Build Log entry added (if a module was added/removed/restructured)
+
+## Breaking changes / rollback notes
+<!-- Describe any breaking changes (API, localStorage key, Firebase schema). If none, write "None". -->
+<!-- Include rollback steps if reverting this PR would require manual intervention. -->
 
 ## Screenshots / recordings
 <!-- Required for any visible UI change. -->

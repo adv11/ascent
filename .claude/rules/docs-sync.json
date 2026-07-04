@@ -1,0 +1,11 @@
+{
+  "rule": "docs-sync",
+  "description": "Any PR that changes files under src/ must update CHANGELOG.md. Any PR that adds or removes a module under src/services/, src/ui/components/, or src/ui/pages/ must add a Build Log entry to docs/architecture.md.",
+  "severity": "error",
+  "rationale": "Keeps the living architecture doc and release notes in sync automatically — issue #43",
+  "details": {
+    "changelog": "Add an entry under ## [Unreleased] in CHANGELOG.md whenever any src/ file changes.",
+    "architecture_build_log": "Append a dated entry to the '## Build Log' section of docs/architecture.md whenever a module is added, removed, or significantly restructured. Format: '### YYYY-MM-DD — PR #N — <short title>' followed by what changed and why.",
+    "claude_md_sync": "Whenever CLAUDE.md is updated, apply the same changes to AGENTS.md. They must never diverge."
+  }
+}

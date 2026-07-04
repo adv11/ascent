@@ -106,6 +106,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Check PR body is not empty template
         uses: actions/github-script@v7
         with:
@@ -117,3 +121,34 @@ jobs:
             if (!body.includes('Closes #') && !body.includes('Refs #') && !body.includes('N/A')) {
               core.warning('PR does not reference a GitHub issue. Add "Closes #XX" or "Refs #XX".');
             }
+
+      - name: Check CHANGELOG.md updated when src/ changed
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          SRC_CHANGED=$(git diff --name-only "$BASE" "$HEAD" | grep -E '^src/' | wc -l)
+          CHANGELOG_CHANGED=$(git diff --name-only "$BASE" "$HEAD" | grep -c '^CHANGELOG.md' || true)
+
+          if [ "$SRC_CHANGED" -gt 0 ] && [ "$CHANGELOG_CHANGED" -eq 0 ]; then
+            echo "❌ src/ files changed but CHANGELOG.md has no diff in this PR."
+            echo "   Add an entry under [Unreleased] in CHANGELOG.md."
+            exit 1
+          fi
+          echo "✅ CHANGELOG check passed (src_changed=$SRC_CHANGED, changelog_changed=$CHANGELOG_CHANGED)"
+
+      - name: Check docs/architecture.md updated when new module added
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          NEW_MODULES=$(git diff --name-only --diff-filter=A "$BASE" "$HEAD" \
+            | grep -E '^src/(services|ui/components|ui/pages)/' | wc -l)
+          ARCH_CHANGED=$(git diff --name-only "$BASE" "$HEAD" | grep -c '^docs/architecture.md' || true)
+
+          if [ "$NEW_MODULES" -gt 0 ] && [ "$ARCH_CHANGED" -eq 0 ]; then
+            echo "❌ New module(s) added under src/services or src/ui but docs/architecture.md has no diff."
+            echo "   Add a Build Log entry to docs/architecture.md."
+            exit 1
+          fi
+          echo "✅ Architecture doc check passed (new_modules=$NEW_MODULES, arch_changed=$ARCH_CHANGED)"

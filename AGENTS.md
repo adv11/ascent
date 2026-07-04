@@ -59,7 +59,7 @@ These rules apply to every issue and every PR. They are not optional — every s
 | `CHANGELOG.md` | Always — add an entry under `[Unreleased]` |
 | `CLAUDE.md` | If any convention, pattern, or rule changed |
 | `AGENTS.md` | Keep in sync with `CLAUDE.md` whenever `CLAUDE.md` changes |
-| `docs/architecture.md` | If structure, CI pipeline, data-flow, or test setup changed |
+| `docs/architecture.md` | If structure, CI pipeline, data-flow, or test setup changed — **also add a Build Log entry** |
 | `docs/api.md` | If a public store or service contract changed |
 
 ### Parallel work (running multiple issues at once)
@@ -108,7 +108,7 @@ src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources
 src/ui/components/toast.js       transient toast notifications
 src/styles/app.css            the entire design system (tokens, components, both themes)
-docs/architecture.md          deploy checklist + data model notes
+docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
 tests/unit/                   Vitest unit tests
 tests/integration/            Vitest integration tests
@@ -200,6 +200,15 @@ have the component factory return `{ node, cleanup }` (or expose `_cleanup` for 
 to collect), and wire the cleanup into the route's cleanup return in `main.js`. Failing
 to do this leaks dead DOM references and fires callbacks on removed nodes — see Issue #27.
 Never add a subscription without a paired teardown path.
+
+**Living architecture doc (`docs/architecture.md`) — keep the Build Log current.** Every PR that adds, removes, or significantly restructures a module must append a dated entry to the `## Build Log` section of `docs/architecture.md`. Format:
+
+```
+### YYYY-MM-DD — PR #N — <short title>
+What changed architecturally and why.
+```
+
+This is the developer-facing history (distinct from `CHANGELOG.md`, which is user-facing). The CI `pr-checklist` job enforces this: if a new file is added under `src/services/`, `src/ui/components/`, or `src/ui/pages/` and `docs/architecture.md` has no diff, the PR will fail. Issue templates are in `.github/ISSUE_TEMPLATE/` (four GitHub issue forms: `feature.yml`, `bug.yml`, `chore-refactor.yml`, `docs.yml`) — blank issues are disabled.
 
 ## Verifying changes
 

@@ -1,0 +1,83 @@
+name: Bug report
+description: Something is broken or behaves incorrectly
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Fill in every required field.** Incomplete issues will be closed.
+        Label line must include `type:fix`, one `priority:*`, and at least one `domain:*`.
+
+  - type: textarea
+    id: label-line
+    attributes:
+      label: Label line
+      description: "Copy-paste and fill: `type:fix` `priority:?` `domain:?`"
+      placeholder: "`type:fix` `priority:high` `domain:auth`"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-why
+    attributes:
+      label: What / Why
+      description: What is broken, observed behaviour vs. expected behaviour, and why this matters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the app as a guest
+        2. Toggle checklist item
+        3. Observe: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Files / modules affected. Out-of-scope items.
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing requirements
+      description: Unit / integration / E2E tests that must be written or updated to prevent regression.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: docs
+    attributes:
+      label: Doc changes checklist
+      options:
+        - label: "`CHANGELOG.md`"
+        - label: "`CLAUDE.md` (if a convention changed)"
+        - label: "`AGENTS.md` (keep in sync with CLAUDE.md)"
+        - label: "`docs/architecture.md` — Build Log entry (if structure/module changed)"
+        - label: "`docs/api.md` (if a public contract changed)"
+
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Blocked by / Blocks / Safe to run in parallel
+      placeholder: |
+        - Blocked by: nothing
+        - Blocks: nothing
+        - Safe to run in parallel with: all
+    validations:
+      required: true
+
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      placeholder: "Phase 0 — Foundation & Standards"
+    validations:
+      required: true

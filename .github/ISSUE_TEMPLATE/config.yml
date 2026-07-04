@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Master Tracker (#11)
+    url: https://github.com/adv11/SwitchPrep/issues/11
+    about: See the master issue tracker for the full project roadmap and issue statuses.
+  - name: Contribution guide (CLAUDE.md)
+    url: https://github.com/adv11/SwitchPrep/blob/main/CLAUDE.md
+    about: Read CLAUDE.md for label taxonomy, workflow rules, and code conventions.

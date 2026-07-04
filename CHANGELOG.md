@@ -6,8 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Infra
 - CI: verify Firebase Emulator E2E runs with secrets configured (issue #37)
+- **`pr-checklist` extended** (issue #43): CI now fails when `src/` changes without a `CHANGELOG.md` diff, or when a new module is added under `src/services|ui/components|ui/pages` without a `docs/architecture.md` diff.
+- **`issues-label-check` workflow** (issue #43): new GitHub Actions workflow fires on `issues.opened`/`issues.edited` and comments on any issue missing `type:*`, `priority:*`, or `domain:*` labels.
+- **GitHub issue templates** (issue #43): `.github/ISSUE_TEMPLATE/` with four structured forms (`feature.yml`, `bug.yml`, `chore-refactor.yml`, `docs.yml`) and `config.yml` disabling blank issues.
+- **`.claude/rules/docs-sync.json`** (issue #43): machine-readable rule for AI agents — CHANGELOG.md update required on every `src/` change; Build Log entry required on every module add/remove/restructure.
 
 ### Added
+
+- **Living architecture doc** (issue #43): rewrote `docs/architecture.md` into a comprehensive guide covering project goals, stack rationale, module-by-module walkthrough, non-obvious conventions with incident history, CI pipeline evolution, deploy checklist, and a Build Log section.
+- **PR template upgrade** (issue #43): added "Build Log entry added?" checkbox and "Breaking changes / rollback notes" section to `.github/PULL_REQUEST_TEMPLATE.md`.
 
 - **CI quality gate** (issue #30): full GitHub Actions pipeline with ESLint, Vitest unit tests, Playwright E2E, secret scanning, and PR checklist enforcement. Branch protection on `main` requires all four non-E2E jobs to pass before merge.
 - **ESLint** (issue #30): flat config with security rules blocking `innerHTML` and `eval`, plus `no-unused-vars`/`no-undef`/`no-console` quality rules. `npm run lint` / `npm run lint:fix` scripts.
