@@ -79,6 +79,14 @@ jobs:
         run: npx firebase emulators:start --only auth,database &
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      - name: Wait for Firebase Auth emulator to be ready
+        if: env.FIREBASE_CONFIGURED == 'true'
+        run: |
+          for i in {1..30}; do
+            curl -sf http://127.0.0.1:9099/ && echo "Auth emulator ready" && break
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
       - run: npm run test:e2e
       - name: Upload Playwright report on failure
         uses: actions/upload-artifact@v4

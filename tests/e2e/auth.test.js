@@ -1,7 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
-// Tests that require real Firebase credentials are skipped until issue #37
-// (Firebase Emulator) is set up. Set FIREBASE_CONFIGURED=true in CI to enable them.
+// Tests that require real Firebase credentials are skipped until FIREBASE_CONFIGURED=true.
+// The fixtures.js page extension injects window.__USE_FIREBASE_EMULATOR__ so the app
+// SDK connects to the local emulator instead of production Firebase.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 test('page loads and shows sign-in screen', async ({ page }) => {
