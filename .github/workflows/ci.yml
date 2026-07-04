@@ -64,9 +64,18 @@ jobs:
         with: { node-version: '20', cache: 'npm' }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Write Firebase config (test project)
-        run: echo "${{ secrets.FIREBASE_CONFIG_TEST }}" > src/services/firebase.config.js
+      - name: Write Firebase config
+        env:
+          FIREBASE_CONFIG_TEST: ${{ secrets.FIREBASE_CONFIG_TEST }}
+        run: |
+          if [ -n "$FIREBASE_CONFIG_TEST" ]; then
+            echo "$FIREBASE_CONFIG_TEST" > src/services/firebase.config.js
+            echo "FIREBASE_CONFIGURED=true" >> $GITHUB_ENV
+          else
+            cp src/services/firebase.config.example.js src/services/firebase.config.js
+          fi
       - name: Start Firebase emulators
+        if: env.FIREBASE_CONFIGURED == 'true'
         run: npx firebase emulators:start --only auth,database &
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
