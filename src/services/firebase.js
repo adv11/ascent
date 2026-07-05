@@ -79,6 +79,7 @@ export function authErrorMessage(error) {
   const messages = {
     'auth/email-already-in-use': 'That email already has an account. Use sign in instead.',
     'auth/invalid-email': 'Enter a valid email address.',
+    'auth/invalid-credential': 'Email or password is incorrect.',
     'auth/invalid-login-credentials': 'Email or password is incorrect.',
     'auth/missing-password': 'Enter your password.',
     'auth/network-request-failed': 'Network error. Check your connection and try again.',
@@ -86,7 +87,7 @@ export function authErrorMessage(error) {
     'auth/too-many-requests': 'Too many attempts. Wait a little and try again.',
     'auth/user-not-found': 'No account found for that email.',
     'auth/weak-password': 'Use at least 6 characters for the password.',
-    'auth/wrong-password': 'Wrong password. Please try again.'
+    'auth/wrong-password': 'Email or password is incorrect.'
   };
   return messages[error?.code] || error?.message || 'Something went wrong. Please try again.';
 }
