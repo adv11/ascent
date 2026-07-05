@@ -1,0 +1,76 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Allow the action to post preview-channel URLs as PR comments
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    name: Firebase Hosting deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Write the client-side Firebase config from the GitHub Secret.
+      # FIREBASE_CONFIG is a JSON object stored as a repository secret.
+      # If the secret is not set the deploy falls back to the example
+      # placeholder file so the workflow doesn't hard-fail on forks or
+      # feature branches that haven't been granted the secret.
+      - name: Write Firebase client config
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+        run: |
+          if [ -n "$FIREBASE_CONFIG" ]; then
+            echo "$FIREBASE_CONFIG" > src/services/firebase.config.js
+          else
+            cp src/services/firebase.config.example.js src/services/firebase.config.js
+            echo "⚠️  FIREBASE_CONFIG secret not set — deploying with example placeholder (app will not connect to Firebase)"
+          fi
+
+      # Check whether the deploy secret is available.
+      # Secrets cannot be read in `if:` expressions directly, so we probe
+      # via an env var and emit a step output.
+      - name: Check deploy readiness
+        id: ready
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$SERVICE_ACCOUNT" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  FIREBASE_SERVICE_ACCOUNT secret not set — deploy steps skipped"
+            echo "   Add the secret in GitHub → Settings → Secrets and variables → Actions"
+            echo "   See docs/architecture.md#cicd for setup instructions"
+          fi
+
+      # PR → deploy to a temporary preview channel (expires in 7 days).
+      # The action posts the preview URL as a PR comment automatically.
+      - name: Deploy preview channel (PR)
+        if: steps.ready.outputs.ok == 'true' && github.event_name == 'pull_request'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          channelId: pr-${{ github.event.number }}
+          expires: 7d
+
+      # main push → deploy to the live production channel.
+      - name: Deploy to production (main)
+        if: steps.ready.outputs.ok == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          channelId: live

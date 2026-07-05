@@ -394,7 +394,7 @@ changes without a `CHANGELOG.md` update or when a new module is added without an
 `architecture.md` diff. Added `issues-label-check` workflow. Added `.claude/rules/docs-sync.json`.
 Updated `CLAUDE.md` and `AGENTS.md` with the Living architecture doc convention.
 
-### 2026-07-05 — PR #TBD — CSP + SRI + security headers (issue #25)
+### 2026-07-05 — PR #46 — CSP + SRI + security headers (issue #25)
 
 Three security layers added in one PR:
 
@@ -419,3 +419,27 @@ process documented in ADR-002 and CLAUDE.md.
 
 New files: `src/services/themeBootstrap.js`, `docs/adr/ADR-002-csp-sri-security.md`,
 `tests/unit/themeBootstrap.test.js`.
+
+### 2026-07-05 — PR #TBD — Firebase Hosting + CI/CD (issue #28)
+
+**Platform**: Firebase Hosting (Spark free tier) chosen over Cloudflare Pages and Netlify
+because Auth + Realtime Database already live in the same Firebase project. One CLI, one
+dashboard, one billing account. ADR-003 documents the tradeoffs and the Cloudflare Pages
+migration path if bandwidth grows.
+
+**`firebase.json`** extended from emulator-only to a full hosting config:
+- `ignore` list keeps dev/doc files (CLAUDE.md, tests/, docs/, package.json, etc.) off the CDN
+- `rewrites` rule `"source": "**" → "/index.html"` enables SPA hash-router on direct URL access
+- `Cache-Control` per route: `no-cache` for `index.html` (always-fresh entry point), `max-age=31536000, immutable` for `/src/**` and `*.css` (cache-busted by the fresh HTML reference)
+- Security headers on `**`: HSTS, X-Frame-Options: DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy (supersedes the security-headers-only version from PR #46 / issue #25)
+- `database.rules` wired so `firebase deploy` also updates Realtime DB Security Rules
+
+**`.firebaserc`** added with a `YOUR_FIREBASE_PROJECT_ID` placeholder — must be set to the real project ID before deploying.
+
+**`.github/workflows/deploy.yml`** added: `FirebaseExtended/action-hosting-deploy@v0`
+triggered on push to `main` (live channel) and on PRs (temporary channel, expires 7d). Deploy
+steps are guarded by a readiness check — if `FIREBASE_SERVICE_ACCOUNT` is not set, the
+workflow prints instructions and exits cleanly rather than failing. Required setup:
+- `FIREBASE_SERVICE_ACCOUNT` (secret) — service account JSON from Firebase Console
+- `FIREBASE_CONFIG` (secret) — production `firebase.config.js` contents
+- `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive)

@@ -69,6 +69,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Cache Firebase emulator JARs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}
       - name: Write Firebase config
         env:
           FIREBASE_CONFIG_TEST: ${{ secrets.FIREBASE_CONFIG_TEST }}
@@ -81,9 +86,12 @@ jobs:
           fi
       - name: Start Firebase emulators
         if: env.FIREBASE_CONFIGURED == 'true'
-        run: npx firebase emulators:start --only auth,database &
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        # Use demo-switchprep so Firebase CLI starts without any authentication.
+        # demo-* project IDs are a Firebase CLI convention that skips all network
+        # calls to Google — the emulator runs fully offline. Any real project ID
+        # in FIREBASE_CONFIG_TEST still works because connectAuthEmulator /
+        # connectDatabaseEmulator redirect all SDK requests to the local ports.
+        run: npx firebase emulators:start --only auth,database --project demo-switchprep &
       - name: Wait for Firebase Auth emulator to be ready
         if: env.FIREBASE_CONFIGURED == 'true'
         run: |
@@ -92,6 +100,7 @@ jobs:
             echo "Waiting... ($i/30)"
             sleep 2
           done
+          curl -sf http://127.0.0.1:9099/ || { echo "❌ Auth emulator failed to start within 60 s"; exit 1; }
       - run: npm run test:e2e
       - name: Upload Playwright report on failure
         uses: actions/upload-artifact@v4

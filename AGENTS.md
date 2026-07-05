@@ -226,6 +226,26 @@ What changed architecturally and why.
 
 This is the developer-facing history (distinct from `CHANGELOG.md`, which is user-facing). The CI `pr-checklist` job enforces this: if a new file is added under `src/services/`, `src/ui/components/`, or `src/ui/pages/` and `docs/architecture.md` has no diff, the PR will fail. Issue templates are in `.github/ISSUE_TEMPLATE/` (four GitHub issue forms: `feature.yml`, `bug.yml`, `chore-refactor.yml`, `docs.yml`) — blank issues are disabled.
 
+## Deploying
+
+Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`.
+Every PR gets a temporary 7-day preview URL posted as a PR comment.
+
+**For a manual deploy:**
+```bash
+firebase deploy            # deploys hosting + database rules
+firebase deploy --only hosting
+firebase deploy --only database
+```
+
+**`firebase.config.js` is gitignored on purpose.** CI injects the production config from
+the `FIREBASE_CONFIG` GitHub Secret at deploy time. Do not commit a real config file.
+
+**Required GitHub secrets/variables:**
+- `FIREBASE_SERVICE_ACCOUNT` (secret) — service account JSON for deploy auth
+- `FIREBASE_CONFIG` (secret) — production `src/services/firebase.config.js` contents
+- `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive)
+
 ## Verifying changes
 
 ```

@@ -206,6 +206,31 @@ What changed architecturally and why.
 
 This is the developer-facing history (distinct from `CHANGELOG.md`, which is user-facing). The CI `pr-checklist` job enforces this: if a new file is added under `src/services/`, `src/ui/components/`, or `src/ui/pages/` and `docs/architecture.md` has no diff, the PR will fail. Issue templates are in `.github/ISSUE_TEMPLATE/` (four GitHub issue forms: `feature.yml`, `bug.yml`, `chore-refactor.yml`, `docs.yml`) — blank issues are disabled.
 
+## Deploying
+
+Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`.
+Every PR gets a temporary 7-day preview URL posted as a PR comment.
+
+**For a manual deploy:**
+```bash
+firebase deploy            # deploys hosting + database rules
+firebase deploy --only hosting
+firebase deploy --only database
+```
+
+**`firebase.config.js` is gitignored on purpose.** It holds client-side Firebase
+identifiers (`apiKey`, `authDomain`, etc.) that are visible to any user who opens
+DevTools — they are not secrets in the traditional sense, but keeping the file out of
+git prevents accidental commitment of production credentials during local development.
+CI injects the production config from the `FIREBASE_CONFIG` GitHub Secret at deploy time.
+
+**Required GitHub secrets/variables** (set in repo → Settings → Secrets and variables → Actions):
+- `FIREBASE_SERVICE_ACCOUNT` (secret) — Firebase service account JSON for deploy auth
+- `FIREBASE_CONFIG` (secret) — contents of `src/services/firebase.config.js` for production
+- `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive; use GitHub Variables, not Secrets)
+
+Also update `.firebaserc` with the real project ID before running `firebase deploy` locally.
+
 ## Verifying changes
 
 ```

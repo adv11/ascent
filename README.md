@@ -41,11 +41,34 @@ for the full data model and file layout, and [`CLAUDE.md`](CLAUDE.md) /
    ```
    Serves the app at `http://localhost:4173`.
 
+## Deploying
+
+```bash
+firebase deploy            # deploys hosting + database rules
+firebase deploy --only hosting
+```
+
+Every push to `main` auto-deploys to Firebase Hosting via GitHub Actions. Every PR
+gets a temporary preview URL posted as a comment. See [`docs/architecture.md`](docs/architecture.md)
+for the required GitHub secrets (`FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_CONFIG`,
+`FIREBASE_PROJECT_ID`).
+
+> **Note on `firebase.config.js`:** The values in this file (`apiKey`, `authDomain`,
+> etc.) are public client identifiers — they are embedded in the page JavaScript and
+> visible to any user who opens DevTools. Firebase's security model relies on Security
+> Rules, not on keeping these values private. The file is gitignored to avoid committing
+> production credentials during local development; CI injects it from a GitHub Secret.
+
 ## Project status
 
-No automated test suite yet — changes are verified manually against a running
-dev server. See the "Verifying changes" section of [`CLAUDE.md`](CLAUDE.md) for
-the checklist to run through before committing.
+Phase 0 (Foundation & Standards) is complete. Phase 1 work (hosting, auth, core
+architecture hardening) is in progress. See [`CHANGELOG.md`](CHANGELOG.md) for the
+detailed change history and [`docs/roadmap.md`](docs/roadmap.md) for the planned
+feature list.
+
+Tests run via `npm test` (Vitest unit + integration) and `npm run test:e2e` (Playwright).
+Run `npm run lint` to check for security and quality issues. See the "Verifying changes"
+section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
 
 ## License
 
