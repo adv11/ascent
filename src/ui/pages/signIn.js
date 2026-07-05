@@ -3,6 +3,7 @@ import { navigate } from '../router.js';
 import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { showToast } from '../components/toast.js';
 import { authShell } from '../components/authShell.js';
+import { makePasswordToggle } from '../utils/password.js';
 
 export function renderSignIn(app, { user }) {
   if (user && !user.isAnonymous) {
@@ -102,7 +103,10 @@ export function renderSignIn(app, { user }) {
           el('span', { className: 'field-label', text: 'Password' }),
           forgotBtn
         ]),
-        passwordInput
+        el('div', { className: 'field-input-wrap' }, [
+          passwordInput,
+          makePasswordToggle(passwordInput),
+        ]),
       ]),
       el('label', { className: 'remember-row', for: 'rememberMe' }, [
         rememberCheckbox,

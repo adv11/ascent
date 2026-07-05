@@ -467,3 +467,25 @@ with password re-entry — no native `confirm()`.
 
 **`src/ui/pages/signIn.js`**: "Keep me signed in" checkbox (checked by default) calls
 `authApi.setPersistence` before sign-in.
+
+### 2026-07-05 — PR #TBD — Auth form UX hardening (issue #26)
+
+**New module**: `src/ui/utils/password.js` — two exports used by both auth pages:
+- `scorePassword(s)` — pure function returning 0–4; 0 for empty/too-short, 1 base for
+  ≥6 chars, +1 for ≥8, +1 for ≥12, +1 for mixed case, +1 for digit, +1 for special char
+  (capped at 4). No external library.
+- `makePasswordToggle(input)` — factory returning an absolutely-positioned `<button>`
+  that toggles `input.type` between `'password'` and `'text'` and updates `aria-label`.
+  Caller wraps the input in `.field-input-wrap` (CSS `position: relative`).
+
+**`src/ui/pages/signUp.js`**: added confirm-password field with real-time mismatch
+validation (fires on `input` event and on submit before any Firebase call); 4-segment
+strength meter driven by `scorePassword`; show/hide toggles on both password fields;
+"Continue as guest" divider + button (matching sign-in). Labels changed to "Create a
+password" / "Confirm password".
+
+**`src/ui/pages/signIn.js`**: show/hide toggle added to the password field.
+
+**`src/styles/app.css`**: new classes `.field-input-wrap`, `.password-toggle`,
+`.strength-meter`, `.strength-segment`, `.strength-segment.weak/.fair/.strong`,
+`.field-error`.

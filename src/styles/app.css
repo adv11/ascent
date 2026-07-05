@@ -216,6 +216,37 @@ body {
 .form-message.error { color: var(--danger); }
 .form-message.success { color: var(--brand-dark); }
 .form-error { color: var(--danger); font-size: 12px; font-weight: 600; min-height: 18px; }
+.field-error { color: var(--danger); font-size: 12px; font-weight: 600; min-height: 16px; }
+
+/* Password field with show/hide toggle */
+.field-input-wrap { position: relative; display: grid; }
+.field-input-wrap .field-input { padding-right: 52px; }
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  line-height: 1;
+}
+.password-toggle:hover { color: var(--ink); }
+.password-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Password strength meter — 4 segment bar below the password field */
+.strength-meter { display: flex; gap: 4px; margin-top: 4px; }
+.strength-segment { flex: 1; height: 3px; border-radius: 2px; background: var(--line); transition: background 200ms ease; }
+.strength-segment.weak { background: var(--danger); }
+.strength-segment.fair { background: var(--p1); }
+.strength-segment.strong { background: var(--brand); }
 
 .field-label-row { display: flex; justify-content: space-between; align-items: center; }
 .forgot-link { background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; line-height: 1; }

@@ -86,3 +86,55 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
 
   expect(errors.filter(e => e.includes('ReferenceError'))).toHaveLength(0);
 });
+
+// Issue #26 — auth form UX improvements
+
+test('sign-up page shows Create a password and Confirm password fields', async ({ page }) => {
+  await page.goto('/#/signup');
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  const pwdInputs = page.locator('input[type="password"]');
+  await expect(pwdInputs).toHaveCount(2);
+});
+
+test('sign-up page has strength meter', async ({ page }) => {
+  await page.goto('/#/signup');
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.strength-meter')).toBeVisible();
+  await expect(page.locator('.strength-segment')).toHaveCount(4);
+});
+
+test('sign-up confirm mismatch shows error and does not navigate', async ({ page }) => {
+  await page.goto('/#/signup');
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await page.locator('input[type="email"]').fill('test@example.com');
+  await page.locator('input[type="password"]').first().fill('Password1!');
+  await page.locator('input[type="password"]').last().fill('Mismatch1!');
+  await page.locator('[type="submit"]').click();
+  await expect(page.locator('.field-error')).toContainText('do not match');
+  await expect(page.locator('.auth-title')).toContainText('Create your account');
+});
+
+test('show/hide toggle on sign-in password field changes input type', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.auth-title')).toContainText('Welcome back', { timeout: 10_000 });
+  const pwdInput = page.locator('input[type="password"]').first();
+  await expect(pwdInput).toHaveAttribute('type', 'password');
+  await page.locator('.password-toggle').first().click();
+  await expect(page.locator('input[type="text"]').first()).toBeVisible();
+  await page.locator('.password-toggle').first().click();
+  await expect(pwdInput).toHaveAttribute('type', 'password');
+});
+
+test('sign-up page has Continue as guest button', async ({ page }) => {
+  await page.goto('/#/signup');
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.auth-divider')).toBeVisible();
+  await expect(page.locator('.btn.btn-secondary.btn-block')).toContainText('Continue as guest');
+});
+
+test('sign-up page Continue as guest navigates to dashboard', async ({ page }) => {
+  test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+  await page.goto('/#/signup');
+  await page.click('text=Continue as guest');
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+});
