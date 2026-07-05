@@ -7,6 +7,7 @@ export const authApi = {
   guest: vi.fn(),
   signOut: vi.fn(),
   linkGuest: vi.fn(),
+  sendResetEmail: vi.fn(),
 };
 
 export const dbApi = {
