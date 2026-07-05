@@ -39,6 +39,8 @@ export function renderSignIn(app, { user }) {
     const submitBtn = el('button', { type: 'submit', className: 'btn btn-primary btn-block', text: 'Sign in' });
     const guestBtn = el('button', { type: 'button', className: 'btn btn-secondary btn-block', text: 'Continue as guest' });
     const forgotBtn = el('button', { type: 'button', className: 'forgot-link', text: 'Forgot password?' });
+    const rememberCheckbox = el('input', { type: 'checkbox', id: 'rememberMe', className: 'remember-checkbox', checked: 'true' });
+    rememberCheckbox.checked = true;
 
     if (prefillEmail) emailInput.value = prefillEmail;
 
@@ -61,6 +63,7 @@ export function renderSignIn(app, { user }) {
       }
       setBusy(true);
       try {
+        await authApi.setPersistence(rememberCheckbox.checked);
         await authApi.signIn(emailVal, passVal);
         showToast('Signed in. Syncing your roadmap…', 'success');
         navigate('/app', true);
@@ -100,6 +103,10 @@ export function renderSignIn(app, { user }) {
           forgotBtn
         ]),
         passwordInput
+      ]),
+      el('label', { className: 'remember-row', for: 'rememberMe' }, [
+        rememberCheckbox,
+        el('span', { className: 'remember-label', text: 'Keep me signed in' })
       ]),
       message,
       submitBtn,

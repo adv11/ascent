@@ -1,5 +1,7 @@
 import { vi } from 'vitest';
 
+export const auth = { currentUser: null };
+
 export const authApi = {
   onChange: vi.fn(),
   signIn: vi.fn(),
@@ -8,6 +10,9 @@ export const authApi = {
   signOut: vi.fn(),
   linkGuest: vi.fn(),
   sendResetEmail: vi.fn(),
+  sendVerificationEmail: vi.fn(),
+  setPersistence: vi.fn(),
+  deleteAccount: vi.fn(),
 };
 
 export const dbApi = {

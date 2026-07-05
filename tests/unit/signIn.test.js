@@ -5,6 +5,7 @@ vi.mock('../../src/services/firebase.js', () => ({
     signIn: vi.fn(),
     guest: vi.fn(),
     sendResetEmail: vi.fn(),
+    setPersistence: vi.fn(),
     onChange: vi.fn(),
   },
   authErrorMessage: (e) => e?.message || 'error',
@@ -161,5 +162,45 @@ describe('reset view — back to sign in', () => {
 
     expect(app.querySelector('.auth-title').textContent).toBe('Welcome back');
     expect(app.querySelector('input[type="email"]').value).toBe('success@example.com');
+  });
+});
+
+describe('sign-in page — remember me', () => {
+  it('renders a "Keep me signed in" checkbox, checked by default', async () => {
+    const { app } = await setup();
+    const checkbox = app.querySelector('#rememberMe');
+    expect(checkbox).not.toBeNull();
+    expect(checkbox.type).toBe('checkbox');
+    expect(checkbox.checked).toBe(true);
+  });
+
+  it('calls setPersistence(true) before signIn when checkbox is checked', async () => {
+    const { app, authApi } = await setup();
+    authApi.setPersistence.mockResolvedValue();
+    authApi.signIn.mockResolvedValue({});
+
+    app.querySelector('input[type="email"]').value = 'user@example.com';
+    app.querySelector('input[type="password"]').value = 'password123';
+    app.querySelector('form').requestSubmit();
+
+    await vi.waitFor(() => expect(authApi.signIn).toHaveBeenCalled());
+    expect(authApi.setPersistence).toHaveBeenCalledWith(true);
+    const setPersistenceOrder = authApi.setPersistence.mock.invocationCallOrder[0];
+    const signInOrder = authApi.signIn.mock.invocationCallOrder[0];
+    expect(setPersistenceOrder).toBeLessThan(signInOrder);
+  });
+
+  it('calls setPersistence(false) when checkbox is unchecked', async () => {
+    const { app, authApi } = await setup();
+    authApi.setPersistence.mockResolvedValue();
+    authApi.signIn.mockResolvedValue({});
+
+    const checkbox = app.querySelector('#rememberMe');
+    checkbox.checked = false;
+    app.querySelector('input[type="email"]').value = 'user@example.com';
+    app.querySelector('input[type="password"]').value = 'password123';
+    app.querySelector('form').requestSubmit();
+
+    await vi.waitFor(() => expect(authApi.setPersistence).toHaveBeenCalledWith(false));
   });
 });

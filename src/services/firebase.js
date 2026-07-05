@@ -7,8 +7,14 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  deleteUser,
   EmailAuthProvider,
   linkWithCredential,
+  reauthenticateWithCredential,
   connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import {
@@ -17,6 +23,7 @@ import {
   onValue,
   off,
   set,
+  remove,
   serverTimestamp,
   connectDatabaseEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
@@ -58,6 +65,20 @@ export const authApi = {
   },
   sendResetEmail(email) {
     return sendPasswordResetEmail(auth, email);
+  },
+  sendVerificationEmail() {
+    return sendEmailVerification(auth.currentUser);
+  },
+  setPersistence(rememberMe) {
+    return setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+  },
+  async deleteAccount(password) {
+    const user = auth.currentUser;
+    const cred = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, cred);
+    // Delete DB data before Auth record to avoid orphaned data
+    await remove(ref(database, `users/${user.uid}`));
+    await deleteUser(user);
   }
 };
 
@@ -87,7 +108,8 @@ export function authErrorMessage(error) {
     'auth/too-many-requests': 'Too many attempts. Wait a little and try again.',
     'auth/user-not-found': 'No account found for that email.',
     'auth/weak-password': 'Use at least 6 characters for the password.',
-    'auth/wrong-password': 'Email or password is incorrect.'
+    'auth/wrong-password': 'Email or password is incorrect.',
+    'auth/requires-recent-login': 'For security, please sign out and sign in again before deleting your account.'
   };
   return messages[error?.code] || error?.message || 'Something went wrong. Please try again.';
 }
