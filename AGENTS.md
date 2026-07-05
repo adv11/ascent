@@ -208,6 +208,8 @@ of these will cause a hash mismatch and the app will fail to boot. Regenerate ha
 in `index.html` must stay consistent with any new CDN domains added; update both the CSP
 meta tag and the `firebase.json` hosting headers.
 
+**Password reset uses Firebase's default action URL (Option A).** `authApi.sendResetEmail(email)` calls `sendPasswordResetEmail(auth, email)` and relies on Firebase's hosted action page for the "Set new password" form — no custom reset-confirm route exists in-app. Do not implement a custom reset form (`#/reset-password?oobCode=...`) unless explicitly requested. The sign-in page manages the reset request inline (same card, no route navigation) by swapping `bodySlot` content and updating `titleEl`/`subtitleEl` from the `authShell` return value. The success state deliberately shows the same UI regardless of whether the email belongs to an existing account — this prevents account-existence enumeration.
+
 **Component subscription cleanup — always unsubscribe on DOM removal.** Any component
 that calls `onThemeChange()`, or subscribes to any other module-level store or service,
 must capture the returned unsubscribe function and call it when the component is torn

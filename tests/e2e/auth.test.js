@@ -24,6 +24,49 @@ test('guest session starts and dashboard loads', async ({ page }) => {
   await expect(page.locator('.brand-name')).toContainText('SwitchPrep');
 });
 
+test('"Forgot password?" link is visible on sign-in screen', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.forgot-link')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.forgot-link')).toContainText('Forgot password?');
+});
+
+test('"Forgot password?" opens reset view with correct title', async ({ page }) => {
+  await page.goto('/');
+  await page.click('.forgot-link');
+  await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
+  await expect(page.locator('[type="submit"]')).toContainText('Send reset link');
+});
+
+test('"Back to sign in" from reset view restores sign-in form', async ({ page }) => {
+  await page.goto('/');
+  await page.fill('input[type="email"]', 'back@example.com');
+  await page.click('.forgot-link');
+  await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
+  await page.click('text=← Back to sign in');
+  await expect(page.locator('.auth-title')).toContainText('Welcome back', { timeout: 5_000 });
+  await expect(page.locator('input[type="email"]')).toHaveValue('back@example.com');
+});
+
+test('reset view shows validation error on empty submit', async ({ page }) => {
+  await page.goto('/');
+  await page.click('.forgot-link');
+  await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
+  await page.locator('input[type="email"]').fill('');
+  await page.locator('[type="submit"]').click();
+  await expect(page.locator('.form-message.error')).toContainText('Enter your email address.');
+});
+
+test('reset flow shows success state with emulator', async ({ page }) => {
+  test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+  await page.goto('/');
+  await page.click('.forgot-link');
+  await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
+  await page.fill('input[type="email"]', 'nobody@example.com');
+  await page.click('[type="submit"]');
+  await expect(page.locator('.auth-title')).toContainText('Check your inbox', { timeout: 5_000 });
+  await expect(page.locator('.reset-success-msg')).toBeVisible();
+});
+
 test('Add resource button works without ReferenceError', async ({ page }) => {
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
   const errors = [];

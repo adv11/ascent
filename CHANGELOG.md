@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Forgot password / password reset** (issue #13): "Forgot password?" link added below the Password field on the sign-in page. Clicking it shows an inline reset-request view (same card, no navigation) where the user enters their email and clicks "Send reset link". Firebase sends the reset email via `sendPasswordResetEmail`. Success state shows a confirmation message and never leaks whether an account exists for the submitted email (non-existent accounts show the same success UI). Network errors show an inline error with retry. "← Back to sign in" pre-fills the sign-in email field with whatever the user typed. Uses Firebase's default hosted action URL (Option A) — no custom reset-confirm form. `authApi.sendResetEmail(email)` added to `src/services/firebase.js`. `authShell` now exposes `titleEl` and `subtitleEl` so pages can update the card header when switching inline views.
+
 ### Security
 - **CSP + SRI + security headers** (issue #25): Content Security Policy meta tag added to `index.html` blocking inline scripts and restricting fetch/connect origins. Three Firebase SDK CDN modules pinned with `<link rel="modulepreload" integrity="sha384-...">` SRI hashes. `firebase.json` extended with Firebase Hosting security headers (HSTS, X-Frame-Options: DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy). Theme bootstrap extracted from inline IIFE to `src/services/themeBootstrap.js` (classic script, no-FOUC guarantee preserved). ADR-002 documents the CSP/SRI design and SDK upgrade process. `connect-src` also allows the local `127.0.0.1:9099`/`127.0.0.1:9000` Auth/Database emulator origins so `FIREBASE_CONFIGURED=true` E2E runs (issue #37) aren't blocked by the new policy.
 

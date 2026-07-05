@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
   EmailAuthProvider,
   linkWithCredential,
   connectAuthEmulator
@@ -54,6 +55,9 @@ export const authApi = {
   },
   signOut() {
     return signOut(auth);
+  },
+  sendResetEmail(email) {
+    return sendPasswordResetEmail(auth, email);
   }
 };
 
