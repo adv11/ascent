@@ -6,6 +6,7 @@ vi.mock('../../src/services/firebase.js', () => ({
     signUp: vi.fn(),
     linkGuest: vi.fn(),
     sendVerificationEmail: vi.fn(),
+    guest: vi.fn(),
   },
   authErrorMessage: (e) => e?.message || 'error',
 }));
@@ -19,6 +20,12 @@ vi.mock('../../src/ui/components/authShell.js', () => ({
     return { node, cleanup: vi.fn() };
   }
 }));
+
+function fillPasswordFields(app, value) {
+  const [pwd, confirm] = app.querySelectorAll('input[type="password"]');
+  pwd.value = value;
+  confirm.value = value;
+}
 
 async function setup() {
   const { authApi } = await import('../../src/services/firebase.js');
@@ -43,7 +50,7 @@ describe('sign-up page — email verification', () => {
     authApi.sendVerificationEmail.mockResolvedValue();
 
     app.querySelector('input[type="email"]').value = 'new@example.com';
-    app.querySelector('input[type="password"]').value = 'password123';
+    fillPasswordFields(app, 'password123');
     app.querySelector('form').requestSubmit();
 
     await vi.waitFor(() => expect(authApi.sendVerificationEmail).toHaveBeenCalledOnce());
@@ -56,7 +63,7 @@ describe('sign-up page — email verification', () => {
     authApi.sendVerificationEmail.mockRejectedValue(new Error('email send failed'));
 
     app.querySelector('input[type="email"]').value = 'new@example.com';
-    app.querySelector('input[type="password"]').value = 'password123';
+    fillPasswordFields(app, 'password123');
     app.querySelector('form').requestSubmit();
 
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
@@ -68,7 +75,7 @@ describe('sign-up page — email verification', () => {
     authApi.sendVerificationEmail.mockResolvedValue();
 
     app.querySelector('input[type="email"]').value = 'new@example.com';
-    app.querySelector('input[type="password"]').value = 'password123';
+    fillPasswordFields(app, 'password123');
     app.querySelector('form').requestSubmit();
 
     await vi.waitFor(() => expect(showToast).toHaveBeenCalled());
@@ -82,7 +89,7 @@ describe('sign-up page — email verification', () => {
     authApi.sendVerificationEmail.mockResolvedValue();
 
     app.querySelector('input[type="email"]').value = 'taken@example.com';
-    app.querySelector('input[type="password"]').value = 'password123';
+    fillPasswordFields(app, 'password123');
     app.querySelector('form').requestSubmit();
 
     await vi.waitFor(() => {
@@ -90,5 +97,59 @@ describe('sign-up page — email verification', () => {
       expect(msg.classList.contains('error')).toBe(true);
     });
     expect(authApi.sendVerificationEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe('sign-up page — confirm password validation', () => {
+  it('shows mismatch error and does not call signUp when passwords differ', async () => {
+    const { app, authApi } = await setup();
+    authApi.signUp.mockResolvedValue({});
+
+    app.querySelector('input[type="email"]').value = 'test@example.com';
+    const [pwd, confirm] = app.querySelectorAll('input[type="password"]');
+    pwd.value = 'password123';
+    confirm.value = 'different456';
+    app.querySelector('form').requestSubmit();
+
+    await vi.waitFor(() => {
+      const err = app.querySelector('.field-error');
+      expect(err.textContent).toContain('do not match');
+    });
+    expect(authApi.signUp).not.toHaveBeenCalled();
+  });
+
+  it('shows mismatch error inline on confirm input event', async () => {
+    const { app } = await setup();
+    const [pwd, confirm] = app.querySelectorAll('input[type="password"]');
+    pwd.value = 'password123';
+    confirm.value = 'nomatch';
+    confirm.dispatchEvent(new Event('input'));
+
+    const err = app.querySelector('.field-error');
+    expect(err.textContent).toContain('do not match');
+  });
+
+  it('clears mismatch error when confirm is corrected', async () => {
+    const { app } = await setup();
+    const [pwd, confirm] = app.querySelectorAll('input[type="password"]');
+    pwd.value = 'password123';
+    confirm.value = 'nomatch';
+    confirm.dispatchEvent(new Event('input'));
+    confirm.value = 'password123';
+    confirm.dispatchEvent(new Event('input'));
+
+    const err = app.querySelector('.field-error');
+    expect(err.textContent).toBe('');
+  });
+
+  it('does not show mismatch error when confirm is empty', async () => {
+    const { app } = await setup();
+    const [pwd, confirm] = app.querySelectorAll('input[type="password"]');
+    pwd.value = 'password123';
+    confirm.value = '';
+    confirm.dispatchEvent(new Event('input'));
+
+    const err = app.querySelector('.field-error');
+    expect(err.textContent).toBe('');
   });
 });
