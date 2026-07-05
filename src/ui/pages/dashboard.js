@@ -1,10 +1,11 @@
 import { PHASES } from '../../data/roadmap.js';
-import { authApi } from '../../services/firebase.js';
+import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { el, debounce } from '../dom.js';
 import { navigate } from '../router.js';
 import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
+import { createVerificationBanner } from '../components/verificationBanner.js';
 
 function groupItems(items) {
   const phases = [];
@@ -351,9 +352,83 @@ export function renderDashboard(app, { user, store }) {
     render(store.getSnapshot());
   }, 160));
 
+  function showDeleteModal() {
+    const message = el('p', { className: 'form-message', text: '' });
+    const passwordInput = el('input', {
+      className: 'field-input',
+      type: 'password',
+      placeholder: 'Your current password',
+      autocomplete: 'current-password'
+    });
+    const confirmBtn = el('button', {
+      type: 'submit',
+      className: 'btn btn-danger btn-block',
+      text: 'Delete my account'
+    });
+    const cancelBtn = el('button', {
+      type: 'button',
+      className: 'btn btn-secondary btn-block',
+      text: 'Cancel'
+    });
+
+    function setBusy(busy) {
+      confirmBtn.disabled = busy;
+      cancelBtn.disabled = busy;
+    }
+
+    async function handleDelete(e) {
+      e.preventDefault();
+      message.textContent = '';
+      message.className = 'form-message';
+      const pass = passwordInput.value;
+      if (!pass) {
+        message.textContent = 'Enter your password to confirm.';
+        message.className = 'form-message error';
+        return;
+      }
+      setBusy(true);
+      try {
+        await authApi.deleteAccount(pass);
+        overlay.remove();
+        showToast('Account deleted.', 'success');
+        navigate('/signin', true);
+      } catch (err) {
+        message.textContent = authErrorMessage(err);
+        message.className = 'form-message error';
+        setBusy(false);
+      }
+    }
+
+    const form = el('form', { className: 'auth-form', onSubmit: handleDelete }, [
+      el('p', { className: 'delete-modal-body', text: 'This permanently deletes your account and all roadmap data. Enter your password to confirm.' }),
+      el('label', { className: 'field' }, [
+        el('span', { className: 'field-label', text: 'Password' }),
+        passwordInput
+      ]),
+      message,
+      confirmBtn,
+      cancelBtn
+    ]);
+
+    const overlay = el('div', { className: 'modal-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Delete account' }, [
+      el('div', { className: 'modal-card' }, [
+        el('h2', { className: 'modal-title', text: 'Delete account' }),
+        form
+      ])
+    ]);
+
+    cancelBtn.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    document.body.appendChild(overlay);
+    passwordInput.focus();
+  }
+
   const themeToggleBtn = createThemeToggle();
+  const verificationBanner = createVerificationBanner(user);
 
   const shell = el('div', { className: 'dashboard fade-in' }, [
+    verificationBanner,
     offlineBanner,
     el('header', { className: 'dashboard-header' }, [
       el('div', { className: 'header-top' }, [
@@ -369,6 +444,12 @@ export function renderDashboard(app, { user, store }) {
           syncPill,
           el('span', { className: 'user-chip', text: userLabel }),
           user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
+          !user.isAnonymous ? el('button', {
+            type: 'button',
+            className: 'btn btn-ghost btn-sm btn-danger-text',
+            text: 'Delete account',
+            onClick: () => showDeleteModal()
+          }) : null,
           el('button', {
             type: 'button',
             className: 'btn btn-ghost btn-sm',

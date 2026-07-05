@@ -35,11 +35,12 @@ export function renderSignUp(app, { user }) {
       const current = auth.currentUser;
       if (current?.isAnonymous) {
         await authApi.linkGuest(emailVal, passVal);
-        showToast('Account created and guest progress linked.', 'success');
       } else {
         await authApi.signUp(emailVal, passVal);
-        showToast('Account created. Your roadmap is ready.', 'success');
       }
+      // Best-effort — don't block sign-up if this fails (e.g. emulator not configured)
+      try { await authApi.sendVerificationEmail(); } catch { /* ignore */ }
+      showToast('Account created. Check your inbox to verify your email.', 'success');
       navigate('/app', true);
     } catch (error) {
       message.textContent = authErrorMessage(error);

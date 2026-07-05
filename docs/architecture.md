@@ -443,3 +443,27 @@ workflow prints instructions and exits cleanly rather than failing. Required set
 - `FIREBASE_SERVICE_ACCOUNT` (secret) — service account JSON from Firebase Console
 - `FIREBASE_CONFIG` (secret) — production `firebase.config.js` contents
 - `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive)
+
+### 2026-07-05 — PR #TBD — Email verification, persistent sessions, account deletion (issue #14)
+
+**New module**: `src/ui/components/verificationBanner.js` — dismissible info bar shown on
+the dashboard when the signed-in user's email is not yet verified. Dismiss state is stored
+in `sessionStorage` keyed by `switchprep-verify-dismissed-{uid}` so it persists across
+navigations but clears on browser close.
+
+**`src/services/firebase.js`** extended with three new `authApi` methods:
+- `sendVerificationEmail()` — wraps `sendEmailVerification(auth.currentUser)`; called best-effort
+  after sign-up (error is swallowed so a transient Firebase failure never blocks account creation)
+- `setPersistence(rememberMe)` — switches between `browserLocalPersistence` (default, survives
+  restart) and `browserSessionPersistence` (tab-only); called in signIn.js before the sign-in
+  call so persistence is set before the credential exchange
+- `deleteAccount(password)` — re-authenticates with `reauthenticateWithCredential`, then deletes
+  `users/{uid}` from Realtime Database *before* calling `deleteUser` (reversing this order leaves
+  orphaned database data)
+
+**`src/ui/pages/dashboard.js`**: mounts `verificationBanner` above the offline banner;
+adds a "Delete account" button (non-anonymous users only) that opens an inline confirmation modal
+with password re-entry — no native `confirm()`.
+
+**`src/ui/pages/signIn.js`**: "Keep me signed in" checkbox (checked by default) calls
+`authApi.setPersistence` before sign-in.
