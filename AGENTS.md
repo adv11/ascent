@@ -2,11 +2,11 @@
 
 Ascent ("Engineer your next move.") is a personal roadmap tracker for anyone learning,
 revising, or tracking progress toward a goal — students, professionals, or career
-switchers. The built-in roadmap currently covers backend engineering topics (Java,
-Spring Boot, microservices, GenAI/agentic AI, system design); support for other
-domains/roadmaps is planned (Issue #51). It's moving from a personal tool toward a
-sellable product, so treat correctness and polish here as customer-facing, not a side
-project.
+switchers. New sign-ups pick a starter template (Issue #51): Java Backend Engineer
+(the original roadmap — Java, Spring Boot, microservices, GenAI/agentic AI, system
+design), Frontend Developer, Data Scientist, or a blank slate. It's moving from a
+personal tool toward a sellable product, so treat correctness and polish here as
+customer-facing, not a side project.
 
 > **Keep this file in sync with `CLAUDE.md`.** Whenever `CLAUDE.md` is updated, apply
 > the same change here. They must never diverge.
@@ -95,25 +95,36 @@ Claude Code supports working on multiple issues simultaneously using **git workt
 ```
 index.html                    entry HTML; CSP meta tag, SRI modulepreload for Firebase SDK, external themeBootstrap
 src/main.js                   boot: migrate localStorage keys, init theme, auth gate, hash router wiring
-src/data/roadmap.js           seed phases/sections/items + resource library
-src/services/firebase.js      auth + Realtime Database access
+src/data/roadmap.js           backward-compat shim — re-exports the java-backend template, no logic
+src/data/templates/index.js   starter template registry — TEMPLATES, getTemplate, buildSeedItems(id), getTemplatePhases(id)
+src/data/templates/java-backend.js  the original roadmap (Java/Spring Boot/…), moved here verbatim
+src/data/templates/frontend.js      Frontend Developer starter template
+src/data/templates/data-science.js  Data Scientist starter template
+src/data/templates/genai-agentic-ai.js  GenAI / Agentic AI Engineer starter template
+src/data/templates/math-grade12.js      12th Grade Mathematics starter template
+src/data/templates/piano.js             Learning Piano starter template
+src/data/templates/marketing.js         Marketing starter template
+src/data/templates/blank.js         four empty starter phases (Learn/Practice/Build/Review) — never hideable
+src/services/firebase.js      auth + Realtime Database access (roadmap + per-user meta)
 src/services/firebase.config.js          gitignored — your real Firebase project config
 src/services/firebase.config.example.js  committed template for the file above
 src/services/localStorageKeys.js  canonical `ascent-*` localStorage/sessionStorage key strings
 src/services/migration.js     one-time migration off the pre-rename `switchprep-*` key prefix
-src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + remote save
+src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + remote save, onboarding detection
 src/services/theme.js         dark/light theme state (localStorage + system preference)
 src/services/themeBootstrap.js  synchronous classic script — sets data-theme before CSS loads (no-FOUC)
 src/ui/router.js              tiny hash router (registerRoute/navigate/startRouter)
 src/ui/dom.js                 el() DOM-builder helper, debounce, isValidUrl
 src/ui/pages/signIn.js        sign-in screen
 src/ui/pages/signUp.js        sign-up screen
+src/ui/pages/onboarding.js     one-time starter template picker (route: /onboarding)
 src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really)
 src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + theme toggle + card)
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources
 src/ui/components/toast.js       transient toast notifications
+src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -153,8 +164,61 @@ and `data:` URI injection. Apply this at both render time and save time.
 **Store pattern** (`src/services/roadmapStore.js`): a single mutable `items` map,
 `subscribe(callback)`/`notify()` for pub-sub, and a 500ms debounced `queueSave()` that
 persists to `localStorage` immediately and to Firebase after the debounce. Snapshots
-carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`) and a `structuralVersion`
-counter.
+carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`), a `structuralVersion`
+counter, the active `templateId`, `onboardingDone`, and `phases` (the current
+template's phase/section skeleton — see below).
+
+**Starter templates and onboarding (`src/data/templates/`, `src/ui/pages/onboarding.js`)**
+— Issue #51. `src/data/templates/index.js` is the template registry (`TEMPLATES`,
+`getTemplate(id)`, `buildSeedItems(id)`, `getTemplatePhases(id)`); every template module
+(`java-backend.js`, `frontend.js`, `data-science.js`, `genai-agentic-ai.js`,
+`math-grade12.js`, `piano.js`, `marketing.js`, `blank.js` — 8 total) exports its own
+`PHASES` + `buildSeedItems()` in the same shape as the original `roadmap.js`. Templates
+are loaded via dynamic `import()` so a signed-out visitor's sign-in page never downloads
+roadmap content for templates they haven't picked. `roadmapStore.js`'s `setUser(user)`
+is now **async**: on every sign-in it does a one-time `dbApi.getMeta`/`dbApi.getRoadmap`
+read to decide `onboardingDone` — `meta.onboardingDone` wins if present; otherwise any
+account with real progress (an item with `custom: true` or `done: true`, local or
+remote) is treated as already onboarded and the flag is backfilled to Firebase with no
+forced migration step. Only when `onboardingDone` is false does `main.js` route to
+`/onboarding`; picking a card there calls `store.initFromTemplate(templateId)`, which
+seeds `items` from that template, marks onboarding done, and starts syncing. Always
+await `store.setUser(...)` before making a routing decision on its result — the
+onboarding-vs-`/app` redirect in `main.js` depends on this resolving first.
+`dashboard.js`'s `groupItems()` takes `store.getSnapshot().phases` instead of a
+hardcoded import specifically so a template like "blank" — whose phases have zero
+items — still renders a phase-card for each one; do not revert it to a static import.
+A "Switch template" link in the dashboard header re-enters `/onboarding` at any time —
+reached this way (`onboardingDone` already `true`), the page shows a "← Back to my
+roadmap" link and requires `confirm()` before `initFromTemplate()` runs, since picking a
+new template discards the current one; first-time onboarding (`onboardingDone === false`)
+shows neither, since there's nothing to lose yet.
+
+**Per-user hidden templates — `hiddenTemplateIds`.** Every template card except
+"blank" has a hide (×) button; clicking it (after a `confirm()`) calls
+`store.hideTemplate(id)`, which appends to `hiddenTemplateIds` and persists it to
+`users/{uid}/meta/hiddenTemplateIds` (plus a local fallback) — **this is a per-user
+preference, never a deletion of the template or a change visible to any other user.**
+`getTemplate`/`buildSeedItems`/`getTemplatePhases` never consult it; it only filters
+which cards `onboarding.js` renders. A "Show hidden templates (N)" toggle reveals
+hidden cards with a "Restore" button (`store.unhideTemplate(id)`) instead of the normal
+pick/hide affordances. Never make "blank" hideable — it's the only path into the
+"build your own" guide (`src/ui/components/buildYourOwnGuide.js`), reachable via the
+"ℹ How do I build my own?" button that replaces the hide button on that one card. That
+modal is purely informational (manual "Add a custom topic…" workflow today, a tip for
+drafting topics with an external AI assistant) — do not claim in-app automated AI
+import exists until it's actually built.
+
+**`setUser`/`initFromTemplate` stale-call guard — `stateCallId`.** Firebase's
+`onAuthStateChanged` can fire in quick succession (e.g. delete-account immediately
+followed by a fresh sign-up with the same email). Because both functions do an `await`
+before mutating store state, an older call can still be in flight when a newer one
+finishes — without a guard, the older call would resolve later and clobber the newer,
+correct state with stale data. `roadmapStore.js` captures a `stateCallId` snapshot at
+the top of each call and checks it's still current after every `await`; if a newer call
+has already started, the older one aborts without touching `items`/`templateId`/
+`onboardingDone`. Any new `await` added to either function must be followed by the same
+staleness check before it mutates state.
 
 **`structuralVersion` — do not regress this.** It exists specifically to fix a checklist
 flicker bug: toggling `done` on an item does *not* bump `structuralVersion` (see
@@ -176,6 +240,24 @@ against the current in-memory `items` with a key-order-independent `stableString
 `JSON.stringify` compare produces false positives) and only bumps when they actually
 differ. If this comparison is ever removed or replaced with an unconditional bump, the
 checklist flicker comes back.
+
+**Every saved roadmap payload is tagged with the `templateId` it belongs to — never remove this.**
+`initFromTemplate()` resets `items`/`templateId`/`lastFlushedStr` synchronously when a user
+switches templates, but it cannot cancel a debounced save from the *previous* template that
+was already in flight to Firebase. That save's echo arrives on the same still-attached
+`listenRoadmap` listener, fails the (now-reset) `lastFlushedStr` echo check above, and — before
+this fix — was applied as if it were genuine new remote data, silently overwriting the new
+template's items with the old template's (issue #51 follow-up: "the previous roadmap's content
+shows up in the one I just switched to"). `flush()` now includes `templateId` in every payload
+it writes, and `attachRoadmapListener()`'s callback drops any incoming update whose `templateId`
+doesn't match the currently active one *before* running the echo/structuralVersion comparison.
+Saves from before this field existed have no `templateId` and are still trusted (never reject
+data just because the tag is missing). If you ever change how templates are switched, re-verify
+this guard with the "cross-template echo guard" describe block in
+`tests/integration/roadmapStore.test.js` — it deterministically replays the exact race by
+capturing the mocked `listenRoadmap` callback and firing a stale, differently-tagged snapshot
+after `initFromTemplate()`, rather than relying on real timing (which is what let this bug ship
+in the first place).
 
 **`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist
 row toggles `done` on click, but child controls that need their own click behavior
@@ -245,6 +327,19 @@ have the component factory return `{ node, cleanup }` (or expose `_cleanup` for 
 to collect), and wire the cleanup into the route's cleanup return in `main.js`. Failing
 to do this leaks dead DOM references and fires callbacks on removed nodes — see Issue #27.
 Never add a subscription without a paired teardown path.
+
+**Card/grid layout — every card in a row must be equal height, with variable-length content, not the grid's stretch behavior, being the thing you design around.** A CSS grid's cells stretch equally by default (`align-items: stretch`), but a card only visually fills that cell if the card element itself is sized to `height: 100%` and stacks its content as a flex column — otherwise each card sizes to its own content and rows visibly mismatch the moment one card's text runs longer than its neighbors (this exact bug hit `.template-card` in the onboarding template picker, `src/ui/pages/onboarding.js` / `src/styles/app.css` — same-row cards rendered at different heights because the card had no `height: 100%` and used `display: grid` with content-sized rows instead of a flex column). The required pattern for any new card-grid component:
+- Grid container: `display: grid; grid-template-columns: repeat(auto-fit, minmax(<min>, 1fr)); align-items: stretch;` so it reflows responsively across breakpoints without a bespoke media query per card count.
+- Card element: `height: 100%; display: flex; flex-direction: column;` so it actually fills the stretched cell.
+- Any footer/action element (badge, button, count) that should stay flush to the card's bottom regardless of how long the body text is: `margin-top: auto` on that element — never rely on equal source text length to keep footers visually aligned.
+- Every element that should stay left-aligned inside the flex column needs an explicit `align-self: flex-start` (or `text-align: left` for text content) — a bare `<button>` left in a stretched flex column centers its text by default (the browser's UA stylesheet), which is an easy regression to introduce when converting a card from `display: grid` (where `justify-self: start` did this job) to `display: flex`.
+Verify visually at at least three viewport widths (mobile ~390px, tablet ~820px, desktop ~1440px) before calling a card-grid change done — unit tests run in jsdom and cannot catch layout/height mismatches.
+
+**Never use the native `window.confirm()` — use `confirmDialog()` (`src/ui/components/confirmDialog.js`).** The browser's built-in confirm dialog can't be styled, breaks the app's own dark/light theming, and reads as unpolished in a customer-facing product. `confirmDialog({ title, message, confirmText, cancelText, danger })` returns a `Promise<boolean>` and renders the same `.modal-overlay`/`.modal-card` chrome as every other modal in the app (matches `showDeleteModal()` in `dashboard.js` and `openBuildYourOwnGuide()`), with Escape-to-cancel and click-outside-to-cancel built in. Pass `danger: true` for anything destructive/irreversible (delete, sign-out with unsaved changes, replacing a roadmap) to get the red confirm button; leave it `false` for reversible actions (e.g. hiding a template, which can be undone from "Show hidden templates"). Every call site does `if (!await confirmDialog({...})) return;` — same control flow as the old `confirm()`, so there's no excuse to reach for the native one out of convenience. Tests reach the dialog via `document.querySelector('.modal-overlay [data-action="confirm"|"cancel"]')` (Vitest/jsdom) or `page.locator('.modal-overlay[aria-label*="..."] [data-action="confirm"]')` (Playwright) — never via `page.on('dialog', ...)`, which only intercepts the native API this component replaced.
+
+**Brand mark is a home link on every authenticated/onboarding-adjacent page.** Clicking the "Ascent" logo/wordmark (`createBrandMark()`) always navigates somewhere predictable instead of sitting inert — `<a class="brand" href="#/signin">` on the sign-in/sign-up pages (already existed), and `<a class="brand" href="#/onboarding">` on the dashboard and onboarding pages (`src/ui/pages/dashboard.js`, `src/ui/pages/onboarding.js`), since `/onboarding` is the "all roadmaps" picker — the closest thing this app has to a home/index page. `.brand`'s CSS (`text-decoration: none; color: inherit;`) was already anchor-ready; only the wrapping element needed to change from a plain `<div>` to an `<a>`. Never make the brand mark a dead `<div>` on a page that has a sensible "home" to link to.
+
+**The active roadmap must always be visible and never silently overwritable by re-picking it.** Two coordinated pieces, both in response to real user confusion about "which roadmap am I on": (1) the dashboard hero (`src/ui/pages/dashboard.js`) always renders a `.current-roadmap-badge` with the active template's icon and name, sourced from `getTemplate(store.getSnapshot().templateId)` (`src/data/templates/index.js`) — never let the dashboard render without this, even for the seeded/default template; (2) the "Switch your starter roadmap" picker (`src/ui/pages/onboarding.js`) marks the currently-active template's card with a `.template-card-current` highlight and a "Current" badge (`.template-card-current-badge`, inside `.template-card-footer` so it doesn't disturb the equal-height card layout above), and `pickTemplate()` treats clicking that same card as a no-op navigation back to `/app` — **not** a re-seed through `store.initFromTemplate()`, which always discards existing progress and would otherwise silently wipe a confused user's own roadmap for re-selecting the template they're already on. If you add another place that lists templates or lets a user pick one, carry both halves of this pattern with it.
 
 **Living architecture doc (`docs/architecture.md`) — keep the Build Log current.** Every PR that adds, removes, or significantly restructures a module must append a dated entry to the `## Build Log` section of `docs/architecture.md`. Format:
 

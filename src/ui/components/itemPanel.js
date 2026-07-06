@@ -1,4 +1,5 @@
 import { el, isValidUrl } from '../dom.js';
+import { confirmDialog } from './confirmDialog.js';
 
 export function openItemPanel({ item, onSave, onDelete, onClose }) {
   const overlay = el('div', { className: 'panel-overlay', onClick: e => { if (e.target === overlay) close(); } });
@@ -110,8 +111,13 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
         type: 'button',
         className: 'btn btn-danger',
         text: 'Delete topic',
-        onClick: () => {
-          if (confirm(`Delete "${item.title}"?`)) {
+        onClick: async () => {
+          if (await confirmDialog({
+            title: `Delete "${item.title}"?`,
+            message: 'This removes the topic and its resources from your roadmap — this cannot be undone.',
+            confirmText: 'Delete',
+            danger: true
+          })) {
             onDelete?.();
             close();
           }

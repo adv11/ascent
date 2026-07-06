@@ -6,6 +6,7 @@ import { startRouter, registerRoute, navigate, getRoute } from './ui/router.js';
 import { renderSignIn } from './ui/pages/signIn.js';
 import { renderSignUp } from './ui/pages/signUp.js';
 import { renderDashboard } from './ui/pages/dashboard.js';
+import { renderOnboarding } from './ui/pages/onboarding.js';
 
 migrateLocalStorageKeys();
 initTheme();
@@ -26,23 +27,32 @@ function guardApp(renderFn) {
   };
 }
 
-authApi.onChange(user => {
+// Awaits setUser so the onboarding-needed decision below always sees this
+// sign-in's resolved state (Issue #51) — never a stale value from the previous user.
+authApi.onChange(async user => {
   currentUser = user;
-  store.setUser(user);
+  await store.setUser(user);
 
   const route = getRoute();
   const publicRoutes = ['/signin', '/signup'];
-  if (!user && !publicRoutes.includes(route)) {
-    navigate('/signin', true);
+
+  if (!user) {
+    if (!publicRoutes.includes(route)) navigate('/signin', true);
     return;
   }
-  if (user && publicRoutes.includes(route)) {
+
+  if (!store.getSnapshot().onboardingDone) {
+    if (route !== '/onboarding') navigate('/onboarding', true);
+    return;
+  }
+  if (publicRoutes.includes(route) || route === '/onboarding') {
     navigate('/app', true);
   }
 });
 
 registerRoute('/signin', guardApp(renderSignIn));
 registerRoute('/signup', guardApp(renderSignUp));
+registerRoute('/onboarding', guardApp(renderOnboarding));
 registerRoute('/app', guardApp(renderDashboard));
 registerRoute('/', () => navigate(currentUser ? '/app' : '/signin', true));
 

@@ -1,4 +1,5 @@
-import { ROADMAP_VERSION, buildSeedItems } from '../data/roadmap.js';
+import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
+import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases } from '../data/templates/index.js';
 import { dbApi, firebaseClock } from './firebase.js';
 import { KEYS } from './localStorageKeys.js';
 
@@ -18,14 +19,29 @@ function stableStringify(value) {
   return JSON.stringify(value);
 }
 
+function hasRealProgress(itemsMap) {
+  return !!itemsMap && Object.values(itemsMap).some(item => item.custom || item.done);
+}
+
 export function createRoadmapStore() {
   let uid = null;
   let unsubscribe = null;
   let items = buildSeedItems();
+  let templateId = 'java-backend';
+  let templatePhases = PHASES;
+  let onboardingDone = null;
+  let hiddenTemplateIds = [];
   let dirty = false;
   let saveTimer = null;
   let structuralVersion = 0;
   let lastFlushedStr = null;
+  // Bumped at the start of every setUser()/initFromTemplate() call. Firebase's
+  // onAuthStateChanged can fire in quick succession (e.g. delete-account
+  // followed immediately by a fresh sign-up with the same email) — without
+  // this, a slower, now-stale call could still be awaiting its network
+  // round-trip when a newer one finishes, and would then clobber the correct
+  // state on arrival.
+  let stateCallId = 0;
   const subscribers = new Set();
 
   function notify(meta = {}) {
@@ -39,19 +55,27 @@ export function createRoadmapStore() {
       allItems: items,
       dirty,
       structuralVersion,
+      templateId,
+      onboardingDone,
+      phases: templatePhases,
+      hiddenTemplateIds,
       ...meta
     };
   }
 
-  function loadLocal() {
+  function readLocalRoadmap() {
     try {
-      const local = JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null');
-      if (local?.items) {
-        items = mergeWithSeed(local.items);
-        dirty = !!local.dirty;
-      }
+      return JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null');
     } catch {
-      items = buildSeedItems();
+      return null;
+    }
+  }
+
+  function loadLocal() {
+    const local = readLocalRoadmap();
+    if (local?.items) {
+      items = mergeWithSeed(local.items, buildSeedItems());
+      dirty = !!local.dirty;
     }
   }
 
@@ -63,18 +87,90 @@ export function createRoadmapStore() {
     }));
   }
 
+  // Only ever persists a positive onboarding state — its absence already means
+  // "not done", so there is nothing useful to write on the false path.
+  function persistLocalOnboarding() {
+    if (!onboardingDone) return;
+    localStorage.setItem(KEYS.ONBOARDING_DONE, 'true');
+    if (templateId) localStorage.setItem(KEYS.TEMPLATE_ID, templateId);
+  }
+
+  function readLocalHiddenTemplates() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(KEYS.HIDDEN_TEMPLATES) || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function persistLocalHiddenTemplates() {
+    localStorage.setItem(KEYS.HIDDEN_TEMPLATES, JSON.stringify(hiddenTemplateIds));
+  }
+
+  // Firebase Realtime Database only returns a genuine JS array from a snapshot
+  // when the child keys are dense integers starting at 0 — a sparse or
+  // non-array shape (e.g. after removing a middle element some other way)
+  // comes back as a plain object instead, so this normalizes either shape.
+  function normalizeHiddenTemplateIds(value) {
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === 'object') return Object.values(value);
+    return null;
+  }
+
   // Wipes all local state for the outgoing user — both roadmap data and UI prefs.
   // Called whenever the active uid changes so the next user always starts clean.
   function clearLocal() {
     localStorage.removeItem(LOCAL_KEY);
     localStorage.removeItem(UI_KEY);
+    localStorage.removeItem(KEYS.ONBOARDING_DONE);
+    localStorage.removeItem(KEYS.TEMPLATE_ID);
+    localStorage.removeItem(KEYS.HIDDEN_TEMPLATES);
   }
 
-  function mergeWithSeed(savedItems = {}) {
+  function mergeWithSeed(savedItems = {}, baseItems = {}) {
     return {
-      ...buildSeedItems(),
+      ...baseItems,
       ...savedItems
     };
+  }
+
+  function attachRoadmapListener() {
+    if (unsubscribe) return;
+    unsubscribe = dbApi.listenRoadmap(uid, snapshot => {
+      const remote = snapshot.exists() ? snapshot.val() : null;
+      if (remote?.items) {
+        // A debounced save queued against the *previous* template can still be
+        // in flight when a template switch happens (initFromTemplate resets
+        // `items`/`templateId`/`lastFlushedStr` synchronously, but can't cancel
+        // a write already sent to Firebase). Its echo would otherwise arrive
+        // after the switch, fail the (now-reset) lastFlushedStr check below, and
+        // get treated as genuinely new remote data — silently overwriting the
+        // new template's items with the old template's. Every write now tags
+        // its payload with the templateId it was written for, so an echo whose
+        // tag no longer matches the currently active template is dropped here
+        // instead of applied. Saves from before this field existed have no
+        // `templateId` — trust them as before rather than reject valid data.
+        if (remote.templateId && remote.templateId !== templateId) {
+          notify({ saveState: 'synced' });
+          return;
+        }
+        const remoteStr = stableStringify(remote.items);
+        if (remoteStr === lastFlushedStr) {
+          // Confirmed echo of our own last write — local state may be newer; skip overwrite
+          notify({ saveState: 'synced' });
+          return;
+        }
+        if (remoteStr !== stableStringify(items)) structuralVersion += 1;
+        items = remote.items;
+        dirty = false;
+        persistLocal();
+      }
+      notify({ saveState: 'synced' });
+    }, error => {
+      console.error('Roadmap listener failed', error);
+      notify({ saveState: 'error', error });
+    });
   }
 
   async function flush() {
@@ -87,6 +183,7 @@ export function createRoadmapStore() {
     const payload = {
       version: ROADMAP_VERSION,
       updatedAt: firebaseClock(),
+      templateId,
       items
     };
     await dbApi.saveRoadmap(uid, payload);
@@ -109,8 +206,15 @@ export function createRoadmapStore() {
     }, 500);
   }
 
-  function setUser(nextUser) {
+  // Determines, once per sign-in, whether this user has already picked a starter
+  // template (Issue #51). New accounts are routed to /onboarding by main.js;
+  // everyone else (including every account that predates the template system)
+  // is treated as already onboarded — see docs/architecture.md §5.4 for the
+  // detection order and the Part 5 backfill this performs.
+  async function setUser(nextUser) {
     const nextUid = nextUser?.uid || null;
+    const callId = ++stateCallId;
+    const isStale = () => callId !== stateCallId;
 
     // Whenever the active uid changes (sign-out, sign-in as a different user),
     // wipe local storage so the incoming user never sees the outgoing user's data.
@@ -120,6 +224,10 @@ export function createRoadmapStore() {
       saveTimer = null;
       clearLocal();
       items = buildSeedItems();
+      templateId = 'java-backend';
+      templatePhases = PHASES;
+      onboardingDone = null;
+      hiddenTemplateIds = [];
       dirty = false;
       lastFlushedStr = null;
       structuralVersion += 1;
@@ -130,36 +238,146 @@ export function createRoadmapStore() {
     uid = nextUid;
 
     if (!uid) {
+      onboardingDone = null;
       notify({ saveState: 'idle' });
       return;
     }
 
-    loadLocal();
+    const localRaw = readLocalRoadmap();
+    const localOnboardingDone = localStorage.getItem(KEYS.ONBOARDING_DONE) === 'true';
+    const localTemplateId = localStorage.getItem(KEYS.TEMPLATE_ID);
 
-    unsubscribe = dbApi.listenRoadmap(uid, snapshot => {
-      const remote = snapshot.exists() ? snapshot.val() : null;
-      if (remote?.items) {
-        const merged = mergeWithSeed(remote.items);
-        const remoteStr = stableStringify(merged);
-        if (remoteStr === lastFlushedStr) {
-          // Confirmed echo of our own last write — local state may be newer; skip overwrite
-          notify({ saveState: 'synced' });
-          return;
-        }
-        if (remoteStr !== stableStringify(items)) structuralVersion += 1;
-        items = merged;
-        dirty = false;
-        persistLocal();
-      } else {
-        items = mergeWithSeed(items);
-        structuralVersion += 1;
-        queueSave();
+    let remoteMeta = null;
+    let remoteRoadmap = null;
+    try {
+      [remoteMeta, remoteRoadmap] = await Promise.all([dbApi.getMeta(uid), dbApi.getRoadmap(uid)]);
+    } catch (error) {
+      console.error('Failed to load roadmap/meta from Firebase', error);
+    }
+
+    // A newer setUser() call (e.g. the very next auth state change) has already
+    // taken over — applying this now-stale result would clobber correct state.
+    if (isStale()) return;
+
+    hiddenTemplateIds = normalizeHiddenTemplateIds(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates();
+    persistLocalHiddenTemplates();
+
+    if (remoteMeta?.onboardingDone) {
+      onboardingDone = true;
+      templateId = remoteMeta.templateId || 'java-backend';
+    } else if (localOnboardingDone) {
+      onboardingDone = true;
+      templateId = localTemplateId || 'java-backend';
+    } else if (hasRealProgress(remoteRoadmap?.items) || hasRealProgress(localRaw?.items)) {
+      // Pre-existing account from before the template system — backfill the
+      // flag lazily instead of forcing a migration step (Issue #51, Part 5).
+      onboardingDone = true;
+      templateId = remoteMeta?.templateId || localTemplateId || 'java-backend';
+      dbApi.saveMeta(uid, { onboardingDone: true, templateId }).catch(error => {
+        console.error('Failed to backfill onboarding meta', error);
+      });
+    } else {
+      onboardingDone = false;
+      templateId = null;
+    }
+
+    persistLocalOnboarding();
+
+    if (!onboardingDone) {
+      items = {};
+      templatePhases = [];
+      notify({ saveState: 'idle' });
+      return;
+    }
+
+    const baseItems = await buildTemplateSeedItems(templateId);
+    const nextTemplatePhases = await getTemplatePhases(templateId);
+
+    if (isStale()) return;
+    templatePhases = nextTemplatePhases;
+
+    if (remoteRoadmap?.items) {
+      items = mergeWithSeed(remoteRoadmap.items, baseItems);
+      dirty = false;
+      persistLocal();
+    } else if (localRaw?.items) {
+      items = mergeWithSeed(localRaw.items, baseItems);
+      dirty = !!localRaw.dirty;
+      queueSave();
+    } else {
+      items = baseItems;
+      dirty = false;
+    }
+
+    attachRoadmapListener();
+    notify({ saveState: 'synced' });
+  }
+
+  // Called once by the onboarding picker (src/ui/pages/onboarding.js) after the
+  // user chooses a starter template. Persists the choice both locally and (once
+  // authenticated) to Firebase meta, then starts syncing like any other session.
+  async function initFromTemplate(chosenTemplateId) {
+    const callId = ++stateCallId;
+
+    const [nextItems, nextPhases] = await Promise.all([
+      buildTemplateSeedItems(chosenTemplateId),
+      getTemplatePhases(chosenTemplateId)
+    ]);
+
+    // A setUser() call (e.g. a concurrent auth state change) has taken over —
+    // don't stomp on whatever state it has already established.
+    if (callId !== stateCallId) return;
+
+    items = nextItems;
+    templatePhases = nextPhases;
+    templateId = chosenTemplateId;
+    onboardingDone = true;
+    dirty = true;
+    lastFlushedStr = null;
+    structuralVersion += 1;
+
+    persistLocal();
+    persistLocalOnboarding();
+    notify({ saveState: 'saving' });
+
+    if (uid) {
+      try {
+        await dbApi.saveMeta(uid, { templateId: chosenTemplateId, onboardingDone: true });
+      } catch (error) {
+        console.error('Failed to save onboarding meta', error);
       }
-      notify({ saveState: 'synced' });
-    }, error => {
-      console.error('Roadmap listener failed', error);
-      notify({ saveState: 'error', error });
-    });
+      attachRoadmapListener();
+      queueSave();
+    } else {
+      notify({ saveState: 'local' });
+    }
+  }
+
+  // Hiding/unhiding is a per-user preference for which template cards show on
+  // *this* user's onboarding picker — it never touches the template's content
+  // or any other user's account. The "blank" template is never hideable, since
+  // it's the gateway to building a roadmap manually or with AI (Issue #51).
+  async function setHiddenTemplateIds(nextHiddenIds) {
+    hiddenTemplateIds = nextHiddenIds;
+    persistLocalHiddenTemplates();
+    notify();
+    if (uid) {
+      try {
+        await dbApi.saveMeta(uid, { hiddenTemplateIds });
+      } catch (error) {
+        console.error('Failed to save hidden template preference', error);
+      }
+    }
+  }
+
+  function hideTemplate(idToHide) {
+    if (idToHide === 'blank' || hiddenTemplateIds.includes(idToHide)) return Promise.resolve();
+    return setHiddenTemplateIds([...hiddenTemplateIds, idToHide]);
+  }
+
+  function unhideTemplate(idToUnhide) {
+    if (!hiddenTemplateIds.includes(idToUnhide)) return Promise.resolve();
+    return setHiddenTemplateIds(hiddenTemplateIds.filter(id => id !== idToUnhide));
   }
 
   function updateItem(id, patch) {
@@ -235,6 +453,9 @@ export function createRoadmapStore() {
       return () => subscribers.delete(callback);
     },
     setUser,
+    initFromTemplate,
+    hideTemplate,
+    unhideTemplate,
     getSnapshot,
     updateItem,
     addItem,

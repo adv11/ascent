@@ -18,6 +18,9 @@ export const authApi = {
 export const dbApi = {
   listenRoadmap: vi.fn(() => () => {}),
   saveRoadmap: vi.fn(() => Promise.resolve()),
+  getMeta: vi.fn(() => Promise.resolve(null)),
+  saveMeta: vi.fn(() => Promise.resolve()),
+  getRoadmap: vi.fn(() => Promise.resolve(null)),
 };
 
 export const firebaseClock = vi.fn(() => Date.now());
