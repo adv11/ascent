@@ -43,7 +43,14 @@ export function renderOnboarding(app, { user, store }) {
 
   async function pickTemplate(template, cardEl) {
     if (picking) return;
-    if (template.id === activeTemplateId) {
+    // Only treat "same id as activeTemplateId" as a no-op once onboarding is
+    // actually done — activeTemplateId still holds the store's pre-setUser()
+    // placeholder default ('java-backend') for a brand-new sign-in whose
+    // setUser() call hasn't resolved by the time this page first rendered, so
+    // comparing against it during first-time onboarding produced a false
+    // "already on this roadmap" no-op that left onboardingDone stuck false —
+    // navigate('/app') would just bounce straight back here.
+    if (isSwitchingTemplate && template.id === activeTemplateId) {
       showToast("You're already on this roadmap.", 'info');
       navigate('/app', true);
       return;

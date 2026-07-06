@@ -141,8 +141,6 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
 
     await page.locator('button', { hasText: 'Switch template' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    // Frontend is now "In progress" (started, not active) rather than disappearing.
-    await expect(page.locator('.template-card', { hasText: 'Frontend Developer' }).locator('.template-card-started-badge')).toContainText('In progress');
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
@@ -151,6 +149,10 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await page.locator('.check-item').nth(0).click();
 
     await page.locator('button', { hasText: 'Switch template' }).click();
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    // Now that Data Scientist is active, Frontend is "In progress" (started,
+    // not active) rather than disappearing.
+    await expect(page.locator('.template-card', { hasText: 'Frontend Developer' }).locator('.template-card-started-badge')).toContainText('In progress');
     await page.locator('.template-card', { hasText: 'Frontend Developer' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
