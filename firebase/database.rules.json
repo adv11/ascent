@@ -10,9 +10,25 @@
             ".validate": "newData.isString()"
           }
         },
+        "roadmaps": {
+          "$templateId": {
+            ".validate": "newData.hasChildren(['version', 'items'])",
+            "templateId": {
+              ".validate": "newData.isString()"
+            }
+          }
+        },
         "meta": {
           "templateId": {
             ".validate": "newData.isString()"
+          },
+          "activeTemplateId": {
+            ".validate": "newData.isString()"
+          },
+          "startedTemplateIds": {
+            "$index": {
+              ".validate": "newData.isString()"
+            }
           },
           "onboardingDone": {
             ".validate": "newData.isBoolean()"

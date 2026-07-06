@@ -146,12 +146,12 @@ to `el()`.
 `isValidUrl()` accepts only `http:` and `https:` protocols — this blocks `javascript:`
 and `data:` URI injection. Apply this at both render time and save time.
 
-**Store pattern** (`src/services/roadmapStore.js`): a single mutable `items` map,
-`subscribe(callback)`/`notify()` for pub-sub, and a 500ms debounced `queueSave()` that
-persists to `localStorage` immediately and to Firebase after the debounce. Snapshots
-carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`), a `structuralVersion`
-counter, the active `templateId`, `onboardingDone`, and `phases` (the current
-template's phase/section skeleton — see below).
+**Store pattern** (`src/services/roadmapStore.js`): a mutable `items` map for whichever
+template is currently active, `subscribe(callback)`/`notify()` for pub-sub, and a 500ms
+debounced `queueSave()` that persists to `localStorage` immediately and to Firebase
+after the debounce. Snapshots carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`),
+a `structuralVersion` counter, `activeTemplateId`, `startedTemplateIds` (issue #58),
+`onboardingDone`, and `phases` (the current template's phase/section skeleton — see below).
 
 **Starter templates and onboarding (`src/data/templates/`, `src/ui/pages/onboarding.js`)**
 — Issue #51. `src/data/templates/index.js` is the template registry (`TEMPLATES`,
@@ -161,23 +161,70 @@ template's phase/section skeleton — see below).
 `PHASES` + `buildSeedItems()` in the same shape as the original `roadmap.js`. Templates
 are loaded via dynamic `import()` so a signed-out visitor's sign-in page never downloads
 roadmap content for templates they haven't picked. `roadmapStore.js`'s `setUser(user)`
-is now **async**: on every sign-in it does a one-time `dbApi.getMeta`/`dbApi.getRoadmap`
-read to decide `onboardingDone` — `meta.onboardingDone` wins if present; otherwise any
-account with real progress (an item with `custom: true` or `done: true`, local or
-remote) is treated as already onboarded and the flag is backfilled to Firebase with no
-forced migration step. Only when `onboardingDone` is false does `main.js` route to
-`/onboarding`; picking a card there calls `store.initFromTemplate(templateId)`, which
-seeds `items` from that template, marks onboarding done, and starts syncing. Always
-await `store.setUser(...)` before making a routing decision on its result — the
+is **async**: on every sign-in it does a one-time `dbApi.getMeta` read to decide
+`onboardingDone`/`activeTemplateId`/`startedTemplateIds` — `meta.startedTemplateIds`
+wins if present (issue #58's per-template shape); otherwise it falls back through legacy
+detection (see the multi-roadmap paragraph below) and backfills the new meta shape with
+no forced migration step. Only when `onboardingDone` is false does `main.js` route to
+`/onboarding`; picking a card there calls `store.switchRoadmap(templateId)`, which (since
+issue #58) seeds a not-yet-started template or loads an already-started one, marks
+onboarding done, and starts syncing — never destroying any other template's progress.
+Always await `store.setUser(...)` before making a routing decision on its result — the
 onboarding-vs-`/app` redirect in `main.js` depends on this resolving first.
 `dashboard.js`'s `groupItems()` takes `store.getSnapshot().phases` instead of a
 hardcoded import specifically so a template like "blank" — whose phases have zero
 items — still renders a phase-card for each one; do not revert it to a static import.
 A "Switch template" link in the dashboard header re-enters `/onboarding` at any time —
 reached this way (`onboardingDone` already `true`), the page shows a "← Back to my
-roadmap" link and requires `confirm()` before `initFromTemplate()` runs, since picking a
-new template discards the current one; first-time onboarding (`onboardingDone === false`)
-shows neither, since there's nothing to lose yet.
+roadmap" link; since issue #58, picking any card there is non-destructive (no
+confirmation dialog), because switching only ever loads or seeds that template's own
+data, never touching another template's. First-time onboarding (`onboardingDone === false`)
+shows no back link either, since there's nothing to switch away from yet.
+
+**Multi-roadmap support — concurrent progress per template (`roadmapStore.js`, issue #58).**
+Each template a user has started gets its own Firebase node,
+`users/{uid}/roadmaps/{templateId}` (`version`/`updatedAt`/`templateId`/`items`), tracked
+in `users/{uid}/meta.startedTemplateIds` (array) with `meta.activeTemplateId` naming the
+one currently displayed. The store replaces the old single `items`/`templateId` trio with
+`activeTemplateId`, `startedTemplateIds`, and an in-memory `roadmapCache` (keyed by
+templateId) that makes switching back to an already-visited template instant — no network
+read — within the same session; switching to a template not yet visited this session
+still reads Firebase/local storage first (cache-first, not cache-only). Locally,
+`KEYS.ROADMAPS` (`ascent-roadmaps-v1`) replaces the old single `KEYS.ROADMAP` blob with a
+`{ [templateId]: { version, dirty, items } }` shape; `KEYS.TEMPLATE_ID` now means the
+*active* template id. `switchRoadmap(templateId)` (replacing `initFromTemplate`) handles
+both first-time picks and later switches with the same logic: a not-yet-started template
+seeds fresh and is appended to `startedTemplateIds`; an already-started one is loaded
+(cache → Firebase → local blob → seed, in that order) and never re-seeded. **Only one
+Firebase listener is open at a time** (switching detaches the old one and attaches a new
+one on the newly active template's path) — keeping listeners open for every started
+template concurrently is an explicit non-goal for this issue, not an oversight. The old
+singular `users/{uid}/roadmap` path is never written to again post-migration — it's a
+read-only safety net; `setUser` migrates a legacy account (one lacking
+`meta.startedTemplateIds`) by copying that path forward into
+`users/{uid}/roadmaps/{templateId}` and writing the new meta shape, the first time such
+an account signs in after this shipped.
+
+**Flush-before-switch — an edit made just before switching must never be silently
+dropped or attributed to the wrong template.** Because `flush()` always saves whatever
+`items`/`activeTemplateId` are current *at the moment it actually runs* (not captured at
+`queueSave()` time), a debounced save queued against the outgoing template that fires
+*after* `switchRoadmap()` has already reassigned those variables would otherwise save the
+new template's data (redundant, harmless) while never flushing the outgoing template's
+real edit to its own path. `switchRoadmap()` checks `dirty` for the outgoing template
+and, if set, cancels the pending timer and `await`s `flush()` **before** reassigning
+`activeTemplateId` — see the "flush-before-switch" describe block in
+`tests/integration/roadmapStore.test.js`. If you ever add another path that can change
+`activeTemplateId`, it must do the same.
+
+**Stale-listener guard replaces the old #51 cross-template payload tag.** Since each
+template now has its own Firebase path, `attachRoadmapListener(templateId)`'s `onValue`
+callback closes over the `templateId` it was attached for and drops any invocation once
+that no longer matches the current `activeTemplateId` — structurally stronger than
+comparing a `remote.templateId` payload tag (the old #51 fix, no longer needed for this
+purpose), since it can't be fooled by a callback that was already queued before `off()`
+took effect. See the "stale listener guard" describe block in
+`tests/integration/roadmapStore.test.js`.
 
 **Per-user hidden templates — `hiddenTemplateIds`.** Every template card except
 "blank" has a hide (×) button; clicking it (after a `confirm()`) calls
@@ -194,16 +241,17 @@ modal is purely informational (manual "Add a custom topic…" workflow today, a 
 drafting topics with an external AI assistant) — do not claim in-app automated AI
 import exists until it's actually built.
 
-**`setUser`/`initFromTemplate` stale-call guard — `stateCallId`.** Firebase's
+**`setUser`/`switchRoadmap` stale-call guard — `stateCallId`.** Firebase's
 `onAuthStateChanged` can fire in quick succession (e.g. delete-account immediately
-followed by a fresh sign-up with the same email). Because both functions do an `await`
+followed by a fresh sign-up with the same email), and a user can also switch templates
+while a sign-in is still resolving. Because both functions do one or more `await`s
 before mutating store state, an older call can still be in flight when a newer one
 finishes — without a guard, the older call would resolve later and clobber the newer,
 correct state with stale data. `roadmapStore.js` captures a `stateCallId` snapshot at
 the top of each call and checks it's still current after every `await`; if a newer call
-has already started, the older one aborts without touching `items`/`templateId`/
-`onboardingDone`. Any new `await` added to either function must be followed by the same
-staleness check before it mutates state.
+has already started, the older one aborts without touching `items`/`activeTemplateId`/
+`startedTemplateIds`/`onboardingDone`. Any new `await` added to either function must be
+followed by the same staleness check before it mutates state.
 
 **`structuralVersion` — do not regress this.** It exists specifically to fix a checklist
 flicker bug: toggling `done` on an item does *not* bump `structuralVersion` (see
@@ -227,23 +275,25 @@ differ. If this comparison is ever removed or replaced with an unconditional bum
 checklist flicker comes back — it'll just be delayed by a save round-trip instead of
 happening immediately on click, which makes it easy to miss in casual testing.
 
-**Every saved roadmap payload is tagged with the `templateId` it belongs to — never remove this.**
-`initFromTemplate()` resets `items`/`templateId`/`lastFlushedStr` synchronously when a user
-switches templates, but it cannot cancel a debounced save from the *previous* template that
-was already in flight to Firebase. That save's echo arrives on the same still-attached
-`listenRoadmap` listener, fails the (now-reset) `lastFlushedStr` echo check above, and — before
-this fix — was applied as if it were genuine new remote data, silently overwriting the new
-template's items with the old template's (issue #51 follow-up: "the previous roadmap's content
-shows up in the one I just switched to"). `flush()` now includes `templateId` in every payload
-it writes, and `attachRoadmapListener()`'s callback drops any incoming update whose `templateId`
-doesn't match the currently active one *before* running the echo/structuralVersion comparison.
-Saves from before this field existed have no `templateId` and are still trusted (never reject
-data just because the tag is missing). If you ever change how templates are switched, re-verify
-this guard with the "cross-template echo guard" describe block in
-`tests/integration/roadmapStore.test.js` — it deterministically replays the exact race by
-capturing the mocked `listenRoadmap` callback and firing a stale, differently-tagged snapshot
-after `initFromTemplate()`, rather than relying on real timing (which is what let this bug ship
-in the first place).
+**Never apply a remote snapshot while a local edit is still unflushed (issue #58
+hardening).** `attachRoadmapListener`'s callback returns immediately, without touching
+`items`, whenever `dirty` is `true` — a queued-or-in-flight local edit is provably newer
+than anything the listener can be echoing, whether that's a delayed echo of an older
+write of ours or a genuine external update. This exists because Firebase's echoed
+payload does not always byte-for-byte match what we computed before sending (its own
+normalization), so string-matching an echo against what we last flushed cannot be
+trusted as the sole defense — a delayed echo of an *older* write of ours could otherwise
+fail to match and get misapplied as "genuinely different, newer" data, silently
+reverting an edit made in the narrow window before it flushed. Found via real E2E
+testing against live Firebase (not caught by the mocked unit/integration suite, which
+can't reproduce genuine network-timing non-determinism) — reproduced most easily by
+switching to a template that hasn't been started yet and immediately checking an item,
+since seeding + first flush + first listener attach all happen in that same narrow
+window. Also keeps a small bounded history of recently-flushed content strings
+(`recentFlushedStrs`, not just the single latest one) so an out-of-order echo of an
+*already-confirmed* older flush (arriving once `dirty` is back to `false`) is still
+recognized as our own and doesn't cause a spurious `structuralVersion` bump. See the
+"out-of-order echo guard" describe block in `tests/integration/roadmapStore.test.js`.
 
 **`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist
 row toggles `done` on click, but child controls that need their own click behavior
@@ -255,12 +305,13 @@ exactly the bug that was fixed for the resource badge.
 **Sign-out contract — never load one user's localStorage into another user's session.**
 `roadmapStore.js`'s `setUser(nextUser)` detects when the active uid changes (sign-out,
 sign-in as a different user). Whenever `uid` transitions from a non-null value to any
-other value, it calls `clearLocal()` (removes both `LOCAL_KEY` and `UI_KEY`) and resets
-in-memory `items` to `buildSeedItems()` before the incoming user's session starts.
-`loadLocal()` is only called for the *incoming* user (after `uid` is updated to the
-new value). The initial boot call has `uid = null`, so the guard is skipped on first
-load. Do not restructure `setUser` in a way that removes this guard or that calls
-`loadLocal()` before clearing — that would silently re-introduce the privacy leak.
+other value, it calls `clearLocal()` (removes `LOCAL_KEY`, the keyed `KEYS.ROADMAPS`
+blob, and `UI_KEY`, among other per-user keys) and resets in-memory `items` to
+`buildSeedItems()` before the incoming user's session starts. The incoming user's own
+local data (`readLocalRoadmaps()`, hidden templates, etc.) is only ever read after `uid`
+is updated to the new value. The initial boot call has `uid = null`, so the guard is
+skipped on first load. Do not restructure `setUser` in a way that removes this guard or
+that reads local data before clearing — that would silently re-introduce the privacy leak.
 
 **Theming**: The no-FOUC theme bootstrap lives in `src/services/themeBootstrap.js` —
 a classic `<script src="...">` (no `defer`/`async`/`type="module"`) that reads
@@ -319,7 +370,7 @@ Verify visually at at least three viewport widths (mobile ~390px, tablet ~820px,
 
 **Brand mark is a home link on every authenticated/onboarding-adjacent page.** Clicking the "Ascent" logo/wordmark (`createBrandMark()`) always navigates somewhere predictable instead of sitting inert — `<a class="brand" href="#/signin">` on the sign-in/sign-up pages (already existed), and `<a class="brand" href="#/onboarding">` on the dashboard and onboarding pages (`src/ui/pages/dashboard.js`, `src/ui/pages/onboarding.js`), since `/onboarding` is the "all roadmaps" picker — the closest thing this app has to a home/index page. `.brand`'s CSS (`text-decoration: none; color: inherit;`) was already anchor-ready; only the wrapping element needed to change from a plain `<div>` to an `<a>`. Never make the brand mark a dead `<div>` on a page that has a sensible "home" to link to.
 
-**The active roadmap must always be visible and never silently overwritable by re-picking it.** Two coordinated pieces, both in response to real user confusion about "which roadmap am I on": (1) the dashboard hero (`src/ui/pages/dashboard.js`) always renders a `.current-roadmap-badge` with the active template's icon and name, sourced from `getTemplate(store.getSnapshot().templateId)` (`src/data/templates/index.js`) — never let the dashboard render without this, even for the seeded/default template; (2) the "Switch your starter roadmap" picker (`src/ui/pages/onboarding.js`) marks the currently-active template's card with a `.template-card-current` highlight and a "Current" badge (`.template-card-current-badge`, inside `.template-card-footer` so it doesn't disturb the equal-height card layout above), and `pickTemplate()` treats clicking that same card as a no-op navigation back to `/app` — **not** a re-seed through `store.initFromTemplate()`, which always discards existing progress and would otherwise silently wipe a confused user's own roadmap for re-selecting the template they're already on. If you add another place that lists templates or lets a user pick one, carry both halves of this pattern with it.
+**The active roadmap must always be visible, and a started template must never be shown as re-seedable.** Two coordinated pieces, both in response to real user confusion about "which roadmap am I on": (1) the dashboard hero (`src/ui/pages/dashboard.js`) always renders a `.current-roadmap-badge` with the active template's icon and name, sourced from `getTemplate(store.getSnapshot().activeTemplateId)` (`src/data/templates/index.js`) — never let the dashboard render without this, even for the seeded/default template; (2) the "Switch your starter roadmap" picker (`src/ui/pages/onboarding.js`) marks the currently-active template's card with a `.template-card-current` highlight and a "Current" badge, and any other *started* (but not active) template with a `.template-card-started` / `.template-card-started-badge` "In progress" badge — both live inside `.template-card-footer` so neither disturbs the equal-height card layout above. `pickTemplate()` treats clicking the active card as a no-op navigation back to `/app`; clicking any other card (started or not) calls `store.switchRoadmap(id)` directly with **no confirmation dialog**, since issue #58 made every switch non-destructive — an already-started template loads its own saved progress, a not-yet-started one seeds fresh, and neither ever touches another template's data. If you add another place that lists templates or lets a user pick one, carry all three badge states and the no-dialog switch with it.
 
 **Living architecture doc (`docs/architecture.md`) — keep the Build Log current.** Every PR that adds, removes, or significantly restructures a module must append a dated entry to the `## Build Log` section of `docs/architecture.md`. Format:
 

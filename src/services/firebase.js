@@ -85,22 +85,32 @@ export const authApi = {
 };
 
 export const dbApi = {
-  roadmapRef(uid) {
+  // Pre-#58 singular roadmap path. Never written to anymore — kept only as a
+  // one-time migration source and safety net for accounts that predate
+  // per-template roadmap storage.
+  legacyRoadmapRef(uid) {
     return ref(database, `users/${uid}/roadmap`);
+  },
+  roadmapRef(uid, templateId) {
+    return ref(database, `users/${uid}/roadmaps/${templateId}`);
   },
   metaRef(uid) {
     return ref(database, `users/${uid}/meta`);
   },
-  listenRoadmap(uid, callback, onError) {
-    const roadmapRef = this.roadmapRef(uid);
+  listenRoadmap(uid, templateId, callback, onError) {
+    const roadmapRef = this.roadmapRef(uid, templateId);
     onValue(roadmapRef, callback, onError);
     return () => off(roadmapRef);
   },
-  saveRoadmap(uid, payload) {
-    return set(this.roadmapRef(uid), payload);
+  saveRoadmap(uid, templateId, payload) {
+    return set(this.roadmapRef(uid, templateId), payload);
   },
-  async getRoadmap(uid) {
-    const snapshot = await get(this.roadmapRef(uid));
+  async getRoadmap(uid, templateId) {
+    const snapshot = await get(this.roadmapRef(uid, templateId));
+    return snapshot.exists() ? snapshot.val() : null;
+  },
+  async getLegacyRoadmap(uid) {
+    const snapshot = await get(this.legacyRoadmapRef(uid));
     return snapshot.exists() ? snapshot.val() : null;
   },
   async getMeta(uid) {

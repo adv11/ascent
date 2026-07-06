@@ -65,7 +65,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
   });
 });
 
-test.describe('onboarding — switch template from the dashboard', () => {
+test.describe('onboarding — switch template from the dashboard (issue #58: non-destructive, concurrent progress)', () => {
   test('"Switch template" reaches the picker with a "Back to my roadmap" link, which returns without changes', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/');
@@ -84,7 +84,7 @@ test.describe('onboarding — switch template from the dashboard', () => {
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
   });
 
-  test('picking a new template while switching asks for confirmation and replaces the roadmap once confirmed', async ({ page }) => {
+  test('picking a new template switches instantly with no confirmation dialog', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/');
     await page.click('text=Continue as guest');
@@ -96,36 +96,10 @@ test.describe('onboarding — switch template from the dashboard', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    const dialog = page.locator('.modal-overlay[aria-label*="Data Scientist"]');
-    await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText('replaces your current roadmap');
-    await dialog.locator('[data-action="confirm"]').click();
+    await expect(page.locator('.modal-overlay')).toHaveCount(0);
 
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
     await expect(page.locator('.phase-name').first()).toContainText('Python for Data Science');
-  });
-
-  test('dismissing the confirmation leaves the current roadmap untouched', async ({ page }) => {
-    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
-    await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
-
-    await page.locator('button', { hasText: 'Switch template' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-
-    await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    const dialog = page.locator('.modal-overlay[aria-label*="Data Scientist"]');
-    await expect(dialog).toBeVisible();
-    await dialog.locator('[data-action="cancel"]').click();
-    await expect(dialog).toHaveCount(0);
-
-    // Cancelled — still on the onboarding picker, not switched.
-    await expect(page).toHaveURL(/#\/onboarding/);
-    await page.locator('button', { hasText: 'Back to my roadmap' }).click();
-    await expect(page.locator('.phase-name').first()).toContainText('Core Java');
   });
 
   test('the currently active template is marked "Current", and re-picking it just returns to the dashboard unchanged', async ({ page }) => {
@@ -147,6 +121,48 @@ test.describe('onboarding — switch template from the dashboard', () => {
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
     // No confirmation dialog should have appeared for re-picking the same template.
     await expect(page.locator('.modal-overlay')).toHaveCount(0);
+  });
+
+  // The core regression scenario issue #58 exists to fix: progress on two
+  // different templates must coexist, and switching between them must never
+  // lose either one's checked-off items.
+  test('two templates keep fully independent progress across repeated switches', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Frontend Developer' }).click();
+    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+
+    const frontendChecks = page.locator('.check-item');
+    await frontendChecks.nth(0).click();
+    await frontendChecks.nth(1).click();
+    await expect(page.locator('.save-badge')).toBeVisible();
+
+    await page.locator('button', { hasText: 'Switch template' }).click();
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    // Frontend is now "In progress" (started, not active) rather than disappearing.
+    await expect(page.locator('.template-card', { hasText: 'Frontend Developer' }).locator('.template-card-started-badge')).toContainText('In progress');
+
+    await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
+    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page.locator('.phase-name').first()).toContainText('Python for Data Science');
+
+    await page.locator('.check-item').nth(0).click();
+
+    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.template-card', { hasText: 'Frontend Developer' }).click();
+    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+
+    // Frontend's two earlier checks must still be checked — no data loss.
+    await expect(page.locator('.check-item').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.check-item').nth(1)).toHaveAttribute('aria-checked', 'true');
+
+    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
+    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    // Data Science's own check must also still be intact.
+    await expect(page.locator('.check-item').nth(0)).toHaveAttribute('aria-checked', 'true');
   });
 });
 
