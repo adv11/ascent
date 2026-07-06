@@ -1,9 +1,12 @@
 # Ascent
 
-Ascent ("Engineer your next move.") is a prep tracker for backend engineers (Java,
-Spring Boot, microservices, GenAI/agentic AI, system design) working toward a company
-switch. It's moving from a personal tool toward a sellable product, so treat
-correctness and polish here as customer-facing, not a side project.
+Ascent ("Engineer your next move.") is a personal roadmap tracker for anyone learning,
+revising, or tracking progress toward a goal — students, professionals, or career
+switchers. The built-in roadmap currently covers backend engineering topics (Java,
+Spring Boot, microservices, GenAI/agentic AI, system design); support for other
+domains/roadmaps is planned (Issue #51). It's moving from a personal tool toward a
+sellable product, so treat correctness and polish here as customer-facing, not a side
+project.
 
 ## Stack
 

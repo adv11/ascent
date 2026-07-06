@@ -9,10 +9,12 @@
 
 ## 1. Project origin & goals
 
-Ascent is a prep tracker for backend engineers (Java, Spring Boot, microservices,
-GenAI/agentic AI, system design) working toward a company switch. It started as a
-personal tool and is moving toward a sellable product. Correctness and polish are
-treated as customer-facing, not side-project-level.
+Ascent is a personal roadmap tracker for anyone learning, revising, or tracking
+progress toward a goal — students, professionals, or career switchers. The built-in
+roadmap currently covers backend engineering topics (Java, Spring Boot, microservices,
+GenAI/agentic AI, system design); support for other domains/roadmaps is planned
+(Issue #51). It started as a personal tool and is moving toward a sellable product.
+Correctness and polish are treated as customer-facing, not side-project-level.
 
 **Current product stage (2026-07):** Phase 0 (Foundation & Standards) complete.
 Working toward Phase 1 (hosting, auth improvements, core architecture hardening).

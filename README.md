@@ -1,8 +1,9 @@
 # Ascent
 
-*Engineer your next move.* A prep tracker for anyone switching companies —
-Java, Spring Boot, microservices, Kafka, Redis, system design, DSA, and GenAI/agentic
-AI, all in one editable, syncable checklist.
+*Engineer your next move.* A roadmap tracker for anyone learning, revising, or working
+toward a goal — students, professionals, and career switchers alike. The built-in
+roadmap covers Java, Spring Boot, microservices, Kafka, Redis, system design, DSA, and
+GenAI/agentic AI, all in one editable, syncable checklist.
 
 - Sign in with email/password or start instantly as a guest.
 - Progress syncs across devices via Firebase, with an offline/local fallback.

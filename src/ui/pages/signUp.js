@@ -131,7 +131,7 @@ export function renderSignUp(app, { user }) {
 
   const { node, cleanup } = authShell({
     title: 'Create your account',
-    subtitle: 'Track your roadmap, resources, and interview prep in one place.',
+    subtitle: 'Track your roadmap, resources, and progress in one place.',
     children: [form],
     footer: el('p', {}, [
       'Already have an account? ',

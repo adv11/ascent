@@ -17,7 +17,7 @@
     "lint:fix": "eslint src --fix",
     "generate:brand-assets": "node scripts/generate-brand-assets.mjs"
   },
-  "description": "Ascent is a preparation tracker for Java Spring Boot backend engineers moving toward product companies and startups.",
+  "description": "Ascent is a personal roadmap tracker for learning, revising, and tracking progress toward any goal.",
   "keywords": [
     "java",
     "spring-boot",

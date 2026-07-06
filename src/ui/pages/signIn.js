@@ -21,7 +21,7 @@ export function renderSignIn(app, { user }) {
       'New here? ',
       el('a', { href: '#/signup', className: 'link', text: 'Create an account' })
     ]),
-    footnote: 'Built for anyone preparing for their next career move.'
+    footnote: 'Built for anyone learning, revising, or tracking progress toward a goal.'
   });
 
   function showSignInView(prefillEmail = '') {
