@@ -140,6 +140,21 @@ export function createRoadmapStore() {
     unsubscribe = dbApi.listenRoadmap(uid, snapshot => {
       const remote = snapshot.exists() ? snapshot.val() : null;
       if (remote?.items) {
+        // A debounced save queued against the *previous* template can still be
+        // in flight when a template switch happens (initFromTemplate resets
+        // `items`/`templateId`/`lastFlushedStr` synchronously, but can't cancel
+        // a write already sent to Firebase). Its echo would otherwise arrive
+        // after the switch, fail the (now-reset) lastFlushedStr check below, and
+        // get treated as genuinely new remote data — silently overwriting the
+        // new template's items with the old template's. Every write now tags
+        // its payload with the templateId it was written for, so an echo whose
+        // tag no longer matches the currently active template is dropped here
+        // instead of applied. Saves from before this field existed have no
+        // `templateId` — trust them as before rather than reject valid data.
+        if (remote.templateId && remote.templateId !== templateId) {
+          notify({ saveState: 'synced' });
+          return;
+        }
         const remoteStr = stableStringify(remote.items);
         if (remoteStr === lastFlushedStr) {
           // Confirmed echo of our own last write — local state may be newer; skip overwrite
@@ -168,6 +183,7 @@ export function createRoadmapStore() {
     const payload = {
       version: ROADMAP_VERSION,
       updatedAt: firebaseClock(),
+      templateId,
       items
     };
     await dbApi.saveRoadmap(uid, payload);

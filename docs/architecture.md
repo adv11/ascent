@@ -301,6 +301,27 @@ comparison, and never make the echo-detection unconditionally bump `structuralVe
 
 Cross-reference: `CLAUDE.md §Watch the Firebase echo`.
 
+**Follow-up (issue #51 follow-up): cross-template echo guard.** The echo check above only
+protects against a write's *own* echo (matched via `lastFlushedStr`). It does not protect
+against a *different* write's echo — specifically, a debounced save queued against the
+template a user just switched *away from*. `initFromTemplate()` resets `items`/`templateId`/
+`lastFlushedStr` synchronously, but a save already in flight to Firebase can't be cancelled;
+its echo arrives afterward, fails the now-reset `lastFlushedStr` comparison, and (before this
+fix) fell through to the "genuinely different data" branch — which then overwrote the new
+template's items with the old template's, reproducing on nearly every switch since any recent
+edit leaves a save queued or in flight. Fixed by tagging every saved payload with the
+`templateId` it was written for (`flush()`'s `payload.templateId`) and having
+`attachRoadmapListener()`'s callback reject any incoming update whose `templateId` doesn't
+match the currently active one, *before* the echo/structuralVersion comparison runs. Payloads
+saved before this field existed have no `templateId` and are still trusted, so existing
+accounts' data isn't rejected. Regression-tested in
+`tests/integration/roadmapStore.test.js`'s "cross-template echo guard" block, which captures
+the mocked `listenRoadmap` callback and fires a stale, differently-tagged snapshot after
+`initFromTemplate()` — deterministically replaying the exact interleaving rather than relying
+on real timing.
+
+Cross-reference: `CLAUDE.md §Every saved roadmap payload is tagged with the templateId`.
+
 ### 5.3 Sign-out localStorage guard
 
 `setUser(nextUser)` in `roadmapStore.js` detects when the active `uid` changes. Whenever
@@ -818,3 +839,31 @@ heights within the same onboarding grid row (no `height: 100%`, content-sized
 row (`.template-card-footer`) pinned to the bottom via `margin-top: auto`. Documented
 as a required "Card/grid layout" convention in `CLAUDE.md`/`AGENTS.md` for any future
 card-grid component.
+
+### 2026-07-06 — PR #57 — Fix: previous template's content could reappear after switching roadmaps (issue #51 follow-up)
+
+**Bug**: reported from real usage — after switching to a different starter template,
+the *previous* template's items (including checked-off progress) would sometimes
+reappear in place of the freshly-picked template's, reproducing on nearly every
+switch rather than as a rare fluke.
+
+**Root cause**: `initFromTemplate()` resets `items`/`templateId`/`lastFlushedStr`
+synchronously, but a debounced save queued against the *previous* template can
+already be in flight to Firebase and can't be cancelled. `attachRoadmapListener()`'s
+still-attached `onValue` listener receives that save's echo after the switch; it
+fails the now-reset `lastFlushedStr` comparison (§5.2) and fell through to the
+"genuinely different remote data" branch, which overwrote the new template's
+`items` with the old template's — and persisted that to `localStorage` too.
+
+**Fix**: `flush()` now tags every saved payload with the `templateId` it was
+written for; `attachRoadmapListener()`'s callback rejects any incoming update whose
+`templateId` doesn't match the currently active template before running the
+echo/structuralVersion comparison at all. Payloads from before this field existed
+have no `templateId` and are still trusted. `firebase/database.rules.json` validates
+the new `roadmap.templateId` field. See §5.2's follow-up subsection for the full
+writeup. Regression-tested in `tests/integration/roadmapStore.test.js`'s
+"cross-template echo guard" block (4 new tests: stale cross-template echo is
+dropped, a genuine same-template remote update still applies, legacy untagged saves
+are still trusted, and every save is tagged with its `templateId`) — verified the
+new test fails without the fix and passes with it, rather than trusting a
+timing-dependent manual repro.

@@ -207,6 +207,107 @@ describe('stableStringify — Firebase echo detection', () => {
   });
 });
 
+// A debounced save queued against the *previous* template can still be in flight
+// when a user switches templates — initFromTemplate() resets items/templateId
+// synchronously, but can't cancel a write already sent to Firebase. Its echo
+// arriving afterward must never be allowed to overwrite the new template's items
+// with the old template's (issue #51 follow-up — reported as "the previous
+// roadmap's content shows up in the one I just switched to").
+describe('cross-template echo guard (issue #51 follow-up)', () => {
+  it('ignores a stale echo tagged with the template that was just switched away from', async () => {
+    let capturedCallback;
+    dbApi.listenRoadmap.mockImplementation((_uid, callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'switch-race-test' }); // java-backend, per default mock
+    await store.flush();
+
+    await store.initFromTemplate('blank');
+    expect(store.getSnapshot().templateId).toBe('blank');
+    expect(store.getSnapshot().allItems).toEqual({});
+
+    // Simulate the old java-backend save's echo landing late, after the switch.
+    const staleJavaItems = { ...buildSeedItems() };
+    const firstId = Object.keys(staleJavaItems)[0];
+    staleJavaItems[firstId] = { ...staleJavaItems[firstId], done: true };
+    const staleEcho = {
+      exists: () => true,
+      val: () => ({ version: 3, templateId: 'java-backend', items: staleJavaItems }),
+    };
+    const versionBeforeStaleEcho = store.getSnapshot().structuralVersion;
+    capturedCallback(staleEcho);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.templateId).toBe('blank');
+    expect(snapshot.allItems).toEqual({});
+    expect(snapshot.structuralVersion).toBe(versionBeforeStaleEcho);
+  });
+
+  it('still applies a genuine remote update tagged with the currently active template', async () => {
+    let capturedCallback;
+    dbApi.listenRoadmap.mockImplementation((_uid, callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'same-template-update-test' });
+    await store.flush();
+
+    const updatedItems = { ...store.getSnapshot().allItems };
+    const firstId = Object.keys(updatedItems)[0];
+    updatedItems[firstId] = { ...updatedItems[firstId], done: true };
+    const genuineUpdate = {
+      exists: () => true,
+      val: () => ({ version: 3, templateId: 'java-backend', items: updatedItems }),
+    };
+    const versionBefore = store.getSnapshot().structuralVersion;
+    capturedCallback(genuineUpdate);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.structuralVersion).toBe(versionBefore + 1);
+    expect(snapshot.allItems[firstId].done).toBe(true);
+  });
+
+  it('still trusts legacy saves that predate the templateId tag (no templateId field)', async () => {
+    let capturedCallback;
+    dbApi.listenRoadmap.mockImplementation((_uid, callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'legacy-save-test' });
+    await store.flush();
+
+    const updatedItems = { ...store.getSnapshot().allItems };
+    const firstId = Object.keys(updatedItems)[0];
+    updatedItems[firstId] = { ...updatedItems[firstId], done: true };
+    const legacyUpdate = {
+      exists: () => true,
+      val: () => ({ version: 3, items: updatedItems }), // no templateId — pre-fix shape
+    };
+    const versionBefore = store.getSnapshot().structuralVersion;
+    capturedCallback(legacyUpdate);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.structuralVersion).toBe(versionBefore + 1);
+    expect(snapshot.allItems[firstId].done).toBe(true);
+  });
+
+  it('tags every saved payload with the templateId it was written for', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'payload-tag-test' });
+    await store.initFromTemplate('frontend');
+    await store.flush();
+
+    expect(dbApi.saveRoadmap).toHaveBeenCalledWith('payload-tag-test', expect.objectContaining({ templateId: 'frontend' }));
+  });
+});
+
 // Issue #51 — a user's Firebase meta (`users/{uid}/meta`) records whether they've
 // already picked a starter template, so setUser() knows whether to route them to
 // the onboarding picker or straight into their existing roadmap.

@@ -227,6 +227,24 @@ differ. If this comparison is ever removed or replaced with an unconditional bum
 checklist flicker comes back — it'll just be delayed by a save round-trip instead of
 happening immediately on click, which makes it easy to miss in casual testing.
 
+**Every saved roadmap payload is tagged with the `templateId` it belongs to — never remove this.**
+`initFromTemplate()` resets `items`/`templateId`/`lastFlushedStr` synchronously when a user
+switches templates, but it cannot cancel a debounced save from the *previous* template that
+was already in flight to Firebase. That save's echo arrives on the same still-attached
+`listenRoadmap` listener, fails the (now-reset) `lastFlushedStr` echo check above, and — before
+this fix — was applied as if it were genuine new remote data, silently overwriting the new
+template's items with the old template's (issue #51 follow-up: "the previous roadmap's content
+shows up in the one I just switched to"). `flush()` now includes `templateId` in every payload
+it writes, and `attachRoadmapListener()`'s callback drops any incoming update whose `templateId`
+doesn't match the currently active one *before* running the echo/structuralVersion comparison.
+Saves from before this field existed have no `templateId` and are still trusted (never reject
+data just because the tag is missing). If you ever change how templates are switched, re-verify
+this guard with the "cross-template echo guard" describe block in
+`tests/integration/roadmapStore.test.js` — it deterministically replays the exact race by
+capturing the mocked `listenRoadmap` callback and firing a stale, differently-tagged snapshot
+after `initFromTemplate()`, rather than relying on real timing (which is what let this bug ship
+in the first place).
+
 **`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist
 row toggles `done` on click, but child controls that need their own click behavior
 (Edit button, the resource-count badge) are marked `data-action="…"` and call

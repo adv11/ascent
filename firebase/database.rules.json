@@ -5,7 +5,10 @@
         ".read": "auth != null && auth.uid == $uid",
         ".write": "auth != null && auth.uid == $uid",
         "roadmap": {
-          ".validate": "newData.hasChildren(['version', 'items'])"
+          ".validate": "newData.hasChildren(['version', 'items'])",
+          "templateId": {
+            ".validate": "newData.isString()"
+          }
         },
         "meta": {
           "templateId": {
