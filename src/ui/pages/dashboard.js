@@ -102,7 +102,7 @@ export function renderDashboard(app, { user, store }) {
   const userPillClass = user.isAnonymous ? 'guest' : 'online';
   // Surfaced in the hero so it's never ambiguous which roadmap is currently
   // loaded — easy to lose track of after switching templates a few times.
-  const currentTemplate = getTemplate(store.getSnapshot().templateId);
+  const currentTemplate = getTemplate(store.getSnapshot().activeTemplateId);
 
   function persistUi() {
     store.setUiState({

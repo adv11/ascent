@@ -301,26 +301,17 @@ comparison, and never make the echo-detection unconditionally bump `structuralVe
 
 Cross-reference: `CLAUDE.md §Watch the Firebase echo`.
 
-**Follow-up (issue #51 follow-up): cross-template echo guard.** The echo check above only
-protects against a write's *own* echo (matched via `lastFlushedStr`). It does not protect
-against a *different* write's echo — specifically, a debounced save queued against the
-template a user just switched *away from*. `initFromTemplate()` resets `items`/`templateId`/
-`lastFlushedStr` synchronously, but a save already in flight to Firebase can't be cancelled;
-its echo arrives afterward, fails the now-reset `lastFlushedStr` comparison, and (before this
-fix) fell through to the "genuinely different data" branch — which then overwrote the new
-template's items with the old template's, reproducing on nearly every switch since any recent
-edit leaves a save queued or in flight. Fixed by tagging every saved payload with the
-`templateId` it was written for (`flush()`'s `payload.templateId`) and having
-`attachRoadmapListener()`'s callback reject any incoming update whose `templateId` doesn't
-match the currently active one, *before* the echo/structuralVersion comparison runs. Payloads
-saved before this field existed have no `templateId` and are still trusted, so existing
-accounts' data isn't rejected. Regression-tested in
-`tests/integration/roadmapStore.test.js`'s "cross-template echo guard" block, which captures
-the mocked `listenRoadmap` callback and fires a stale, differently-tagged snapshot after
-`initFromTemplate()` — deterministically replaying the exact interleaving rather than relying
-on real timing.
-
-Cross-reference: `CLAUDE.md §Every saved roadmap payload is tagged with the templateId`.
+**Follow-up (issue #51 follow-up, superseded by issue #58): cross-template echo guard.**
+The echo check above only protects against a write's *own* echo (matched via
+`lastFlushedStr`). Originally it did not protect against a *different* write's echo —
+specifically, a debounced save queued against the template a user just switched *away
+from* — and was fixed with a payload-tag check. Issue #58 replaced that mechanism
+entirely by giving each template its own Firebase path
+(`users/{uid}/roadmaps/{templateId}`, not a single shared `users/{uid}/roadmap`), which
+makes this class of cross-template echo structurally impossible rather than merely
+filtered. See §5.11 for the current mechanism (a closure-based stale-listener guard) and
+the flush-before-switch fix that replaced the old destructive-switch model this
+subsection originally described.
 
 ### 5.3 Sign-out localStorage guard
 
@@ -370,19 +361,22 @@ Cross-reference: `CLAUDE.md §data-action click-guard convention`.
 
 `roadmapStore.js`'s `setUser(nextUser)` is `async` specifically so it can resolve
 whether a user still needs the `/onboarding` template picker *before* `main.js` decides
-where to route them. On every sign-in it does a one-time `dbApi.getMeta(uid)` +
-`dbApi.getRoadmap(uid)` read (not the realtime listener — that only attaches once
-onboarding is confirmed done) and evaluates, in order:
+where to route them. On every sign-in it does a one-time `dbApi.getMeta(uid)` read (not
+the realtime listener — that only attaches once onboarding is confirmed done and a
+template is active) and evaluates, in order:
 
-1. `remoteMeta.onboardingDone` is `true` → already onboarded; use `remoteMeta.templateId`.
-2. The local `ascent-onboarding-done` flag is `true` → already onboarded (fast local
-   path, e.g. offline); use the local `ascent-template-id`.
-3. Either the remote roadmap or the local roadmap already has an item with
-   `custom: true` or `done: true` → this is a pre-existing account from before the
-   template system existed. Treat it as onboarded and **backfill**
-   `meta.onboardingDone`/`meta.templateId` to Firebase (fire-and-forget — no forced
-   migration step, per the issue's Part 5).
-4. Otherwise → a genuinely new account. `onboardingDone = false`, `items = {}`, and the
+1. `remoteMeta.startedTemplateIds` is non-empty → already on the issue #58 meta shape,
+   already onboarded; use `remoteMeta.activeTemplateId` (or the first started id).
+2. Otherwise, read the legacy singular `users/{uid}/roadmap` path once and check, in
+   order: `remoteMeta.onboardingDone` is `true` (post-#51, pre-#58 shape; use
+   `remoteMeta.templateId`) → the local `ascent-onboarding-done` flag is `true` (fast
+   local path, e.g. offline) → the legacy roadmap or local blob already has an item with
+   `custom: true` or `done: true` (a pre-existing account from before the template
+   system existed at all). Any of these → treat as onboarded and **migrate/backfill**:
+   copy the legacy roadmap forward into `users/{uid}/roadmaps/{templateId}` (if it
+   existed) and write `meta.startedTemplateIds`/`meta.activeTemplateId`/
+   `meta.onboardingDone` (fire-and-forget — no forced migration step). See §5.11.
+3. Otherwise → a genuinely new account. `onboardingDone = false`, `items = {}`, and the
    realtime listener is **not** attached yet (nothing to sync until a template exists).
 
 `main.js`'s auth listener `await`s `setUser` before reading
@@ -405,12 +399,13 @@ picked, there was no UI path back to it, even to deliberately start over with a
 different template. Fixed by adding a **"Switch template"** link to the dashboard
 header (`navigate('/onboarding')`) and relaxing `onboarding.js`'s self-guard: it no
 longer redirects away when `onboardingDone` is already `true`. Instead, when reached in
-that state it shows a **"← Back to my roadmap"** link and wraps the pick handler in a
-`confirmDialog()` (originally the native `confirm()`, replaced in the issue #51
-follow-up covered in §5.10) — since `initFromTemplate()` fully replaces `items`,
-switching is destructive and needs explicit confirmation. First-time onboarding
-(`onboardingDone === false`) shows neither the back link nor the confirm prompt, since
-there is no existing roadmap to lose yet.
+that state it shows a **"← Back to my roadmap"** link. Originally (issue #51 follow-up)
+picking a different template here was destructive — `initFromTemplate()` fully replaced
+`items`, so the pick handler wrapped it in a `confirmDialog()` warning "this cannot be
+undone." **Issue #58 removed that confirmation entirely**: `switchRoadmap()` (which
+replaced `initFromTemplate()`) never discards another template's data, so there is
+nothing left to confirm — see §5.11. First-time onboarding (`onboardingDone === false`)
+still shows no back link, since there is nothing to switch away from yet.
 
 **Stale async writes.** `setUser()` and `initFromTemplate()` both `await` a Firebase
 round-trip before mutating store state. Firebase's `onAuthStateChanged` can fire in
@@ -485,22 +480,123 @@ screen. No CSS changes were needed — `.brand` was already anchor-styled
 
 **Current-roadmap visibility.** Neither the dashboard nor the "Switch your starter
 roadmap" picker gave any indication of which template was actually active, which
-became a real footgun combined with the picker's destructive re-seed: a user unsure
-whether they were already on, say, the Java Backend roadmap could click that same card
-"just to check" and — before this fix — silently wipe their own progress, since
-`pickTemplate()` didn't special-case re-selecting the current template. Fixed with two
-additions sourced from the same `getTemplate(store.getSnapshot().templateId)` lookup:
-(1) `dashboard.js`'s hero always renders a `.current-roadmap-badge` (icon + template
-name) above the "Learn it. Revise it. Track it." title; (2) `onboarding.js` marks the
-active template's card with a `.template-card-current` highlight and a "Current" badge
-(placed inside the existing `.template-card-footer` row next to the topic count, so it
-doesn't add a new flex row and break the equal-height card layout from §5.10's sibling
-card-grid convention in `CLAUDE.md`), and `pickTemplate()` now short-circuits re-picking
-that same card into a plain `navigate('/app', true)` — no confirmation dialog, no
-`initFromTemplate()` call, no data loss.
+became a real footgun combined with the picker's (at the time) destructive re-seed: a
+user unsure whether they were already on, say, the Java Backend roadmap could click that
+same card "just to check" and — before this fix — silently wipe their own progress,
+since `pickTemplate()` didn't special-case re-selecting the current template. Fixed with
+two additions sourced from the same `getTemplate(store.getSnapshot().activeTemplateId)`
+lookup (renamed from `.templateId` in issue #58): (1) `dashboard.js`'s hero always
+renders a `.current-roadmap-badge` (icon + template name) above the "Learn it. Revise
+it. Track it." title; (2) `onboarding.js` marks the active template's card with a
+`.template-card-current` highlight and a "Current" badge (placed inside the existing
+`.template-card-footer` row next to the topic count, so it doesn't add a new flex row
+and break the equal-height card layout from §5.10's sibling card-grid convention in
+`CLAUDE.md`), and `pickTemplate()` short-circuits re-picking that same card into a plain
+`navigate('/app', true)` — no confirmation dialog, no `switchRoadmap()` call, no data
+loss. Issue #58 added a third badge state, `.template-card-started-badge` ("In
+progress"), for any template that's been started but isn't the active one — see §5.11.
 
 Cross-reference: `CLAUDE.md §Never use the native window.confirm()`, `CLAUDE.md §Brand
 mark is a home link`, `CLAUDE.md §The active roadmap must always be visible`.
+
+### 5.11 Multi-roadmap support — concurrent progress per template (Issue #58)
+
+Issue #51 gave every account exactly one roadmap slot (`users/{uid}/roadmap`), and
+switching templates via `initFromTemplate()` always replaced it wholesale — the only
+guard was a `confirmDialog()` warning the switch "cannot be undone." That broke the
+product's actual goal: a user tracking two things at once (e.g. Frontend for a job
+search, Piano as a hobby) couldn't keep both moving — picking one destroyed the other.
+
+**Data model.** Each started template gets its own Firebase node,
+`users/{uid}/roadmaps/{templateId}/` (`version`/`updatedAt`/`templateId`/`items` — same
+item shape as before). `users/{uid}/meta` gains `activeTemplateId` (renamed from
+`templateId`, the currently displayed roadmap) and `startedTemplateIds` (string array —
+every template with a `roadmaps/` node). The old singular `users/{uid}/roadmap` path,
+and the old `meta.templateId` field, are **left in place, never written to again** —
+pure migration source and safety net; `firebase/database.rules.json` still validates
+both the legacy and new shapes side by side.
+
+**Store shape.** `roadmapStore.js` replaces the single `items`/`templateId`/
+`templatePhases` trio with `activeTemplateId`, `startedTemplateIds`, and an in-memory
+`roadmapCache` (`{ [templateId]: { items, phases, dirty } }`) populated lazily as
+templates are visited in a session. `switchRoadmap(templateId)` replaces
+`initFromTemplate()` entirely — one function now handles both a first-time pick and a
+later switch, because the logic is identical: an already-started template resolves
+cache-first (in-memory → Firebase → local blob → seed, never re-seeded), a not-yet-
+started one always seeds fresh and is appended to `startedTemplateIds`. Neither path
+ever touches another template's stored items. Locally, `KEYS.ROADMAPS`
+(`ascent-roadmaps-v1`) replaces the single `KEYS.ROADMAP` blob with a
+`{ [templateId]: { version, dirty, items } }` shape; a one-time
+`migrateLocalRoadmapsShape()` wraps any pre-existing single blob into the new shape
+before the store's first read, leaving the old key in place.
+
+**Only one Firebase listener open at a time.** Switching detaches the previously
+active template's `onValue` listener and attaches a new one on the newly active
+template's path — keeping every started template's listener open concurrently (for
+instant cross-device sync of an inactive template) is an explicit non-goal for this
+issue, not an oversight; it's called out as a future optimization.
+
+**Firebase migration for pre-#58 accounts.** On the first `setUser()` after this
+shipped, an account whose meta lacks `startedTemplateIds` is treated as legacy: its
+`users/{uid}/roadmap` node (if any) is read once and, if the account turns out to
+already be onboarded (via the pre-#58 `meta.onboardingDone` flag, a local flag, or the
+pre-#51 `hasRealProgress` fallback — see §5.7), copied forward into
+`users/{uid}/roadmaps/{templateId}` and the new meta fields are written. The freshly
+migrated items are seeded directly into `roadmapCache` rather than re-read from
+Firebase afterward — re-reading would race the fire-and-forget migration write and
+could return stale (pre-migration) data.
+
+**Flush-before-switch.** `flush()` always saves whatever `items`/`activeTemplateId` are
+current *at the moment it runs*, not what they were when `queueSave()` scheduled it. A
+debounced edit on the outgoing template that was still pending when `switchRoadmap()`
+reassigns `activeTemplateId` would otherwise never get flushed to the outgoing
+template's own path once the timer fires — the timer would instead redundantly re-save
+the *new* template using the by-then-reassigned variables. `switchRoadmap()` checks the
+outgoing template's `dirty` flag and, if set, cancels the pending timer and `await`s
+`flush()` synchronously **before** reassigning `activeTemplateId`. Regression-tested in
+`tests/integration/roadmapStore.test.js`'s "flush-before-switch" block.
+
+**Stale-listener guard.** Because each template now has its own path,
+`attachRoadmapListener(templateId)`'s `onValue` callback closes over the `templateId` it
+was attached for and drops any invocation once that no longer matches the current
+`activeTemplateId` — this fully supersedes the old #51 payload-tag cross-template echo
+guard (§5.2) for this purpose, since a callback queued before `off()` takes effect can't
+slip through. Regression-tested in the "stale listener guard" describe block in the same
+test file.
+
+**Never apply a remote snapshot while a local edit is unflushed.** Found only through
+real E2E testing against live Firebase — not by the mocked unit/integration suite, which
+can't reproduce genuine network-timing non-determinism. Reproduction: switch to a
+not-yet-started template (seeds fresh, flushes the seed, attaches the listener — all in
+the same narrow window), then immediately check an item. Intermittently, the check would
+silently revert a few hundred milliseconds later. Root cause: Firebase's echoed payload
+does not always byte-for-byte match what was computed locally before sending (its own
+data normalization), so `recentFlushedStrs`-style content matching can't be fully trusted
+as the sole defense against a *delayed* echo — an older write's echo arriving after a
+newer, not-yet-flushed edit could fail to match anything recorded and get misapplied as
+"genuinely different, newer" remote data, silently overwriting the newer edit. Fixed by
+having `attachRoadmapListener`'s callback return immediately, without touching `items` at
+all, whenever `dirty` is `true`: a queued-or-in-flight local edit is, by definition,
+always newer than anything the listener could be echoing at that moment — whether that's
+a delayed echo of an *our own* older write or genuinely new external data — so it's
+always correct to defer applying remote data until our own edit has flushed. `lastFlushedStr`
+was also widened from a single value to a small bounded history (`recentFlushedStrs`) so
+an out-of-order echo of an *already-confirmed* older flush (arriving once `dirty` is back
+to `false`) is still recognized as our own and doesn't cause a spurious
+`structuralVersion` bump. Regression-tested in the "out-of-order echo guard" describe
+block; verified against the live Firebase project the bug was found on (10 consecutive
+clean E2E runs after the fix, versus a highly reproducible failure before it).
+
+**UI.** `onboarding.js` reads `activeTemplateId`/`startedTemplateIds` off the snapshot
+and drops the switch-mode `confirmDialog()` entirely — every pick (started or not) now
+calls `store.switchRoadmap(id)` directly with no prompt, since nothing is ever destroyed.
+Cards gain a third badge state, `.template-card-started-badge` ("In progress"), for a
+started-but-not-active template; a hidden template that's also started stays visible
+(badged, not moved into the "restore" section) since hiding only ever filters the
+"start something new" grid, never an already-started roadmap's visibility.
+
+Cross-reference: `CLAUDE.md §Multi-roadmap support`, `CLAUDE.md §Flush-before-switch`,
+`CLAUDE.md §Stale-listener guard`, `docs/api.md`.
 
 ---
 
@@ -867,3 +963,31 @@ dropped, a genuine same-template remote update still applies, legacy untagged sa
 are still trusted, and every save is tagged with its `templateId`) — verified the
 new test fails without the fix and passes with it, rather than trusting a
 timing-dependent manual repro.
+
+### 2026-07-06 — PR #58 — Multi-roadmap support: concurrent progress per template, non-destructive switching (issue #58)
+
+Replaced the single-roadmap-slot model (`users/{uid}/roadmap`, replace-on-switch via
+`initFromTemplate()`) with per-template Firebase storage
+(`users/{uid}/roadmaps/{templateId}/`) so a user can start multiple templates and
+switch between them with zero data loss. `roadmapStore.js` rewritten: `activeTemplateId`
++ `startedTemplateIds` replace `templateId`; a session-scoped `roadmapCache` makes
+switching back to an already-visited template instant; `switchRoadmap(templateId)`
+replaces `initFromTemplate()` for both first-time picks and later switches. Three
+correctness fixes specific to the new per-template-path design: (1) "flush-before-switch"
+— an edit pending on the outgoing template is flushed to its own path before
+`activeTemplateId` is reassigned, or it would otherwise be silently dropped; (2) a
+closure-based "stale listener guard" replaces the old #51 payload-tag cross-template
+echo guard, since each template's listener is now structurally scoped to its own path;
+(3) found via real E2E testing against live Firebase (reliably reproducible, not caught
+by the mocked test suite) — the realtime listener no longer applies an incoming snapshot
+while a local edit is still unflushed (`dirty === true`), since a delayed echo of an
+older write could otherwise fail to string-match what was last flushed (Firebase's own
+data normalization) and get misapplied as newer data, silently reverting an edit made
+right after starting a fresh template. `setUser()` migrates pre-#58 accounts (legacy
+`users/{uid}/roadmap` + old meta shape)
+forward on first sign-in, leaving the old path untouched as a safety net.
+`firebase/database.rules.json` extended with the `roadmaps/$templateId` node and
+`meta.activeTemplateId`/`meta.startedTemplateIds` validators, alongside (not replacing)
+the legacy validators. `onboarding.js` drops the switch-mode `confirmDialog()` entirely
+(nothing is destroyed anymore) and gains a third card badge state, "In progress", for a
+started-but-not-active template. See §5.11 for the full writeup.

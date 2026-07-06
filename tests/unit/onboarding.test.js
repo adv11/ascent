@@ -5,8 +5,9 @@ vi.mock('../../src/ui/router.js', () => ({ navigate: vi.fn() }));
 async function setup({
   onboardingDone = false,
   hiddenTemplateIds = [],
-  templateId,
-  initFromTemplate = vi.fn().mockResolvedValue(undefined),
+  activeTemplateId,
+  startedTemplateIds = [],
+  switchRoadmap = vi.fn().mockResolvedValue(undefined),
   hideTemplate = vi.fn().mockResolvedValue(undefined),
   unhideTemplate = vi.fn().mockResolvedValue(undefined)
 } = {}) {
@@ -15,8 +16,8 @@ async function setup({
   const app = document.createElement('div');
   document.body.appendChild(app);
   const store = {
-    getSnapshot: vi.fn(() => ({ onboardingDone, hiddenTemplateIds, templateId })),
-    initFromTemplate,
+    getSnapshot: vi.fn(() => ({ onboardingDone, hiddenTemplateIds, activeTemplateId, startedTemplateIds })),
+    switchRoadmap,
     hideTemplate,
     unhideTemplate
   };
@@ -47,7 +48,7 @@ describe('onboarding page — gating', () => {
     const { navigate } = await import('../../src/ui/router.js');
     const { renderOnboarding } = await import('../../src/ui/pages/onboarding.js');
     const app = document.createElement('div');
-    renderOnboarding(app, { user: null, store: { getSnapshot: () => ({ onboardingDone: false, hiddenTemplateIds: [] }) } });
+    renderOnboarding(app, { user: null, store: { getSnapshot: () => ({ onboardingDone: false, hiddenTemplateIds: [], startedTemplateIds: [] }) } });
     expect(navigate).toHaveBeenCalledWith('/signin', true);
     expect(app.children.length).toBe(0);
   });
@@ -68,19 +69,19 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
   });
 
   it('clicking a card picks that template without confirmation and navigates to /app', async () => {
-    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
-    const { app, navigate } = await setup({ initFromTemplate });
+    const switchRoadmap = vi.fn().mockResolvedValue(undefined);
+    const { app, navigate } = await setup({ switchRoadmap });
     const blankCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Start blank'));
     blankCard.click();
-    await vi.waitFor(() => expect(initFromTemplate).toHaveBeenCalledWith('blank'));
+    await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalledWith('blank'));
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
     expect(getConfirmDialog()).toBeNull();
   });
 
   it('disables every card while a pick is in flight, to prevent a double-submit', async () => {
     let resolvePick;
-    const initFromTemplate = vi.fn(() => new Promise(resolve => { resolvePick = resolve; }));
-    const { app } = await setup({ initFromTemplate });
+    const switchRoadmap = vi.fn(() => new Promise(resolve => { resolvePick = resolve; }));
+    const { app } = await setup({ switchRoadmap });
     const cards = [...app.querySelectorAll('.template-card')];
 
     cards[0].click();
@@ -103,8 +104,8 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
 
   it('clicking the hide button asks for confirmation, then hides the card without picking it', async () => {
     const hideTemplate = vi.fn().mockResolvedValue(undefined);
-    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
-    const { app, navigate } = await setup({ hideTemplate, initFromTemplate });
+    const switchRoadmap = vi.fn().mockResolvedValue(undefined);
+    const { app, navigate } = await setup({ hideTemplate, switchRoadmap });
 
     const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
     javaCard.querySelector('.template-card-hide').click();
@@ -113,7 +114,7 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     clickDialogAction('confirm');
 
     await vi.waitFor(() => expect(hideTemplate).toHaveBeenCalledWith('java-backend'));
-    expect(initFromTemplate).not.toHaveBeenCalled();
+    expect(switchRoadmap).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
     expect(app.querySelector('.template-card-name')?.textContent).not.toBe(undefined);
     expect([...app.querySelectorAll('.template-card-name')].some(n => n.textContent === 'Java Backend Engineer')).toBe(false);
@@ -160,7 +161,7 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
 
 describe('onboarding page — switch-template mode (onboardingDone === true)', () => {
   it('does NOT redirect away, and shows a "Back to my roadmap" link', async () => {
-    const { app, navigate } = await setup({ onboardingDone: true });
+    const { app, navigate } = await setup({ onboardingDone: true, activeTemplateId: 'java-backend' });
     expect(navigate).not.toHaveBeenCalled();
     const backBtn = [...app.querySelectorAll('button')].find(b => /back to my roadmap/i.test(b.textContent));
     expect(backBtn).toBeTruthy();
@@ -168,38 +169,21 @@ describe('onboarding page — switch-template mode (onboardingDone === true)', (
     expect(navigate).toHaveBeenCalledWith('/app', true);
   });
 
-  it('requires confirmation before replacing the current roadmap, and does nothing if cancelled', async () => {
-    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
-    const { app, navigate } = await setup({ onboardingDone: true, templateId: 'java-backend', initFromTemplate });
+  it('switches to a different template immediately — no confirmation dialog, since nothing is ever destroyed (issue #58)', async () => {
+    const switchRoadmap = vi.fn().mockResolvedValue(undefined);
+    const { app, navigate } = await setup({ onboardingDone: true, activeTemplateId: 'java-backend', switchRoadmap });
 
     const dataScienceCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Data Scientist'));
     dataScienceCard.click();
 
-    expect(getConfirmDialog()).toBeTruthy();
-    clickDialogAction('cancel');
-
-    await vi.waitFor(() => expect(getConfirmDialog()).toBeNull());
-    expect(initFromTemplate).not.toHaveBeenCalled();
-    expect(navigate).not.toHaveBeenCalledWith('/app', true);
-  });
-
-  it('switches to the picked template once the user confirms', async () => {
-    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
-    const { app, navigate } = await setup({ onboardingDone: true, templateId: 'java-backend', initFromTemplate });
-
-    const blankCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Start blank'));
-    blankCard.click();
-
-    expect(getConfirmDialog()).toBeTruthy();
-    clickDialogAction('confirm');
-
-    await vi.waitFor(() => expect(initFromTemplate).toHaveBeenCalledWith('blank'));
+    expect(getConfirmDialog()).toBeNull();
+    await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalledWith('data-science'));
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 
   it('marks the active template as "Current" and re-picking it returns to the dashboard without re-seeding or asking for confirmation', async () => {
-    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
-    const { app, navigate } = await setup({ onboardingDone: true, templateId: 'java-backend', initFromTemplate });
+    const switchRoadmap = vi.fn().mockResolvedValue(undefined);
+    const { app, navigate } = await setup({ onboardingDone: true, activeTemplateId: 'java-backend', switchRoadmap });
 
     const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
     expect(javaCard.querySelector('.template-card-current-badge')?.textContent).toBe('Current');
@@ -207,7 +191,43 @@ describe('onboarding page — switch-template mode (onboardingDone === true)', (
     javaCard.click();
 
     expect(getConfirmDialog()).toBeNull();
-    expect(initFromTemplate).not.toHaveBeenCalled();
+    expect(switchRoadmap).not.toHaveBeenCalled();
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
+  });
+
+  it('badges a started-but-not-active template "In progress"', async () => {
+    const { app } = await setup({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend', 'frontend'] });
+
+    const frontendCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Frontend Developer'));
+    expect(frontendCard.querySelector('.template-card-started-badge')?.textContent).toBe('In progress');
+    expect(frontendCard.querySelector('.template-card-current-badge')).toBeNull();
+
+    const untouchedCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Data Scientist'));
+    expect(untouchedCard.querySelector('.template-card-started-badge')).toBeNull();
+    expect(untouchedCard.querySelector('.template-card-current-badge')).toBeNull();
+  });
+
+  it('a started+hidden template stays visible in the main grid, badged "In progress", instead of moving to the hidden section', async () => {
+    const { app } = await setup({
+      onboardingDone: true,
+      activeTemplateId: 'java-backend',
+      startedTemplateIds: ['java-backend', 'frontend'],
+      hiddenTemplateIds: ['frontend']
+    });
+
+    const mainGridCards = [...app.querySelectorAll('.template-grid:not(.hidden-grid) .template-card')];
+    const frontendCard = mainGridCards.find(c => c.textContent.includes('Frontend Developer'));
+    expect(frontendCard).toBeTruthy();
+    expect(frontendCard.querySelector('.template-card-started-badge')?.textContent).toBe('In progress');
+
+    // Not listed under "hidden templates to restore" — it's already visible.
+    expect(app.querySelector('.hidden-templates-toggle')).toBeNull();
+  });
+
+  it('the subtitle no longer claims switching replaces or overwrites progress', async () => {
+    const { app } = await setup({ onboardingDone: true, activeTemplateId: 'java-backend' });
+    const subtitle = app.querySelector('.auth-subtitle');
+    expect(subtitle.textContent.toLowerCase()).not.toContain('replaces');
+    expect(subtitle.textContent.toLowerCase()).not.toContain('cannot be undone');
   });
 });

@@ -9,10 +9,13 @@ import { TEMPLATES } from '../../data/templates/index.js';
 
 // Shown once, right after a brand-new sign-up (Issue #51). A user who has already
 // picked a template can also reach this page later via the dashboard's "Switch
-// template" link to start over with a different one — picking a card in that case
-// replaces the current roadmap, so it's gated behind a confirmDialog(). Every template
-// except "blank" can also be hidden from the picker — a per-user preference (see
-// roadmapStore.hideTemplate) that never affects other users or the template itself.
+// template" link to start (or switch back to) a different one — since issue #58,
+// every template a user starts keeps its own persisted progress, so picking any
+// card here is always non-destructive: an already-started template loads its own
+// saved progress instantly, and a not-yet-started one seeds fresh without touching
+// any other template's data. Every template except "blank" can also be hidden from
+// the picker — a per-user preference (see roadmapStore.hideTemplate) that never
+// affects other users, the template itself, or an already-started roadmap's data.
 export function renderOnboarding(app, { user, store }) {
   if (!user) {
     navigate('/signin', true);
@@ -22,10 +25,9 @@ export function renderOnboarding(app, { user, store }) {
   const snapshot = store.getSnapshot();
   const isSwitchingTemplate = snapshot.onboardingDone;
   // Lets the picker mark the active template (see buildCard) and treat re-picking
-  // it as a harmless "go back" instead of silently re-seeding and wiping progress —
-  // without this, a confused user could wipe their own roadmap by "switching" to
-  // the template they're already on.
-  const currentTemplateId = snapshot.templateId;
+  // it as a harmless "go back" instead of re-navigating through switchRoadmap.
+  const activeTemplateId = snapshot.activeTemplateId;
+  const startedTemplateIds = [...snapshot.startedTemplateIds];
   let hiddenTemplateIds = [...snapshot.hiddenTemplateIds];
 
   let picking = false;
@@ -41,26 +43,27 @@ export function renderOnboarding(app, { user, store }) {
 
   async function pickTemplate(template, cardEl) {
     if (picking) return;
-    if (isSwitchingTemplate && template.id === currentTemplateId) {
+    // Only treat "same id as activeTemplateId" as a no-op once onboarding is
+    // actually done — activeTemplateId still holds the store's pre-setUser()
+    // placeholder default ('java-backend') for a brand-new sign-in whose
+    // setUser() call hasn't resolved by the time this page first rendered, so
+    // comparing against it during first-time onboarding produced a false
+    // "already on this roadmap" no-op that left onboardingDone stuck false —
+    // navigate('/app') would just bounce straight back here.
+    if (isSwitchingTemplate && template.id === activeTemplateId) {
       showToast("You're already on this roadmap.", 'info');
       navigate('/app', true);
       return;
     }
-    if (isSwitchingTemplate && !await confirmDialog({
-      title: `Switch to "${template.name}"?`,
-      message: 'This replaces your current roadmap and progress — this cannot be undone.',
-      confirmText: 'Switch roadmap',
-      danger: true
-    })) return;
 
     picking = true;
     setBusy(true);
     cardEl.classList.add('picking');
     try {
-      await store.initFromTemplate(template.id);
+      await store.switchRoadmap(template.id);
       navigate('/app', true);
     } catch (error) {
-      console.error('Failed to start from template', error);
+      console.error('Failed to switch roadmap', error);
       picking = false;
       setBusy(false);
       cardEl.classList.remove('picking');
@@ -72,15 +75,18 @@ export function renderOnboarding(app, { user, store }) {
 
   function buildCard(template) {
     const isBlank = template.id === 'blank';
-    const isCurrent = isSwitchingTemplate && template.id === currentTemplateId;
+    const isCurrent = template.id === activeTemplateId;
+    const isStarted = startedTemplateIds.includes(template.id);
     const countEl = el('span', { className: 'template-card-count', text: 'Loading topics…' });
-    const footerEl = el('div', { className: 'template-card-footer' }, [
-      countEl,
-      isCurrent ? el('span', { className: 'template-card-current-badge', text: 'Current' }) : null
-    ]);
+    const badgeEl = isCurrent
+      ? el('span', { className: 'template-card-current-badge', text: 'Current' })
+      : isStarted
+        ? el('span', { className: 'template-card-started-badge', text: 'In progress' })
+        : null;
+    const footerEl = el('div', { className: 'template-card-footer' }, [countEl, badgeEl]);
 
     const cardEl = el('div', {
-      className: `template-card${isCurrent ? ' template-card-current' : ''}`,
+      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
       role: 'button',
       tabindex: '0',
       'aria-current': isCurrent ? 'true' : null,
@@ -140,9 +146,13 @@ export function renderOnboarding(app, { user, store }) {
     })) return;
     await store.hideTemplate(template.id);
     hiddenTemplateIds = [...hiddenTemplateIds, template.id];
-    const index = cardEls.indexOf(cardEl);
-    if (index !== -1) cardEls.splice(index, 1);
-    cardEl.closest('[role="listitem"]')?.remove();
+    // A started template stays visible (badged "In progress") even once hidden —
+    // hiding only ever filters the "start something new" grid.
+    if (!startedTemplateIds.includes(template.id)) {
+      const index = cardEls.indexOf(cardEl);
+      if (index !== -1) cardEls.splice(index, 1);
+      cardEl.closest('[role="listitem"]')?.remove();
+    }
     renderHiddenToggle();
   }
 
@@ -167,7 +177,9 @@ export function renderOnboarding(app, { user, store }) {
   }
 
   function renderHiddenToggle() {
-    const hiddenTemplates = TEMPLATES.filter(t => hiddenTemplateIds.includes(t.id));
+    // A started+hidden template is already visible in the main grid — only
+    // list not-yet-started hidden templates here.
+    const hiddenTemplates = TEMPLATES.filter(t => hiddenTemplateIds.includes(t.id) && !startedTemplateIds.includes(t.id));
     if (!hiddenTemplates.length) {
       hiddenSection.replaceChildren();
       return;
@@ -186,7 +198,7 @@ export function renderOnboarding(app, { user, store }) {
   }
 
   TEMPLATES
-    .filter(t => t.id === 'blank' || !hiddenTemplateIds.includes(t.id))
+    .filter(t => t.id === 'blank' || !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
     .forEach(template => visibleGrid.appendChild(buildCard(template)));
   renderHiddenToggle();
 
@@ -213,8 +225,8 @@ export function renderOnboarding(app, { user, store }) {
         el('p', {
           className: 'auth-subtitle',
           text: isSwitchingTemplate
-            ? 'Picking a template below replaces your current roadmap and progress.'
-            : 'Choose a template to get started. You can add, edit, or remove topics anytime after.'
+            ? "Switch between your roadmaps anytime — each one keeps its own progress, and starting or switching never overwrites another."
+            : 'Choose a template to get started. You can add, edit, or remove topics anytime after, and start more templates later without losing progress.'
         })
       ]),
       visibleGrid,
