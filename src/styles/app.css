@@ -642,6 +642,23 @@ body {
   font-weight: 800;
   opacity: 0.65;
 }
+.notes-indicator {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--brand-dark);
+  background: var(--brand-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.check-item.done .notes-indicator {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
 .priority-tag.P0 { color: var(--p0); opacity: 1; }
 .priority-tag.P1 { color: var(--p1); opacity: 1; }
 .priority-tag.P2 { color: var(--p2); opacity: 1; }

@@ -5,12 +5,15 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
   const panel = el('aside', { className: 'item-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Edit topic' });
 
   const titleInput = el('input', { className: 'field-input', value: item.title, placeholder: 'Topic title' });
+  const notesInput = el('textarea', { className: 'field-input', placeholder: 'Add personal notes, code snippets, or reminders here...', text: item.notes || '', rows: '4' });
+  
   const prioritySelect = el('select', { className: 'field-input' });
   ['P0', 'P1', 'P2', 'P3'].forEach(p => {
     const opt = el('option', { value: p, text: p });
     if (item.priority === p) opt.selected = true;
     prioritySelect.append(opt);
   });
+  
   const resourceList = el('div', { className: 'resource-list' });
   const labelInput = el('input', { className: 'field-input', placeholder: 'Resource label (e.g. YouTube tutorial)' });
   const urlInput = el('input', { className: 'field-input', placeholder: 'https://...', type: 'url' });
@@ -91,6 +94,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
         titleInput
       ]),
       el('label', { className: 'field' }, [
+        el('span', { className: 'field-label', text: 'Notes' }),
+        notesInput
+      ]),
+      el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Priority' }),
         prioritySelect
       ]),
@@ -125,6 +132,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
           text: 'Save changes',
           onClick: () => {
             const title = titleInput.value.trim();
+            const notes = notesInput.value.trim();
             if (!title) {
               formError.textContent = 'Title cannot be empty.';
               return;
@@ -137,7 +145,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
               formError.textContent = 'One or more resource URLs must be a valid http or https URL.';
               return;
             }
-            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources });
+            onSave?.({ title, priority: prioritySelect.value, notes, resources: cleanResources });
             close();
           }
         })

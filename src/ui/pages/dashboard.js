@@ -124,64 +124,65 @@ export function renderDashboard(app, { user, store }) {
   }
 
   function renderItemRow(item) {
-    return el('div', {
-      className: `check-item ${item.done ? 'done' : ''}`,
-      role: 'checkbox',
-      tabindex: '0',
-      'aria-checked': String(item.done),
-      dataset: { id: item.id },
-      onClick: e => {
-        if (e.target.closest('[data-action]')) return;
+  return el('div', {
+    className: `check-item ${item.done ? 'done' : ''}`,
+    role: 'checkbox',
+    tabindex: '0',
+    'aria-checked': String(item.done),
+    dataset: { id: item.id },
+    onClick: e => {
+      if (e.target.closest('[data-action]')) return;
+      const live = store.getSnapshot().allItems[item.id];
+      if (live) store.updateItem(item.id, { done: !live.done });
+    },
+    onKeydown: e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
         const live = store.getSnapshot().allItems[item.id];
         if (live) store.updateItem(item.id, { done: !live.done });
-      },
-      onKeydown: e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          const live = store.getSnapshot().allItems[item.id];
-          if (live) store.updateItem(item.id, { done: !live.done });
-        }
       }
-    }, [
-      el('div', { className: 'check-box' }, [el('span', { className: 'check-mark', text: '✓' })]),
-      el('div', { className: 'check-body' }, [
-        el('span', { className: 'check-title', text: item.title }),
-        el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
-        item.resources?.length ? el('button', {
-          type: 'button',
-          className: 'resource-count',
-          'data-action': 'resources',
-          'aria-label': `View resources for ${item.title}`,
-          text: `${item.resources.length} resource${item.resources.length > 1 ? 's' : ''}`,
-          onClick: e => {
-            e.stopPropagation();
-            openItemPanel({
-              item,
-              onSave: patch => store.updateItem(item.id, patch),
-              onDelete: () => store.removeItem(item.id)
-            });
-          }
-        }) : null
-      ].filter(Boolean)),
-      el('div', { className: 'check-actions' }, [
-        el('button', {
-          type: 'button',
-          className: 'btn btn-ghost btn-sm',
-          'data-action': 'edit',
-          'aria-label': `Edit ${item.title}`,
-          text: 'Edit',
-          onClick: e => {
-            e.stopPropagation();
-            openItemPanel({
-              item,
-              onSave: patch => store.updateItem(item.id, patch),
-              onDelete: () => store.removeItem(item.id)
-            });
-          }
-        })
-      ])
-    ]);
-  }
+    }
+  }, [
+    el('div', { className: 'check-box' }, [el('span', { className: 'check-mark', text: '✓' })]),
+    el('div', { className: 'check-body' }, [
+      el('span', { className: 'check-title', text: item.title }),
+      el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
+      item.notes ? el('span', { className: 'notes-indicator', text: '≡' }) : null,
+      item.resources?.length ? el('button', {
+        type: 'button',
+        className: 'resource-count',
+        'data-action': 'resources',
+        'aria-label': `View resources for ${item.title}`,
+        text: `${item.resources.length} resource${item.resources.length > 1 ? 's' : ''}`,
+        onClick: e => {
+          e.stopPropagation();
+          openItemPanel({
+            item,
+            onSave: patch => store.updateItem(item.id, patch),
+            onDelete: () => store.removeItem(item.id)
+          });
+        }
+      }) : null
+    ].filter(Boolean)),
+    el('div', { className: 'check-actions' }, [
+      el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm',
+        'data-action': 'edit',
+        'aria-label': `Edit ${item.title}`,
+        text: 'Edit',
+        onClick: e => {
+          e.stopPropagation();
+          openItemPanel({
+            item,
+            onSave: patch => store.updateItem(item.id, patch),
+            onDelete: () => store.removeItem(item.id)
+          });
+        }
+      })
+    ])
+  ]);
+}
 
   function renderAddRow(phase, section) {
     const input = el('input', { className: 'field-input compact inline-add', placeholder: 'Add a custom topic…' });
