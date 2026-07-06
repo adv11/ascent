@@ -433,7 +433,7 @@ export function renderDashboard(app, { user, store }) {
     offlineBanner,
     el('header', { className: 'dashboard-header' }, [
       el('div', { className: 'header-top' }, [
-        el('div', { className: 'brand' }, createBrandMark({ tagline: 'Your engineering prep command center' })),
+        el('div', { className: 'brand' }, createBrandMark({ tagline: 'Your career prep command center' })),
         el('div', { className: 'header-actions' }, [
           themeToggleBtn,
           syncPill,

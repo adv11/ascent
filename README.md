@@ -1,6 +1,6 @@
 # Ascent
 
-*Engineer your next move.* A prep tracker for backend engineers switching companies —
+*Engineer your next move.* A prep tracker for anyone switching companies —
 Java, Spring Boot, microservices, Kafka, Redis, system design, DSA, and GenAI/agentic
 AI, all in one editable, syncable checklist.
 
