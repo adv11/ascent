@@ -349,3 +349,77 @@ describe('initFromTemplate', () => {
     expect(localStorage.getItem('ascent-roadmap-v3')).not.toBeNull();
   });
 });
+
+// Per-user "hide this template from my picker" preference (Issue #51 follow-up).
+// Must never touch the template's content or any other user's account.
+describe('hideTemplate / unhideTemplate', () => {
+  it('hiding a template persists it to Firebase meta and the local snapshot, without touching items', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'hide-user' });
+    const itemsBefore = store.getSnapshot().allItems;
+
+    await store.hideTemplate('frontend');
+
+    expect(store.getSnapshot().hiddenTemplateIds).toEqual(['frontend']);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('hide-user', { hiddenTemplateIds: ['frontend'] });
+    expect(store.getSnapshot().allItems).toBe(itemsBefore);
+  });
+
+  it('hiding "blank" is a no-op — it can never be hidden', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'hide-user-2' });
+
+    await store.hideTemplate('blank');
+
+    expect(store.getSnapshot().hiddenTemplateIds).toEqual([]);
+    expect(dbApi.saveMeta).not.toHaveBeenCalled();
+  });
+
+  it('unhiding removes it from hiddenTemplateIds and re-persists the shorter list', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'hide-user-3' });
+
+    await store.hideTemplate('frontend');
+    await store.hideTemplate('piano');
+    await store.unhideTemplate('frontend');
+
+    expect(store.getSnapshot().hiddenTemplateIds).toEqual(['piano']);
+    expect(dbApi.saveMeta).toHaveBeenLastCalledWith('hide-user-3', { hiddenTemplateIds: ['piano'] });
+  });
+
+  it('a hidden-template preference set on a previous session is loaded back from Firebase meta on the next sign-in', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, templateId: 'java-backend', hiddenTemplateIds: ['frontend', 'data-science'] });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'returning-hide-user' });
+
+    expect(store.getSnapshot().hiddenTemplateIds).toEqual(['frontend', 'data-science']);
+  });
+
+  it('hiding is scoped per-user — one account\'s hidden list is never visible to another', async () => {
+    // A per-uid-aware fake of the Firebase meta store, so hiding on user-a's
+    // account is verifiably absent when user-b signs in — not just an artifact
+    // of two separate in-memory store instances never talking to each other.
+    const fakeMetaByUid = { 'user-a': { onboardingDone: true, templateId: 'java-backend' } };
+    dbApi.getMeta.mockImplementation(uid => Promise.resolve(fakeMetaByUid[uid] || { onboardingDone: true, templateId: 'java-backend' }));
+    dbApi.saveMeta.mockImplementation((uid, patch) => {
+      fakeMetaByUid[uid] = { ...fakeMetaByUid[uid], ...patch };
+      return Promise.resolve();
+    });
+
+    const storeA = createRoadmapStore();
+    await storeA.setUser({ uid: 'user-a' });
+    await storeA.hideTemplate('marketing');
+    expect(storeA.getSnapshot().hiddenTemplateIds).toEqual(['marketing']);
+    expect(fakeMetaByUid['user-a'].hiddenTemplateIds).toEqual(['marketing']);
+
+    // Simulate user-b on a different device (no shared localStorage) — only
+    // Firebase meta, scoped by uid, can carry a hidden-template preference
+    // across devices, and user-b's uid has none recorded.
+    localStorage.clear();
+    const storeB = createRoadmapStore();
+    await storeB.setUser({ uid: 'user-b' });
+    expect(storeB.getSnapshot().hiddenTemplateIds).toEqual([]);
+    expect(fakeMetaByUid['user-b']).toBeUndefined();
+  });
+});

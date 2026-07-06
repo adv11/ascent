@@ -100,7 +100,11 @@ src/data/templates/index.js   starter template registry — TEMPLATES, getTempla
 src/data/templates/java-backend.js  the original roadmap (Java/Spring Boot/…), moved here verbatim
 src/data/templates/frontend.js      Frontend Developer starter template
 src/data/templates/data-science.js  Data Scientist starter template
-src/data/templates/blank.js         four empty starter phases (Learn/Practice/Build/Review)
+src/data/templates/genai-agentic-ai.js  GenAI / Agentic AI Engineer starter template
+src/data/templates/math-grade12.js      12th Grade Mathematics starter template
+src/data/templates/piano.js             Learning Piano starter template
+src/data/templates/marketing.js         Marketing starter template
+src/data/templates/blank.js         four empty starter phases (Learn/Practice/Build/Review) — never hideable
 src/services/firebase.js      auth + Realtime Database access (roadmap + per-user meta)
 src/services/firebase.config.js          gitignored — your real Firebase project config
 src/services/firebase.config.example.js  committed template for the file above
@@ -120,6 +124,7 @@ src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMa
 src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources
 src/ui/components/toast.js       transient toast notifications
+src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -166,7 +171,8 @@ template's phase/section skeleton — see below).
 **Starter templates and onboarding (`src/data/templates/`, `src/ui/pages/onboarding.js`)**
 — Issue #51. `src/data/templates/index.js` is the template registry (`TEMPLATES`,
 `getTemplate(id)`, `buildSeedItems(id)`, `getTemplatePhases(id)`); every template module
-(`java-backend.js`, `frontend.js`, `data-science.js`, `blank.js`) exports its own
+(`java-backend.js`, `frontend.js`, `data-science.js`, `genai-agentic-ai.js`,
+`math-grade12.js`, `piano.js`, `marketing.js`, `blank.js` — 8 total) exports its own
 `PHASES` + `buildSeedItems()` in the same shape as the original `roadmap.js`. Templates
 are loaded via dynamic `import()` so a signed-out visitor's sign-in page never downloads
 roadmap content for templates they haven't picked. `roadmapStore.js`'s `setUser(user)`
@@ -187,6 +193,21 @@ reached this way (`onboardingDone` already `true`), the page shows a "← Back t
 roadmap" link and requires `confirm()` before `initFromTemplate()` runs, since picking a
 new template discards the current one; first-time onboarding (`onboardingDone === false`)
 shows neither, since there's nothing to lose yet.
+
+**Per-user hidden templates — `hiddenTemplateIds`.** Every template card except
+"blank" has a hide (×) button; clicking it (after a `confirm()`) calls
+`store.hideTemplate(id)`, which appends to `hiddenTemplateIds` and persists it to
+`users/{uid}/meta/hiddenTemplateIds` (plus a local fallback) — **this is a per-user
+preference, never a deletion of the template or a change visible to any other user.**
+`getTemplate`/`buildSeedItems`/`getTemplatePhases` never consult it; it only filters
+which cards `onboarding.js` renders. A "Show hidden templates (N)" toggle reveals
+hidden cards with a "Restore" button (`store.unhideTemplate(id)`) instead of the normal
+pick/hide affordances. Never make "blank" hideable — it's the only path into the
+"build your own" guide (`src/ui/components/buildYourOwnGuide.js`), reachable via the
+"ℹ How do I build my own?" button that replaces the hide button on that one card. That
+modal is purely informational (manual "Add a custom topic…" workflow today, a tip for
+drafting topics with an external AI assistant) — do not claim in-app automated AI
+import exists until it's actually built.
 
 **`setUser`/`initFromTemplate` stale-call guard — `stateCallId`.** Firebase's
 `onAuthStateChanged` can fire in quick succession (e.g. delete-account immediately

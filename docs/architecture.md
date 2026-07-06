@@ -67,26 +67,42 @@ src/data/templates/
 ```
 The starter template system (Issue #51). `index.js` is the registry: `TEMPLATES` (id,
 name, description, icon, `buildItems()`), `getTemplate(id)`, `buildSeedItems(templateId)`,
-and `getTemplatePhases(templateId)`. Each template module (`java-backend.js`,
-`frontend.js`, `data-science.js`, `blank.js`) exports its own `PHASES` + `buildSeedItems()`
-in the exact shape the original `roadmap.js` used, so `roadmapStore.js` and `dashboard.js`
+and `getTemplatePhases(templateId)`. Eight template modules — `java-backend.js`,
+`frontend.js`, `data-science.js`, `genai-agentic-ai.js`, `math-grade12.js`, `piano.js`,
+`marketing.js`, `blank.js` — each export their own `PHASES` + `buildSeedItems()` in the
+exact shape the original `roadmap.js` used, so `roadmapStore.js` and `dashboard.js`
 don't need to know which template is active beyond the id. `java-backend.js` is the
-original 500+-item roadmap, moved verbatim — nothing about its content changed.
-Templates are loaded via dynamic `import()` (not a static import at the top of
-`roadmapStore.js`) specifically so a signed-out visitor on the sign-in page never
-downloads roadmap content for templates they haven't picked yet — this file has no
-bundler/tree-shaking, so every module is its own network request.
+original 500+-item roadmap, moved verbatim — nothing about its content changed. The
+registry has no concept of "hidden" templates — that's a per-user preference layered on
+top in `roadmapStore.js` (see §5.9), not a property of a template itself. Templates are
+loaded via dynamic `import()` (not a static import at the top of `roadmapStore.js`)
+specifically so a signed-out visitor on the sign-in page never downloads roadmap content
+for templates they haven't picked yet — this file has no bundler/tree-shaking, so every
+module is its own network request.
 
 ```
 src/ui/pages/onboarding.js
 ```
-The `/onboarding` route (Issue #51) — a one-way template picker shown exactly once,
-right after a brand-new sign-up, before the dashboard ever renders. No back button.
-Renders one card per `TEMPLATES` entry; picking a card calls
-`store.initFromTemplate(templateId)` then navigates to `/app`. Self-guards like the
-other pages: redirects to `/signin` if there's no user, and to `/app` if
-`store.getSnapshot().onboardingDone` is already `true` (e.g. a returning user manually
-navigates to `#/onboarding`).
+The `/onboarding` route (Issue #51) — a template picker shown right after a brand-new
+sign-up, and reachable afterward via the dashboard's "Switch template" link (see §5.8).
+Renders one card per `TEMPLATES` entry not currently hidden for this user; picking a
+card calls `store.initFromTemplate(templateId)` then navigates to `/app`. Every card
+except "blank" has a hide (×) button (see §5.9); "blank" instead has an "ℹ How do I
+build my own?" button opening `buildYourOwnGuide.js`. Self-guards like the other pages:
+redirects to `/signin` if there's no user. Does **not** redirect away when
+`onboardingDone` is already `true` — that's the switch-template re-entry path, not a
+bug; see §5.8.
+
+```
+src/ui/components/buildYourOwnGuide.js
+```
+A single-purpose informational modal (Issue #51 follow-up) opened from the "blank"
+template's card. Explains the two ways to fill in a blank roadmap today: manually, via
+the dashboard's "Add a custom topic…" row under any phase; or with help from an
+external AI chat assistant (ask it to draft topics organized under Learn/Practice/
+Build/Review, then paste them in one at a time). Explicitly notes that fully automated
+AI import is a planned future feature, not something this modal or the app does today —
+don't let this copy drift ahead of what's actually implemented.
 
 ```
 src/services/firebase.js
@@ -390,6 +406,37 @@ either function must be followed by the same check before mutating state — see
 
 Cross-reference: `CLAUDE.md §setUser/initFromTemplate stale-call guard`.
 
+### 5.9 Per-user hidden templates and the "build your own" guide (Issue #51 follow-up)
+
+A user who doesn't want a given starter template cluttering their picker can hide it —
+requested directly from manual testing feedback: "some roadmaps I don't want, let me
+remove them, but only for me." Two things make this safe:
+
+- **It's per-user, not global.** Hiding writes to `users/{uid}/meta/hiddenTemplateIds`
+  (an array of template ids) via `dbApi.saveMeta` — the same per-account meta node
+  `templateId`/`onboardingDone` already live in. It never touches the template's own
+  content (`src/data/templates/*.js` is untouched) and has zero effect on any other
+  account. `roadmapStore.js` loads it the same way it loads `templateId`: during
+  `setUser`, normalizing whatever shape Firebase returns (`normalizeHiddenTemplateIds` —
+  Realtime Database only returns a genuine array when child keys are dense integers from
+  0; a sparse/gappy shape comes back as a plain object instead) with a local-storage
+  fallback for the offline/fast-path case, same as `onboardingDone`.
+- **"blank" can never be hidden.** `hideTemplate('blank')` is a no-op by construction —
+  it's the only path into `buildYourOwnGuide.js`'s manual/AI-assisted instructions, so
+  removing it would leave a user with zero ways to start a roadmap outside the seeded
+  templates.
+
+`onboarding.js` filters `TEMPLATES` down to non-hidden entries (plus "blank",
+unconditionally) when building the visible grid. A "Show hidden templates (N)" toggle
+appears whenever `hiddenTemplateIds` is non-empty, revealing a second row of cards with
+a "Restore" button (`store.unhideTemplate(id)`) instead of the normal pick/hide
+affordances. Hiding and unhiding both go through `confirm()`-free store methods — the
+*hide* action itself is gated behind a `confirm()` in `onboarding.js` (since it's a
+one-click action a user could easily fat-finger), but restoring is not, since it's
+non-destructive.
+
+Cross-reference: `CLAUDE.md §Per-user hidden templates`.
+
 ---
 
 ## 6. Deploy checklist
@@ -683,3 +730,20 @@ signing up again with the same email — via a `stateCallId` generation guard sh
 `initFromTemplate()` (see §5.8); (3) substantially expanded `frontend.js` (116 → 230
 topics) and `data-science.js` (80 → 166 topics) to match the Java Backend template's
 depth, adding a `TOPIC_RESOURCES` map to both.
+
+**Second follow-up round, same PR — diversify templates, per-user hiding, self-build
+guide**: (4) added four new starter templates so the lineup no longer reads as
+"one category, software engineering" — `genai-agentic-ai.js`, `math-grade12.js`,
+`piano.js`, `marketing.js` — bringing the registry to 8 templates total (kept
+`frontend.js`/`data-science.js` rather than removing them, per explicit direction).
+(5) Added a per-user "hide this template" preference (§5.9): a hide (×) button on every
+card except "blank", persisted to `users/{uid}/meta/hiddenTemplateIds`
+(`roadmapStore.hideTemplate`/`unhideTemplate`), with a "Show hidden templates" reveal
+and "Restore" affordance — explicitly scoped to the signed-in user only, never a global
+template deletion. (6) Added `src/ui/components/buildYourOwnGuide.js`, an informational
+modal opened from the "blank" card's new "ℹ How do I build my own?" button, explaining
+the manual "Add a custom topic…" workflow and a practical external-AI-assistant tip —
+honest that automated AI import isn't built yet. `onboarding.js`'s card markup changed
+from a `<button class="template-card">` to a `<div role="button" tabindex="0">` so each
+card can host a real nested `<button>` (hide or info) without invalid button-in-button
+markup; `firebase/database.rules.json` validates the new `meta.hiddenTemplateIds` array.

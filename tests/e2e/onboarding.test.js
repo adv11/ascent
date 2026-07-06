@@ -11,9 +11,10 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await expect(page).toHaveTitle('Ascent');
-    await expect(page.locator('.template-card')).toHaveCount(4);
+    await expect(page.locator('.template-card')).toHaveCount(8);
     await expect(page.locator('.template-card-name')).toContainText([
-      'Java Backend Engineer', 'Frontend Developer', 'Data Scientist', 'Start blank'
+      'Java Backend Engineer', 'GenAI / Agentic AI Engineer', 'Frontend Developer', 'Data Scientist',
+      '12th Grade Mathematics', 'Learning Piano', 'Marketing', 'Start blank'
     ]);
   });
 
@@ -125,5 +126,93 @@ test.describe('onboarding — switch template from the dashboard', () => {
     await expect(page).toHaveURL(/#\/onboarding/);
     await page.locator('button', { hasText: 'Back to my roadmap' }).click();
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
+  });
+});
+
+test.describe('onboarding — hiding and restoring templates', () => {
+  test('hiding a template removes its card, and it can be restored from "Show hidden templates"', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    const pianoCard = page.locator('.template-card', { hasText: 'Learning Piano' });
+    await expect(pianoCard).toBeVisible();
+
+    page.once('dialog', dialog => dialog.accept());
+    await pianoCard.locator('.template-card-hide').click();
+
+    await expect(page.locator('.template-card', { hasText: 'Learning Piano' })).toHaveCount(0);
+    const toggle = page.locator('.hidden-templates-toggle');
+    await expect(toggle).toContainText('1 template hidden');
+
+    await toggle.click();
+    const restoreCard = page.locator('.template-card-hidden', { hasText: 'Learning Piano' });
+    await expect(restoreCard).toBeVisible();
+    await restoreCard.locator('button', { hasText: 'Restore' }).click();
+
+    await expect(page.locator('.hidden-templates-toggle')).toHaveCount(0);
+    await expect(page.locator('.template-grid:not(.hidden-grid) .template-card', { hasText: 'Learning Piano' })).toBeVisible();
+  });
+
+  test('dismissing the hide confirmation leaves the card in place', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    page.once('dialog', dialog => dialog.dismiss());
+    await page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-hide').click();
+
+    await expect(page.locator('.template-card', { hasText: 'Marketing' })).toBeVisible();
+    await expect(page.locator('.hidden-templates-toggle')).toHaveCount(0);
+  });
+
+  test('the "Start blank" card has no hide button — it can never be hidden', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    const blankCard = page.locator('.template-card', { hasText: 'Start blank' });
+    await expect(blankCard.locator('.template-card-hide')).toHaveCount(0);
+    await expect(blankCard.locator('.template-card-info')).toBeVisible();
+  });
+
+  test('a hidden template stays hidden across a reload (persisted per-user)', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    page.once('dialog', dialog => dialog.accept());
+    await page.locator('.template-card', { hasText: 'Learning Piano' }).locator('.template-card-hide').click();
+    await expect(page.locator('.template-card', { hasText: 'Learning Piano' })).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.locator('.template-card', { hasText: 'Learning Piano' })).toHaveCount(0);
+    await expect(page.locator('.hidden-templates-toggle')).toContainText('1 template hidden');
+  });
+});
+
+test.describe('onboarding — "build your own roadmap" guide', () => {
+  test('the info button on "Start blank" opens a guide explaining manual and AI-assisted roadmap building', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    await page.locator('.template-card', { hasText: 'Start blank' }).locator('.template-card-info').click();
+
+    const modal = page.locator('.build-guide-card');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText('Build your own roadmap');
+    await expect(modal).toContainText('Add topics manually');
+    await expect(modal).toContainText('AI assistant');
+
+    await modal.locator('button', { hasText: 'Got it' }).click();
+    await expect(modal).toHaveCount(0);
+    // Clicking the info button must not have picked the blank template.
+    await expect(page).toHaveURL(/#\/onboarding/);
   });
 });

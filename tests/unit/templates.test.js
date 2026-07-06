@@ -21,9 +21,13 @@ describe('template registry', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('includes the java-backend, frontend, data-science, and blank templates', () => {
+  it('includes all 8 expected templates', () => {
     const ids = TEMPLATES.map(t => t.id);
-    expect(ids).toEqual(expect.arrayContaining(['java-backend', 'frontend', 'data-science', 'blank']));
+    expect(ids).toEqual(expect.arrayContaining([
+      'java-backend', 'frontend', 'data-science', 'genai-agentic-ai', 'math-grade12',
+      'piano', 'marketing', 'blank'
+    ]));
+    expect(ids).toHaveLength(8);
   });
 
   it('getTemplate falls back to the first template for an unknown id', () => {
@@ -50,8 +54,10 @@ describe('buildSeedItems(templateId)', () => {
     expect(items).toEqual({});
   });
 
-  it("buildSeedItems('frontend') and buildSeedItems('data-science') each return a non-empty, well-shaped item map", async () => {
-    for (const id of ['frontend', 'data-science']) {
+  it('every non-blank template returns a non-empty, well-shaped item map', async () => {
+    const nonBlankIds = TEMPLATES.map(t => t.id).filter(id => id !== 'blank');
+    expect(nonBlankIds.length).toBeGreaterThan(0);
+    for (const id of nonBlankIds) {
       const items = await buildSeedItems(id);
       const values = Object.values(items);
       expect(values.length).toBeGreaterThan(0);

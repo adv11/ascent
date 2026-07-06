@@ -30,6 +30,7 @@ export function createRoadmapStore() {
   let templateId = 'java-backend';
   let templatePhases = PHASES;
   let onboardingDone = null;
+  let hiddenTemplateIds = [];
   let dirty = false;
   let saveTimer = null;
   let structuralVersion = 0;
@@ -57,6 +58,7 @@ export function createRoadmapStore() {
       templateId,
       onboardingDone,
       phases: templatePhases,
+      hiddenTemplateIds,
       ...meta
     };
   }
@@ -93,6 +95,29 @@ export function createRoadmapStore() {
     if (templateId) localStorage.setItem(KEYS.TEMPLATE_ID, templateId);
   }
 
+  function readLocalHiddenTemplates() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(KEYS.HIDDEN_TEMPLATES) || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function persistLocalHiddenTemplates() {
+    localStorage.setItem(KEYS.HIDDEN_TEMPLATES, JSON.stringify(hiddenTemplateIds));
+  }
+
+  // Firebase Realtime Database only returns a genuine JS array from a snapshot
+  // when the child keys are dense integers starting at 0 — a sparse or
+  // non-array shape (e.g. after removing a middle element some other way)
+  // comes back as a plain object instead, so this normalizes either shape.
+  function normalizeHiddenTemplateIds(value) {
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === 'object') return Object.values(value);
+    return null;
+  }
+
   // Wipes all local state for the outgoing user — both roadmap data and UI prefs.
   // Called whenever the active uid changes so the next user always starts clean.
   function clearLocal() {
@@ -100,6 +125,7 @@ export function createRoadmapStore() {
     localStorage.removeItem(UI_KEY);
     localStorage.removeItem(KEYS.ONBOARDING_DONE);
     localStorage.removeItem(KEYS.TEMPLATE_ID);
+    localStorage.removeItem(KEYS.HIDDEN_TEMPLATES);
   }
 
   function mergeWithSeed(savedItems = {}, baseItems = {}) {
@@ -185,6 +211,7 @@ export function createRoadmapStore() {
       templateId = 'java-backend';
       templatePhases = PHASES;
       onboardingDone = null;
+      hiddenTemplateIds = [];
       dirty = false;
       lastFlushedStr = null;
       structuralVersion += 1;
@@ -215,6 +242,9 @@ export function createRoadmapStore() {
     // A newer setUser() call (e.g. the very next auth state change) has already
     // taken over — applying this now-stale result would clobber correct state.
     if (isStale()) return;
+
+    hiddenTemplateIds = normalizeHiddenTemplateIds(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates();
+    persistLocalHiddenTemplates();
 
     if (remoteMeta?.onboardingDone) {
       onboardingDone = true;
@@ -307,6 +337,33 @@ export function createRoadmapStore() {
     }
   }
 
+  // Hiding/unhiding is a per-user preference for which template cards show on
+  // *this* user's onboarding picker — it never touches the template's content
+  // or any other user's account. The "blank" template is never hideable, since
+  // it's the gateway to building a roadmap manually or with AI (Issue #51).
+  async function setHiddenTemplateIds(nextHiddenIds) {
+    hiddenTemplateIds = nextHiddenIds;
+    persistLocalHiddenTemplates();
+    notify();
+    if (uid) {
+      try {
+        await dbApi.saveMeta(uid, { hiddenTemplateIds });
+      } catch (error) {
+        console.error('Failed to save hidden template preference', error);
+      }
+    }
+  }
+
+  function hideTemplate(idToHide) {
+    if (idToHide === 'blank' || hiddenTemplateIds.includes(idToHide)) return Promise.resolve();
+    return setHiddenTemplateIds([...hiddenTemplateIds, idToHide]);
+  }
+
+  function unhideTemplate(idToUnhide) {
+    if (!hiddenTemplateIds.includes(idToUnhide)) return Promise.resolve();
+    return setHiddenTemplateIds(hiddenTemplateIds.filter(id => id !== idToUnhide));
+  }
+
   function updateItem(id, patch) {
     if (!items[id]) return;
     const isCosmetic = Object.keys(patch).every(key => key === 'done');
@@ -381,6 +438,8 @@ export function createRoadmapStore() {
     },
     setUser,
     initFromTemplate,
+    hideTemplate,
+    unhideTemplate,
     getSnapshot,
     updateItem,
     addItem,

@@ -2,14 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../../src/ui/router.js', () => ({ navigate: vi.fn() }));
 
-async function setup({ onboardingDone = false, initFromTemplate = vi.fn().mockResolvedValue(undefined) } = {}) {
+async function setup({
+  onboardingDone = false,
+  hiddenTemplateIds = [],
+  initFromTemplate = vi.fn().mockResolvedValue(undefined),
+  hideTemplate = vi.fn().mockResolvedValue(undefined),
+  unhideTemplate = vi.fn().mockResolvedValue(undefined)
+} = {}) {
   const { navigate } = await import('../../src/ui/router.js');
   const { renderOnboarding } = await import('../../src/ui/pages/onboarding.js');
   const app = document.createElement('div');
   document.body.appendChild(app);
   const store = {
-    getSnapshot: vi.fn(() => ({ onboardingDone })),
-    initFromTemplate
+    getSnapshot: vi.fn(() => ({ onboardingDone, hiddenTemplateIds })),
+    initFromTemplate,
+    hideTemplate,
+    unhideTemplate
   };
   const user = { uid: 'uid-1', isAnonymous: false };
   const cleanup = renderOnboarding(app, { user, store });
@@ -27,7 +35,7 @@ describe('onboarding page — gating', () => {
     const { navigate } = await import('../../src/ui/router.js');
     const { renderOnboarding } = await import('../../src/ui/pages/onboarding.js');
     const app = document.createElement('div');
-    renderOnboarding(app, { user: null, store: { getSnapshot: () => ({ onboardingDone: false }) } });
+    renderOnboarding(app, { user: null, store: { getSnapshot: () => ({ onboardingDone: false, hiddenTemplateIds: [] }) } });
     expect(navigate).toHaveBeenCalledWith('/signin', true);
     expect(app.children.length).toBe(0);
   });
@@ -66,8 +74,72 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
 
     cards[0].click();
 
-    expect(cards[1].disabled).toBe(true);
+    expect(cards[1].classList.contains('is-disabled')).toBe(true);
     resolvePick();
+  });
+
+  it('every non-blank card has a hide (×) button, and the blank card has an info button instead', async () => {
+    const { app } = await setup();
+    const cards = [...app.querySelectorAll('.template-card')];
+    const blankCard = cards.find(c => c.textContent.includes('Start blank'));
+    const javaCard = cards.find(c => c.textContent.includes('Java Backend Engineer'));
+
+    expect(blankCard.querySelector('.template-card-hide')).toBeNull();
+    expect(blankCard.querySelector('.template-card-info')).not.toBeNull();
+    expect(javaCard.querySelector('.template-card-hide')).not.toBeNull();
+    expect(javaCard.querySelector('.template-card-info')).toBeNull();
+  });
+
+  it('clicking the hide button asks for confirmation, then hides the card without picking it', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const hideTemplate = vi.fn().mockResolvedValue(undefined);
+    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
+    const { app, navigate } = await setup({ hideTemplate, initFromTemplate });
+
+    const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
+    javaCard.querySelector('.template-card-hide').click();
+
+    await vi.waitFor(() => expect(hideTemplate).toHaveBeenCalledWith('java-backend'));
+    expect(initFromTemplate).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(app.querySelector('.template-card-name')?.textContent).not.toBe(undefined);
+    expect([...app.querySelectorAll('.template-card-name')].some(n => n.textContent === 'Java Backend Engineer')).toBe(false);
+  });
+
+  it('does not hide when the confirmation is dismissed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const hideTemplate = vi.fn().mockResolvedValue(undefined);
+    const { app } = await setup({ hideTemplate });
+
+    const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
+    javaCard.querySelector('.template-card-hide').click();
+
+    expect(hideTemplate).not.toHaveBeenCalled();
+    expect([...app.querySelectorAll('.template-card-name')].some(n => n.textContent === 'Java Backend Engineer')).toBe(true);
+  });
+
+  it('shows a "Show hidden templates" toggle and restores a hidden template on demand', async () => {
+    const unhideTemplate = vi.fn().mockResolvedValue(undefined);
+    const { app } = await setup({ hiddenTemplateIds: ['java-backend'], unhideTemplate });
+
+    expect([...app.querySelectorAll('.template-card-name')].some(n => n.textContent === 'Java Backend Engineer')).toBe(false);
+    const toggle = app.querySelector('.hidden-templates-toggle');
+    expect(toggle.textContent).toContain('1 template hidden');
+
+    toggle.click();
+    const restoreBtn = [...app.querySelectorAll('.template-card-hidden')]
+      .find(c => c.textContent.includes('Java Backend Engineer'))
+      ?.querySelector('button');
+    expect(restoreBtn).toBeTruthy();
+
+    restoreBtn.click();
+    await vi.waitFor(() => expect(unhideTemplate).toHaveBeenCalledWith('java-backend'));
+    // Back in the main (non-hidden) grid, and the "hidden" section is now empty.
+    await vi.waitFor(() => {
+      const mainGridNames = [...app.querySelectorAll('.template-grid:not(.hidden-grid) .template-card-name')];
+      expect(mainGridNames.some(n => n.textContent === 'Java Backend Engineer')).toBe(true);
+    });
+    expect(app.querySelector('.hidden-templates-toggle')).toBeNull();
   });
 });
 

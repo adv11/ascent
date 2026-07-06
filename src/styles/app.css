@@ -367,14 +367,60 @@ body {
   font-family: inherit;
   color: var(--ink);
   width: 100%;
+  position: relative;
 }
 .template-card:hover, .template-card:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--brand); }
-.template-card:disabled { cursor: not-allowed; opacity: 0.6; transform: none; }
+.template-card.is-disabled { cursor: not-allowed; opacity: 0.6; transform: none; pointer-events: none; }
 .template-card.picking { opacity: 0.85; }
 .template-card-icon { font-size: 32px; line-height: 1; }
 .template-card-name { font-size: 17px; font-weight: 800; }
 .template-card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
 .template-card-count { font-size: 12px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.template-card-hide {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-glass);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.template-card-hide:hover { color: var(--danger); border-color: var(--danger-border); }
+
+.template-card-info {
+  justify-self: start;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.template-card-info:hover { text-decoration: underline; }
+
+.hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
+.hidden-templates-toggle { justify-self: center; }
+.hidden-grid { width: 100%; }
+.template-card-hidden {
+  background: var(--panel-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  opacity: 0.85;
+}
 
 /* Dashboard */
 .dashboard { min-height: 100vh; display: flex; flex-direction: column; }
@@ -436,6 +482,12 @@ body {
   color: var(--muted);
   line-height: 1.6;
 }
+
+.build-guide-card { max-width: 520px; display: grid; gap: 4px; }
+.build-guide-intro { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+.build-guide-heading { font-size: 14px; font-weight: 800; color: var(--ink); margin-top: 12px; }
+.build-guide-body { font-size: 14px; color: var(--ink); line-height: 1.6; }
+.build-guide-note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 12px; }
 
 .dashboard-header {
   background: var(--surface-glass);

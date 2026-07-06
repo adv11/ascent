@@ -2,9 +2,11 @@
 
 *Engineer your next move.* A roadmap tracker for anyone learning, revising, or working
 toward a goal — students, professionals, and career switchers alike. New sign-ups pick
-a starter template — Java Backend Engineer (Java, Spring Boot, microservices, Kafka,
-Redis, system design, DSA, GenAI/agentic AI), Frontend Developer, Data Scientist, or a
-blank slate — all in one editable, syncable checklist.
+one of 8 starter templates — Java Backend Engineer, GenAI/Agentic AI Engineer, Frontend
+Developer, Data Scientist, 12th Grade Mathematics, Learning Piano, Marketing, or a blank
+slate to build your own — all in one editable, syncable checklist. Any template except
+the blank one can be hidden from your own picker if you don't want it cluttering the
+list; hiding is per-account and never affects anyone else.
 
 - Sign in with email/password or start instantly as a guest.
 - Progress syncs across devices via Firebase, with an offline/local fallback.

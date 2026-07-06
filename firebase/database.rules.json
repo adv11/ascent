@@ -13,6 +13,11 @@
           },
           "onboardingDone": {
             ".validate": "newData.isBoolean()"
+          },
+          "hiddenTemplateIds": {
+            "$index": {
+              ".validate": "newData.isString()"
+            }
           }
         }
       }
