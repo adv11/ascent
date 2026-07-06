@@ -348,19 +348,21 @@ body {
 .template-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
   gap: 16px;
 }
 
 .template-card {
+  height: 100%;
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 24px 20px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  justify-items: start;
   text-align: left;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -375,7 +377,15 @@ body {
 .template-card-icon { font-size: 32px; line-height: 1; }
 .template-card-name { font-size: 17px; font-weight: 800; }
 .template-card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
-.template-card-count { font-size: 12px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.04em; }
+.template-card-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: auto;
+  padding-top: 8px;
+}
 
 .template-card-hide {
   position: absolute;
@@ -396,7 +406,8 @@ body {
 .template-card-hide:hover { color: var(--danger); border-color: var(--danger-border); }
 
 .template-card-info {
-  justify-self: start;
+  align-self: flex-start;
+  text-align: left;
   margin-top: 2px;
   font-size: 12px;
   font-weight: 700;
@@ -416,11 +427,9 @@ body {
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-lg);
   padding: 20px;
-  display: grid;
-  gap: 8px;
-  justify-items: start;
   opacity: 0.85;
 }
+.template-card-hidden .btn { margin-top: auto; align-self: flex-start; }
 
 /* Dashboard */
 .dashboard { min-height: 100vh; display: flex; flex-direction: column; }
