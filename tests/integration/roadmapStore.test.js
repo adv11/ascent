@@ -7,6 +7,9 @@ vi.mock('../../src/services/firebase.js', () => ({
   dbApi: {
     listenRoadmap: vi.fn(() => () => {}),
     saveRoadmap: vi.fn(() => Promise.resolve()),
+    getMeta: vi.fn(() => Promise.resolve(null)),
+    saveMeta: vi.fn(() => Promise.resolve()),
+    getRoadmap: vi.fn(() => Promise.resolve(null)),
   },
   firebaseClock: vi.fn(() => null),
 }));
@@ -17,6 +20,12 @@ beforeEach(() => {
   vi.useRealTimers();
   dbApi.listenRoadmap.mockImplementation(() => () => {});
   dbApi.saveRoadmap.mockResolvedValue(undefined);
+  dbApi.saveMeta.mockResolvedValue(undefined);
+  // Default every setUser() call in this file to "already onboarded, java-backend"
+  // unless a test overrides it — this matches the pre-Issue-#51 behavior that most
+  // of these tests (structuralVersion, sign-out guard, echo detection) rely on.
+  dbApi.getMeta.mockResolvedValue({ onboardingDone: true, templateId: 'java-backend' });
+  dbApi.getRoadmap.mockResolvedValue(null);
 });
 
 describe('subscribe / notify cycle', () => {
@@ -106,24 +115,24 @@ describe('structuralVersion contract', () => {
 });
 
 describe('sign-out guard (setUser contract)', () => {
-  it('setUser(null) after a non-null uid clears both localStorage keys', () => {
+  it('setUser(null) after a non-null uid clears both localStorage keys', async () => {
     const store = createRoadmapStore();
-    store.setUser({ uid: 'user-123' });
+    await store.setUser({ uid: 'user-123' });
 
     // Manually write data that belongs to the outgoing user
     localStorage.setItem('ascent-roadmap-v3', JSON.stringify({ dirty: false, items: {} }));
     localStorage.setItem('ascent-ui-v3', JSON.stringify({ expanded: true }));
 
-    store.setUser(null);
+    await store.setUser(null);
 
     expect(localStorage.getItem('ascent-roadmap-v3')).toBeNull();
     expect(localStorage.getItem('ascent-ui-v3')).toBeNull();
   });
 
-  it('setUser(null) resets items to seed data', () => {
+  it('setUser(null) resets items to seed data', async () => {
     const store = createRoadmapStore();
-    store.setUser({ uid: 'user-456' });
-    store.setUser(null);
+    await store.setUser({ uid: 'user-456' });
+    await store.setUser(null);
 
     const snapshot = store.getSnapshot();
     const seedKeys = Object.keys(buildSeedItems());
@@ -132,12 +141,12 @@ describe('sign-out guard (setUser contract)', () => {
     expect(storeKeys).toHaveLength(seedKeys.length);
   });
 
-  it('setUser(null) on initial boot (uid was null) does NOT clear localStorage', () => {
+  it('setUser(null) on initial boot (uid was null) does NOT clear localStorage', async () => {
     const store = createRoadmapStore();
     // uid starts as null — guard must NOT fire here
     localStorage.setItem('ascent-roadmap-v3', 'should-remain');
 
-    store.setUser(null); // uid is still null, no transition
+    await store.setUser(null); // uid is still null, no transition
 
     expect(localStorage.getItem('ascent-roadmap-v3')).toBe('should-remain');
   });
@@ -152,7 +161,7 @@ describe('stableStringify — Firebase echo detection', () => {
     });
 
     const store = createRoadmapStore();
-    store.setUser({ uid: 'echo-test' });
+    await store.setUser({ uid: 'echo-test' });
 
     // flush() sets lastFlushedStr = stableStringify(items)
     await store.flush();
@@ -178,7 +187,7 @@ describe('stableStringify — Firebase echo detection', () => {
     });
 
     const store = createRoadmapStore();
-    store.setUser({ uid: 'diff-data-test' });
+    await store.setUser({ uid: 'diff-data-test' });
     await store.flush();
 
     const versionBefore = store.getSnapshot().structuralVersion;
@@ -195,5 +204,114 @@ describe('stableStringify — Firebase echo detection', () => {
     capturedCallback(diffSnapshot);
 
     expect(store.getSnapshot().structuralVersion).toBe(versionBefore + 1);
+  });
+});
+
+// Issue #51 — a user's Firebase meta (`users/{uid}/meta`) records whether they've
+// already picked a starter template, so setUser() knows whether to route them to
+// the onboarding picker or straight into their existing roadmap.
+describe('onboarding detection (setUser)', () => {
+  it('a brand-new user (no meta, no remote or local data) is not marked onboarded and gets no items yet', async () => {
+    dbApi.getMeta.mockResolvedValue(null);
+    dbApi.getRoadmap.mockResolvedValue(null);
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'brand-new-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.onboardingDone).toBe(false);
+    expect(snapshot.templateId).toBeNull();
+    expect(snapshot.allItems).toEqual({});
+    // No point syncing a roadmap that doesn't exist yet — the listener only
+    // attaches once a template has been chosen.
+    expect(dbApi.listenRoadmap).not.toHaveBeenCalled();
+  });
+
+  it('a pre-existing account with real remote progress but no meta flag is backfilled as already onboarded', async () => {
+    const remoteItems = {
+      'seed-0-0-0': { id: 'seed-0-0-0', title: 'X', phase: 'Core Java', section: 'Fundamentals', priority: 'P0', done: true, custom: false, deleted: false, resources: [] }
+    };
+    dbApi.getMeta.mockResolvedValue(null);
+    dbApi.getRoadmap.mockResolvedValue({ version: 3, items: remoteItems });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'legacy-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.onboardingDone).toBe(true);
+    expect(snapshot.templateId).toBe('java-backend');
+    expect(snapshot.allItems['seed-0-0-0'].done).toBe(true);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('legacy-user', { onboardingDone: true, templateId: 'java-backend' });
+  });
+
+  it('a fresh account with no real progress (only untouched seed data) is still routed to onboarding', async () => {
+    dbApi.getMeta.mockResolvedValue(null);
+    dbApi.getRoadmap.mockResolvedValue({ version: 3, items: buildSeedItems() });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'never-touched-anything' });
+
+    expect(store.getSnapshot().onboardingDone).toBe(false);
+  });
+
+  it('a user whose Firebase meta already has onboardingDone loads their saved items directly (no re-seeding)', async () => {
+    const remoteItems = {
+      'custom-1': { id: 'custom-1', title: 'My topic', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] }
+    };
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, templateId: 'blank' });
+    dbApi.getRoadmap.mockResolvedValue({ version: 3, items: remoteItems });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'returning-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.onboardingDone).toBe(true);
+    expect(snapshot.templateId).toBe('blank');
+    expect(snapshot.allItems).toEqual(remoteItems);
+    expect(dbApi.listenRoadmap).toHaveBeenCalled();
+  });
+});
+
+describe('initFromTemplate', () => {
+  it('seeds items from the chosen template, marks onboarding done, and saves templateId to Firebase meta', async () => {
+    dbApi.getMeta.mockResolvedValue(null);
+    dbApi.getRoadmap.mockResolvedValue(null);
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'new-user' });
+    expect(store.getSnapshot().onboardingDone).toBe(false);
+
+    await store.initFromTemplate('blank');
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.onboardingDone).toBe(true);
+    expect(snapshot.templateId).toBe('blank');
+    expect(snapshot.allItems).toEqual({});
+    expect(snapshot.phases).toHaveLength(4);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('new-user', { templateId: 'blank', onboardingDone: true });
+    expect(dbApi.listenRoadmap).toHaveBeenCalled();
+  });
+
+  it('picking java-backend seeds the same roadmap as the original default (no regression)', async () => {
+    dbApi.getMeta.mockResolvedValue(null);
+    dbApi.getRoadmap.mockResolvedValue(null);
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'new-user-2' });
+    await store.initFromTemplate('java-backend');
+
+    const snapshot = store.getSnapshot();
+    expect(Object.keys(snapshot.allItems).length).toBe(Object.keys(buildSeedItems()).length);
+  });
+
+  it('without a signed-in uid, still seeds items and persists locally, but never calls Firebase', async () => {
+    const store = createRoadmapStore();
+    await store.initFromTemplate('frontend');
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.onboardingDone).toBe(true);
+    expect(snapshot.templateId).toBe('frontend');
+    expect(dbApi.saveMeta).not.toHaveBeenCalled();
+    expect(localStorage.getItem('ascent-roadmap-v3')).not.toBeNull();
   });
 });

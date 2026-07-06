@@ -1,4 +1,3 @@
-import { PHASES } from '../../data/roadmap.js';
 import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { el, debounce } from '../dom.js';
 import { navigate } from '../router.js';
@@ -8,11 +7,16 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
 import { createBrandMark } from '../components/brand.js';
 
-function groupItems(items) {
+// `templatePhases` is the current user's chosen template's phase/section skeleton
+// (store.getSnapshot().phases) rather than a hardcoded import, so a template with
+// phases that have no items yet (e.g. the "blank" template's 4 empty phases) still
+// renders a phase-card for each one instead of only ever showing phases that already
+// have at least one item.
+function groupItems(items, templatePhases = []) {
   const phases = [];
   const phaseMap = new Map();
-  PHASES.forEach((phase, index) => {
-    const entry = { ...phase, index, sections: phase.sections.map((section, sIndex) => ({ ...section, sIndex, items: [] })) };
+  templatePhases.forEach((phase, index) => {
+    const entry = { ...phase, index, sections: (phase.sections || []).map((section, sIndex) => ({ ...section, sIndex, items: [] })) };
     phaseMap.set(phase.title, entry);
     phases.push(entry);
   });
@@ -65,6 +69,10 @@ export function renderDashboard(app, { user, store }) {
     navigate('/signin', true);
     return;
   }
+  if (!store.getSnapshot().onboardingDone) {
+    navigate('/onboarding', true);
+    return;
+  }
 
   let ui = store.getUiState();
   let activeFilter = ui.filter || 'ALL';
@@ -83,7 +91,7 @@ export function renderDashboard(app, { user, store }) {
   const percentStat = el('span', { text: '0' });
   const progressFill = el('div', { className: 'progress-fill', style: 'width:0%' });
   const filterContainer = el('div', { className: 'filter-row' });
-  const searchInput = el('input', { className: 'search-input', placeholder: 'Search topics, e.g. Kafka, RAG, Saga…', value: searchQuery });
+  const searchInput = el('input', { className: 'search-input', placeholder: 'Search topics…', value: searchQuery });
   const content = el('main', { className: 'dashboard-content' });
   const saveBadge = el('div', { className: 'save-badge', id: 'saveBadge' });
   const syncPill = el('span', { className: 'sync-pill', text: 'Syncing' });
@@ -230,15 +238,18 @@ export function renderDashboard(app, { user, store }) {
     }));
 
     const filteredIds = new Set(filtered.map(i => i.id));
-    const phases = groupItems(allItems);
+    const phases = groupItems(allItems, snapshot.phases);
     content.replaceChildren();
 
     let visibleCount = 0;
     phases.forEach((phase, pi) => {
+      // A section that has no topics at all (e.g. the "blank" template's empty
+      // phases) always stays visible — only a section that HAS topics but none
+      // matching the current filter/search gets hidden.
       const visibleSections = phase.sections.map(section => ({
         ...section,
         items: section.items.filter(i => filteredIds.has(i.id))
-      })).filter(section => section.items.length > 0);
+      })).filter((section, sIdx) => phase.sections[sIdx].items.length === 0 || section.items.length > 0);
 
       if (!visibleSections.length) return;
       visibleCount += 1;
@@ -265,7 +276,7 @@ export function renderDashboard(app, { user, store }) {
           el('span', { className: 'chevron', text: '›' })
         ]),
         el('div', { className: 'phase-body' }, visibleSections.flatMap(section => [
-          el('div', { className: 'section-label', text: section.title }),
+          section.title ? el('div', { className: 'section-label', text: section.title }) : null,
           ...section.items.map(renderItemRow),
           renderAddRow(phase, section)
         ]))
@@ -314,7 +325,7 @@ export function renderDashboard(app, { user, store }) {
 
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });
     const filteredIds = new Set(filtered.map(i => i.id));
-    groupItems(allItems).forEach((phase, pi) => {
+    groupItems(allItems, snapshot.phases).forEach((phase, pi) => {
       const phaseCard = content.querySelector(`.phase-card[data-phase="${pi}"]`);
       if (!phaseCard) return;
       const progressEl = phaseCard.querySelector('.phase-progress');
@@ -339,7 +350,8 @@ export function renderDashboard(app, { user, store }) {
     dataset: { toggleAll: '1' },
     text: 'Expand all',
     onClick: () => {
-      const phases = groupItems(store.getSnapshot().items);
+      const snapshot = store.getSnapshot();
+      const phases = groupItems(snapshot.items, snapshot.phases);
       const allOpen = phases.every((_, i) => openPhases.has(i));
       openPhases = allOpen ? new Set() : new Set(phases.map((_, i) => i));
       persistUi();

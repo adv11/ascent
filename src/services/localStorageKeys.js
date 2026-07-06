@@ -1,7 +1,9 @@
 export const KEYS = {
   THEME: 'ascent-theme',
   ROADMAP: 'ascent-roadmap-v3',
-  UI_STATE: 'ascent-ui-v3'
+  UI_STATE: 'ascent-ui-v3',
+  ONBOARDING_DONE: 'ascent-onboarding-done',
+  TEMPLATE_ID: 'ascent-template-id'
 };
 
 export function verifyDismissedKey(uid) {

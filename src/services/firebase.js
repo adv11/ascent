@@ -23,6 +23,8 @@ import {
   onValue,
   off,
   set,
+  update,
+  get,
   remove,
   serverTimestamp,
   connectDatabaseEmulator
@@ -86,6 +88,9 @@ export const dbApi = {
   roadmapRef(uid) {
     return ref(database, `users/${uid}/roadmap`);
   },
+  metaRef(uid) {
+    return ref(database, `users/${uid}/meta`);
+  },
   listenRoadmap(uid, callback, onError) {
     const roadmapRef = this.roadmapRef(uid);
     onValue(roadmapRef, callback, onError);
@@ -93,6 +98,17 @@ export const dbApi = {
   },
   saveRoadmap(uid, payload) {
     return set(this.roadmapRef(uid), payload);
+  },
+  async getRoadmap(uid) {
+    const snapshot = await get(this.roadmapRef(uid));
+    return snapshot.exists() ? snapshot.val() : null;
+  },
+  async getMeta(uid) {
+    const snapshot = await get(this.metaRef(uid));
+    return snapshot.exists() ? snapshot.val() : null;
+  },
+  saveMeta(uid, meta) {
+    return update(this.metaRef(uid), meta);
   }
 };
 

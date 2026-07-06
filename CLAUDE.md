@@ -2,11 +2,11 @@
 
 Ascent ("Engineer your next move.") is a personal roadmap tracker for anyone learning,
 revising, or tracking progress toward a goal — students, professionals, or career
-switchers. The built-in roadmap currently covers backend engineering topics (Java,
-Spring Boot, microservices, GenAI/agentic AI, system design); support for other
-domains/roadmaps is planned (Issue #51). It's moving from a personal tool toward a
-sellable product, so treat correctness and polish here as customer-facing, not a side
-project.
+switchers. New sign-ups pick a starter template (Issue #51): Java Backend Engineer
+(the original roadmap — Java, Spring Boot, microservices, GenAI/agentic AI, system
+design), Frontend Developer, Data Scientist, or a blank slate. It's moving from a
+personal tool toward a sellable product, so treat correctness and polish here as
+customer-facing, not a side project.
 
 ## Stack
 
@@ -89,19 +89,25 @@ Claude Code supports working on multiple issues simultaneously using **git workt
 ```
 index.html                    entry HTML; has an inline no-FOUC theme bootstrap script
 src/main.js                   boot: migrate localStorage keys, init theme, auth gate, hash router wiring
-src/data/roadmap.js           seed phases/sections/items + resource library
-src/services/firebase.js      auth + Realtime Database access
+src/data/roadmap.js           backward-compat shim — re-exports the java-backend template, no logic
+src/data/templates/index.js   starter template registry — TEMPLATES, getTemplate, buildSeedItems(id), getTemplatePhases(id)
+src/data/templates/java-backend.js  the original roadmap (Java/Spring Boot/…), moved here verbatim
+src/data/templates/frontend.js      Frontend Developer starter template
+src/data/templates/data-science.js  Data Scientist starter template
+src/data/templates/blank.js         four empty starter phases (Learn/Practice/Build/Review)
+src/services/firebase.js      auth + Realtime Database access (roadmap + per-user meta)
 src/services/firebase.config.js          gitignored — your real Firebase project config
 src/services/firebase.config.example.js  committed template for the file above
 src/services/localStorageKeys.js  canonical `ascent-*` localStorage/sessionStorage key strings
 src/services/migration.js     one-time migration off the pre-rename `switchprep-*` key prefix
-src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + remote save
+src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + remote save, onboarding detection
 src/services/theme.js         dark/light theme state (localStorage + system preference)
 src/services/themeBootstrap.js  synchronous classic script — sets data-theme before CSS loads (no-FOUC)
 src/ui/router.js              tiny hash router (registerRoute/navigate/startRouter)
 src/ui/dom.js                 el() DOM-builder helper, debounce, isValidUrl
 src/ui/pages/signIn.js        sign-in screen
 src/ui/pages/signUp.js        sign-up screen
+src/ui/pages/onboarding.js     one-time starter template picker (route: /onboarding)
 src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really)
 src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + theme toggle + card)
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
@@ -138,8 +144,29 @@ and `data:` URI injection. Apply this at both render time and save time.
 **Store pattern** (`src/services/roadmapStore.js`): a single mutable `items` map,
 `subscribe(callback)`/`notify()` for pub-sub, and a 500ms debounced `queueSave()` that
 persists to `localStorage` immediately and to Firebase after the debounce. Snapshots
-carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`) and a `structuralVersion`
-counter.
+carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`), a `structuralVersion`
+counter, the active `templateId`, `onboardingDone`, and `phases` (the current
+template's phase/section skeleton — see below).
+
+**Starter templates and onboarding (`src/data/templates/`, `src/ui/pages/onboarding.js`)**
+— Issue #51. `src/data/templates/index.js` is the template registry (`TEMPLATES`,
+`getTemplate(id)`, `buildSeedItems(id)`, `getTemplatePhases(id)`); every template module
+(`java-backend.js`, `frontend.js`, `data-science.js`, `blank.js`) exports its own
+`PHASES` + `buildSeedItems()` in the same shape as the original `roadmap.js`. Templates
+are loaded via dynamic `import()` so a signed-out visitor's sign-in page never downloads
+roadmap content for templates they haven't picked. `roadmapStore.js`'s `setUser(user)`
+is now **async**: on every sign-in it does a one-time `dbApi.getMeta`/`dbApi.getRoadmap`
+read to decide `onboardingDone` — `meta.onboardingDone` wins if present; otherwise any
+account with real progress (an item with `custom: true` or `done: true`, local or
+remote) is treated as already onboarded and the flag is backfilled to Firebase with no
+forced migration step. Only when `onboardingDone` is false does `main.js` route to
+`/onboarding`; picking a card there calls `store.initFromTemplate(templateId)`, which
+seeds `items` from that template, marks onboarding done, and starts syncing. Always
+await `store.setUser(...)` before making a routing decision on its result — the
+onboarding-vs-`/app` redirect in `main.js` depends on this resolving first.
+`dashboard.js`'s `groupItems()` takes `store.getSnapshot().phases` instead of a
+hardcoded import specifically so a template like "blank" — whose phases have zero
+items — still renders a phase-card for each one; do not revert it to a static import.
 
 **`structuralVersion` — do not regress this.** It exists specifically to fix a checklist
 flicker bug: toggling `done` on an item does *not* bump `structuralVersion` (see

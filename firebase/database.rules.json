@@ -6,6 +6,14 @@
         ".write": "auth != null && auth.uid == $uid",
         "roadmap": {
           ".validate": "newData.hasChildren(['version', 'items'])"
+        },
+        "meta": {
+          "templateId": {
+            ".validate": "newData.isString()"
+          },
+          "onboardingDone": {
+            ".validate": "newData.isBoolean()"
+          }
         }
       }
     }

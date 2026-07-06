@@ -1,9 +1,10 @@
 # Ascent
 
 *Engineer your next move.* A roadmap tracker for anyone learning, revising, or working
-toward a goal — students, professionals, and career switchers alike. The built-in
-roadmap covers Java, Spring Boot, microservices, Kafka, Redis, system design, DSA, and
-GenAI/agentic AI, all in one editable, syncable checklist.
+toward a goal — students, professionals, and career switchers alike. New sign-ups pick
+a starter template — Java Backend Engineer (Java, Spring Boot, microservices, Kafka,
+Redis, system design, DSA, GenAI/agentic AI), Frontend Developer, Data Scientist, or a
+blank slate — all in one editable, syncable checklist.
 
 - Sign in with email/password or start instantly as a guest.
 - Progress syncs across devices via Firebase, with an offline/local fallback.

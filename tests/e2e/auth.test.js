@@ -16,10 +16,12 @@ test('theme toggle is visible on sign-in screen', async ({ page }) => {
   await expect(page.locator('button[aria-label*="mode"]')).toBeVisible({ timeout: 10_000 });
 });
 
-test('guest session starts and dashboard loads', async ({ page }) => {
+test('guest session starts, lands on the onboarding picker, and reaches the dashboard after picking a template', async ({ page }) => {
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
   await page.goto('/');
   await page.click('text=Continue as guest');
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.brand-name')).toContainText('Ascent');
 });
@@ -74,6 +76,8 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
 
   await page.goto('/');
   await page.click('text=Continue as guest');
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
   await page.locator('[data-action="edit"]').nth(0).click();
@@ -132,9 +136,11 @@ test('sign-up page has Continue as guest button', async ({ page }) => {
   await expect(page.locator('.btn.btn-secondary.btn-block')).toContainText('Continue as guest');
 });
 
-test('sign-up page Continue as guest navigates to dashboard', async ({ page }) => {
+test('sign-up page Continue as guest navigates to the onboarding picker, then the dashboard', async ({ page }) => {
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
   await page.goto('/#/signup');
   await page.click('text=Continue as guest');
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await page.locator('.template-card').first().click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 });

@@ -10,14 +10,16 @@
 ## 1. Project origin & goals
 
 Ascent is a personal roadmap tracker for anyone learning, revising, or tracking
-progress toward a goal — students, professionals, or career switchers. The built-in
-roadmap currently covers backend engineering topics (Java, Spring Boot, microservices,
-GenAI/agentic AI, system design); support for other domains/roadmaps is planned
-(Issue #51). It started as a personal tool and is moving toward a sellable product.
-Correctness and polish are treated as customer-facing, not side-project-level.
+progress toward a goal — students, professionals, or career switchers. New sign-ups
+pick a starter template (Issue #51) instead of always getting the original Java
+Backend Engineer roadmap: Java Backend Engineer, Frontend Developer, Data Scientist,
+or a blank slate to fill in themselves. It started as a personal tool and is moving
+toward a sellable product. Correctness and polish are treated as customer-facing, not
+side-project-level.
 
 **Current product stage (2026-07):** Phase 0 (Foundation & Standards) complete.
-Working toward Phase 1 (hosting, auth improvements, core architecture hardening).
+Working through Phase 1 (hosting ✅, auth improvements ✅, brand rename ✅, starter
+templates + onboarding ✅ — core architecture hardening continues).
 
 ---
 
@@ -55,16 +57,46 @@ user's data is loaded.
 ```
 src/data/roadmap.js
 ```
-Seed data only — the default phases, sections, topics, and resource library that every
-new user starts with. No business logic here. This is what `buildSeedItems()` in
-`roadmapStore.js` returns when there is no saved data for a user.
+Backward-compat shim (Issue #51) — re-exports `PHASES`, `RESOURCE_LIBRARY`,
+`TOPIC_RESOURCES`, `ROADMAP_VERSION`, and `buildSeedItems()` from
+`src/data/templates/java-backend.js` so every pre-existing import keeps working. No
+logic lives here; the actual seed data moved to `src/data/templates/`.
+
+```
+src/data/templates/
+```
+The starter template system (Issue #51). `index.js` is the registry: `TEMPLATES` (id,
+name, description, icon, `buildItems()`), `getTemplate(id)`, `buildSeedItems(templateId)`,
+and `getTemplatePhases(templateId)`. Each template module (`java-backend.js`,
+`frontend.js`, `data-science.js`, `blank.js`) exports its own `PHASES` + `buildSeedItems()`
+in the exact shape the original `roadmap.js` used, so `roadmapStore.js` and `dashboard.js`
+don't need to know which template is active beyond the id. `java-backend.js` is the
+original 500+-item roadmap, moved verbatim — nothing about its content changed.
+Templates are loaded via dynamic `import()` (not a static import at the top of
+`roadmapStore.js`) specifically so a signed-out visitor on the sign-in page never
+downloads roadmap content for templates they haven't picked yet — this file has no
+bundler/tree-shaking, so every module is its own network request.
+
+```
+src/ui/pages/onboarding.js
+```
+The `/onboarding` route (Issue #51) — a one-way template picker shown exactly once,
+right after a brand-new sign-up, before the dashboard ever renders. No back button.
+Renders one card per `TEMPLATES` entry; picking a card calls
+`store.initFromTemplate(templateId)` then navigates to `/app`. Self-guards like the
+other pages: redirects to `/signin` if there's no user, and to `/app` if
+`store.getSnapshot().onboardingDone` is already `true` (e.g. a returning user manually
+navigates to `#/onboarding`).
 
 ```
 src/services/firebase.js
 ```
 Thin wrappers around the Firebase SDK — `authApi` (signIn, signUp, signOut, onAuthChange)
-and `dbApi` (listenRoadmap, saveRoadmap). Keeps SDK coupling in one place so the rest of
-the codebase can be tested against the mock in `tests/__mocks__/firebase.js`.
+and `dbApi` (listenRoadmap, saveRoadmap, getRoadmap, getMeta, saveMeta). `getRoadmap`/
+`getMeta` are one-time `get()` reads (not listeners) used only during `setUser`'s
+onboarding-detection step (Issue #51); `listenRoadmap` remains the ongoing real-time
+sync mechanism once a user is confirmed onboarded. Keeps SDK coupling in one place so
+the rest of the codebase can be tested against the mock in `tests/__mocks__/firebase.js`.
 
 ```
 src/services/firebase.config.js   (gitignored)
@@ -81,12 +113,18 @@ The central state container. Key design decisions:
 - **Single mutable `items` map** — all mutations go through named helpers
   (`updateItem`, `addResource`, …) that call `notify()` + `queueSave()`.
 - **`subscribe(callback)` / `notify()`** — pub-sub; subscribers receive a snapshot
-  `{ items, saveState, structuralVersion }`.
+  `{ items, saveState, structuralVersion, templateId, onboardingDone, phases }`.
 - **500 ms debounced `queueSave()`** — writes to `localStorage` immediately and to
   Firebase after the debounce, to avoid hammering the database on every keystroke.
 - **`structuralVersion` counter** — see §5.1.
 - **`stableStringify` comparison** — see §5.2.
 - **`setUser(nextUser)` sign-out guard** — see §5.3.
+- **`setUser(nextUser)` is `async` and doubles as onboarding detection** (Issue #51) —
+  see §5.7. `main.js` must `await` it before deciding whether to route to `/onboarding`
+  or `/app`.
+- **`initFromTemplate(templateId)`** — called once by `onboarding.js` after a template
+  pick; seeds `items` from that template, sets `templateId`/`onboardingDone`, and starts
+  the same debounced-save + realtime-listener sync every other user gets.
 
 ```
 src/services/theme.js
@@ -290,6 +328,34 @@ Any new interactive element nested inside a row must follow this pattern or it w
 silently toggle the row's checkbox.
 
 Cross-reference: `CLAUDE.md §data-action click-guard convention`.
+
+### 5.7 Onboarding detection order (Issue #51)
+
+`roadmapStore.js`'s `setUser(nextUser)` is `async` specifically so it can resolve
+whether a user still needs the `/onboarding` template picker *before* `main.js` decides
+where to route them. On every sign-in it does a one-time `dbApi.getMeta(uid)` +
+`dbApi.getRoadmap(uid)` read (not the realtime listener — that only attaches once
+onboarding is confirmed done) and evaluates, in order:
+
+1. `remoteMeta.onboardingDone` is `true` → already onboarded; use `remoteMeta.templateId`.
+2. The local `ascent-onboarding-done` flag is `true` → already onboarded (fast local
+   path, e.g. offline); use the local `ascent-template-id`.
+3. Either the remote roadmap or the local roadmap already has an item with
+   `custom: true` or `done: true` → this is a pre-existing account from before the
+   template system existed. Treat it as onboarded and **backfill**
+   `meta.onboardingDone`/`meta.templateId` to Firebase (fire-and-forget — no forced
+   migration step, per the issue's Part 5).
+4. Otherwise → a genuinely new account. `onboardingDone = false`, `items = {}`, and the
+   realtime listener is **not** attached yet (nothing to sync until a template exists).
+
+`main.js`'s auth listener `await`s `setUser` before reading
+`store.getSnapshot().onboardingDone` to route to `/onboarding` or `/app` — if this ever
+becomes a fire-and-forget call again, the router will act on stale state from the
+*previous* user and route incorrectly. `dashboard.js` and `onboarding.js` each also
+self-guard on `onboardingDone` (mirroring the existing `!user` self-guards on every
+page) so direct hash navigation can't bypass the picker.
+
+Cross-reference: `CLAUDE.md §Starter templates and onboarding`.
 
 ---
 
@@ -529,3 +595,45 @@ none existed before this PR.
 is Issue #10; Firebase Console changes (project display name, Auth email templates,
 custom action-URL domain) are manual, non-code steps documented as a checklist on the
 closing PR.
+
+### 2026-07-06 — PR #TBD — Starter template system, new-user onboarding picker (issue #51)
+
+**New directory**: `src/data/templates/` — the starter template registry (`index.js`:
+`TEMPLATES`, `getTemplate`, `buildSeedItems(templateId)`, `getTemplatePhases(templateId)`)
+plus four template modules: `java-backend.js` (the original roadmap, moved verbatim from
+`src/data/roadmap.js`), `frontend.js`, `data-science.js`, and `blank.js` (four empty
+phases, no seeded topics). `src/data/roadmap.js` is now a thin re-export shim pointing at
+`templates/java-backend.js` — every existing import of it keeps working unchanged.
+Templates load via dynamic `import()` so the sign-in/sign-up pages never download roadmap
+content the visitor hasn't picked yet.
+
+**New route/page**: `src/ui/pages/onboarding.js` (`/onboarding`) — a one-way template
+picker (no back button) shown once, right after a brand-new sign-up. Renders one card per
+registered template with a live item count (fetched async per card), and calls the new
+`roadmapStore.initFromTemplate(templateId)` on selection.
+
+**`src/services/roadmapStore.js`**: `setUser(nextUser)` is now `async`. It performs a
+one-time `dbApi.getMeta` + `dbApi.getRoadmap` read to decide `onboardingDone` before
+attaching the realtime `listenRoadmap` listener — see §5.7 for the full detection order,
+including the Part 5 backfill for every pre-existing account. Snapshots now also carry
+`templateId`, `onboardingDone`, and `phases` (the active template's phase/section
+skeleton). New `initFromTemplate(templateId)` seeds items from a chosen template and
+starts syncing.
+
+**`src/services/firebase.js`**: `dbApi` gains `getRoadmap`/`getMeta` (one-time `get()`
+reads) and `saveMeta` (partial `update()` of `users/{uid}/meta`), alongside the existing
+`listenRoadmap`/`saveRoadmap`.
+
+**`firebase/database.rules.json`**: added validation for `users/{uid}/meta/templateId`
+(string) and `meta/onboardingDone` (boolean).
+
+**`src/ui/pages/dashboard.js`**: `groupItems()` now takes the active template's phase
+skeleton (`store.getSnapshot().phases`) as a parameter instead of a hardcoded `PHASES`
+import, and a section with zero total items (as opposed to zero items *after* a
+filter/search) always stays visible — otherwise the "blank" template's four empty phases
+would never render a phase-card at all. Also self-guards on `!store.getSnapshot().onboardingDone`
+the same way it already self-guards on `!user`.
+
+**Copy**: the dashboard search input's placeholder ("Search topics, e.g. Kafka, RAG,
+Saga…") was the last Java-specific string outside the templates themselves; changed to
+"Search topics…".
