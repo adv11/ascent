@@ -351,11 +351,44 @@ onboarding is confirmed done) and evaluates, in order:
 `main.js`'s auth listener `await`s `setUser` before reading
 `store.getSnapshot().onboardingDone` to route to `/onboarding` or `/app` — if this ever
 becomes a fire-and-forget call again, the router will act on stale state from the
-*previous* user and route incorrectly. `dashboard.js` and `onboarding.js` each also
-self-guard on `onboardingDone` (mirroring the existing `!user` self-guards on every
-page) so direct hash navigation can't bypass the picker.
+*previous* user and route incorrectly. `dashboard.js` self-guards on `onboardingDone`
+(mirroring the existing `!user` self-guard) so direct hash navigation to `#/app` can't
+bypass first-time onboarding. `onboarding.js` itself no longer bounces an already-
+onboarded user away — see §5.8, it's a deliberate re-entry point now.
 
 Cross-reference: `CLAUDE.md §Starter templates and onboarding`.
+
+### 5.8 Switching templates and the `stateCallId` stale-call guard (Issue #51 follow-up)
+
+Two gaps surfaced from real-world manual testing of the onboarding picker, fixed in the
+same PR before merge:
+
+**No way back.** The picker was originally a strict one-way gate — once a template was
+picked, there was no UI path back to it, even to deliberately start over with a
+different template. Fixed by adding a **"Switch template"** link to the dashboard
+header (`navigate('/onboarding')`) and relaxing `onboarding.js`'s self-guard: it no
+longer redirects away when `onboardingDone` is already `true`. Instead, when reached in
+that state it shows a **"← Back to my roadmap"** link and wraps the pick handler in a
+`confirm()` — since `initFromTemplate()` fully replaces `items`, switching is
+destructive and needs explicit confirmation. First-time onboarding
+(`onboardingDone === false`) shows neither the back link nor the confirm prompt, since
+there is no existing roadmap to lose yet.
+
+**Stale async writes.** `setUser()` and `initFromTemplate()` both `await` a Firebase
+round-trip before mutating store state. Firebase's `onAuthStateChanged` can fire in
+quick succession — most notably, deleting an account and immediately signing up again
+with the same email fires it for the old uid (`null`) and the new uid back-to-back. If
+an older call's network round-trip happens to resolve *after* a newer call has already
+finished, the older call would still go on to overwrite `items`/`templateId`/
+`onboardingDone` with its now-stale result — observed as a freshly re-created account
+incorrectly skipping the onboarding picker. Fixed with a `stateCallId` counter: every
+`setUser`/`initFromTemplate` call captures the counter's value at entry and re-checks it
+against the (module-level) current value after each `await`; if a newer call has since
+started, the older one returns without touching any state. Any future `await` added to
+either function must be followed by the same check before mutating state — see the
+`isStale()` helper in `setUser` for the pattern.
+
+Cross-reference: `CLAUDE.md §setUser/initFromTemplate stale-call guard`.
 
 ---
 
@@ -607,10 +640,12 @@ phases, no seeded topics). `src/data/roadmap.js` is now a thin re-export shim po
 Templates load via dynamic `import()` so the sign-in/sign-up pages never download roadmap
 content the visitor hasn't picked yet.
 
-**New route/page**: `src/ui/pages/onboarding.js` (`/onboarding`) — a one-way template
-picker (no back button) shown once, right after a brand-new sign-up. Renders one card per
-registered template with a live item count (fetched async per card), and calls the new
-`roadmapStore.initFromTemplate(templateId)` on selection.
+**New route/page**: `src/ui/pages/onboarding.js` (`/onboarding`) — a template picker
+shown once, right after a brand-new sign-up (no back link or confirmation needed then,
+since there's nothing to lose yet). Renders one card per registered template with a
+live item count (fetched async per card), and calls the new
+`roadmapStore.initFromTemplate(templateId)` on selection. Also reachable later via the
+dashboard's new "Switch template" link — see the follow-up note below.
 
 **`src/services/roadmapStore.js`**: `setUser(nextUser)` is now `async`. It performs a
 one-time `dbApi.getMeta` + `dbApi.getRoadmap` read to decide `onboardingDone` before
@@ -637,3 +672,14 @@ the same way it already self-guards on `!user`.
 **Copy**: the dashboard search input's placeholder ("Search topics, e.g. Kafka, RAG,
 Saga…") was the last Java-specific string outside the templates themselves; changed to
 "Search topics…".
+
+**Follow-up fixes from manual testing, same PR**: (1) added a "Switch template" link to
+the dashboard header and relaxed `onboarding.js`'s self-guard so it no longer redirects
+an already-onboarded user away — reached that way it shows a "← Back to my roadmap"
+link and a `confirm()` before replacing the roadmap (see §5.8); (2) fixed a real
+concurrency bug where a slow, superseded `setUser()` call could resolve after a newer
+one and clobber its state — most reproducible by deleting an account and immediately
+signing up again with the same email — via a `stateCallId` generation guard shared with
+`initFromTemplate()` (see §5.8); (3) substantially expanded `frontend.js` (116 → 230
+topics) and `data-science.js` (80 → 166 topics) to match the Java Backend template's
+depth, adding a `TOPIC_RESOURCES` map to both.

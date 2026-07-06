@@ -451,6 +451,12 @@ export function renderDashboard(app, { user, store }) {
           syncPill,
           el('span', { className: 'user-chip', text: userLabel }),
           user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
+          el('button', {
+            type: 'button',
+            className: 'btn btn-ghost btn-sm',
+            text: 'Switch template',
+            onClick: () => navigate('/onboarding')
+          }),
           !user.isAnonymous ? el('button', {
             type: 'button',
             className: 'btn btn-ghost btn-sm btn-danger-text',

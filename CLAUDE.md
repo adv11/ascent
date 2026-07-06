@@ -167,6 +167,22 @@ onboarding-vs-`/app` redirect in `main.js` depends on this resolving first.
 `dashboard.js`'s `groupItems()` takes `store.getSnapshot().phases` instead of a
 hardcoded import specifically so a template like "blank" — whose phases have zero
 items — still renders a phase-card for each one; do not revert it to a static import.
+A "Switch template" link in the dashboard header re-enters `/onboarding` at any time —
+reached this way (`onboardingDone` already `true`), the page shows a "← Back to my
+roadmap" link and requires `confirm()` before `initFromTemplate()` runs, since picking a
+new template discards the current one; first-time onboarding (`onboardingDone === false`)
+shows neither, since there's nothing to lose yet.
+
+**`setUser`/`initFromTemplate` stale-call guard — `stateCallId`.** Firebase's
+`onAuthStateChanged` can fire in quick succession (e.g. delete-account immediately
+followed by a fresh sign-up with the same email). Because both functions do an `await`
+before mutating store state, an older call can still be in flight when a newer one
+finishes — without a guard, the older call would resolve later and clobber the newer,
+correct state with stale data. `roadmapStore.js` captures a `stateCallId` snapshot at
+the top of each call and checks it's still current after every `await`; if a newer call
+has already started, the older one aborts without touching `items`/`templateId`/
+`onboardingDone`. Any new `await` added to either function must be followed by the same
+staleness check before it mutates state.
 
 **`structuralVersion` — do not regress this.** It exists specifically to fix a checklist
 flicker bug: toggling `done` on an item does *not* bump `structuralVersion` (see

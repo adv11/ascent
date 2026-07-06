@@ -270,6 +270,40 @@ describe('onboarding detection (setUser)', () => {
     expect(snapshot.allItems).toEqual(remoteItems);
     expect(dbApi.listenRoadmap).toHaveBeenCalled();
   });
+
+  // Firebase's onAuthStateChanged can fire in quick succession — e.g. deleting an
+  // account and immediately signing up again with the same email. If an older,
+  // slower setUser() call is still awaiting its network round-trip when a newer
+  // one finishes, it must not overwrite the newer (correct) state on arrival.
+  it('a slow, superseded setUser() call does not clobber a newer setUser() call that already resolved', async () => {
+    let resolveSlowUser;
+    const slowPromise = new Promise(resolve => { resolveSlowUser = resolve; });
+
+    dbApi.getMeta.mockImplementation(uid => (uid === 'slow-user' ? slowPromise : Promise.resolve({ onboardingDone: true, templateId: 'blank' })));
+    dbApi.getRoadmap.mockImplementation(uid => {
+      if (uid === 'slow-user') return slowPromise.then(() => null);
+      return Promise.resolve({ version: 3, items: { 'custom-1': { id: 'custom-1', title: 'x', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } } });
+    });
+
+    const store = createRoadmapStore();
+
+    const slowCall = store.setUser({ uid: 'slow-user' });
+    const fastCall = store.setUser({ uid: 'fast-user' });
+    await fastCall;
+
+    expect(store.getSnapshot().uid).toBe('fast-user');
+    expect(store.getSnapshot().onboardingDone).toBe(true);
+    expect(store.getSnapshot().templateId).toBe('blank');
+
+    resolveSlowUser(null); // let the stale call finish resolving, after the fact
+    await slowCall;
+
+    // The stale slow-user resolution must not have overwritten fast-user's state.
+    expect(store.getSnapshot().uid).toBe('fast-user');
+    expect(store.getSnapshot().onboardingDone).toBe(true);
+    expect(store.getSnapshot().templateId).toBe('blank');
+    expect(Object.keys(store.getSnapshot().allItems)).toEqual(['custom-1']);
+  });
 });
 
 describe('initFromTemplate', () => {

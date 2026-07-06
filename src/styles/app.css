@@ -343,6 +343,7 @@ body {
 }
 
 .onboarding-head { text-align: center; display: grid; gap: 8px; justify-items: center; }
+.onboarding-back { justify-self: start; }
 
 .template-grid {
   display: grid;

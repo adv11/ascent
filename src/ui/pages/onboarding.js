@@ -4,17 +4,17 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createBrandMark } from '../components/brand.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 
-// Shown exactly once, right after a brand-new sign-up (Issue #51) — there is no
-// back button by design, since picking a template is a one-way gate into /app.
+// Shown once, right after a brand-new sign-up (Issue #51). A user who has already
+// picked a template can also reach this page later via the dashboard's "Switch
+// template" link to start over with a different one — picking a card in that case
+// replaces the current roadmap, so it's gated behind a confirm().
 export function renderOnboarding(app, { user, store }) {
   if (!user) {
     navigate('/signin', true);
     return;
   }
-  if (store.getSnapshot().onboardingDone) {
-    navigate('/app', true);
-    return;
-  }
+
+  const isSwitchingTemplate = store.getSnapshot().onboardingDone;
 
   let picking = false;
   const cardButtons = [];
@@ -25,6 +25,10 @@ export function renderOnboarding(app, { user, store }) {
 
   async function pickTemplate(template, button) {
     if (picking) return;
+    if (isSwitchingTemplate && !confirm(
+      `Switch to "${template.name}"? This replaces your current roadmap and progress — this cannot be undone.`
+    )) return;
+
     picking = true;
     setBusy(true);
     button.classList.add('picking');
@@ -64,6 +68,14 @@ export function renderOnboarding(app, { user, store }) {
   });
 
   const themeToggleBtn = createThemeToggle();
+  const backBtn = isSwitchingTemplate
+    ? el('button', {
+      type: 'button',
+      className: 'btn btn-ghost btn-sm onboarding-back',
+      text: '← Back to my roadmap',
+      onClick: () => navigate('/app', true)
+    })
+    : null;
 
   const node = el('div', { className: 'onboarding-page fade-in' }, [
     el('div', { className: 'auth-page-bg' }),
@@ -72,12 +84,18 @@ export function renderOnboarding(app, { user, store }) {
         el('div', { className: 'brand' }, createBrandMark()),
         themeToggleBtn
       ]),
+      backBtn,
       el('header', { className: 'onboarding-head' }, [
-        el('h1', { className: 'auth-title', text: 'Pick a starting roadmap' }),
-        el('p', { className: 'auth-subtitle', text: 'Choose a template to get started. You can add, edit, or remove topics anytime after.' })
+        el('h1', { className: 'auth-title', text: isSwitchingTemplate ? 'Switch your starter roadmap' : 'Pick a starting roadmap' }),
+        el('p', {
+          className: 'auth-subtitle',
+          text: isSwitchingTemplate
+            ? 'Picking a template below replaces your current roadmap and progress.'
+            : 'Choose a template to get started. You can add, edit, or remove topics anytime after.'
+        })
       ]),
       el('div', { className: 'template-grid', role: 'list' }, cards)
-    ])
+    ].filter(Boolean))
   ]);
 
   app.replaceChildren(node);

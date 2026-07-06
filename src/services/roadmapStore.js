@@ -34,6 +34,13 @@ export function createRoadmapStore() {
   let saveTimer = null;
   let structuralVersion = 0;
   let lastFlushedStr = null;
+  // Bumped at the start of every setUser()/initFromTemplate() call. Firebase's
+  // onAuthStateChanged can fire in quick succession (e.g. delete-account
+  // followed immediately by a fresh sign-up with the same email) — without
+  // this, a slower, now-stale call could still be awaiting its network
+  // round-trip when a newer one finishes, and would then clobber the correct
+  // state on arrival.
+  let stateCallId = 0;
   const subscribers = new Set();
 
   function notify(meta = {}) {
@@ -164,6 +171,8 @@ export function createRoadmapStore() {
   // detection order and the Part 5 backfill this performs.
   async function setUser(nextUser) {
     const nextUid = nextUser?.uid || null;
+    const callId = ++stateCallId;
+    const isStale = () => callId !== stateCallId;
 
     // Whenever the active uid changes (sign-out, sign-in as a different user),
     // wipe local storage so the incoming user never sees the outgoing user's data.
@@ -203,6 +212,10 @@ export function createRoadmapStore() {
       console.error('Failed to load roadmap/meta from Firebase', error);
     }
 
+    // A newer setUser() call (e.g. the very next auth state change) has already
+    // taken over — applying this now-stale result would clobber correct state.
+    if (isStale()) return;
+
     if (remoteMeta?.onboardingDone) {
       onboardingDone = true;
       templateId = remoteMeta.templateId || 'java-backend';
@@ -232,7 +245,10 @@ export function createRoadmapStore() {
     }
 
     const baseItems = await buildTemplateSeedItems(templateId);
-    templatePhases = await getTemplatePhases(templateId);
+    const nextTemplatePhases = await getTemplatePhases(templateId);
+
+    if (isStale()) return;
+    templatePhases = nextTemplatePhases;
 
     if (remoteRoadmap?.items) {
       items = mergeWithSeed(remoteRoadmap.items, baseItems);
@@ -255,10 +271,16 @@ export function createRoadmapStore() {
   // user chooses a starter template. Persists the choice both locally and (once
   // authenticated) to Firebase meta, then starts syncing like any other session.
   async function initFromTemplate(chosenTemplateId) {
+    const callId = ++stateCallId;
+
     const [nextItems, nextPhases] = await Promise.all([
       buildTemplateSeedItems(chosenTemplateId),
       getTemplatePhases(chosenTemplateId)
     ]);
+
+    // A setUser() call (e.g. a concurrent auth state change) has taken over —
+    // don't stomp on whatever state it has already established.
+    if (callId !== stateCallId) return;
 
     items = nextItems;
     templatePhases = nextPhases;

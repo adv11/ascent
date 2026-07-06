@@ -15,13 +15,13 @@ export const TEMPLATES = [
   {
     id: 'frontend',
     name: 'Frontend Developer',
-    description: 'HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, and accessibility.',
+    description: 'HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep.',
     icon: '🖥'
   },
   {
     id: 'data-science',
     name: 'Data Scientist',
-    description: 'Python, statistics, ML fundamentals, deep learning, SQL, data engineering, and MLOps.',
+    description: 'Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep.',
     icon: '📊'
   },
   {

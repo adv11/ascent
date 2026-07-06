@@ -31,15 +31,9 @@ describe('onboarding page — gating', () => {
     expect(navigate).toHaveBeenCalledWith('/signin', true);
     expect(app.children.length).toBe(0);
   });
-
-  it('redirects straight to /app when onboarding is already done (returning user)', async () => {
-    const { app, navigate } = await setup({ onboardingDone: true });
-    expect(navigate).toHaveBeenCalledWith('/app', true);
-    expect(app.querySelector('.template-grid')).toBeNull();
-  });
 });
 
-describe('onboarding page — template picker', () => {
+describe('onboarding page — first-time picker (onboardingDone === false)', () => {
   it('renders exactly one card per registered template', async () => {
     const { TEMPLATES } = await import('../../src/data/templates/index.js');
     const { app } = await setup();
@@ -47,19 +41,21 @@ describe('onboarding page — template picker', () => {
     expect(cards.length).toBe(TEMPLATES.length);
   });
 
-  it('has no back/cancel control — onboarding is a one-way gate', async () => {
+  it('has no back/cancel control — nothing to go back to yet', async () => {
     const { app } = await setup();
     const buttons = [...app.querySelectorAll('button')].filter(b => !b.classList.contains('theme-toggle'));
     expect(buttons.every(b => !/\bback\b|\bcancel\b/i.test(b.textContent))).toBe(true);
   });
 
-  it('clicking a card picks that template and navigates to /app', async () => {
+  it('clicking a card picks that template without confirmation and navigates to /app', async () => {
     const initFromTemplate = vi.fn().mockResolvedValue(undefined);
+    const confirmSpy = vi.spyOn(window, 'confirm');
     const { app, navigate } = await setup({ initFromTemplate });
     const blankCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Start blank'));
     blankCard.click();
     await vi.waitFor(() => expect(initFromTemplate).toHaveBeenCalledWith('blank'));
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
+    expect(confirmSpy).not.toHaveBeenCalled();
   });
 
   it('disables every card while a pick is in flight, to prevent a double-submit', async () => {
@@ -72,5 +68,40 @@ describe('onboarding page — template picker', () => {
 
     expect(cards[1].disabled).toBe(true);
     resolvePick();
+  });
+});
+
+describe('onboarding page — switch-template mode (onboardingDone === true)', () => {
+  it('does NOT redirect away, and shows a "Back to my roadmap" link', async () => {
+    const { app, navigate } = await setup({ onboardingDone: true });
+    expect(navigate).not.toHaveBeenCalled();
+    const backBtn = [...app.querySelectorAll('button')].find(b => /back to my roadmap/i.test(b.textContent));
+    expect(backBtn).toBeTruthy();
+    backBtn.click();
+    expect(navigate).toHaveBeenCalledWith('/app', true);
+  });
+
+  it('requires confirmation before replacing the current roadmap, and does nothing if cancelled', async () => {
+    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const { app, navigate } = await setup({ onboardingDone: true, initFromTemplate });
+
+    app.querySelector('.template-card').click();
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(initFromTemplate).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalledWith('/app', true);
+  });
+
+  it('switches to the picked template once the user confirms', async () => {
+    const initFromTemplate = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const { app, navigate } = await setup({ onboardingDone: true, initFromTemplate });
+
+    const blankCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Start blank'));
+    blankCard.click();
+
+    await vi.waitFor(() => expect(initFromTemplate).toHaveBeenCalledWith('blank'));
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 });

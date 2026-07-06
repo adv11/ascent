@@ -13,8 +13,8 @@ Returns a store instance with the following methods.
 | Method | Signature | Notes |
 |---|---|---|
 | `subscribe` | `(callback: (snapshot) => void) => unsubscribe` | Calls `callback` immediately with the current snapshot, then on every `notify()`. |
-| `setUser` | `async (user: { uid } \| null) => void` | **Must be awaited.** Resolves `onboardingDone`/`templateId` for the signed-in user (or clears state on sign-out) before returning. See "Onboarding detection" below. |
-| `initFromTemplate` | `async (templateId: string) => void` | Seeds `items` from the given template, sets `onboardingDone = true`, and starts syncing. Called once, by `onboarding.js`. |
+| `setUser` | `async (user: { uid } \| null) => void` | **Must be awaited.** Resolves `onboardingDone`/`templateId` for the signed-in user (or clears state on sign-out) before returning. See "Onboarding detection" below. Safe to call concurrently with itself or `initFromTemplate` — a call superseded by a newer one before it finishes aborts without mutating state (the `stateCallId` guard, see `docs/architecture.md` §5.8). |
+| `initFromTemplate` | `async (templateId: string) => void` | Seeds `items` from the given template, sets `onboardingDone = true`, and starts syncing. Called by `onboarding.js` — either during first-time onboarding, or later via the dashboard's "Switch template" link (which replaces the current roadmap, so the caller must confirm with the user first). Same stale-call guard as `setUser`. |
 | `getSnapshot` | `(meta?: object) => Snapshot` | Synchronous; returns the current state merged with any extra `meta` fields. |
 | `updateItem` | `(id: string, patch: object) => void` | Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). |
 | `addItem` | `({ title, phase, section, priority }) => void` | Always bumps `structuralVersion`. |
