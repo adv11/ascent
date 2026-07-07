@@ -637,6 +637,49 @@ started-but-not-active template; a hidden template that's also started stays vis
 Cross-reference: `CLAUDE.md §Multi-roadmap support`, `CLAUDE.md §Flush-before-switch`,
 `CLAUDE.md §Stale-listener guard`, `docs/api.md`.
 
+### 5.12 Storage adapter abstraction (Issue #5, part 1 of 3)
+
+Everything above in §5.11 describes reads/writes as going straight to Firebase, because
+until this issue that was the only backend. Issue #5 asks for Google Drive as a second,
+opt-in backend, plus the full Google OAuth (GIS) sign-in flow and an account-migration
+path — too much for one PR, and the sign-in half needs an OAuth client ID only the
+product owner can provision. Split into three PRs, all tracked against issue #5:
+
+1. **This PR** — `StorageAdapter` interface + `FirebaseAdapter` (`dbApi`'s exact logic,
+   relocated) + a standalone `LocalStorageAdapter`. `roadmapStore.js` now calls whichever
+   adapter `getStorageAdapter()` (`src/services/storage/adapterFactory.js`) returns,
+   instead of importing `firebase.js`'s `dbApi` directly. **No behavior change** —
+   `adapterFactory.js` currently always returns `firebaseAdapter`, so every code path in
+   §5.11 above behaves identically; only the import boundary moved.
+2. **Later** — `GoogleDriveAdapter` (conflict retry via etag, visibility-based polling
+   since Drive has no push) and `adapterFactory` branching by auth type.
+3. **Later** — "Sign in with Google" UI, real GIS wiring, Firebase→Drive migration flow.
+
+**Why the interface differs from issue #5's own sketch.** The issue's proposed contract
+is `load(roadmapId)`/`save(roadmapId, data)` — one document, no user concept. That
+predates issues #58 and #4, which made the app multi-user *and* multi-roadmap-per-user;
+`roadmapStore.js` already calls Firebase with `(uid, templateId, ...)` on every roadmap
+method, plus a separate per-user `meta` document and a one-time legacy-migration read.
+`StorageAdapter` (`src/services/storage/StorageAdapter.js`) is shaped to match what
+`roadmapStore.js` actually calls, not the issue's simplified MVP text — see `docs/api.md`
+for the full method list. `getLegacyRoadmap` is optional (default resolves `null`) since
+only Firebase has pre-#58 data to migrate from; `now()` is adapter-specific (Firebase
+stamps its `serverTimestamp()` sentinel, a future Drive adapter would stamp an ISO date
+string) so each backend controls its own write-timestamp representation.
+
+**`LocalStorageAdapter` is intentionally not wired into `roadmapStore.js` yet.**
+`roadmapStore.js` already maintains its own local-cache bookkeeping (`KEYS.ROADMAPS` and
+friends — see §5.11's "Store shape") independently of whichever remote adapter is
+active, and that is untouched by this PR. `LocalStorageAdapter` is a real, unit-tested
+implementation of the same `StorageAdapter` contract over its own dedicated keys
+(`KEYS.LOCAL_ADAPTER_ROADMAPS`/`KEYS.LOCAL_ADAPTER_META`) — built now so a later PR can
+select it (e.g. a true guest-only local mode, or an explicit offline-cache adapter)
+without redesigning the interface at that point. It is deliberately unreferenced by
+`adapterFactory.js` today; this is scope discipline, not an oversight.
+
+Cross-reference: `CLAUDE.md §Storage adapter abstraction`, `docs/api.md §Storage
+adapters`.
+
 ---
 
 ## 6. Deploy checklist
@@ -1159,7 +1202,7 @@ focusField); two new cases in `tests/integration/roadmapStore.test.js`'s
 `notes` field reads as `''`); `tests/e2e/itemNotes.test.js` (add note → reopen → note
 restored; indicator visibility + click-to-focus; survives a page reload).
 
-### 2026-07-07 — PR #TBD — Fix: dirty local blob outranked by stale remote on reload (issue #67)
+### 2026-07-07 — PR #68 — Fix: dirty local blob outranked by stale remote on reload (issue #67)
 
 Found while investigating an E2E failure surfaced during an unrelated PR
 (`tests/e2e/itemNotes.test.js`'s "notes survive a page reload"): reproduced
@@ -1175,3 +1218,35 @@ blob outranks stale remote" describe block (dirty local wins over stale remote; 
 recovered dirty state re-queues a save; an already-clean local blob still reads from
 remote as before, unaffected). Verified against the local Firebase emulator: the
 previously-deterministic E2E failure passed on repeated runs after the fix.
+
+### 2026-07-07 — PR #TBD — Storage adapter abstraction (issue #5, part 1/3)
+
+First of three PRs implementing issue #5 (pluggable storage backends). This PR
+introduces the `StorageAdapter` interface and refactors `roadmapStore.js` to go through
+it instead of importing `firebase.js` directly — see §5.12 above for the full
+rationale, including why the interface's shape (`(uid, templateId, ...)` on every
+method, plus a separate `meta` document) deviates from the issue's simpler MVP sketch.
+
+`src/services/storage/FirebaseAdapter.js` is `dbApi`'s exact previous logic (same ref
+paths, same method bodies), just relocated out of `firebase.js`; `firebase.js` keeps
+only `auth`/`database`/`firebaseClock`/`authApi`/`authErrorMessage`.
+`src/services/storage/adapterFactory.js`'s `getStorageAdapter()` always returns
+`firebaseAdapter` for now — every signed-in uid, including anonymous/guest sessions
+(which already used Firebase before this PR), keeps identical behavior; this is the
+seam part 2 extends once a `GoogleDriveAdapter` exists.
+`src/services/storage/LocalStorageAdapter.js` is a standalone, tested implementation of
+the same contract over its own dedicated local-storage keys — not wired into
+`roadmapStore.js` in this PR (see §5.12).
+
+No behavior change: `roadmapStore.js`'s echo guard, stale-call guard, flush-before-
+switch, and `structuralVersion` logic are untouched — only the 13 `dbApi.*` call sites
+became `adapter.*`, and the two `firebaseClock()` calls became `adapter.now()`.
+
+New tests: `tests/unit/storage/StorageAdapter.test.js` (required methods throw, optional
+methods have safe defaults); `tests/unit/storage/LocalStorageAdapter.test.js`
+(save/get/delete round-trips, per-template isolation, partial `saveMeta` updates,
+no-op `listenRoadmap` unsubscribe, `uid` is ignored). The existing 63-test
+`tests/integration/roadmapStore.test.js` suite required no behavioral changes — only its
+mock target moved from `../../src/services/firebase.js` to `../../src/services/storage/
+adapterFactory.js`, keeping the same `dbApi`-named fake so every existing test body is
+unchanged.

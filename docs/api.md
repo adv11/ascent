@@ -1,10 +1,10 @@
 # Ascent — Public Store & Service Contracts
 
 This document is the reference for the public contracts of `roadmapStore.js`,
-`firebase.js`, `src/data/templates/index.js`, and the AI-import modules under
-`src/core/roadmap/` — the surfaces other modules (and future contributors) are expected
-to code against. For the *why* behind these decisions, see `docs/architecture.md`.
-Update this file whenever one of these contracts changes shape.
+`firebase.js`, `src/services/storage/`, `src/data/templates/index.js`, and the
+AI-import modules under `src/core/roadmap/` — the surfaces other modules (and future
+contributors) are expected to code against. For the *why* behind these decisions, see
+`docs/architecture.md`. Update this file whenever one of these contracts changes shape.
 
 ## `createRoadmapStore()` — `src/services/roadmapStore.js`
 
@@ -137,11 +137,53 @@ Pure — no DOM, no store, no Firebase. Only ever called on data that has alread
 | Export | Signature | Notes |
 |---|---|---|
 | `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, onChange` | Thin wrappers around Firebase Auth. |
-| `dbApi.listenRoadmap` | `(uid, templateId, callback, onError) => unsubscribe` | Realtime listener on `users/{uid}/roadmaps/{templateId}` (issue #58 — was `users/{uid}/roadmap`, no `templateId`). Only one listener is attached at a time; switching templates detaches the previous one first. |
-| `dbApi.saveRoadmap` | `(uid, templateId, payload) => Promise<void>` | Full overwrite of `users/{uid}/roadmaps/{templateId}`. |
-| `dbApi.getRoadmap` | `(uid, templateId) => Promise<{ version, items, phases? } \| null>` | One-time read of a specific template's node — used by `resolveRoadmapItems` when a started template isn't already in the in-memory `roadmapCache`. `phases` is only ever meaningfully present for a custom roadmap (issue #4) — a built-in template's phases are code-derived, not read from here. |
-| `dbApi.deleteRoadmap` | `(uid, templateId) => Promise<void>` | Issue #4 — removes `users/{uid}/roadmaps/{templateId}` entirely. Only ever called for a custom roadmap the user has explicitly deleted; built-in template ids are never removed. |
-| `dbApi.getLegacyRoadmap` | `(uid) => Promise<{ version, items } \| null>` | Issue #58 — one-time read of the old singular `users/{uid}/roadmap` path. Only ever called during legacy-account migration in `setUser`; never written to. |
-| `dbApi.getMeta` | `(uid) => Promise<{ onboardingDone?, templateId?, activeTemplateId?, startedTemplateIds?, hiddenTemplateIds?, customRoadmaps? } \| null>` | One-time read of `users/{uid}/meta`. `templateId` is the pre-#58 field, still read as a migration fallback; `activeTemplateId`/`startedTemplateIds` are the current fields; `customRoadmaps` is issue #4. |
-| `dbApi.saveMeta` | `(uid, meta: { onboardingDone?, activeTemplateId?, startedTemplateIds?, hiddenTemplateIds?, customRoadmaps? }) => Promise<void>` | Partial `update()` — does not overwrite the whole `meta` node. |
 | `authErrorMessage` | `(error) => string` | Maps Firebase Auth error codes to user-facing copy. |
+| `database` | Firebase `Database` instance | Consumed only by `FirebaseAdapter` (below) — no other module should read/write the Realtime Database directly. |
+| `firebaseClock` | `() => ServerValue` | Firebase's `serverTimestamp()` sentinel. Consumed only by `FirebaseAdapter.now()`. |
+
+## Storage adapters — `src/services/storage/` (issue #5)
+
+`roadmapStore.js` no longer imports Firebase directly — it calls whichever adapter
+`getStorageAdapter()` returns. The interface is shaped around what `roadmapStore.js`
+actually needs (per-user, per-template roadmap documents plus a separate per-user
+`meta` document), which is broader than issue #5's original MVP sketch of a single
+`load(roadmapId)`/`save(roadmapId, data)` pair — that sketch predates the multi-user/
+multi-template data model issues #58 and #4 built. See `docs/architecture.md` §5.11 for
+the full history.
+
+### `StorageAdapter` — `src/services/storage/StorageAdapter.js`
+
+Base class every backend extends. Required methods throw `not implemented` if not
+overridden; optional ones have safe defaults.
+
+| Method | Signature | Notes |
+|---|---|---|
+| `listenRoadmap` | `(uid, templateId, onData, onError) => unsubscribe` | **Required.** Realtime listener for one template's roadmap. |
+| `saveRoadmap` | `(uid, templateId, payload) => Promise<void>` | **Required.** Full overwrite of one template's roadmap. |
+| `getRoadmap` | `(uid, templateId) => Promise<object \| null>` | **Required.** One-time read. |
+| `deleteRoadmap` | `(uid, templateId) => Promise<void>` | **Required.** Only ever called for a custom roadmap the user has explicitly deleted. |
+| `getMeta` | `(uid) => Promise<object \| null>` | **Required.** One-time read of the user's roadmap-selection/onboarding meta. |
+| `saveMeta` | `(uid, meta: object) => Promise<void>` | **Required.** Partial update, never a full overwrite. |
+| `getLegacyRoadmap` | `(uid) => Promise<object \| null>` | Optional — default resolves `null`. Only `FirebaseAdapter` has pre-issue-#58 legacy data to migrate from. |
+| `now` | `() => unknown` | Optional — default `Date.now()`. Adapter-specific write timestamp (Firebase's `serverTimestamp()` sentinel vs. a future Drive adapter's ISO string). |
+| `destroy` | `() => void` | Optional — default no-op. Cleanup hook for a backend with open listeners/timers (e.g. a future Drive adapter's visibility-polling). |
+
+### `FirebaseAdapter` — `src/services/storage/FirebaseAdapter.js`
+
+| Export | Signature | Notes |
+|---|---|---|
+| `FirebaseAdapter` | `class extends StorageAdapter` | Same Realtime Database logic previously in `firebase.js`'s `dbApi` (unchanged behavior): `listenRoadmap`/`saveRoadmap`/`getRoadmap` on `users/{uid}/roadmaps/{templateId}`, `getLegacyRoadmap` on the pre-#58 `users/{uid}/roadmap`, `getMeta`/`saveMeta` on `users/{uid}/meta`. `now()` returns `firebaseClock()`. |
+| `firebaseAdapter` | `FirebaseAdapter` instance | Singleton used by `adapterFactory.js`. |
+
+### `LocalStorageAdapter` — `src/services/storage/LocalStorageAdapter.js`
+
+| Export | Signature | Notes |
+|---|---|---|
+| `LocalStorageAdapter` | `class extends StorageAdapter` | Standalone `localStorage`-backed implementation, under its own dedicated keys (`KEYS.LOCAL_ADAPTER_ROADMAPS`, `KEYS.LOCAL_ADAPTER_META`) — independent of `roadmapStore.js`'s own local-cache bookkeeping (`KEYS.ROADMAPS` etc.), which is unchanged. `uid` is accepted but ignored (one local store per browser profile). `listenRoadmap` returns a no-op unsubscribe (no push mechanism over plain `localStorage`). **Not yet wired into `roadmapStore.js`** — reserved for a future guest-only/offline-cache adapter selection. |
+| `localStorageAdapter` | `LocalStorageAdapter` instance | Singleton, unused by any call site yet. |
+
+### `adapterFactory.js` — `src/services/storage/adapterFactory.js`
+
+| Export | Signature | Notes |
+|---|---|---|
+| `getStorageAdapter` | `() => StorageAdapter` | Currently always returns `firebaseAdapter` — every signed-in uid (including anonymous/guest, which already used Firebase before this refactor) keeps identical behavior. This is the seam a later PR extends to branch on auth type once a `GoogleDriveAdapter` exists. |

@@ -13,7 +13,14 @@ export const KEYS = {
   // Array of { id, title, description, createdAt } — one entry per roadmap the
   // user has created manually (issue #4). Each entry's `id` also appears in
   // KEYS.ROADMAPS/startedTemplateIds like any built-in template id.
-  CUSTOM_ROADMAPS: 'ascent-custom-roadmaps-v1'
+  CUSTOM_ROADMAPS: 'ascent-custom-roadmaps-v1',
+  // Dedicated store for LocalStorageAdapter (issue #5) — a standalone
+  // StorageAdapter implementation, separate from roadmapStore's own
+  // ROADMAPS/ONBOARDING_DONE/etc. local-cache bookkeeping above. Not yet
+  // wired into roadmapStore; reserved for a future guest-only/offline-cache
+  // adapter selection.
+  LOCAL_ADAPTER_ROADMAPS: 'ascent-local-adapter-roadmaps-v1',
+  LOCAL_ADAPTER_META: 'ascent-local-adapter-meta-v1'
 };
 
 export function verifyDismissedKey(uid) {

@@ -1,10 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createRoadmapStore } from '../../src/services/roadmapStore.js';
 import { buildSeedItems } from '../../src/data/roadmap.js';
-import { dbApi } from '../../src/services/firebase.js';
+import { dbApi } from '../../src/services/storage/adapterFactory.js';
 
-vi.mock('../../src/services/firebase.js', () => ({
-  dbApi: {
+// Mocks the adapter roadmapStore.js gets from getStorageAdapter() (issue #5) —
+// still named/shaped like the old `dbApi` fake so the 60+ tests below that
+// call `dbApi.<method>.mockResolvedValue(...)` don't need to change.
+vi.mock('../../src/services/storage/adapterFactory.js', () => {
+  const dbApi = {
     listenRoadmap: vi.fn(() => () => {}),
     saveRoadmap: vi.fn(() => Promise.resolve()),
     getMeta: vi.fn(() => Promise.resolve(null)),
@@ -12,9 +15,10 @@ vi.mock('../../src/services/firebase.js', () => ({
     getRoadmap: vi.fn(() => Promise.resolve(null)),
     getLegacyRoadmap: vi.fn(() => Promise.resolve(null)),
     deleteRoadmap: vi.fn(() => Promise.resolve()),
-  },
-  firebaseClock: vi.fn(() => null),
-}));
+    now: vi.fn(() => null),
+  };
+  return { getStorageAdapter: () => dbApi, dbApi };
+});
 
 beforeEach(() => {
   localStorage.clear();
@@ -36,6 +40,7 @@ beforeEach(() => {
   dbApi.getRoadmap.mockResolvedValue(null);
   dbApi.getLegacyRoadmap.mockResolvedValue(null);
   dbApi.deleteRoadmap.mockResolvedValue(undefined);
+  dbApi.now.mockReturnValue(null);
 });
 
 describe('subscribe / notify cycle', () => {

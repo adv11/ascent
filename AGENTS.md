@@ -105,12 +105,16 @@ src/data/templates/math-grade12.js      12th Grade Mathematics starter template
 src/data/templates/piano.js             Learning Piano starter template
 src/data/templates/marketing.js         Marketing starter template
 src/data/templates/blank.js         retired starter template (issue #4 follow-up) — migration-only, not in TEMPLATES
-src/services/firebase.js      auth + Realtime Database access (roadmap + per-user meta)
+src/services/firebase.js      Firebase Auth (authApi) + auth/database singletons for FirebaseAdapter
 src/services/firebase.config.js          gitignored — your real Firebase project config
 src/services/firebase.config.example.js  committed template for the file above
 src/services/localStorageKeys.js  canonical `ascent-*` localStorage/sessionStorage key strings
 src/services/migration.js     one-time migration off the pre-rename `switchprep-*` key prefix
-src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + remote save, onboarding detection
+src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + adapter save, onboarding detection
+src/services/storage/StorageAdapter.js       storage backend interface (issue #5) — required + optional methods
+src/services/storage/FirebaseAdapter.js      Realtime Database implementation (formerly firebase.js's dbApi)
+src/services/storage/LocalStorageAdapter.js  standalone localStorage implementation — not yet wired into roadmapStore.js
+src/services/storage/adapterFactory.js       getStorageAdapter() — currently always returns firebaseAdapter
 src/services/theme.js         dark/light theme state (localStorage + system preference)
 src/services/themeBootstrap.js  synchronous classic script — sets data-theme before CSS loads (no-FOUC)
 src/ui/router.js              tiny hash router (registerRoute/navigate/startRouter)
@@ -168,10 +172,31 @@ and `data:` URI injection. Apply this at both render time and save time.
 
 **Store pattern** (`src/services/roadmapStore.js`): a mutable `items` map for whichever
 template is currently active, `subscribe(callback)`/`notify()` for pub-sub, and a 500ms
-debounced `queueSave()` that persists to `localStorage` immediately and to Firebase
-after the debounce. Snapshots carry `saveState` (`saving`/`saved`/`local`/`synced`/`error`),
-a `structuralVersion` counter, `activeTemplateId`, `startedTemplateIds` (issue #58),
-`onboardingDone`, and `phases` (the current template's phase/section skeleton — see below).
+debounced `queueSave()` that persists to `localStorage` immediately and to the active
+storage adapter (see below) after the debounce. Snapshots carry `saveState`
+(`saving`/`saved`/`local`/`synced`/`error`), a `structuralVersion` counter,
+`activeTemplateId`, `startedTemplateIds` (issue #58), `onboardingDone`, and `phases`
+(the current template's phase/section skeleton — see below).
+
+**Storage adapter abstraction (`src/services/storage/`, issue #5 — phased across 3
+PRs).** `roadmapStore.js` never imports `firebase.js` directly for roadmap/meta reads
+and writes — it calls whichever adapter `getStorageAdapter()` (`adapterFactory.js`)
+returns. `StorageAdapter` is the base contract (required: `listenRoadmap`/`saveRoadmap`/
+`getRoadmap`/`deleteRoadmap`/`getMeta`/`saveMeta`, all `(uid, templateId, ...)`-shaped;
+optional with safe defaults: `getLegacyRoadmap` — Firebase-only migration data —, `now()`
+— the adapter's own write-timestamp representation —, and `destroy()`). This interface
+is shaped around what `roadmapStore.js` actually calls (multi-user, multi-template, plus
+a separate `meta` document), not issue #5's simpler single-roadmap MVP sketch — see
+`docs/architecture.md` §5.12 for why. `FirebaseAdapter` carries `dbApi`'s exact former
+logic with no behavior change; `adapterFactory.js` currently always returns it (every
+signed-in uid, including guest/anonymous, keeps using Firebase — identical to before
+this refactor). `LocalStorageAdapter` is a complete, unit-tested implementation of the
+same contract over its own dedicated keys, but is **not yet wired into
+`roadmapStore.js`** — scaffolding for a later PR (true guest-only local mode, or an
+explicit offline-cache adapter), not forgotten work. A planned `GoogleDriveAdapter` (part
+2) and real Google sign-in UI (part 3, needs a Google Cloud OAuth client ID only the
+product owner can provision) are tracked against issue #5 but not yet implemented — do
+not assume Google Drive sync exists anywhere in the app yet.
 
 **Starter templates and onboarding (`src/data/templates/`, `src/ui/pages/onboarding.js`)**
 — Issue #51. `src/data/templates/index.js` is the template registry (`TEMPLATES`,
