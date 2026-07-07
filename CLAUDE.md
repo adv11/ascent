@@ -414,6 +414,12 @@ window. Also keeps a small bounded history of recently-flushed content strings
 *already-confirmed* older flush (arriving once `dirty` is back to `false`) is still
 recognized as our own and doesn't cause a spurious `structuralVersion` bump. See the
 "out-of-order echo guard" describe block in `tests/integration/roadmapStore.test.js`.
+The same hazard existed on the initial-load path too (issue #67): `resolveRoadmapItems`
+used to prefer a successful remote read over the local blob unconditionally, so a page
+reload that beat the debounced `flush()` could let a stale remote snapshot silently
+overwrite a dirty (not-yet-confirmed) local edit. It now checks `localBlob.dirty` before
+ever attempting a remote read — see the "resolveRoadmapItems — dirty local blob outranks
+stale remote" describe block in the same test file.
 
 **`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist
 row toggles `done` on click, but child controls that need their own click behavior

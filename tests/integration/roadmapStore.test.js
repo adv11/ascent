@@ -496,6 +496,74 @@ describe('onboarding detection (setUser)', () => {
   });
 });
 
+// Issue #67 — a page reload/close can interrupt the debounced Firebase write
+// for an edit before it lands, leaving Firebase holding stale data while the
+// local blob (written synchronously by queueSave) already has the edit and is
+// marked dirty. resolveRoadmapItems must prefer that dirty local blob over a
+// stale remote read on the very next load, mirroring the guard
+// attachRoadmapListener already has for the realtime-listener path.
+describe('resolveRoadmapItems — dirty local blob outranks stale remote (issue #67)', () => {
+  it('prefers a dirty local blob over a stale remote read on initial load', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'piano', startedTemplateIds: ['piano'] });
+    dbApi.getRoadmap.mockResolvedValue({
+      version: 3,
+      items: { 'custom-1': { id: 'custom-1', title: 'Stale remote title', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } }
+    });
+    localStorage.setItem('ascent-roadmaps-v1', JSON.stringify({
+      piano: {
+        version: 3,
+        dirty: true,
+        items: { 'custom-1': { id: 'custom-1', title: 'Newer local title', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } }
+      }
+    }));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'reload-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.allItems['custom-1'].title).toBe('Newer local title');
+    expect(snapshot.dirty).toBe(true);
+    expect(dbApi.getRoadmap).not.toHaveBeenCalled();
+  });
+
+  it('re-queues a save for the recovered dirty edit so the interrupted write completes', async () => {
+    vi.useFakeTimers();
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'piano', startedTemplateIds: ['piano'] });
+    localStorage.setItem('ascent-roadmaps-v1', JSON.stringify({
+      piano: {
+        version: 3,
+        dirty: true,
+        items: { 'custom-1': { id: 'custom-1', title: 'x', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } }
+      }
+    }));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'reload-user' });
+
+    await vi.advanceTimersByTimeAsync(500);
+    expect(dbApi.saveRoadmap).toHaveBeenCalled();
+  });
+
+  it('an already-cached (non-dirty) template still reads from remote as before', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'piano', startedTemplateIds: ['piano'] });
+    const remoteItems = {
+      'custom-1': { id: 'custom-1', title: 'Remote title', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] }
+    };
+    dbApi.getRoadmap.mockResolvedValue({ version: 3, items: remoteItems });
+    localStorage.setItem('ascent-roadmaps-v1', JSON.stringify({
+      piano: { version: 3, dirty: false, items: {} }
+    }));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'clean-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.allItems['custom-1'].title).toBe('Remote title');
+    expect(snapshot.dirty).toBe(false);
+    expect(dbApi.getRoadmap).toHaveBeenCalledWith('clean-user', 'piano');
+  });
+});
+
 // Issue #58 — accounts created before per-template storage existed have all
 // their progress under the old singular `users/{uid}/roadmap` path. On the
 // first sign-in after this ships, that data is copied forward into the new

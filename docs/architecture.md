@@ -604,6 +604,28 @@ to `false`) is still recognized as our own and doesn't cause a spurious
 block; verified against the live Firebase project the bug was found on (10 consecutive
 clean E2E runs after the fix, versus a highly reproducible failure before it).
 
+**The same dirty-local guard was missing from the initial-load path (issue #67).** The
+guard above only covered `attachRoadmapListener`'s realtime callback — but
+`resolveRoadmapItems` (used on every `setUser()`/initial page load) had the identical
+hazard on its own read path: if a page reload/close interrupts the 500ms-debounced
+`flush()` before it lands, Firebase is left holding stale (pre-edit) data while the local
+blob (written synchronously by `queueSave()`) already has the edit and is marked
+`dirty: true`. `resolveRoadmapItems` used to prefer a successful remote read over the
+local blob unconditionally whenever the remote had *any* items — silently overwriting
+the fresher local edit with the stale remote snapshot the moment the page reloaded.
+Reproduced deterministically with `tests/e2e/itemNotes.test.js`'s "notes survive a page
+reload" test against a local Firebase emulator (both before and independent of any
+in-flight PR — confirmed on a clean `main` checkout). Fixed by having
+`resolveRoadmapItems` check the local blob's `dirty` flag *before* attempting a remote
+read at all: a dirty local blob is by definition at least as new as anything remote can
+offer, so it's returned directly (with `dirty: true` preserved) and `setUser()`'s
+existing `if (dirty) queueSave();` re-attempts the previously-interrupted write on the
+new page load — no separate wiring needed. Regression-tested in the "resolveRoadmapItems
+— dirty local blob outranks stale remote" describe block in
+`tests/integration/roadmapStore.test.js`; verified against the local emulator (multiple
+consecutive clean runs of the E2E test after the fix, versus a deterministic failure
+before it).
+
 **UI.** `onboarding.js` reads `activeTemplateId`/`startedTemplateIds` off the snapshot
 and drops the switch-mode `confirmDialog()` entirely — every pick (started or not) now
 calls `store.switchRoadmap(id)` directly with no prompt, since nothing is ever destroyed.
@@ -1136,3 +1158,20 @@ focusField); two new cases in `tests/integration/roadmapStore.test.js`'s
 `structuralVersion contract` block (notes patch bumps `structuralVersion`; missing
 `notes` field reads as `''`); `tests/e2e/itemNotes.test.js` (add note → reopen → note
 restored; indicator visibility + click-to-focus; survives a page reload).
+
+### 2026-07-07 — PR #TBD — Fix: dirty local blob outranked by stale remote on reload (issue #67)
+
+Found while investigating an E2E failure surfaced during an unrelated PR
+(`tests/e2e/itemNotes.test.js`'s "notes survive a page reload"): reproduced
+deterministically against a local Firebase emulator on a clean `main` checkout, so it
+predates and is independent of that PR. See §5.11 "The same dirty-local guard was
+missing from the initial-load path" above for the full root-cause writeup —
+`resolveRoadmapItems` unconditionally preferred a successful remote read over the local
+blob whenever remote had any items, with no check of the local blob's `dirty` flag. Fixed
+by checking `localBlob.dirty` before attempting a remote read at all.
+
+New tests: `tests/integration/roadmapStore.test.js`'s "resolveRoadmapItems — dirty local
+blob outranks stale remote" describe block (dirty local wins over stale remote; the
+recovered dirty state re-queues a save; an already-clean local blob still reads from
+remote as before, unaffected). Verified against the local Firebase emulator: the
+previously-deterministic E2E failure passed on repeated runs after the fix.

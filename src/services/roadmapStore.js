@@ -349,6 +349,22 @@ export function createRoadmapStore() {
     if (cached) return { items: cached.items, phases: cached.phases || basePhases, dirty: !!cached.dirty };
 
     const localBlob = readLocalRoadmaps()[templateId];
+    // A dirty local blob means a queued-or-in-flight write from a previous
+    // session never got confirmed (e.g. the page reloaded/closed before the
+    // debounced flush() completed) — by definition it's at least as new as
+    // anything remote can offer, so it must never be silently overwritten by
+    // a stale remote read here. Same principle as attachRoadmapListener's
+    // "never apply a remote snapshot while a local edit is unflushed" guard
+    // (issue #58 hardening) — that guard only covered the realtime listener,
+    // this initial-load path needed it too (issue #67).
+    if (localBlob?.items && localBlob.dirty) {
+      return {
+        items: mergeWithSeed(localBlob.items, baseItems),
+        phases: normalizeStringArray(localBlob.phases) || basePhases,
+        dirty: true
+      };
+    }
+
     let remote = null;
     if (uid) {
       try {
