@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TEMPLATES, getTemplate, buildSeedItems, getTemplatePhases } from '../../src/data/templates/index.js';
+import { TEMPLATES, getTemplate, buildSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../../src/data/templates/index.js';
 import { buildSeedItems as buildJavaBackendSeedItems, PHASES as JAVA_BACKEND_PHASES } from '../../src/data/templates/java-backend.js';
 import { buildSeedItems as buildRoadmapShimSeedItems, PHASES as ROADMAP_SHIM_PHASES } from '../../src/data/roadmap.js';
 
@@ -21,13 +21,22 @@ describe('template registry', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('includes all 8 expected templates', () => {
+  it('includes all 7 expected templates', () => {
     const ids = TEMPLATES.map(t => t.id);
     expect(ids).toEqual(expect.arrayContaining([
       'java-backend', 'frontend', 'data-science', 'genai-agentic-ai', 'math-grade12',
-      'piano', 'marketing', 'blank'
+      'piano', 'marketing'
     ]));
-    expect(ids).toHaveLength(8);
+    expect(ids).toHaveLength(7);
+  });
+
+  // 'blank' was retired (issue #4 follow-up) — it was a strict subset of
+  // "Create your own roadmap" once manual CRUD + AI import both existed.
+  // getTemplate/buildSeedItems/getTemplatePhases fall back to TEMPLATES[0]
+  // for it now, exactly like any other unrecognized id.
+  it('"blank" is no longer in the registry and falls back like any unknown id', () => {
+    expect(TEMPLATES.map(t => t.id)).not.toContain('blank');
+    expect(getTemplate('blank')).toBe(TEMPLATES[0]);
   });
 
   it('getTemplate falls back to the first template for an unknown id', () => {
@@ -49,15 +58,10 @@ describe('buildSeedItems(templateId)', () => {
     expect(Object.keys(buildRoadmapShimSeedItems()).length).toBe(Object.keys(buildJavaBackendSeedItems()).length);
   });
 
-  it("buildSeedItems('blank') returns zero items", async () => {
-    const items = await buildSeedItems('blank');
-    expect(items).toEqual({});
-  });
-
-  it('every non-blank template returns a non-empty, well-shaped item map', async () => {
-    const nonBlankIds = TEMPLATES.map(t => t.id).filter(id => id !== 'blank');
-    expect(nonBlankIds.length).toBeGreaterThan(0);
-    for (const id of nonBlankIds) {
+  it('every registered template returns a non-empty, well-shaped item map', async () => {
+    const ids = TEMPLATES.map(t => t.id);
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
       const items = await buildSeedItems(id);
       const values = Object.values(items);
       expect(values.length).toBeGreaterThan(0);
@@ -78,14 +82,25 @@ describe('buildSeedItems(templateId)', () => {
 });
 
 describe('getTemplatePhases(templateId)', () => {
-  it("getTemplatePhases('blank') returns exactly 4 phases", async () => {
+  it("getTemplatePhases('blank') no longer returns blank's own phases (falls back to TEMPLATES[0])", async () => {
     const phases = await getTemplatePhases('blank');
-    expect(phases).toHaveLength(4);
-    expect(phases.map(p => p.title)).toEqual(['Learn', 'Practice', 'Build', 'Review']);
+    expect(phases).toBe(JAVA_BACKEND_PHASES);
   });
 
   it("getTemplatePhases('java-backend') matches the java-backend module's PHASES export", async () => {
     const phases = await getTemplatePhases('java-backend');
     expect(phases).toBe(JAVA_BACKEND_PHASES);
+  });
+});
+
+// blank.js itself is untouched and still directly importable — only its
+// registration in TEMPLATES was removed. roadmapStore.js's setUser()
+// migration for pre-retirement 'blank' accounts depends on this.
+describe('getLegacyBlankTemplateData (migration-only, issue #4 follow-up)', () => {
+  it("returns blank.js's own 4 fixed phases and empty seed, bypassing the TEMPLATES fallback", async () => {
+    const { baseItems, phases } = await getLegacyBlankTemplateData();
+    expect(baseItems).toEqual({});
+    expect(phases).toHaveLength(4);
+    expect(phases.map(p => p.title)).toEqual(['Learn', 'Practice', 'Build', 'Review']);
   });
 });

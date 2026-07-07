@@ -236,8 +236,9 @@ describe('stale listener guard (issue #58)', () => {
     await store.setUser({ uid: 'stale-listener-test' }); // java-backend, per default mock
     const javaCallback = capturedCallbacks[capturedCallbacks.length - 1];
 
-    await store.switchRoadmap('blank');
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
+    await store.switchRoadmap('piano');
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
+    const pianoItemsBeforeStaleCallback = store.getSnapshot().allItems;
 
     // Manually invoke the old (already-detached) java-backend listener's
     // callback, simulating one last queued call slipping through.
@@ -248,8 +249,8 @@ describe('stale listener guard (issue #58)', () => {
     });
 
     const snapshot = store.getSnapshot();
-    expect(snapshot.activeTemplateId).toBe('blank');
-    expect(snapshot.allItems).toEqual({});
+    expect(snapshot.activeTemplateId).toBe('piano');
+    expect(snapshot.allItems).toEqual(pianoItemsBeforeStaleCallback);
     expect(snapshot.structuralVersion).toBe(versionBeforeStaleCallback);
   });
 
@@ -360,7 +361,7 @@ describe('flush-before-switch (issue #58)', () => {
     store.updateItem(firstId, { done: true }); // queues a 500ms debounced save; dirty=true immediately
     dbApi.saveRoadmap.mockClear();
 
-    await store.switchRoadmap('blank'); // must flush java-backend's edit before switching away
+    await store.switchRoadmap('piano'); // must flush java-backend's edit before switching away
 
     expect(dbApi.saveRoadmap).toHaveBeenCalledWith(
       'flush-before-switch-test',
@@ -370,7 +371,7 @@ describe('flush-before-switch (issue #58)', () => {
         items: expect.objectContaining({ [firstId]: expect.objectContaining({ done: true }) })
       })
     );
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
   });
 
   it('tags every saved payload with the templateId it was written for', async () => {
@@ -417,7 +418,7 @@ describe('onboarding detection (setUser)', () => {
   });
 
   it('a returning user on the new (#58) meta shape loads their saved items directly, no re-seeding, no legacy read', async () => {
-    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] });
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'piano', startedTemplateIds: ['piano'] });
     const remoteItems = {
       'custom-1': { id: 'custom-1', title: 'My topic', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] }
     };
@@ -428,9 +429,9 @@ describe('onboarding detection (setUser)', () => {
 
     const snapshot = store.getSnapshot();
     expect(snapshot.onboardingDone).toBe(true);
-    expect(snapshot.activeTemplateId).toBe('blank');
-    expect(snapshot.allItems).toEqual(remoteItems);
-    expect(dbApi.getRoadmap).toHaveBeenCalledWith('returning-user', 'blank');
+    expect(snapshot.activeTemplateId).toBe('piano');
+    expect(snapshot.allItems).toMatchObject(remoteItems);
+    expect(dbApi.getRoadmap).toHaveBeenCalledWith('returning-user', 'piano');
     expect(dbApi.getLegacyRoadmap).not.toHaveBeenCalled();
     expect(dbApi.listenRoadmap).toHaveBeenCalled();
   });
@@ -445,7 +446,7 @@ describe('onboarding detection (setUser)', () => {
 
     dbApi.getMeta.mockImplementation(uid => (uid === 'slow-user'
       ? slowMetaPromise
-      : Promise.resolve({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] })));
+      : Promise.resolve({ onboardingDone: true, activeTemplateId: 'piano', startedTemplateIds: ['piano'] })));
     dbApi.getRoadmap.mockResolvedValue({ version: 3, items: { 'custom-1': { id: 'custom-1', title: 'x', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } } });
 
     const store = createRoadmapStore();
@@ -456,7 +457,7 @@ describe('onboarding detection (setUser)', () => {
 
     expect(store.getSnapshot().uid).toBe('fast-user');
     expect(store.getSnapshot().onboardingDone).toBe(true);
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
 
     resolveSlowMeta(null); // let the stale call finish resolving, after the fact
     await slowCall;
@@ -464,8 +465,8 @@ describe('onboarding detection (setUser)', () => {
     // The stale slow-user resolution must not have overwritten fast-user's state.
     expect(store.getSnapshot().uid).toBe('fast-user');
     expect(store.getSnapshot().onboardingDone).toBe(true);
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
-    expect(Object.keys(store.getSnapshot().allItems)).toEqual(['custom-1']);
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
+    expect(store.getSnapshot().allItems['custom-1']).toBeTruthy();
   });
 });
 
@@ -512,13 +513,13 @@ describe('Firebase migration — legacy single-roadmap accounts', () => {
   });
 
   it('an account already on the new meta shape is not re-migrated (no legacy read performed)', async () => {
-    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] });
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'piano', startedTemplateIds: ['piano'] });
 
     const store = createRoadmapStore();
     await store.setUser({ uid: 'already-migrated-user' });
 
     expect(dbApi.getLegacyRoadmap).not.toHaveBeenCalled();
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
   });
 });
 
@@ -531,15 +532,15 @@ describe('switchRoadmap — first-time pick (onboardingDone was false)', () => {
     await store.setUser({ uid: 'new-user' });
     expect(store.getSnapshot().onboardingDone).toBe(false);
 
-    await store.switchRoadmap('blank');
+    await store.switchRoadmap('piano');
 
     const snapshot = store.getSnapshot();
     expect(snapshot.onboardingDone).toBe(true);
-    expect(snapshot.activeTemplateId).toBe('blank');
-    expect(snapshot.startedTemplateIds).toEqual(['blank']);
-    expect(snapshot.allItems).toEqual({});
-    expect(snapshot.phases).toHaveLength(4);
-    expect(dbApi.saveMeta).toHaveBeenCalledWith('new-user', { activeTemplateId: 'blank', startedTemplateIds: ['blank'], onboardingDone: true });
+    expect(snapshot.activeTemplateId).toBe('piano');
+    expect(snapshot.startedTemplateIds).toEqual(['piano']);
+    expect(Object.keys(snapshot.allItems).length).toBeGreaterThan(0);
+    expect(snapshot.phases.length).toBeGreaterThan(0);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('new-user', { activeTemplateId: 'piano', startedTemplateIds: ['piano'], onboardingDone: true });
     expect(dbApi.listenRoadmap).toHaveBeenCalled();
   });
 
@@ -603,9 +604,9 @@ describe('switchRoadmap — concurrent progress across templates', () => {
     await store.setUser({ uid: 'seed-isolation-user' });
     const javaItemsBefore = store.getSnapshot().allItems;
 
-    await store.switchRoadmap('blank');
-    expect(store.getSnapshot().allItems).toEqual({});
-    expect(store.getSnapshot().startedTemplateIds).toEqual(expect.arrayContaining(['java-backend', 'blank']));
+    await store.switchRoadmap('piano');
+    expect(store.getSnapshot().allItems).not.toEqual(javaItemsBefore);
+    expect(store.getSnapshot().startedTemplateIds).toEqual(expect.arrayContaining(['java-backend', 'piano']));
 
     await store.switchRoadmap('java-backend');
     expect(store.getSnapshot().allItems).toEqual(javaItemsBefore);
@@ -634,17 +635,18 @@ describe('switchRoadmap — concurrent progress across templates', () => {
     dbApi.getRoadmap.mockImplementation((_uid, templateId) => (templateId === 'frontend' ? slowPromise : Promise.resolve(null)));
 
     const slowSwitch = store.switchRoadmap('frontend'); // already-started, not cached -> awaits the slow dbApi.getRoadmap
-    const fastSwitch = store.switchRoadmap('blank'); // not-yet-started -> no Firebase read needed, resolves quickly
+    const fastSwitch = store.switchRoadmap('piano'); // not-yet-started -> no Firebase read needed, resolves quickly
     await fastSwitch;
 
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
+    const pianoItems = store.getSnapshot().allItems;
 
     resolveSlow({ items: { 'frontend-x': { id: 'frontend-x', done: true } } });
     await slowSwitch;
 
-    // The stale frontend switch must not have clobbered the newer blank switch.
-    expect(store.getSnapshot().activeTemplateId).toBe('blank');
-    expect(store.getSnapshot().allItems).toEqual({});
+    // The stale frontend switch must not have clobbered the newer piano switch.
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
+    expect(store.getSnapshot().allItems).toEqual(pianoItems);
   });
 });
 
@@ -664,14 +666,17 @@ describe('hideTemplate / unhideTemplate', () => {
     expect(store.getSnapshot().allItems).toBe(itemsBefore);
   });
 
-  it('hiding "blank" is a no-op — it can never be hidden', async () => {
+  // 'blank' is retired (issue #4 follow-up) — it's no longer special-cased,
+  // so hiding it behaves like hiding any other id (harmless, since it's not
+  // rendered as a card anymore either way).
+  it('hiding "blank" is no longer special-cased — behaves like any other id', async () => {
     const store = createRoadmapStore();
     await store.setUser({ uid: 'hide-user-2' });
 
     await store.hideTemplate('blank');
 
-    expect(store.getSnapshot().hiddenTemplateIds).toEqual([]);
-    expect(dbApi.saveMeta).not.toHaveBeenCalled();
+    expect(store.getSnapshot().hiddenTemplateIds).toEqual(['blank']);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('hide-user-2', { hiddenTemplateIds: ['blank'] });
   });
 
   it('unhiding removes it from hiddenTemplateIds and re-persists the shorter list', async () => {
@@ -940,5 +945,187 @@ describe('deleteCustomRoadmap (issue #4)', () => {
 
     expect(dbApi.deleteRoadmap).not.toHaveBeenCalled();
     expect(store.getSnapshot().activeTemplateId).toBe('java-backend');
+  });
+});
+
+// AI-assisted import (issue #4): createCustomRoadmap's optional phases/items
+// seed the roadmap already populated instead of empty — everything else
+// (activation, Firebase path, cache-first resolution) is identical to the
+// manual-creation path already covered above.
+describe('custom roadmaps — AI-import seeding (issue #4)', () => {
+  function importedSeed() {
+    return {
+      phases: [{ id: 'phase-import-1', title: 'Phase One', priority: 'P1', resourceKey: null, sections: [{ id: 'section-import-1', title: 'Section One' }] }],
+      items: {
+        'custom-import-1': { id: 'custom-import-1', title: 'Imported Topic', phase: 'Phase One', section: 'Section One', priority: 'P0', done: false, custom: true, deleted: false, resources: [], createdAt: 1 }
+      }
+    };
+  }
+
+  it('activates the new roadmap already populated with the given phases/items', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'import-user' });
+    const { phases: seedPhases, items: seedItems } = importedSeed();
+
+    const id = await store.createCustomRoadmap({ title: 'Imported Roadmap', phases: seedPhases, items: seedItems });
+
+    expect(store.getSnapshot().activeTemplateId).toBe(id);
+    expect(store.getSnapshot().phases).toEqual(seedPhases);
+    expect(store.getSnapshot().items.map(i => i.id)).toEqual(['custom-import-1']);
+  });
+
+  it('persists the seeded phases/items to Firebase once the debounced flush fires', async () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'import-flush-user' });
+    const { phases: seedPhases, items: seedItems } = importedSeed();
+
+    await store.createCustomRoadmap({ title: 'Imported Roadmap', phases: seedPhases, items: seedItems });
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(dbApi.saveRoadmap).toHaveBeenCalledWith(
+      'import-flush-user',
+      store.getSnapshot().activeTemplateId,
+      expect.objectContaining({ phases: seedPhases, items: seedItems })
+    );
+    vi.useRealTimers();
+  });
+
+  it('omitting phases/items still seeds a truly empty roadmap (manual-creation path is unaffected)', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'manual-still-empty-user' });
+
+    await store.createCustomRoadmap({ title: 'Manual Roadmap' });
+
+    expect(store.getSnapshot().phases).toEqual([]);
+    expect(store.getSnapshot().items).toEqual([]);
+  });
+
+  it('the seed is consumed exactly once — switching away and back reloads from the cache/Firebase, not the original seed object', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'import-reswitch-user' });
+    const { phases: seedPhases, items: seedItems } = importedSeed();
+    const id = await store.createCustomRoadmap({ title: 'Imported Roadmap', phases: seedPhases, items: seedItems });
+
+    await store.switchRoadmap('java-backend');
+    await store.switchRoadmap(id); // already started -> cache-first resolution, not the seed path again
+
+    expect(store.getSnapshot().phases).toEqual(seedPhases);
+    expect(store.getSnapshot().items.map(i => i.id)).toEqual(['custom-import-1']);
+  });
+});
+
+// "blank" was retired (issue #4 follow-up) — once manual CRUD (PR #60) and AI
+// import (this PR) both existed, it became a strict subset of "Create your
+// own roadmap" (fixed Learn/Practice/Build/Review vs. fully editable). Anyone
+// who already started it before this shipped is migrated forward into a
+// real custom roadmap on their next sign-in instead of losing access to it.
+describe('blank-template migration (issue #4 follow-up)', () => {
+  it('migrates an active "blank" roadmap into a real custom roadmap, preserving its items and phases', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] });
+    const storedItems = { 'custom-1': { id: 'custom-1', title: 'My topic', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } };
+    const storedPhases = [{ id: 'phase-x', title: 'Learn', priority: 'P1', resourceKey: null, sections: [{ id: 'section-x', title: '' }] }];
+    dbApi.getRoadmap.mockImplementation((_uid, templateId) => (
+      templateId === 'blank' ? Promise.resolve({ version: 3, items: storedItems, phases: storedPhases }) : Promise.resolve(null)
+    ));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'blank-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.activeTemplateId).not.toBe('blank');
+    expect(store.isCustomRoadmapId(snapshot.activeTemplateId)).toBe(true);
+    expect(snapshot.startedTemplateIds).not.toContain('blank');
+    expect(snapshot.startedTemplateIds).toContain(snapshot.activeTemplateId);
+    expect(snapshot.allItems).toEqual(storedItems);
+    expect(snapshot.phases).toEqual(storedPhases);
+    expect(snapshot.customRoadmaps).toEqual([
+      { id: snapshot.activeTemplateId, title: 'My roadmap', description: '', createdAt: expect.any(Number) }
+    ]);
+
+    // The old path is preserved, never deleted.
+    expect(dbApi.deleteRoadmap).not.toHaveBeenCalled();
+    // The corrected pointers are persisted so the next sign-in doesn't re-migrate.
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('blank-user', expect.objectContaining({
+      activeTemplateId: snapshot.activeTemplateId,
+      startedTemplateIds: [snapshot.activeTemplateId],
+      onboardingDone: true
+    }));
+    expect(dbApi.saveRoadmap).toHaveBeenCalledWith(
+      'blank-user',
+      snapshot.activeTemplateId,
+      expect.objectContaining({ items: storedItems, phases: storedPhases })
+    );
+  });
+
+  it('migrates a started-but-not-active "blank" without switching the currently active roadmap', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend', 'blank'] });
+    dbApi.getRoadmap.mockImplementation((_uid, templateId) => (
+      templateId === 'blank' ? Promise.resolve({ version: 3, items: {}, phases: [] }) : Promise.resolve(null)
+    ));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'started-not-active-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.activeTemplateId).toBe('java-backend');
+    expect(snapshot.startedTemplateIds).not.toContain('blank');
+    expect(snapshot.startedTemplateIds).toContain('java-backend');
+    expect(snapshot.customRoadmaps).toHaveLength(1);
+    expect(store.isCustomRoadmapId(snapshot.customRoadmaps[0].id)).toBe(true);
+  });
+
+  it("falls back to blank.js's own 4 fixed phases when the stored roadmap predates persisted phases (pre-PR-#60)", async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] });
+    const storedItems = { 'custom-1': { id: 'custom-1', title: 'Old topic', phase: 'Learn', section: '', priority: 'P1', done: false, custom: true, deleted: false, resources: [] } };
+    dbApi.getRoadmap.mockImplementation((_uid, templateId) => (
+      templateId === 'blank' ? Promise.resolve({ version: 1, items: storedItems }) : Promise.resolve(null) // no `phases` field
+    ));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'pre-60-blank-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.allItems).toEqual(storedItems);
+    expect(snapshot.phases).toHaveLength(4);
+    expect(snapshot.phases.map(p => p.title)).toEqual(['Learn', 'Practice', 'Build', 'Review']);
+  });
+
+  it('falls back to a fully empty seed when nothing was ever stored for "blank" (picked but never flushed)', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] });
+    dbApi.getRoadmap.mockResolvedValue(null);
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'never-flushed-blank-user' });
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.allItems).toEqual({});
+    expect(snapshot.phases).toHaveLength(4);
+  });
+
+  it('does not re-migrate (or duplicate the custom roadmap) on a later sign-in once meta has been corrected', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'blank', startedTemplateIds: ['blank'] });
+    dbApi.getRoadmap.mockImplementation((_uid, templateId) => (
+      templateId === 'blank' ? Promise.resolve({ version: 3, items: {}, phases: [] }) : Promise.resolve(null)
+    ));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'resign-in-user' });
+    const migratedId = store.getSnapshot().activeTemplateId;
+    expect(store.getSnapshot().customRoadmaps).toHaveLength(1);
+
+    // Simulate the corrected meta this migration itself just persisted, on a fresh sign-in.
+    dbApi.getMeta.mockResolvedValue({
+      onboardingDone: true,
+      activeTemplateId: migratedId,
+      startedTemplateIds: [migratedId],
+      customRoadmaps: store.getSnapshot().customRoadmaps
+    });
+
+    const store2 = createRoadmapStore();
+    await store2.setUser({ uid: 'resign-in-user' });
+
+    expect(store2.getSnapshot().activeTemplateId).toBe(migratedId);
+    expect(store2.getSnapshot().customRoadmaps).toHaveLength(1); // not duplicated
   });
 });

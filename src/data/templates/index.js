@@ -1,3 +1,10 @@
+// 'blank' is deliberately NOT in TEMPLATES below anymore (retired — see the
+// "Manual roadmap creation" / "Create your own roadmap" convention in
+// CLAUDE.md: it's a strict subset of a custom roadmap, which is fully
+// editable instead of fixed-Learn/Practice/Build/Review). It stays in
+// LOADERS and blank.js stays in the repo purely so roadmapStore.js's one-time
+// setUser() migration can still load its PHASES/buildSeedItems shape for any
+// account that started it before this retirement.
 const LOADERS = {
   'java-backend': () => import('./java-backend.js'),
   frontend: () => import('./frontend.js'),
@@ -51,12 +58,6 @@ export const TEMPLATES = [
     name: 'Marketing',
     description: 'Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep.',
     icon: '📈'
-  },
-  {
-    id: 'blank',
-    name: 'Start blank',
-    description: 'Four empty phases to fill however you like — build your own roadmap manually or with AI.',
-    icon: '✦'
   }
 ].map(template => ({
   ...template,
@@ -74,4 +75,15 @@ export function buildSeedItems(templateId) {
 export async function getTemplatePhases(templateId) {
   const mod = await LOADERS[getTemplate(templateId).id]();
   return mod.PHASES;
+}
+
+// Not part of the live registry — `getTemplate('blank')` deliberately falls
+// back to TEMPLATES[0] like any other unrecognized id now that 'blank' is
+// retired. This bypasses that fallback to load blank.js's own PHASES/seed
+// directly, only ever used as a fallback source by roadmapStore.js's
+// one-time migration when a 'blank' account's stored roadmap is missing
+// `phases` (pre-dates issue #4's PR #60, which started always persisting it).
+export async function getLegacyBlankTemplateData() {
+  const mod = await LOADERS.blank();
+  return { baseItems: mod.buildSeedItems(), phases: mod.PHASES };
 }

@@ -1,9 +1,15 @@
 import { el } from '../dom.js';
 
-// Informational modal for the "blank" starter template (Issue #51) — explains
-// how to fill in the four empty phases, since there's no automated AI-import
-// feature yet (that's tracked separately). Purely explanatory, no state.
-export function openBuildYourOwnGuide() {
+// Informational modal reachable from "Create your own roadmap"'s corner ℹ
+// button (issue #4 follow-up — used to live on the now-retired "blank"
+// template, the only way to get an empty roadmap before manual CRUD and
+// AI-assisted import both existed). Explains both real paths side by side:
+// adding topics by hand, and generating a roadmap with an AI assistant via
+// "Import roadmap". `onOpenImport`, if given, powers the "Open Import
+// roadmap" button — closes this guide and hands off to the caller's own
+// import flow (`onboarding.js`'s `handleImport()`) instead of duplicating
+// that logic here.
+export function openBuildYourOwnGuide({ onOpenImport } = {}) {
   function close() {
     window.removeEventListener('keydown', onKey);
     overlay.remove();
@@ -11,34 +17,42 @@ export function openBuildYourOwnGuide() {
 
   const onKey = e => { if (e.key === 'Escape') close(); };
 
+  const footerButtons = [
+    onOpenImport
+      ? el('button', {
+        type: 'button',
+        className: 'btn btn-secondary',
+        text: 'Open Import roadmap',
+        onClick: () => { close(); onOpenImport(); }
+      })
+      : null,
+    el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close })
+  ].filter(Boolean);
+
   const card = el('div', { className: 'modal-card build-guide-card' }, [
     el('h2', { className: 'modal-title', text: 'Build your own roadmap' }),
     el('p', {
       className: 'build-guide-intro',
-      text: '"Start blank" gives you four empty phases — Learn, Practice, Build, Review — for any goal you\'re working toward. Here\'s how to fill them in.'
+      text: '"Create your own roadmap" starts empty — you add exactly the phases, sections, and topics your goal needs. There are two ways to fill it in.'
     }),
     el('h3', { className: 'build-guide-heading', text: '1. Add topics manually' }),
     el('p', { className: 'build-guide-body' }, [
-      'On your dashboard, use the ',
+      'Use ',
+      el('strong', { text: '"+ Add phase"' }),
+      ' and ',
+      el('strong', { text: '"+ Add section"' }),
+      ' to build the structure, then ',
       el('strong', { text: '"Add a custom topic…"' }),
-      ' box under any phase to add as many topics as you want. Click ',
+      ' under any section to add as many topics as you want. Click ',
       el('strong', { text: 'Edit' }),
       ' on any topic to set its priority and attach resource links.'
     ]),
-    el('h3', { className: 'build-guide-heading', text: '2. Get help from an AI assistant' }),
+    el('h3', { className: 'build-guide-heading', text: '2. Generate one with an AI assistant' }),
     el('p', { className: 'build-guide-body' }, [
-      'Ask an AI chat assistant (like Claude or ChatGPT) to break your goal into concrete topics ',
-      'organized under Learn, Practice, Build, and Review — then copy each one into Ascent using ',
-      el('strong', { text: '"Add a custom topic…"' }),
-      '.'
+      el('strong', { text: '"Import roadmap"' }),
+      ' (next to "Create your own roadmap") gives you a ready-to-copy prompt for describing your goal to an AI assistant like Claude or ChatGPT. Paste its reply back in and it\'s validated and imported automatically — no copying topics in one at a time.'
     ]),
-    el('p', {
-      className: 'build-guide-note',
-      text: 'A fully automated AI import is planned for a future update — for now, this manual copy-paste approach works great.'
-    }),
-    el('div', { className: 'panel-footer-right' }, [
-      el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close })
-    ])
+    el('div', { className: 'panel-footer-right' }, footerButtons)
   ]);
 
   const overlay = el('div', {
