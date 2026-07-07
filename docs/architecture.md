@@ -991,3 +991,35 @@ forward on first sign-in, leaving the old path untouched as a safety net.
 the legacy validators. `onboarding.js` drops the switch-mode `confirmDialog()` entirely
 (nothing is destroyed anymore) and gains a third card badge state, "In progress", for a
 started-but-not-active template. See §5.11 for the full writeup.
+
+### 2026-07-07 — PR #60 — Manual roadmap creation: full phase/section/topic CRUD (issue #4)
+
+Added a "Create your own roadmap" path alongside the 8 built-in starter templates.
+`roadmapStore.js` gains `createCustomRoadmap`/`deleteCustomRoadmap` and a `customRoadmaps`
+list (`{ id, title, description, createdAt }`, synced to `users/{uid}/meta.customRoadmaps`);
+each custom roadmap gets a generated `croadmap-<timestamp>-<random>` id
+(`isCustomRoadmapId()`, exported from the store) instead of a built-in template id, and
+reuses the exact same per-template Firebase path / `startedTemplateIds` / cache-first
+resolution machinery issue #58 built — no new storage model, just a new kind of id
+flowing through the existing one. The one real structural addition: a built-in template's
+`phases` skeleton is fixed code, never persisted, but a custom roadmap's `phases` (now
+carrying generated `phase-...`/`section-...` ids so they can be renamed/removed
+unambiguously) are user data with no code-side source of truth, so `fetchTemplateData`/
+`resolveRoadmapItems`/`flush`/`persistLocal` all thread `phases` through the same
+cache → Firebase → local-blob → seed resolution `items` already used, and
+`attachRoadmapListener`'s echo/structural-version comparison now compares `{ items,
+phases }` together instead of `items` alone (a no-op for built-in templates, whose phases
+never differ). New store mutations `addPhase`/`renamePhase`/`removePhase`/`addSection`/
+`renameSection`/`removeSection` are no-ops unless `activeTemplateId` is a custom id;
+renaming re-files affected items to the new title, removing soft-deletes items under the
+removed phase/section (same soft-delete convention `removeItem` already used). New
+`src/ui/components/newRoadmapModal.js` (title/description form, same `.modal-overlay`
+chrome as `confirmDialog`); `onboarding.js` renders a "Create your own roadmap" card plus
+one card per custom roadmap (same Current/In-progress badges as template cards, with a
+delete button instead of hide); `dashboard.js` shows "+ Add phase"/"+ Add section" and
+inline rename/delete controls only when `store.isCustomRoadmapId(activeTemplateId)`.
+`firebase/database.rules.json` extended with a `meta.customRoadmaps` array validator.
+Superseded the original issue #4's "default pinned/read-only roadmap" proposal — issue
+#51's starter-template system already gives every user a roadmap on first load, so a
+separate read-only "default" concept would have been redundant. AI-assisted import
+remains a follow-up, not implemented here.

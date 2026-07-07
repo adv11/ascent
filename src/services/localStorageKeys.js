@@ -9,7 +9,11 @@ export const KEYS = {
   ONBOARDING_DONE: 'ascent-onboarding-done',
   // Now means the *active* template id (issue #58) — the one currently displayed.
   TEMPLATE_ID: 'ascent-template-id',
-  HIDDEN_TEMPLATES: 'ascent-hidden-templates'
+  HIDDEN_TEMPLATES: 'ascent-hidden-templates',
+  // Array of { id, title, description, createdAt } — one entry per roadmap the
+  // user has created manually (issue #4). Each entry's `id` also appears in
+  // KEYS.ROADMAPS/startedTemplateIds like any built-in template id.
+  CUSTOM_ROADMAPS: 'ascent-custom-roadmaps-v1'
 };
 
 export function verifyDismissedKey(uid) {

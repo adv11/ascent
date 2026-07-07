@@ -3,6 +3,7 @@ import { navigate } from '../router.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createBrandMark } from '../components/brand.js';
 import { openBuildYourOwnGuide } from '../components/buildYourOwnGuide.js';
+import { openNewRoadmapModal } from '../components/newRoadmapModal.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
@@ -29,6 +30,7 @@ export function renderOnboarding(app, { user, store }) {
   const activeTemplateId = snapshot.activeTemplateId;
   const startedTemplateIds = [...snapshot.startedTemplateIds];
   let hiddenTemplateIds = [...snapshot.hiddenTemplateIds];
+  const customRoadmaps = [...snapshot.customRoadmaps];
 
   let picking = false;
   const cardEls = [];
@@ -72,6 +74,130 @@ export function renderOnboarding(app, { user, store }) {
 
   const visibleGrid = el('div', { className: 'template-grid', role: 'list' });
   const hiddenSection = el('div', { className: 'hidden-templates-section' });
+
+  // "Create your own roadmap" (issue #4) — always the first card, since it's
+  // an action rather than a roadmap to pick. Opens newRoadmapModal, then
+  // activates the freshly created (empty) roadmap through the same
+  // switchRoadmap() path a built-in template pick uses.
+  async function handleCreate() {
+    if (picking) return;
+    const result = await openNewRoadmapModal();
+    if (!result) return;
+    picking = true;
+    setBusy(true);
+    try {
+      await store.createCustomRoadmap(result);
+      navigate('/app', true);
+    } catch (error) {
+      console.error('Failed to create custom roadmap', error);
+      picking = false;
+      setBusy(false);
+      showToast('Could not create your roadmap. Try again.', 'error');
+    }
+  }
+
+  function buildCreateCard() {
+    const cardEl = el('div', {
+      className: 'template-card template-card-create',
+      role: 'button',
+      tabindex: '0',
+      onClick: handleCreate,
+      onKeydown: e => {
+        if (e.target !== cardEl) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCreate();
+        }
+      }
+    }, [
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '+' }),
+      el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
+      el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' })
+    ]);
+    cardEls.push(cardEl);
+    return el('div', { role: 'listitem' }, [cardEl]);
+  }
+
+  async function pickCustomRoadmap(roadmap, cardEl) {
+    if (picking) return;
+    if (isSwitchingTemplate && roadmap.id === activeTemplateId) {
+      showToast("You're already on this roadmap.", 'info');
+      navigate('/app', true);
+      return;
+    }
+    picking = true;
+    setBusy(true);
+    cardEl.classList.add('picking');
+    try {
+      await store.switchRoadmap(roadmap.id);
+      navigate('/app', true);
+    } catch (error) {
+      console.error('Failed to switch roadmap', error);
+      picking = false;
+      setBusy(false);
+      cardEl.classList.remove('picking');
+    }
+  }
+
+  async function deleteCustomCard(roadmap, cardEl) {
+    if (!await confirmDialog({
+      title: `Delete "${roadmap.title}"?`,
+      message: 'This permanently deletes this roadmap and all its progress. This cannot be undone.',
+      confirmText: 'Delete',
+      danger: true
+    })) return;
+    await store.deleteCustomRoadmap(roadmap.id);
+    const index = cardEls.indexOf(cardEl);
+    if (index !== -1) cardEls.splice(index, 1);
+    cardEl.closest('[role="listitem"]')?.remove();
+    showToast(`Deleted "${roadmap.title}"`, 'success');
+  }
+
+  function buildCustomCard(roadmap) {
+    const isCurrent = roadmap.id === activeTemplateId;
+    const isStarted = startedTemplateIds.includes(roadmap.id);
+    const badgeEl = isCurrent
+      ? el('span', { className: 'template-card-current-badge', text: 'Current' })
+      : isStarted
+        ? el('span', { className: 'template-card-started-badge', text: 'In progress' })
+        : null;
+    const footerEl = el('div', { className: 'template-card-footer' }, [badgeEl].filter(Boolean));
+
+    const cardEl = el('div', {
+      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
+      role: 'button',
+      tabindex: '0',
+      'aria-current': isCurrent ? 'true' : null,
+      onClick: () => pickCustomRoadmap(roadmap, cardEl),
+      onKeydown: e => {
+        if (e.target !== cardEl) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pickCustomRoadmap(roadmap, cardEl);
+        }
+      }
+    }, [
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '✎' }),
+      el('span', { className: 'template-card-name', text: roadmap.title }),
+      el('span', { className: 'template-card-desc', text: roadmap.description || 'Your own roadmap.' }),
+      footerEl,
+      el('button', {
+        type: 'button',
+        className: 'template-card-hide',
+        'data-action': 'delete',
+        'aria-label': `Delete ${roadmap.title}`,
+        title: `Delete ${roadmap.title}`,
+        text: '×',
+        onClick: e => {
+          e.stopPropagation();
+          deleteCustomCard(roadmap, cardEl);
+        }
+      })
+    ]);
+
+    cardEls.push(cardEl);
+    return el('div', { role: 'listitem' }, [cardEl]);
+  }
 
   function buildCard(template) {
     const isBlank = template.id === 'blank';
@@ -197,6 +323,8 @@ export function renderOnboarding(app, { user, store }) {
     hiddenSection.replaceChildren(toggleBtn);
   }
 
+  visibleGrid.appendChild(buildCreateCard());
+  customRoadmaps.forEach(roadmap => visibleGrid.appendChild(buildCustomCard(roadmap)));
   TEMPLATES
     .filter(t => t.id === 'blank' || !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
     .forEach(template => visibleGrid.appendChild(buildCard(template)));

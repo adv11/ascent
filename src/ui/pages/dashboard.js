@@ -100,9 +100,17 @@ export function renderDashboard(app, { user, store }) {
 
   const userLabel = user.isAnonymous ? 'Guest session' : (user.email || 'Signed in');
   const userPillClass = user.isAnonymous ? 'guest' : 'online';
+  const isCustomRoadmap = store.isCustomRoadmapId(store.getSnapshot().activeTemplateId);
   // Surfaced in the hero so it's never ambiguous which roadmap is currently
-  // loaded — easy to lose track of after switching templates a few times.
-  const currentTemplate = getTemplate(store.getSnapshot().activeTemplateId);
+  // loaded — easy to lose track of after switching templates a few times. A
+  // custom roadmap (issue #4) has no entry in the template registry, so its
+  // name/icon come from customRoadmaps meta instead of getTemplate().
+  const currentTemplate = isCustomRoadmap
+    ? (() => {
+      const custom = store.getSnapshot().customRoadmaps.find(r => r.id === store.getSnapshot().activeTemplateId);
+      return { icon: '✎', name: custom ? custom.title : 'Custom roadmap' };
+    })()
+    : getTemplate(store.getSnapshot().activeTemplateId);
 
   function persistUi() {
     store.setUiState({
@@ -216,6 +224,100 @@ export function renderDashboard(app, { user, store }) {
     ]);
   }
 
+  // Generic "type a name, click to create" row (issue #4) — used for both
+  // "+ Add phase" and "+ Add section", only ever rendered for a custom
+  // roadmap (built-in templates' phase/section skeleton is fixed content).
+  function renderInlineCreate(placeholder, buttonLabel, onCreate) {
+    const input = el('input', { className: 'field-input compact inline-add', placeholder });
+    return el('div', { className: 'add-row' }, [
+      input,
+      el('button', {
+        type: 'button',
+        className: 'btn btn-secondary btn-sm',
+        text: buttonLabel,
+        onClick: () => {
+          const value = input.value.trim();
+          if (!value) return;
+          onCreate(value);
+          input.value = '';
+        }
+      })
+    ]);
+  }
+
+  function renderPhaseManageRow(phase) {
+    const renameInput = el('input', {
+      className: 'field-input compact',
+      value: phase.title,
+      'aria-label': `Rename phase "${phase.title}"`
+    });
+    return el('div', { className: 'phase-manage-row' }, [
+      renameInput,
+      el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm',
+        text: 'Rename',
+        onClick: () => {
+          const value = renameInput.value.trim();
+          if (!value || value === phase.title) return;
+          store.renamePhase(phase.id, value);
+        }
+      }),
+      el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm btn-danger-text',
+        text: 'Delete phase',
+        onClick: async () => {
+          if (!await confirmDialog({
+            title: `Delete "${phase.title}"?`,
+            message: 'This deletes the phase and every topic inside it. This cannot be undone.',
+            confirmText: 'Delete',
+            danger: true
+          })) return;
+          store.removePhase(phase.id);
+          showToast(`Deleted phase "${phase.title}"`, 'success');
+        }
+      })
+    ]);
+  }
+
+  function renderSectionManageRow(phase, section) {
+    const renameInput = el('input', {
+      className: 'field-input compact',
+      value: section.title,
+      placeholder: 'Section name',
+      'aria-label': `Rename section "${section.title}"`
+    });
+    return el('div', { className: 'section-manage-row' }, [
+      renameInput,
+      el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm',
+        text: 'Rename',
+        onClick: () => {
+          const value = renameInput.value.trim();
+          if (!value || value === section.title) return;
+          store.renameSection(phase.id, section.id, value);
+        }
+      }),
+      el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm btn-danger-text',
+        text: 'Delete section',
+        onClick: async () => {
+          if (!await confirmDialog({
+            title: `Delete "${section.title || 'this section'}"?`,
+            message: 'This deletes the section and every topic inside it. This cannot be undone.',
+            confirmText: 'Delete',
+            danger: true
+          })) return;
+          store.removeSection(phase.id, section.id);
+          showToast('Section deleted', 'success');
+        }
+      })
+    ]);
+  }
+
   function render(snapshot) {
     const allItems = snapshot.items;
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });
@@ -246,6 +348,15 @@ export function renderDashboard(app, { user, store }) {
     const phases = groupItems(allItems, snapshot.phases);
     content.replaceChildren();
 
+    // A custom roadmap (issue #4) has no fixed phase/section skeleton, so
+    // "+ Add phase" always renders here regardless of how many phases exist
+    // yet — including zero, for a freshly created roadmap.
+    if (isCustomRoadmap) {
+      content.append(renderInlineCreate('New phase name…', '+ Add phase', title => {
+        store.addPhase(title);
+      }));
+    }
+
     let visibleCount = 0;
     phases.forEach((phase, pi) => {
       // A section that has no topics at all (e.g. the "blank" template's empty
@@ -256,7 +367,10 @@ export function renderDashboard(app, { user, store }) {
         items: section.items.filter(i => filteredIds.has(i.id))
       })).filter((section, sIdx) => phase.sections[sIdx].items.length === 0 || section.items.length > 0);
 
-      if (!visibleSections.length) return;
+      // A custom roadmap's freshly-added phase (issue #4) starts with zero
+      // sections — without this, it would never render at all, leaving no
+      // way to reach the "+ Add section" control inside its phase-body.
+      if (!visibleSections.length && phase.sections.length > 0) return;
       visibleCount += 1;
 
       const sectionDone = visibleSections.reduce((acc, s) => acc + s.items.filter(i => i.done).length, 0);
@@ -280,11 +394,19 @@ export function renderDashboard(app, { user, store }) {
           el('span', { className: 'phase-progress', text: `${sectionDone}/${sectionTotal}` }),
           el('span', { className: 'chevron', text: '›' })
         ]),
-        el('div', { className: 'phase-body' }, visibleSections.flatMap(section => [
-          section.title ? el('div', { className: 'section-label', text: section.title }) : null,
-          ...section.items.map(renderItemRow),
-          renderAddRow(phase, section)
-        ]))
+        el('div', { className: 'phase-body' }, [
+          (isCustomRoadmap && phase.id) ? renderPhaseManageRow(phase) : null,
+          ...visibleSections.flatMap(section => [
+            (isCustomRoadmap && phase.id)
+              ? renderSectionManageRow(phase, section)
+              : (section.title ? el('div', { className: 'section-label', text: section.title }) : null),
+            ...section.items.map(renderItemRow),
+            renderAddRow(phase, section)
+          ]),
+          (isCustomRoadmap && phase.id) ? renderInlineCreate('New section name…', '+ Add section', title => {
+            store.addSection(phase.id, title);
+          }) : null
+        ].filter(Boolean))
       ]);
       content.append(phaseEl);
     });

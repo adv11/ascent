@@ -457,6 +457,16 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .template-card-hidden .btn { margin-top: auto; align-self: flex-start; }
 
+.template-card-create {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-style: dashed;
+  gap: 6px;
+}
+.template-card-create .template-card-icon { font-size: 36px; color: var(--brand); }
+.template-card-create .template-card-name { color: var(--brand-dark); }
+
 /* Dashboard */
 .dashboard { min-height: 100vh; display: flex; flex-direction: column; }
 
@@ -737,6 +747,17 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   padding: 12px 16px 6px;
   background: var(--panel-2);
 }
+
+/* Custom roadmap phase/section CRUD (issue #4) */
+.phase-manage-row, .section-manage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--panel-2);
+  border-bottom: 1px dashed var(--line);
+}
+.phase-manage-row .field-input, .section-manage-row .field-input { flex: 1; }
 
 .badge {
   font-family: var(--mono);

@@ -119,6 +119,7 @@ src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
+src/ui/components/newRoadmapModal.js    "Create your own roadmap" title/description modal (issue #4)
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -205,6 +206,42 @@ read-only safety net; `setUser` migrates a legacy account (one lacking
 `users/{uid}/roadmaps/{templateId}` and writing the new meta shape, the first time such
 an account signs in after this shipped.
 
+**Manual roadmap creation — `croadmap-...` ids (`roadmapStore.js`, issue #4).** A
+user can build their own roadmap from scratch via "Create your own roadmap" (the first
+card in `/onboarding`'s grid, opening `src/ui/components/newRoadmapModal.js`) instead of
+picking a built-in template. `createCustomRoadmap({ title, description })` generates an
+id in the shape `croadmap-<timestamp>-<random>` — `isCustomRoadmapId(id)` (exported from
+the store) is the *only* thing anywhere in the codebase that distinguishes a custom
+roadmap from a built-in template id, and it's deliberately a different prefix than
+`addItem()`'s `custom-` item ids (a different id namespace entirely — item.id, not
+templateId — but a shared prefix would be a confusing coincidence to debug). A custom
+roadmap's metadata (`{ id, title, description, createdAt }`) lives in a new `customRoadmaps`
+array (`users/{uid}/meta.customRoadmaps`, plus a local `KEYS.CUSTOM_ROADMAPS` fallback) —
+separate from `startedTemplateIds`, which a custom roadmap's id is *also* added to, so it
+flows through the exact same `switchRoadmap`/`roadmapCache`/Firebase-per-path machinery
+issue #58 built for built-in templates. The one structural difference: a built-in
+template's `phases` skeleton is fixed content from its template module and is never
+persisted (the store just re-derives it from `getTemplatePhases()` every time), but a
+custom roadmap has no template module — its `phases` (with generated `phase-...`/
+`section-...` ids, so they can be renamed/deleted unambiguously by id rather than by
+title) are the *only* record of what the user built, and get persisted/resolved through
+the exact same cache → Firebase → local-blob → seed path as `items` (see
+`resolveRoadmapItems`), and folded into the same echo/structural-version comparison in
+`attachRoadmapListener` (comparing `{ items, phases }` together, not `items` alone) so a
+custom roadmap's user-added structure gets the same echo-guard and multi-device sync
+guarantees `items` already had. `addPhase`/`renamePhase`/`removePhase`/`addSection`/
+`renameSection`/`removeSection` are silent no-ops when `activeTemplateId` isn't a custom
+id — a built-in template's phase/section skeleton is fixed, never user-editable.
+Renaming a phase or section re-files every item under it to the new title (so they don't
+become orphaned); removing one soft-deletes every item under it (there's no phase/section
+left for them to render under). `dashboard.js` only renders the "+ Add phase"/"+ Add
+section"/rename/delete controls when `store.isCustomRoadmapId(activeTemplateId)` is true.
+`deleteCustomRoadmap(id)` permanently removes a custom roadmap (Firebase node + local
+blob + meta entry) — never usable on a built-in template id, which can only ever be
+hidden (see `hideTemplate` above), never deleted. If it's the currently active roadmap,
+it switches to the default built-in template (`java-backend`) first so the app is never
+left without an active roadmap.
+
 **Flush-before-switch — an edit made just before switching must never be silently
 dropped or attributed to the wrong template.** Because `flush()` always saves whatever
 `items`/`activeTemplateId` are current *at the moment it actually runs* (not captured at
@@ -267,11 +304,15 @@ row, don't — and prefer extending `patchDoneStates()` over adding more full re
 **Watch the Firebase echo.** `dbApi.listenRoadmap`'s `onValue` callback fires on every
 write to the path, *including the echo of writes this client just made* (every debounced
 save round-trips back through the listener ~500ms-1s after a click). It must not bump
-`structuralVersion` on that echo — `roadmapStore.js` compares the incoming remote data
-against the current in-memory `items` with a key-order-independent `stableStringify`
-(Realtime Database returns keys sorted; our in-memory map is insertion-order, so a plain
-`JSON.stringify` compare produces false positives) and only bumps when they actually
-differ. If this comparison is ever removed or replaced with an unconditional bump, the
+`structuralVersion` on that echo — `roadmapStore.js` compares the incoming remote
+`{ items, phases }` pair against the current in-memory one with a key-order-independent
+`stableStringify` (Realtime Database returns keys sorted; our in-memory map is
+insertion-order, so a plain `JSON.stringify` compare produces false positives) and only
+bumps when they actually differ. `phases` is folded into this same comparison (issue #4)
+rather than checked separately, so a custom roadmap's user-added phases/sections get the
+identical echo-guard and multi-device sync behavior `items` already had — for a built-in
+template `phases` never differs, so this is a no-op there. If this comparison is ever
+removed or replaced with an unconditional bump, the
 checklist flicker comes back — it'll just be delayed by a save round-trip instead of
 happening immediately on click, which makes it easy to miss in casual testing.
 
