@@ -25,7 +25,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     await expect(page.locator('.phase-card')).toHaveCount(0);
 
     await page.fill('input[placeholder="New phase name…"]', 'Phase One');
-    await page.click('button', { hasText: '+ Add phase' });
+    await page.locator('button', { hasText: '+ Add phase' }).click();
     const phaseCard = page.locator('.phase-card', { hasText: 'Phase One' });
     await expect(phaseCard).toBeVisible();
     // Freshly-added phase has zero sections — must still render the card
@@ -38,7 +38,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     await expect(phaseCard.locator('.section-manage-row')).toBeVisible();
 
     await phaseCard.locator('input[placeholder="Add a custom topic…"]').fill('My first topic');
-    await phaseCard.locator('button', { hasText: 'Add' }).click();
+    await phaseCard.locator('button', { hasText: /^Add$/ }).click();
     await expect(phaseCard.locator('.check-item', { hasText: 'My first topic' })).toBeVisible();
   });
 
@@ -53,12 +53,12 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
     await page.fill('input[placeholder="New phase name…"]', 'Old Phase');
-    await page.click('button', { hasText: '+ Add phase' });
+    await page.locator('button', { hasText: '+ Add phase' }).click();
     const phaseCard = page.locator('.phase-card');
     await phaseCard.locator('input[placeholder="New section name…"]').fill('Old Section');
     await phaseCard.locator('button', { hasText: '+ Add section' }).click();
     await phaseCard.locator('input[placeholder="Add a custom topic…"]').fill('Topic');
-    await phaseCard.locator('button', { hasText: 'Add' }).click();
+    await phaseCard.locator('button', { hasText: /^Add$/ }).click();
 
     await phaseCard.locator('.phase-manage-row input').fill('New Phase');
     await phaseCard.locator('.phase-manage-row button', { hasText: 'Rename' }).click();
@@ -81,12 +81,12 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
     await page.fill('input[placeholder="New phase name…"]', 'Doomed Phase');
-    await page.click('button', { hasText: '+ Add phase' });
+    await page.locator('button', { hasText: '+ Add phase' }).click();
     const phaseCard = page.locator('.phase-card');
     await phaseCard.locator('input[placeholder="New section name…"]').fill('Doomed Section');
     await phaseCard.locator('button', { hasText: '+ Add section' }).click();
     await phaseCard.locator('input[placeholder="Add a custom topic…"]').fill('Doomed Topic');
-    await phaseCard.locator('button', { hasText: 'Add' }).click();
+    await phaseCard.locator('button', { hasText: /^Add$/ }).click();
 
     await phaseCard.locator('.section-manage-row button', { hasText: 'Delete section' }).click();
     await page.locator('.modal-overlay [data-action="confirm"]').click();

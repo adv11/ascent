@@ -141,6 +141,8 @@ test('sign-up page Continue as guest navigates to the onboarding picker, then th
   await page.goto('/#/signup');
   await page.click('text=Continue as guest');
   await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-  await page.locator('.template-card').first().click();
+  // .first() would now hit the "Create your own roadmap" card (issue #4,
+  // always first in the grid) instead of a template — pick an actual template.
+  await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 });
