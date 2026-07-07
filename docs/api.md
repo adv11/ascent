@@ -27,12 +27,25 @@ Returns a store instance with the following methods.
 | `renameSection` | `(phaseId: string, sectionId: string, newTitle: string) => void` | Issue #4 — same guard. Re-files matching items to the new section title. |
 | `removeSection` | `(phaseId: string, sectionId: string) => void` | Issue #4 — same guard. Soft-deletes every item filed under the removed section. |
 | `getSnapshot` | `(meta?: object) => Snapshot` | Synchronous; returns the current state merged with any extra `meta` fields. |
-| `updateItem` | `(id: string, patch: object) => void` | Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). |
-| `addItem` | `({ title, phase, section, priority }) => void` | Always bumps `structuralVersion`. |
+| `updateItem` | `(id: string, patch: object) => void` | Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). A `{ notes }` patch (issue #15) is therefore non-cosmetic — never add `'notes'` to the cosmetic-check. |
+| `addItem` | `({ title, phase, section, priority }) => void` | Always bumps `structuralVersion`. Seeds `notes: ''`. |
 | `removeItem` | `(id: string) => void` | Soft-delete (`deleted: true`); always bumps `structuralVersion`. |
 | `addResource` / `updateResource` / `removeResource` | `(id, ...) => void` | Mutate an item's `resources` array via `updateItem`. |
 | `flush` | `async () => void` | Immediately persists `items` and `phases` to `localStorage` and (if signed in) Firebase, bypassing the debounce. |
 | `getUiState` / `setUiState` | `() => object` / `(state) => void` | Per-device UI prefs (open phases, filter, search) — never synced to Firebase. |
+
+### Item shape
+
+```ts
+{
+  id: string, title: string, phase: string, section: string, priority: 'P0' | 'P1' | 'P2' | 'P3',
+  done: boolean,
+  custom: boolean, deleted: boolean,
+  resources: { label: string, url: string }[],
+  notes?: string,     // issue #15 — plain text, ≤ 5000 chars. Missing/'' both mean "no notes".
+  createdAt: number, updatedAt?: number,
+}
+```
 
 ### Snapshot shape
 

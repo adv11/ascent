@@ -122,6 +122,32 @@ describe('structuralVersion contract', () => {
 
     expect(store.getSnapshot().structuralVersion).toBe(initial + 1);
   });
+
+  // Issue #15 — a notes patch is NOT cosmetic (the notes indicator badge on
+  // the row needs structuralVersion to bump so it re-renders). Never add
+  // 'notes' to the cosmetic-check in updateItem.
+  it('bumps structuralVersion when a notes patch is applied', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const initial = store.getSnapshot().structuralVersion;
+
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    store.updateItem(firstId, { notes: 'Some personal notes' });
+
+    expect(store.getSnapshot().structuralVersion).toBe(initial + 1);
+    expect(store.getSnapshot().allItems[firstId].notes).toBe('Some personal notes');
+  });
+
+  it('an item without a notes field reads as empty string, with no crash', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    // Seed items never carry a `notes` field (backward compat) — the field
+    // is only ever added once a user actually writes a note.
+    expect(store.getSnapshot().allItems[firstId].notes).toBeUndefined();
+    expect(store.getSnapshot().allItems[firstId].notes || '').toBe('');
+  });
 });
 
 describe('sign-out guard (setUser contract)', () => {

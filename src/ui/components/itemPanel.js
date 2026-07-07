@@ -1,7 +1,13 @@
 import { el, isValidUrl } from '../dom.js';
 import { confirmDialog } from './confirmDialog.js';
 
-export function openItemPanel({ item, onSave, onDelete, onClose }) {
+// Issue #15 — plain-string notes field, capped at 5000 chars (enforced both
+// here via the textarea's native maxlength and in roadmapStore/schema docs).
+const NOTES_MAX_LENGTH = 5000;
+const NOTES_AUTOSAVE_DEBOUNCE_MS = 800;
+const NOTES_SAVED_INDICATOR_MS = 1500;
+
+export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   const overlay = el('div', { className: 'panel-overlay', onClick: e => { if (e.target === overlay) close(); } });
   const panel = el('aside', { className: 'item-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Edit topic' });
 
@@ -17,7 +23,53 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
   const urlInput = el('input', { className: 'field-input', placeholder: 'https://...', type: 'url' });
   const formError = el('p', { className: 'form-error', text: '' });
 
+  const notesTextarea = el('textarea', {
+    className: 'field-input notes-textarea',
+    placeholder: 'Your personal notes, tips, examples…',
+    rows: '4',
+    maxlength: String(NOTES_MAX_LENGTH)
+  });
+  notesTextarea.value = item.notes || '';
+  const notesCounter = el('span', { className: 'notes-counter small muted', text: '' });
+  const notesStatus = el('span', { className: 'notes-status', text: '' });
+
   let resources = [...(item.resources || [])];
+  let notesSaveTimer = null;
+
+  function updateNotesCounter() {
+    const len = notesTextarea.value.length;
+    notesCounter.textContent = len > NOTES_MAX_LENGTH * 0.8 ? `${len} / ${NOTES_MAX_LENGTH}` : '';
+  }
+
+  function showNotesSaved() {
+    notesStatus.textContent = 'Autosaved ✓';
+    notesStatus.className = 'notes-status show';
+    setTimeout(() => notesStatus.classList.remove('show'), NOTES_SAVED_INDICATOR_MS);
+  }
+
+  function showNotesError() {
+    notesStatus.textContent = 'Failed to save — check connection';
+    notesStatus.className = 'notes-status show error';
+  }
+
+  function scheduleNotesAutosave() {
+    clearTimeout(notesSaveTimer);
+    notesStatus.classList.remove('show', 'error');
+    notesSaveTimer = setTimeout(() => {
+      try {
+        onSave?.({ notes: notesTextarea.value });
+        showNotesSaved();
+      } catch {
+        showNotesError();
+      }
+    }, NOTES_AUTOSAVE_DEBOUNCE_MS);
+  }
+
+  notesTextarea.addEventListener('input', () => {
+    updateNotesCounter();
+    scheduleNotesAutosave();
+  });
+  updateNotesCounter();
 
   function renderResources() {
     resourceList.replaceChildren();
@@ -54,6 +106,14 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
   }
 
   function close() {
+    // Flush a pending notes autosave immediately rather than letting the
+    // debounce timer close over an unmounted panel — an edit made just
+    // before closing must never be silently dropped.
+    if (notesSaveTimer) {
+      clearTimeout(notesSaveTimer);
+      notesSaveTimer = null;
+      if (notesTextarea.value !== (item.notes || '')) onSave?.({ notes: notesTextarea.value });
+    }
     overlay.classList.remove('show');
     panel.classList.remove('show');
     setTimeout(() => overlay.remove(), 240);
@@ -94,6 +154,14 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
       el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Priority' }),
         prioritySelect
+      ]),
+      el('div', { className: 'field' }, [
+        el('div', { className: 'field-label-row' }, [
+          el('span', { className: 'field-label', text: 'Notes' }),
+          notesCounter,
+          notesStatus
+        ]),
+        notesTextarea
       ]),
       el('div', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Resources' }),
@@ -143,7 +211,9 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
               formError.textContent = 'One or more resource URLs must be a valid http or https URL.';
               return;
             }
-            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources });
+            clearTimeout(notesSaveTimer);
+            notesSaveTimer = null;
+            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources, notes: notesTextarea.value });
             close();
           }
         })
@@ -157,7 +227,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose }) {
   requestAnimationFrame(() => {
     overlay.classList.add('show');
     panel.classList.add('show');
-    titleInput.focus();
+    (focusField === 'notes' ? notesTextarea : titleInput).focus();
   });
 
   const onKey = e => { if (e.key === 'Escape') close(); };

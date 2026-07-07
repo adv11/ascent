@@ -122,7 +122,7 @@ src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really)
 src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + theme toggle + card)
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
-src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources
+src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
 src/ui/components/newRoadmapModal.js    "Create your own roadmap" title/description modal (issue #4)
@@ -348,6 +348,18 @@ the affected row's classes in place. If you add a new mutation that changes the 
 shape* of items (add/remove/reorder/edit fields other than `done`), bump
 `structuralVersion` for it. If you add a mutation that's purely cosmetic on an existing
 row, don't — and prefer extending `patchDoneStates()` over adding more full re-renders.
+
+**Personal notes per topic — `item.notes` (issue #15).** Every item may carry a plain-text
+`notes` field, capped at 5,000 characters; a missing field and `''` both mean "no notes"
+(backward compat — seed items are never retrofitted with `notes: ''`, the same precedent
+as `resources`). A `notes` patch is **not cosmetic** — it bumps `structuralVersion` (see
+above) because the row's notes indicator badge needs to re-render. Never add `'notes'` to
+`updateItem`'s cosmetic-check. `itemPanel.js`'s Notes textarea autosaves independently of
+the title/priority/resources "Save changes" button — an 800ms-debounced call to `onSave`
+with just `{ notes }` — and flushes any pending save synchronously on close so an edit
+made in the narrow window before the debounce fires is never lost. `dashboard.js` renders
+a `data-action="notes"` 📝 indicator on a row only when `item.notes` is non-empty,
+following the same click-guard (`e.stopPropagation()`) convention as the resource badge.
 
 **Watch the Firebase echo.** `dbApi.listenRoadmap`'s `onValue` callback fires on every
 write to the path, *including the echo of writes this client just made* (every debounced

@@ -1099,3 +1099,40 @@ Manually verified against the live Firebase emulator: seeded a legacy "blank" ac
 meta/data directly via the SDK, reloaded, and confirmed the migrated roadmap kept its
 exact phases and topic, showed up correctly in both the dashboard and the onboarding
 picker, and that no "Start blank" card remained.
+
+### 2026-07-07 — PR #TBD — Personal notes per topic (issue #15)
+
+Added a `notes: string` field to the item schema, alongside the existing `resources`
+array. No template/seed changes: backward compat is handled entirely by treating a
+missing `notes` field as `''` at read time, the same way older items without seeded
+`resources: []` were never retrofitted either. `updateItem`'s existing cosmetic-check
+(`Object.keys(patch).every(key => key === 'done')`) already classified a `{ notes }`
+patch as non-cosmetic with zero code change — added a comment there specifically
+warning against ever adding `'notes'` to that check, since the row's notes indicator
+depends on `structuralVersion` bumping to re-render.
+
+`src/ui/components/itemPanel.js` gained a Notes field between Priority and Resources —
+a `<textarea maxlength="5000">` with `field-sizing: content` (auto-grows, no JS height
+sync needed) and its own independent autosave path: an 800ms-debounced call to `onSave`
+with just `{ notes }`, separate from the title/priority/resources bundle the "Save
+changes" button submits. A local `notesSaveTimer` is flushed synchronously in `close()`
+(Cancel, Escape, outside-click, or Delete) so an edit made in the narrow window before
+the debounce fires is never silently lost — the same class of bug the "flush-before-switch"
+and "out-of-order echo guard" work in `roadmapStore.js` already exists to prevent, just
+at the component level instead of the store level. A `focusField: 'notes'` option (new,
+optional — defaults to focusing the title input as before) lets a caller open the panel
+with focus already in the notes textarea.
+
+`dashboard.js`'s `renderItemRow` gained a `data-action="notes"` 📝 button next to the
+resource-count badge, rendered only when `item.notes` is non-empty, following the same
+`e.stopPropagation()` click-guard convention as the resource badge and Edit button —
+clicking it opens the item panel via `focusField: 'notes'`. Uses the native `title`
+attribute for the "Has notes" tooltip rather than a custom tooltip component, since a
+plain hover title was sufficient here.
+
+New tests: `tests/unit/itemPanel.test.js` (textarea pre-fill, maxlength cap, character
+counter threshold, debounce timing, autosaved/failed indicator states, flush-on-close,
+focusField); two new cases in `tests/integration/roadmapStore.test.js`'s
+`structuralVersion contract` block (notes patch bumps `structuralVersion`; missing
+`notes` field reads as `''`); `tests/e2e/itemNotes.test.js` (add note → reopen → note
+restored; indicator visibility + click-to-focus; survives a page reload).

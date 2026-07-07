@@ -183,6 +183,23 @@ export function renderDashboard(app, { user, store }) {
               onDelete: () => store.removeItem(item.id)
             });
           }
+        }) : null,
+        item.notes ? el('button', {
+          type: 'button',
+          className: 'notes-indicator',
+          'data-action': 'notes',
+          'aria-label': 'Has notes',
+          title: 'Has notes',
+          text: '📝',
+          onClick: e => {
+            e.stopPropagation();
+            openItemPanel({
+              item,
+              focusField: 'notes',
+              onSave: patch => store.updateItem(item.id, patch),
+              onDelete: () => store.removeItem(item.id)
+            });
+          }
         }) : null
       ].filter(Boolean)),
       el('div', { className: 'check-actions' }, [
