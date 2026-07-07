@@ -431,19 +431,27 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .template-card-hide:hover { color: var(--danger); border-color: var(--danger-border); }
 
-.template-card-info {
-  align-self: flex-start;
-  text-align: left;
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--brand);
-  background: none;
-  border: none;
+/* Corner info button on "Create your own roadmap" (issue #4 follow-up) —
+   same slot/sizing as .template-card-hide, opening buildYourOwnGuide instead
+   of hiding/deleting. Used to live only on the now-retired "blank" template
+   as an inline text link; moved here since blank was its sole home. */
+.template-card-info-corner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-glass);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
   cursor: pointer;
-  padding: 0;
 }
-.template-card-info:hover { text-decoration: underline; }
+.template-card-info-corner:hover { color: var(--brand); border-color: var(--brand-light-border); }
 
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
 .hidden-templates-toggle { justify-self: center; }

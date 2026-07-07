@@ -11,14 +11,16 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await expect(page).toHaveTitle('Ascent');
-    // 8 built-in templates + "Create your own roadmap" + "Import roadmap" (issue #4).
-    await expect(page.locator('.template-card')).toHaveCount(10);
+    // 7 built-in templates ("blank" retired — issue #4 follow-up) + "Create
+    // your own roadmap" + "Import roadmap" (issue #4).
+    await expect(page.locator('.template-card')).toHaveCount(9);
     await expect(page.locator('.template-card-create')).toContainText('Create your own roadmap');
     await expect(page.locator('.template-card-import')).toContainText('Import roadmap');
     await expect(page.locator('.template-card-name')).toContainText([
       'Java Backend Engineer', 'GenAI / Agentic AI Engineer', 'Frontend Developer', 'Data Scientist',
-      '12th Grade Mathematics', 'Learning Piano', 'Marketing', 'Start blank'
+      '12th Grade Mathematics', 'Learning Piano', 'Marketing'
     ]);
+    await expect(page.locator('.template-card', { hasText: 'Start blank' })).toHaveCount(0);
   });
 
   test('picking Java Backend Engineer lands on /app with the Java roadmap', async ({ page }) => {
@@ -32,23 +34,6 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
     await expect(page.locator('.dashboard')).toBeVisible();
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
-  });
-
-  test('picking Start blank lands on /app with 4 empty phases', async ({ page }) => {
-    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
-    await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-
-    await page.locator('.template-card', { hasText: 'Start blank' }).click();
-
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
-    await expect(page.locator('.dashboard')).toBeVisible();
-    await expect(page.locator('.phase-card')).toHaveCount(4);
-    await expect(page.locator('.phase-name')).toContainText(['Learn', 'Practice', 'Build', 'Review']);
-
-    await page.click('[data-toggle-all]');
-    await expect(page.locator('.check-item')).toHaveCount(0);
   });
 
   test('returning user (already picked a template) skips onboarding on reload', async ({ page }) => {
@@ -214,15 +199,21 @@ test.describe('onboarding — hiding and restoring templates', () => {
     await expect(page.locator('.hidden-templates-toggle')).toHaveCount(0);
   });
 
-  test('the "Start blank" card has no hide button — it can never be hidden', async ({ page }) => {
+  // "blank" is retired (issue #4 follow-up) — every built-in template card
+  // now has a hide button with no exceptions.
+  test('every built-in template card has a hide button, including the ones that used to be exceptions', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
-    const blankCard = page.locator('.template-card', { hasText: 'Start blank' });
-    await expect(blankCard.locator('.template-card-hide')).toHaveCount(0);
-    await expect(blankCard.locator('.template-card-info')).toBeVisible();
+    for (const name of ['Java Backend Engineer', 'Learning Piano', 'Marketing']) {
+      await expect(page.locator('.template-card', { hasText: name }).locator('.template-card-hide')).toBeVisible();
+    }
+    // "Create your own roadmap" has the info corner button instead, never a hide button.
+    const createCard = page.locator('.template-card-create');
+    await expect(createCard.locator('.template-card-info-corner')).toBeVisible();
+    await expect(createCard.locator('.template-card-hide')).toHaveCount(0);
   });
 
   test('a hidden template stays hidden across a reload (persisted per-user)', async ({ page }) => {
@@ -241,24 +232,37 @@ test.describe('onboarding — hiding and restoring templates', () => {
   });
 });
 
-test.describe('onboarding — "build your own roadmap" guide', () => {
-  test('the info button on "Start blank" opens a guide explaining manual and AI-assisted roadmap building', async ({ page }) => {
+test.describe('onboarding — "build your own roadmap" guide (issue #4 follow-up)', () => {
+  test('the corner info button on "Create your own roadmap" opens a guide explaining manual and AI-assisted roadmap building', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
-    await page.locator('.template-card', { hasText: 'Start blank' }).locator('.template-card-info').click();
+    await page.locator('.template-card-create .template-card-info-corner').click();
 
     const modal = page.locator('.build-guide-card');
     await expect(modal).toBeVisible();
     await expect(modal).toContainText('Build your own roadmap');
     await expect(modal).toContainText('Add topics manually');
-    await expect(modal).toContainText('AI assistant');
+    await expect(modal).toContainText('Import roadmap');
 
     await modal.locator('button', { hasText: 'Got it' }).click();
     await expect(modal).toHaveCount(0);
-    // Clicking the info button must not have picked the blank template.
+    // Clicking the info button must not have created a roadmap.
     await expect(page).toHaveURL(/#\/onboarding/);
+  });
+
+  test('the guide\'s "Open Import roadmap" button closes the guide and opens the import modal directly', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    await page.locator('.template-card-create .template-card-info-corner').click();
+    await page.locator('.build-guide-card button', { hasText: 'Open Import roadmap' }).click();
+
+    await expect(page.locator('.build-guide-card')).toHaveCount(0);
+    await expect(page.locator('.modal-overlay[aria-label="Import roadmap"]')).toBeVisible();
   });
 });

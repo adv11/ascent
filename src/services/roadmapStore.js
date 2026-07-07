@@ -1,5 +1,5 @@
 import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
-import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases } from '../data/templates/index.js';
+import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../data/templates/index.js';
 import { dbApi, firebaseClock } from './firebase.js';
 import { KEYS } from './localStorageKeys.js';
 
@@ -489,6 +489,71 @@ export function createRoadmapStore() {
       }
     }
 
+    // One-time migration for the now-retired 'blank' template (issue #4
+    // follow-up): once manual CRUD (PR #60) and AI import (this PR) both
+    // existed, 'blank' became a strict subset of "Create your own roadmap" —
+    // fixed Learn/Practice/Build/Review phases versus fully editable ones —
+    // so it's no longer offered in TEMPLATES. Anyone who already started it
+    // keeps their content: migrated forward into a real custom roadmap
+    // instead of losing access. Never deletes the old
+    // users/{uid}/roadmaps/blank node — same never-delete-just-stop-reading
+    // precedent as every other legacy path in this file. Runs before
+    // fetchTemplateData(activeTemplateId) below, which would otherwise be
+    // called with 'blank' — no longer a valid built-in id (removed from
+    // TEMPLATES) or custom id (doesn't match the croadmap- prefix) — and
+    // silently resolve to the wrong (fallback) template content.
+    if (onboardingDone && (activeTemplateId === 'blank' || startedTemplateIds.includes('blank'))) {
+      let storedBlank = null;
+      if (uid) {
+        try {
+          storedBlank = await dbApi.getRoadmap(uid, 'blank');
+        } catch (error) {
+          console.error('Failed to load blank roadmap for migration', error);
+        }
+      }
+      if (isStale()) return;
+
+      if (!storedBlank?.items) {
+        const localBlob = readLocalRoadmaps().blank;
+        if (localBlob?.items) storedBlank = localBlob;
+      }
+
+      let migratedItems = storedBlank?.items;
+      let migratedPhases = normalizeStringArray(storedBlank?.phases);
+      if (!migratedItems || !migratedPhases) {
+        // Pre-dates PR #60 always persisting `phases` — fall back to blank.js's
+        // own fixed skeleton/empty seed for whichever half is missing.
+        const legacy = await getLegacyBlankTemplateData();
+        if (isStale()) return;
+        migratedItems = migratedItems || legacy.baseItems;
+        migratedPhases = migratedPhases || legacy.phases;
+      }
+
+      const migratedId = genId('croadmap');
+      customRoadmaps = [...customRoadmaps, { id: migratedId, title: 'My roadmap', description: '', createdAt: Date.now() }];
+      persistLocalCustomRoadmaps();
+      persistLocalRoadmap(migratedId, { dirty: false, items: migratedItems, phases: migratedPhases });
+      roadmapCache[migratedId] = { items: migratedItems, phases: migratedPhases, dirty: false };
+
+      if (activeTemplateId === 'blank') activeTemplateId = migratedId;
+      startedTemplateIds = startedTemplateIds.map(id => (id === 'blank' ? migratedId : id));
+
+      if (uid) {
+        dbApi.saveRoadmap(uid, migratedId, {
+          version: ROADMAP_VERSION,
+          updatedAt: firebaseClock(),
+          templateId: migratedId,
+          items: migratedItems,
+          phases: migratedPhases
+        }).catch(error => {
+          console.error('Failed to migrate blank roadmap content', error);
+        });
+        dbApi.saveMeta(uid, { activeTemplateId, startedTemplateIds, customRoadmaps, onboardingDone: true }).catch(error => {
+          console.error('Failed to save meta after blank-template migration', error);
+        });
+      }
+    }
+
     persistLocalOnboarding();
 
     if (!onboardingDone) {
@@ -599,9 +664,7 @@ export function createRoadmapStore() {
   // Hiding/unhiding is a per-user preference for which template cards show on
   // *this* user's onboarding picker — it never touches the template's content
   // or any other user's account, and never affects startedTemplateIds or the
-  // ability to switch to an already-started template (issue #58). The "blank"
-  // template is never hideable, since it's the gateway to building a roadmap
-  // manually or with AI (Issue #51).
+  // ability to switch to an already-started template (issue #58).
   async function setHiddenTemplateIds(nextHiddenIds) {
     hiddenTemplateIds = nextHiddenIds;
     persistLocalHiddenTemplates();
@@ -616,7 +679,7 @@ export function createRoadmapStore() {
   }
 
   function hideTemplate(idToHide) {
-    if (idToHide === 'blank' || hiddenTemplateIds.includes(idToHide)) return Promise.resolve();
+    if (hiddenTemplateIds.includes(idToHide)) return Promise.resolve();
     return setHiddenTemplateIds([...hiddenTemplateIds, idToHide]);
   }
 

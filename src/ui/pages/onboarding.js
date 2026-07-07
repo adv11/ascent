@@ -15,7 +15,7 @@ import { TEMPLATES } from '../../data/templates/index.js';
 // every template a user starts keeps its own persisted progress, so picking any
 // card here is always non-destructive: an already-started template loads its own
 // saved progress instantly, and a not-yet-started one seeds fresh without touching
-// any other template's data. Every template except "blank" can also be hidden from
+// any other template's data. Every built-in template can also be hidden from
 // the picker — a per-user preference (see roadmapStore.hideTemplate) that never
 // affects other users, the template itself, or an already-started roadmap's data.
 export function renderOnboarding(app, { user, store }) {
@@ -113,7 +113,19 @@ export function renderOnboarding(app, { user, store }) {
     }, [
       el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '+' }),
       el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
-      el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' })
+      el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' }),
+      el('button', {
+        type: 'button',
+        className: 'template-card-info-corner',
+        'data-action': 'info',
+        'aria-label': 'How do I build my own roadmap?',
+        title: 'How do I build my own roadmap?',
+        text: 'ℹ',
+        onClick: e => {
+          e.stopPropagation();
+          openBuildYourOwnGuide({ onOpenImport: handleImport });
+        }
+      })
     ]);
     cardEls.push(cardEl);
     return el('div', { role: 'listitem' }, [cardEl]);
@@ -247,7 +259,6 @@ export function renderOnboarding(app, { user, store }) {
   }
 
   function buildCard(template) {
-    const isBlank = template.id === 'blank';
     const isCurrent = template.id === activeTemplateId;
     const isStarted = startedTemplateIds.includes(template.id);
     const countEl = el('span', { className: 'template-card-count', text: 'Loading topics…' });
@@ -276,27 +287,18 @@ export function renderOnboarding(app, { user, store }) {
       el('span', { className: 'template-card-name', text: template.name }),
       el('span', { className: 'template-card-desc', text: template.description }),
       footerEl,
-      isBlank
-        ? el('button', {
-          type: 'button',
-          className: 'template-card-info',
-          'data-action': 'info',
-          'aria-label': 'How do I build my own roadmap?',
-          text: 'ℹ How do I build my own?',
-          onClick: e => { e.stopPropagation(); openBuildYourOwnGuide(); }
-        })
-        : el('button', {
-          type: 'button',
-          className: 'template-card-hide',
-          'data-action': 'hide',
-          'aria-label': `Hide ${template.name}`,
-          title: `Hide ${template.name}`,
-          text: '×',
-          onClick: e => {
-            e.stopPropagation();
-            hideTemplate(template, cardEl);
-          }
-        })
+      el('button', {
+        type: 'button',
+        className: 'template-card-hide',
+        'data-action': 'hide',
+        'aria-label': `Hide ${template.name}`,
+        title: `Hide ${template.name}`,
+        text: '×',
+        onClick: e => {
+          e.stopPropagation();
+          hideTemplate(template, cardEl);
+        }
+      })
     ]);
 
     cardEls.push(cardEl);
@@ -374,7 +376,7 @@ export function renderOnboarding(app, { user, store }) {
   visibleGrid.appendChild(buildImportCard());
   customRoadmaps.forEach(roadmap => visibleGrid.appendChild(buildCustomCard(roadmap)));
   TEMPLATES
-    .filter(t => t.id === 'blank' || !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
+    .filter(t => !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
     .forEach(template => visibleGrid.appendChild(buildCard(template)));
   renderHiddenToggle();
 

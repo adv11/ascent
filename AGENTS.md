@@ -104,7 +104,7 @@ src/data/templates/genai-agentic-ai.js  GenAI / Agentic AI Engineer starter temp
 src/data/templates/math-grade12.js      12th Grade Mathematics starter template
 src/data/templates/piano.js             Learning Piano starter template
 src/data/templates/marketing.js         Marketing starter template
-src/data/templates/blank.js         four empty starter phases (Learn/Practice/Build/Review) — never hideable
+src/data/templates/blank.js         retired starter template (issue #4 follow-up) — migration-only, not in TEMPLATES
 src/services/firebase.js      auth + Realtime Database access (roadmap + per-user meta)
 src/services/firebase.config.js          gitignored — your real Firebase project config
 src/services/firebase.config.example.js  committed template for the file above
@@ -175,14 +175,15 @@ a `structuralVersion` counter, `activeTemplateId`, `startedTemplateIds` (issue #
 
 **Starter templates and onboarding (`src/data/templates/`, `src/ui/pages/onboarding.js`)**
 — Issue #51. `src/data/templates/index.js` is the template registry (`TEMPLATES`,
-`getTemplate(id)`, `buildSeedItems(id)`, `getTemplatePhases(id)`); every template module
-(`java-backend.js`, `frontend.js`, `data-science.js`, `genai-agentic-ai.js`,
-`math-grade12.js`, `piano.js`, `marketing.js`, `blank.js` — 8 total) exports its own
-`PHASES` + `buildSeedItems()` in the same shape as the original `roadmap.js`. Templates
-are loaded via dynamic `import()` so a signed-out visitor's sign-in page never downloads
-roadmap content for templates they haven't picked. `roadmapStore.js`'s `setUser(user)`
-is **async**: on every sign-in it does a one-time `dbApi.getMeta` read to decide
-`onboardingDone`/`activeTemplateId`/`startedTemplateIds` — `meta.startedTemplateIds`
+`getTemplate(id)`, `buildSeedItems(id)`, `getTemplatePhases(id)`); every registered
+template module (`java-backend.js`, `frontend.js`, `data-science.js`,
+`genai-agentic-ai.js`, `math-grade12.js`, `piano.js`, `marketing.js` — 7 total) exports
+its own `PHASES` + `buildSeedItems()` in the same shape as the original `roadmap.js`.
+(`blank.js` is no longer one of the 7 — retired, see below; file kept, migration-only.)
+Templates are loaded via dynamic `import()` so a signed-out visitor's sign-in page never
+downloads roadmap content for templates they haven't picked. `roadmapStore.js`'s
+`setUser(user)` is **async**: on every sign-in it does a one-time `dbApi.getMeta` read to
+decide `onboardingDone`/`activeTemplateId`/`startedTemplateIds` — `meta.startedTemplateIds`
 wins if present (issue #58's per-template shape); otherwise it falls back through legacy
 detection (see the multi-roadmap paragraph below) and backfills the new meta shape with
 no forced migration step. Only when `onboardingDone` is false does `main.js` route to
@@ -192,8 +193,8 @@ onboarding done, and starts syncing — never destroying any other template's pr
 Always await `store.setUser(...)` before making a routing decision on its result — the
 onboarding-vs-`/app` redirect in `main.js` depends on this resolving first.
 `dashboard.js`'s `groupItems()` takes `store.getSnapshot().phases` instead of a
-hardcoded import specifically so a template like "blank" — whose phases have zero
-items — still renders a phase-card for each one; do not revert it to a static import.
+hardcoded import specifically so a template (or custom roadmap) whose phases have zero
+items still renders a phase-card for each one; do not revert it to a static import.
 A "Switch template" link in the dashboard header re-enters `/onboarding` at any time —
 reached this way (`onboardingDone` already `true`), the page shows a "← Back to my
 roadmap" link; since issue #58, picking any card there is non-destructive (no
@@ -293,20 +294,37 @@ purpose), since it can't be fooled by a callback that was already queued before 
 took effect. See the "stale listener guard" describe block in
 `tests/integration/roadmapStore.test.js`.
 
-**Per-user hidden templates — `hiddenTemplateIds`.** Every template card except
-"blank" has a hide (×) button; clicking it (after a `confirm()`) calls
-`store.hideTemplate(id)`, which appends to `hiddenTemplateIds` and persists it to
-`users/{uid}/meta/hiddenTemplateIds` (plus a local fallback) — **this is a per-user
-preference, never a deletion of the template or a change visible to any other user.**
-`getTemplate`/`buildSeedItems`/`getTemplatePhases` never consult it; it only filters
-which cards `onboarding.js` renders. A "Show hidden templates (N)" toggle reveals
-hidden cards with a "Restore" button (`store.unhideTemplate(id)`) instead of the normal
-pick/hide affordances. Never make "blank" hideable — it's the only path into the
-"build your own" guide (`src/ui/components/buildYourOwnGuide.js`), reachable via the
-"ℹ How do I build my own?" button that replaces the hide button on that one card. That
-modal is purely informational (manual "Add a custom topic…" workflow today, a tip for
-drafting topics with an external AI assistant) — do not claim in-app automated AI
-import exists until it's actually built.
+**Per-user hidden templates — `hiddenTemplateIds`.** Every built-in template card has a
+hide (×) button, no exceptions (issue #4 follow-up retired "blank", the one card that
+used to be exempt); clicking it (after a `confirm()`) calls `store.hideTemplate(id)`,
+which appends to `hiddenTemplateIds` and persists it to `users/{uid}/meta/hiddenTemplateIds`
+(plus a local fallback) — **this is a per-user preference, never a deletion of the
+template or a change visible to any other user.** `getTemplate`/`buildSeedItems`/
+`getTemplatePhases` never consult it; it only filters which cards `onboarding.js`
+renders. A "Show hidden templates (N)" toggle reveals hidden cards with a "Restore"
+button (`store.unhideTemplate(id)`) instead of the normal pick/hide affordances.
+"Create your own roadmap" (never hideable — an action card, not a pickable template)
+has a corner ℹ info button instead, opening the "build your own" guide
+(`src/ui/components/buildYourOwnGuide.js`) — where blank's old info button moved to.
+The guide covers both real paths now: manual and AI-assisted (an "Open Import roadmap"
+button handing off to the same `handleImport()` the "Import roadmap" card uses) — keep
+it that way, don't let it drift back to describing a manual copy-into-an-AI-chat
+workflow now that real automated import exists.
+
+**"blank" template retirement and migration (`roadmapStore.js`, `src/data/templates/`,
+issue #4 follow-up).** Once manual creation (CRUD, above) and AI import (below) both
+existed, "Start blank" (four fixed, uneditable phases, one per account, never hideable)
+became a strict subset of a custom roadmap — removed from `TEMPLATES` accordingly.
+`blank.js` stays importable via a migration-only export, `getLegacyBlankTemplateData()`
+— `getTemplate('blank')` etc. now fall back to `TEMPLATES[0]` like any unrecognized id.
+Anyone who already started "blank" is migrated forward on their next `setUser()` (before
+`fetchTemplateData` would otherwise be called with the now-meaningless `'blank'` id)
+into a real custom roadmap (`croadmap-...`, titled "My roadmap"): reads whatever's
+actually stored at `users/{uid}/roadmaps/blank` (Firebase then local blob), falling back
+to `getLegacyBlankTemplateData()` only for whichever half (items/phases) is missing
+(pre-PR-#60 accounts never persisted `phases`). `activeTemplateId`/`startedTemplateIds`
+are corrected and saved in the same pass so it's never re-migrated later. The old
+`roadmaps/blank` node is never deleted — same precedent as every other legacy path here.
 
 **`setUser`/`switchRoadmap` stale-call guard — `stateCallId`.** Firebase's
 `onAuthStateChanged` can fire in quick succession (e.g. delete-account immediately

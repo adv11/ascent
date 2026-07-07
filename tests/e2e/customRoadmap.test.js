@@ -133,6 +133,6 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
     await expect(modal).toHaveCount(0);
     await expect(page).toHaveURL(/#\/onboarding/);
-    await expect(page.locator('.template-card')).toHaveCount(10);
+    await expect(page.locator('.template-card')).toHaveCount(9);
   });
 });
