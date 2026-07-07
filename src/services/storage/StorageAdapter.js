@@ -4,7 +4,13 @@
 // single-roadmap `load(roadmapId)`/`save(roadmapId, data)` sketch, which
 // predates the multi-user/multi-template data model issues #58 and #4 built.
 export class StorageAdapter {
-  /** Realtime listener for one template's roadmap. Returns an unsubscribe fn. */
+  // Realtime (or polled) listener for one template's roadmap. Returns an
+  // unsubscribe fn. `_onData` is called with the plain roadmap payload
+  // (`{ version, updatedAt, templateId, items, phases }`) or `null` if none
+  // exists — never a backend-specific wrapper (e.g. a Firebase `DataSnapshot`
+  // with `.exists()`/`.val()`). Implementations must unwrap their own
+  // backend's shape before invoking the callback (issue #5 part 2 — this was
+  // originally a leaky Firebase snapshot passed straight through).
   listenRoadmap(_uid, _templateId, _onData, _onError) {
     throw new Error('not implemented');
   }

@@ -13,7 +13,7 @@ Returns a store instance with the following methods.
 | Method | Signature | Notes |
 |---|---|---|
 | `subscribe` | `(callback: (snapshot) => void) => unsubscribe` | Calls `callback` immediately with the current snapshot, then on every `notify()`. |
-| `setUser` | `async (user: { uid } \| null) => void` | **Must be awaited.** Resolves `onboardingDone`/`activeTemplateId`/`startedTemplateIds` for the signed-in user (or clears state on sign-out) before returning. See "Onboarding detection" below. Safe to call concurrently with itself or `switchRoadmap` — a call superseded by a newer one before it finishes aborts without mutating state (the `stateCallId` guard, see `docs/architecture.md` §5.8, §5.11). |
+| `setUser` | `async (user: { uid, providerData? } \| null) => void` | **Must be awaited.** Resolves `onboardingDone`/`activeTemplateId`/`startedTemplateIds` for the signed-in user (or clears state on sign-out) before returning. Also re-selects the active storage adapter via `getStorageAdapter(user)` (issue #5 part 2) before any of its own adapter calls — a Google-signed-in user gets Drive, everyone else keeps Firebase. See "Onboarding detection" below. Safe to call concurrently with itself or `switchRoadmap` — a call superseded by a newer one before it finishes aborts without mutating state (the `stateCallId` guard, see `docs/architecture.md` §5.8, §5.11). |
 | `switchRoadmap` | `async (templateId: string) => void` | Issue #58 — replaces `initFromTemplate`. Handles both a first-time pick and a later switch with the same logic: a not-yet-started template seeds fresh and is appended to `startedTemplateIds`; an already-started one is loaded cache-first (never re-seeded) and never touches any other template's stored items. Sets `onboardingDone = true`. Flushes any pending debounced edit on the *outgoing* template before switching (see `docs/architecture.md` §5.11 "flush-before-switch"). No-op if `templateId` is already active. Same `stateCallId` staleness guard as `setUser`. Called by `onboarding.js` with **no confirmation dialog** — switching is always non-destructive. |
 | `hideTemplate` | `async (templateId: string) => void` | Per-user preference only — adds `templateId` to `hiddenTemplateIds` and persists to `users/{uid}/meta/hiddenTemplateIds` (plus a local fallback). No-op for an already-hidden id (no template-specific exceptions since issue #4 follow-up retired "blank", the one id this used to special-case). Never touches the template's own content, any other account, or `startedTemplateIds`/the ability to switch to an already-started template. See `docs/architecture.md` §5.9. |
 | `unhideTemplate` | `async (templateId: string) => void` | Removes `templateId` from `hiddenTemplateIds` and re-persists. No-op if not currently hidden. |
@@ -158,7 +158,7 @@ overridden; optional ones have safe defaults.
 
 | Method | Signature | Notes |
 |---|---|---|
-| `listenRoadmap` | `(uid, templateId, onData, onError) => unsubscribe` | **Required.** Realtime listener for one template's roadmap. |
+| `listenRoadmap` | `(uid, templateId, onData, onError) => unsubscribe` | **Required.** Realtime (or polled) listener for one template's roadmap. `onData` receives the plain roadmap payload (or `null`) — never a backend-specific wrapper. Originally leaked Firebase's `DataSnapshot` (`.exists()`/`.val()`) straight through; fixed in issue #5 part 2 when `GoogleDriveAdapter` (which has no such object) needed the same contract — `FirebaseAdapter` now unwraps its snapshot internally before calling `onData`. |
 | `saveRoadmap` | `(uid, templateId, payload) => Promise<void>` | **Required.** Full overwrite of one template's roadmap. |
 | `getRoadmap` | `(uid, templateId) => Promise<object \| null>` | **Required.** One-time read. |
 | `deleteRoadmap` | `(uid, templateId) => Promise<void>` | **Required.** Only ever called for a custom roadmap the user has explicitly deleted. |
@@ -182,8 +182,22 @@ overridden; optional ones have safe defaults.
 | `LocalStorageAdapter` | `class extends StorageAdapter` | Standalone `localStorage`-backed implementation, under its own dedicated keys (`KEYS.LOCAL_ADAPTER_ROADMAPS`, `KEYS.LOCAL_ADAPTER_META`) — independent of `roadmapStore.js`'s own local-cache bookkeeping (`KEYS.ROADMAPS` etc.), which is unchanged. `uid` is accepted but ignored (one local store per browser profile). `listenRoadmap` returns a no-op unsubscribe (no push mechanism over plain `localStorage`). **Not yet wired into `roadmapStore.js`** — reserved for a future guest-only/offline-cache adapter selection. |
 | `localStorageAdapter` | `LocalStorageAdapter` instance | Singleton, unused by any call site yet. |
 
+### `GoogleDriveAdapter` — `src/services/storage/GoogleDriveAdapter.js` (issue #5 part 2)
+
+Google Drive `appDataFolder` implementation, built with raw `fetch` against the Drive
+REST API (no SDK dependency). Decoupled from *how* an access token is obtained: takes a
+`getAccessToken()` provider (and optional `onTokenExpired()`) via its constructor rather
+than doing any OAuth/GIS work itself — that's issue #5 part 3's job. `uid` is accepted on
+every method for interface conformance but ignored (the token already scopes every
+request to one Drive account).
+
+| Export | Signature | Notes |
+|---|---|---|
+| `GoogleDriveAdapter` | `class extends StorageAdapter` | Constructor: `new GoogleDriveAdapter({ getAccessToken, onTokenExpired })`. Stores one file per template (`ascent-roadmap-{templateId}.json`) plus `ascent-meta.json`, all in `appDataFolder`. `saveRoadmap`: find-by-name → create (multipart) if missing, else `PATCH .../upload/drive/v3/files/{id}?uploadType=media` with `If-Match: {etag}` (Drive v3 exposes the etag as a response header, not a JSON field) → on `412`, re-`GET` + last-write-wins-per-item merge (keyed by `item.updatedAt`) + retry once. `phases` is not merged the same way — the local copy wins outright on conflict (custom-roadmap phase edits are rare; a documented scope simplification). `getRoadmap`/`getMeta` find-by-name then `GET ?alt=media`, resolving `null` if no file exists. `saveMeta` is a simpler read-merge-write (no etag-conflict-retry — meta writes are infrequent, not per-keystroke). `deleteRoadmap` finds-by-name then `DELETE`s. `listenRoadmap` has no realtime push to rely on — polls via `visibilitychange`/`focus` listeners instead, catching its own errors and routing them to `onError` (a fire-and-forget path nothing awaits, so it must never produce an unhandled rejection). `now()` returns `new Date().toISOString()`. A `401` from any request calls `onTokenExpired()` then rejects like any other failed request — never thrown as an unhandled/user-facing error; existing caller-side handling (`resolveRoadmapItems`'s try/catch, `queueSave()`'s `.catch()`) already covers it, same as any `FirebaseAdapter` failure. |
+| `googleDriveAdapter` | `GoogleDriveAdapter` instance | Singleton used by `adapterFactory.js`. Constructed with a placeholder `getAccessToken` that throws "not yet wired up" if ever actually invoked — unreachable in production until issue #5 part 3 ships real Google sign-in. |
+
 ### `adapterFactory.js` — `src/services/storage/adapterFactory.js`
 
 | Export | Signature | Notes |
 |---|---|---|
-| `getStorageAdapter` | `() => StorageAdapter` | Currently always returns `firebaseAdapter` — every signed-in uid (including anonymous/guest, which already used Firebase before this refactor) keeps identical behavior. This is the seam a later PR extends to branch on auth type once a `GoogleDriveAdapter` exists. |
+| `getStorageAdapter` | `(user?: { providerData?: { providerId: string }[] } \| null) => StorageAdapter` | Issue #5 part 2 — branches on the signed-in user's auth provider: `providerData` containing `providerId: 'google.com'` → `googleDriveAdapter`; everything else (`null`/missing user, anonymous guest, email/password) → `firebaseAdapter`, identical to before this backend existed. `roadmapStore.js`'s `setUser(nextUser)` calls this on every sign-in (not just once at store creation) so the backend can change across sign-out/sign-in-as-a-different-user within the same store instance. |

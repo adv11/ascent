@@ -24,7 +24,10 @@ export class FirebaseAdapter extends StorageAdapter {
 
   listenRoadmap(uid, templateId, callback, onError) {
     const roadmapRef = this.roadmapRef(uid, templateId);
-    onValue(roadmapRef, callback, onError);
+    // Unwrap Firebase's DataSnapshot here so the adapter interface's callback
+    // contract stays backend-agnostic (issue #5 part 2) — callers must never
+    // see a `.exists()`/`.val()` shape.
+    onValue(roadmapRef, snapshot => callback(snapshot.exists() ? snapshot.val() : null), onError);
     return () => off(roadmapRef);
   }
 
