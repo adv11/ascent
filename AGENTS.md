@@ -125,6 +125,7 @@ src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
+src/ui/components/newRoadmapModal.js    "Create your own roadmap" title/description modal (issue #4)
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -220,6 +221,28 @@ read-only safety net; `setUser` migrates a legacy account (one lacking
 `users/{uid}/roadmaps/{templateId}` and writing the new meta shape, the first time such
 an account signs in after this shipped.
 
+**Manual roadmap creation — `croadmap-...` ids (`roadmapStore.js`, issue #4).** A user
+can build their own roadmap from scratch via "Create your own roadmap" (first card in
+`/onboarding`'s grid, opening `src/ui/components/newRoadmapModal.js`). `createCustomRoadmap`
+generates an id shaped `croadmap-<timestamp>-<random>` — `isCustomRoadmapId(id)` (exported
+from the store) is the only thing distinguishing a custom roadmap from a built-in template
+id; deliberately not the same prefix as `addItem()`'s `custom-` item ids (a different id
+namespace — item.id, not templateId). Metadata (`{ id, title, description, createdAt }`)
+lives in a `customRoadmaps` array (`users/{uid}/meta.customRoadmaps` + local
+`KEYS.CUSTOM_ROADMAPS`), separate from `startedTemplateIds` (which the id is also added
+to) — so it flows through the same `switchRoadmap`/`roadmapCache`/per-path Firebase
+machinery issue #58 built. Unlike a built-in template's fixed, never-persisted `phases`
+skeleton, a custom roadmap's `phases` (with generated `phase-...`/`section-...` ids) are
+the only record of what the user built, persisted/resolved through the same
+cache → Firebase → local-blob → seed path as `items`. `addPhase`/`renamePhase`/
+`removePhase`/`addSection`/`renameSection`/`removeSection` are no-ops unless
+`activeTemplateId` is a custom id — built-in phase/section skeletons are fixed. Renaming
+re-files every item under the old title; removing soft-deletes every item under it.
+`dashboard.js` only shows the add/rename/delete phase/section controls when
+`store.isCustomRoadmapId(activeTemplateId)`. `deleteCustomRoadmap(id)` permanently
+deletes (never usable on a built-in id, which can only be hidden) — switches to
+`java-backend` first if it was the active roadmap.
+
 **Flush-before-switch — an edit made just before switching must never be silently
 dropped or attributed to the wrong template.** Because `flush()` always saves whatever
 `items`/`activeTemplateId` are current *at the moment it actually runs* (not captured at
@@ -282,12 +305,14 @@ row, don't — and prefer extending `patchDoneStates()` over adding more full re
 **Watch the Firebase echo.** `dbApi.listenRoadmap`'s `onValue` callback fires on every
 write to the path, *including the echo of writes this client just made* (every debounced
 save round-trips back through the listener ~500ms-1s after a click). It must not bump
-`structuralVersion` on that echo — `roadmapStore.js` compares the incoming remote data
-against the current in-memory `items` with a key-order-independent `stableStringify`
-(Realtime Database returns keys sorted; our in-memory map is insertion-order, so a plain
-`JSON.stringify` compare produces false positives) and only bumps when they actually
-differ. If this comparison is ever removed or replaced with an unconditional bump, the
-checklist flicker comes back.
+`structuralVersion` on that echo — `roadmapStore.js` compares the incoming remote
+`{ items, phases }` pair against the current in-memory one with a key-order-independent
+`stableStringify` (Realtime Database returns keys sorted; our in-memory map is
+insertion-order, so a plain `JSON.stringify` compare produces false positives) and only
+bumps when they actually differ. `phases` is folded into this comparison (issue #4) so a
+custom roadmap's user-added phases/sections get the same echo-guard as `items` — a no-op
+for built-in templates, whose `phases` never differs. If this comparison is ever removed
+or replaced with an unconditional bump, the checklist flicker comes back.
 
 **Never apply a remote snapshot while a local edit is still unflushed (issue #58
 hardening).** `attachRoadmapListener`'s callback returns immediately, without touching

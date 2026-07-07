@@ -105,6 +105,11 @@ export const dbApi = {
   saveRoadmap(uid, templateId, payload) {
     return set(this.roadmapRef(uid, templateId), payload);
   },
+  // Only ever called for a custom roadmap the user has explicitly deleted
+  // (issue #4) — built-in template ids are never removed from Firebase.
+  deleteRoadmap(uid, templateId) {
+    return remove(this.roadmapRef(uid, templateId));
+  },
   async getRoadmap(uid, templateId) {
     const snapshot = await get(this.roadmapRef(uid, templateId));
     return snapshot.exists() ? snapshot.val() : null;

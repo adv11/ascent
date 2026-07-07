@@ -49,6 +49,29 @@ function readLocalRoadmaps() {
   }
 }
 
+// A user-created roadmap (issue #4) gets a generated id in this shape instead
+// of one of the fixed built-in template ids from src/data/templates/index.js —
+// this is the only thing that distinguishes the two, everywhere in this file.
+// Deliberately NOT the same prefix as addItem()'s `custom-` item ids below —
+// those live in a completely different id namespace (item.id, not
+// templateId) but a shared prefix would be a confusing coincidence to debug.
+function isCustomRoadmapId(id) {
+  return typeof id === 'string' && id.startsWith('croadmap-');
+}
+
+function genId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function readLocalCustomRoadmaps() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEYS.CUSTOM_ROADMAPS) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
 // One-time migration (issue #58): before per-template storage existed, every
 // account had exactly one roadmap under the old singular KEYS.ROADMAP blob.
 // Wraps it as { [templateId]: oldBlob } under the new keyed KEYS.ROADMAPS
@@ -82,6 +105,11 @@ export function createRoadmapStore() {
   let templatePhases = PHASES;
   let onboardingDone = null;
   let hiddenTemplateIds = [];
+  // { id, title, description, createdAt } per roadmap the user built manually
+  // (issue #4) — a subset of startedTemplateIds, tracked separately only so
+  // the onboarding picker can render a name/description for them (built-in
+  // templates get theirs from src/data/templates/index.js instead).
+  let customRoadmaps = [];
   // Every templateId this account has ever started — each one has its own
   // Firebase node (users/{uid}/roadmaps/{templateId}) and/or local blob.
   let startedTemplateIds = [];
@@ -131,6 +159,7 @@ export function createRoadmapStore() {
       onboardingDone,
       phases: templatePhases,
       hiddenTemplateIds,
+      customRoadmaps,
       ...meta
     };
   }
@@ -153,7 +182,11 @@ export function createRoadmapStore() {
   }
 
   function persistLocal() {
-    persistLocalRoadmap(activeTemplateId, { dirty, items });
+    persistLocalRoadmap(activeTemplateId, { dirty, items, phases: templatePhases });
+  }
+
+  function persistLocalCustomRoadmaps() {
+    localStorage.setItem(KEYS.CUSTOM_ROADMAPS, JSON.stringify(customRoadmaps));
   }
 
   // Only ever persists a positive onboarding state — its absence already means
@@ -186,6 +219,7 @@ export function createRoadmapStore() {
     localStorage.removeItem(KEYS.ONBOARDING_DONE);
     localStorage.removeItem(KEYS.TEMPLATE_ID);
     localStorage.removeItem(KEYS.HIDDEN_TEMPLATES);
+    localStorage.removeItem(KEYS.CUSTOM_ROADMAPS);
   }
 
   function attachRoadmapListener(listenerTemplateId) {
@@ -210,7 +244,13 @@ export function createRoadmapStore() {
       }
       const remote = snapshot.exists() ? snapshot.val() : null;
       if (remote?.items) {
-        const remoteStr = stableStringify(remote.items);
+        // Phases are folded into the same echo/structural comparison as items
+        // (rather than a separate check) so a custom roadmap's user-added
+        // phases/sections get the exact same echo-guard and multi-device sync
+        // guarantees as items — built-in templates never have differing
+        // phases here, so this is a no-op for them.
+        const remotePhases = normalizeStringArray(remote.phases) || templatePhases;
+        const remoteStr = stableStringify({ items: remote.items, phases: remotePhases });
         if (recentFlushedStrs.includes(remoteStr)) {
           // Confirmed echo of one of our own recent writes (possibly not the
           // latest one, if it arrived out of order) — skip the redundant
@@ -218,8 +258,9 @@ export function createRoadmapStore() {
           notify({ saveState: 'synced' });
           return;
         }
-        if (remoteStr !== stableStringify(items)) structuralVersion += 1;
+        if (remoteStr !== stableStringify({ items, phases: templatePhases })) structuralVersion += 1;
         items = remote.items;
+        templatePhases = remotePhases;
         dirty = false;
         persistLocal();
         roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty: false };
@@ -238,12 +279,13 @@ export function createRoadmapStore() {
       return;
     }
     const templateId = activeTemplateId;
-    const flushedStr = stableStringify(items);
+    const flushedStr = stableStringify({ items, phases: templatePhases });
     const payload = {
       version: ROADMAP_VERSION,
       updatedAt: firebaseClock(),
       templateId,
-      items
+      items,
+      phases: templatePhases
     };
     await dbApi.saveRoadmap(uid, templateId, payload);
     recentFlushedStrs.push(flushedStr);
@@ -267,7 +309,14 @@ export function createRoadmapStore() {
     }, 500);
   }
 
+  // A custom roadmap (issue #4) has no template module to load — it starts
+  // with zero items and zero phases; whatever the user has actually added is
+  // entirely stored in its own Firebase/local roadmap payload, resolved below
+  // by resolveRoadmapItems just like a built-in template's saved progress is.
   async function fetchTemplateData(templateId) {
+    if (isCustomRoadmapId(templateId)) {
+      return { baseItems: {}, phases: [] };
+    }
     const [baseItems, phases] = await Promise.all([
       buildTemplateSeedItems(templateId),
       getTemplatePhases(templateId)
@@ -279,10 +328,13 @@ export function createRoadmapStore() {
   // in-memory roadmapCache (instant, same session) -> Firebase (if signed
   // in) -> local blob -> bare seed. Never reads Firebase for a template that
   // isn't started yet — that path always seeds fresh instead (see
-  // switchRoadmap).
-  async function resolveRoadmapItems(templateId, baseItems) {
+  // switchRoadmap). Also resolves `phases`: for a built-in template this is
+  // always just `basePhases` (its static PHASES never differ from what's
+  // stored), but for a custom roadmap the persisted phases ARE the only
+  // record of the phases/sections the user has added.
+  async function resolveRoadmapItems(templateId, baseItems, basePhases) {
     const cached = roadmapCache[templateId];
-    if (cached) return { items: cached.items, dirty: !!cached.dirty };
+    if (cached) return { items: cached.items, phases: cached.phases || basePhases, dirty: !!cached.dirty };
 
     const localBlob = readLocalRoadmaps()[templateId];
     let remote = null;
@@ -293,9 +345,21 @@ export function createRoadmapStore() {
         console.error('Failed to load roadmap from Firebase', error);
       }
     }
-    if (remote?.items) return { items: mergeWithSeed(remote.items, baseItems), dirty: false };
-    if (localBlob?.items) return { items: mergeWithSeed(localBlob.items, baseItems), dirty: !!localBlob.dirty };
-    return { items: baseItems, dirty: false };
+    if (remote?.items) {
+      return {
+        items: mergeWithSeed(remote.items, baseItems),
+        phases: normalizeStringArray(remote.phases) || basePhases,
+        dirty: false
+      };
+    }
+    if (localBlob?.items) {
+      return {
+        items: mergeWithSeed(localBlob.items, baseItems),
+        phases: normalizeStringArray(localBlob.phases) || basePhases,
+        dirty: !!localBlob.dirty
+      };
+    }
+    return { items: baseItems, phases: basePhases, dirty: false };
   }
 
   // Determines, once per sign-in, whether this user has already picked a starter
@@ -320,6 +384,7 @@ export function createRoadmapStore() {
       templatePhases = PHASES;
       onboardingDone = null;
       hiddenTemplateIds = [];
+      customRoadmaps = [];
       startedTemplateIds = [];
       roadmapCache = {};
       dirty = false;
@@ -355,6 +420,8 @@ export function createRoadmapStore() {
 
     hiddenTemplateIds = normalizeStringArray(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates();
     persistLocalHiddenTemplates();
+    customRoadmaps = normalizeStringArray(remoteMeta?.customRoadmaps) || readLocalCustomRoadmaps();
+    persistLocalCustomRoadmaps();
 
     // Set only when this call just migrated a legacy roadmap forward — lets the
     // load step below seed roadmapCache directly from it instead of re-reading
@@ -421,16 +488,16 @@ export function createRoadmapStore() {
 
     const { baseItems, phases } = await fetchTemplateData(activeTemplateId);
     if (isStale()) return;
-    templatePhases = phases;
 
     if (migratedLegacyItems && !roadmapCache[activeTemplateId]) {
-      roadmapCache[activeTemplateId] = { items: mergeWithSeed(migratedLegacyItems, baseItems), dirty: false };
+      roadmapCache[activeTemplateId] = { items: mergeWithSeed(migratedLegacyItems, baseItems), phases, dirty: false };
     }
 
-    const resolved = await resolveRoadmapItems(activeTemplateId, baseItems);
+    const resolved = await resolveRoadmapItems(activeTemplateId, baseItems, phases);
     if (isStale()) return;
 
     items = resolved.items;
+    templatePhases = resolved.phases;
     dirty = resolved.dirty;
     recentFlushedStrs = [];
     persistLocal();
@@ -457,9 +524,9 @@ export function createRoadmapStore() {
     const { baseItems, phases } = await fetchTemplateData(requestedTemplateId);
     if (isStale()) return;
 
-    let resolved = { items: baseItems, dirty: true };
+    let resolved = { items: baseItems, phases, dirty: true };
     if (alreadyStarted) {
-      resolved = await resolveRoadmapItems(requestedTemplateId, baseItems);
+      resolved = await resolveRoadmapItems(requestedTemplateId, baseItems, phases);
       if (isStale()) return;
     }
 
@@ -487,7 +554,7 @@ export function createRoadmapStore() {
     if (!alreadyStarted) startedTemplateIds = [...startedTemplateIds, requestedTemplateId];
 
     activeTemplateId = requestedTemplateId;
-    templatePhases = phases;
+    templatePhases = resolved.phases;
     items = resolved.items;
     dirty = resolved.dirty;
     recentFlushedStrs = [];
@@ -543,6 +610,154 @@ export function createRoadmapStore() {
   function unhideTemplate(idToUnhide) {
     if (!hiddenTemplateIds.includes(idToUnhide)) return Promise.resolve();
     return setHiddenTemplateIds(hiddenTemplateIds.filter(id => id !== idToUnhide));
+  }
+
+  // Creates a brand-new user-authored roadmap (issue #4): generates an id,
+  // records its title/description in customRoadmaps (a per-user list, not a
+  // template registry entry), then activates it through the exact same
+  // switchRoadmap() path a built-in template uses — it seeds empty (zero
+  // phases, zero items) since fetchTemplateData short-circuits for a custom
+  // id, and the user builds it up from there with addPhase/addSection/addItem.
+  async function createCustomRoadmap({ title, description }) {
+    const trimmedTitle = (title || '').trim();
+    if (!trimmedTitle) throw new Error('Title is required');
+    const id = genId('croadmap');
+    const meta = { id, title: trimmedTitle, description: (description || '').trim(), createdAt: Date.now() };
+    customRoadmaps = [...customRoadmaps, meta];
+    persistLocalCustomRoadmaps();
+    if (uid) {
+      try {
+        await dbApi.saveMeta(uid, { customRoadmaps });
+      } catch (error) {
+        console.error('Failed to save custom roadmap meta', error);
+      }
+    }
+    await switchRoadmap(id);
+    return id;
+  }
+
+  // Permanently removes a user-authored roadmap and its stored data. Never
+  // usable on a built-in template id (guarded by isCustomRoadmapId) — those
+  // are never deleted, only hidden (see hideTemplate). If the roadmap being
+  // deleted is the active one, switches to the default built-in template
+  // first so the app is never left without an active roadmap.
+  async function deleteCustomRoadmap(idToDelete) {
+    if (!isCustomRoadmapId(idToDelete)) return;
+    if (idToDelete === activeTemplateId) {
+      await switchRoadmap('java-backend');
+    }
+    customRoadmaps = customRoadmaps.filter(r => r.id !== idToDelete);
+    startedTemplateIds = startedTemplateIds.filter(id => id !== idToDelete);
+    delete roadmapCache[idToDelete];
+    persistLocalCustomRoadmaps();
+    const localAll = readLocalRoadmaps();
+    delete localAll[idToDelete];
+    localStorage.setItem(KEYS.ROADMAPS, JSON.stringify(localAll));
+    notify();
+    if (uid) {
+      try {
+        await dbApi.saveMeta(uid, { customRoadmaps, startedTemplateIds });
+        await dbApi.deleteRoadmap(uid, idToDelete);
+      } catch (error) {
+        console.error('Failed to delete custom roadmap', error);
+      }
+    }
+  }
+
+  function findPhase(phaseId) {
+    return templatePhases.find(p => p.id === phaseId);
+  }
+
+  // Phase/section structural mutations (issue #4) only ever apply to a custom
+  // roadmap — a built-in template's PHASES skeleton is fixed content, never
+  // user-editable, so every one of these is a silent no-op when
+  // activeTemplateId isn't a custom id.
+  function addPhase(title) {
+    if (!isCustomRoadmapId(activeTemplateId)) return;
+    const trimmed = (title || '').trim();
+    if (!trimmed) return;
+    templatePhases = [...templatePhases, { id: genId('phase'), title: trimmed, priority: 'P2', resourceKey: null, sections: [] }];
+    structuralVersion += 1;
+    queueSave();
+  }
+
+  // Renaming a phase updates every item filed under its old title so they
+  // stay grouped under the renamed phase instead of becoming orphaned.
+  function renamePhase(phaseId, newTitle) {
+    if (!isCustomRoadmapId(activeTemplateId)) return;
+    const trimmed = (newTitle || '').trim();
+    const phase = findPhase(phaseId);
+    if (!phase || !trimmed || phase.title === trimmed) return;
+    const oldTitle = phase.title;
+    templatePhases = templatePhases.map(p => (p.id === phaseId ? { ...p, title: trimmed } : p));
+    Object.keys(items).forEach(id => {
+      if (items[id].phase === oldTitle) items[id] = { ...items[id], phase: trimmed, updatedAt: Date.now() };
+    });
+    structuralVersion += 1;
+    queueSave();
+  }
+
+  // Removing a phase soft-deletes every item filed under it — there is no
+  // phase for them to render under anymore, so leaving them live would make
+  // them permanently invisible without actually freeing up their titles.
+  function removePhase(phaseId) {
+    if (!isCustomRoadmapId(activeTemplateId)) return;
+    const phase = findPhase(phaseId);
+    if (!phase) return;
+    templatePhases = templatePhases.filter(p => p.id !== phaseId);
+    Object.keys(items).forEach(id => {
+      if (items[id].phase === phase.title) items[id] = { ...items[id], deleted: true, updatedAt: Date.now() };
+    });
+    structuralVersion += 1;
+    queueSave();
+  }
+
+  function addSection(phaseId, title) {
+    if (!isCustomRoadmapId(activeTemplateId)) return;
+    const trimmed = (title || '').trim();
+    const phase = findPhase(phaseId);
+    if (!phase || !trimmed) return;
+    templatePhases = templatePhases.map(p => (p.id === phaseId
+      ? { ...p, sections: [...p.sections, { id: genId('section'), title: trimmed }] }
+      : p));
+    structuralVersion += 1;
+    queueSave();
+  }
+
+  function renameSection(phaseId, sectionId, newTitle) {
+    if (!isCustomRoadmapId(activeTemplateId)) return;
+    const trimmed = (newTitle || '').trim();
+    const phase = findPhase(phaseId);
+    const section = phase?.sections.find(s => s.id === sectionId);
+    if (!phase || !section || !trimmed || section.title === trimmed) return;
+    const oldTitle = section.title;
+    templatePhases = templatePhases.map(p => (p.id === phaseId
+      ? { ...p, sections: p.sections.map(s => (s.id === sectionId ? { ...s, title: trimmed } : s)) }
+      : p));
+    Object.keys(items).forEach(id => {
+      if (items[id].phase === phase.title && items[id].section === oldTitle) {
+        items[id] = { ...items[id], section: trimmed, updatedAt: Date.now() };
+      }
+    });
+    structuralVersion += 1;
+    queueSave();
+  }
+
+  function removeSection(phaseId, sectionId) {
+    if (!isCustomRoadmapId(activeTemplateId)) return;
+    const phase = findPhase(phaseId);
+    const section = phase?.sections.find(s => s.id === sectionId);
+    if (!phase || !section) return;
+    templatePhases = templatePhases.map(p => (p.id === phaseId
+      ? { ...p, sections: p.sections.filter(s => s.id !== sectionId) }
+      : p));
+    Object.keys(items).forEach(id => {
+      if (items[id].phase === phase.title && items[id].section === section.title) {
+        items[id] = { ...items[id], deleted: true, updatedAt: Date.now() };
+      }
+    });
+    structuralVersion += 1;
+    queueSave();
   }
 
   function updateItem(id, patch) {
@@ -622,6 +837,15 @@ export function createRoadmapStore() {
     switchRoadmap,
     hideTemplate,
     unhideTemplate,
+    isCustomRoadmapId,
+    createCustomRoadmap,
+    deleteCustomRoadmap,
+    addPhase,
+    renamePhase,
+    removePhase,
+    addSection,
+    renameSection,
+    removeSection,
     getSnapshot,
     updateItem,
     addItem,

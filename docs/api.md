@@ -17,12 +17,21 @@ Returns a store instance with the following methods.
 | `switchRoadmap` | `async (templateId: string) => void` | Issue #58 — replaces `initFromTemplate`. Handles both a first-time pick and a later switch with the same logic: a not-yet-started template seeds fresh and is appended to `startedTemplateIds`; an already-started one is loaded cache-first (never re-seeded) and never touches any other template's stored items. Sets `onboardingDone = true`. Flushes any pending debounced edit on the *outgoing* template before switching (see `docs/architecture.md` §5.11 "flush-before-switch"). No-op if `templateId` is already active. Same `stateCallId` staleness guard as `setUser`. Called by `onboarding.js` with **no confirmation dialog** — switching is always non-destructive. |
 | `hideTemplate` | `async (templateId: string) => void` | Per-user preference only — adds `templateId` to `hiddenTemplateIds` and persists to `users/{uid}/meta/hiddenTemplateIds` (plus a local fallback). No-op for `'blank'` or an already-hidden id. Never touches the template's own content, any other account, or `startedTemplateIds`/the ability to switch to an already-started template. See `docs/architecture.md` §5.9. |
 | `unhideTemplate` | `async (templateId: string) => void` | Removes `templateId` from `hiddenTemplateIds` and re-persists. No-op if not currently hidden. |
+| `isCustomRoadmapId` | `(id: string) => boolean` | Issue #4 — `true` iff `id` is a user-created roadmap's generated id (`croadmap-<timestamp>-<random>`), never a built-in template id. The only place this distinction is made; every other function below keys off it. |
+| `createCustomRoadmap` | `async ({ title, description? }) => Promise<string>` | Issue #4 — generates a `croadmap-...` id, appends `{ id, title, description, createdAt }` to `customRoadmaps` (persisted to `users/{uid}/meta.customRoadmaps`), then activates it via `switchRoadmap(id)` (seeds empty: zero items, zero phases). Throws if `title` is empty/whitespace-only. Returns the new id. |
+| `deleteCustomRoadmap` | `async (id: string) => void` | Issue #4 — no-op unless `isCustomRoadmapId(id)`. Removes the entry from `customRoadmaps`/`startedTemplateIds`, deletes `users/{uid}/roadmaps/{id}` and its local blob. If `id` is the active roadmap, switches to `java-backend` first so the app is never left without an active roadmap. |
+| `addPhase` | `(title: string) => void` | Issue #4 — no-op unless the active roadmap `isCustomRoadmapId`. Appends `{ id, title, priority: 'P2', resourceKey: null, sections: [] }` to `phases`; bumps `structuralVersion`. |
+| `renamePhase` | `(phaseId: string, newTitle: string) => void` | Issue #4 — same custom-roadmap-only guard. Re-files every item whose `phase` matched the old title to `newTitle`. |
+| `removePhase` | `(phaseId: string) => void` | Issue #4 — same guard. Soft-deletes (`deleted: true`) every item filed under the removed phase. |
+| `addSection` | `(phaseId: string, title: string) => void` | Issue #4 — same guard. Appends `{ id, title }` to the given phase's `sections`. |
+| `renameSection` | `(phaseId: string, sectionId: string, newTitle: string) => void` | Issue #4 — same guard. Re-files matching items to the new section title. |
+| `removeSection` | `(phaseId: string, sectionId: string) => void` | Issue #4 — same guard. Soft-deletes every item filed under the removed section. |
 | `getSnapshot` | `(meta?: object) => Snapshot` | Synchronous; returns the current state merged with any extra `meta` fields. |
 | `updateItem` | `(id: string, patch: object) => void` | Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). |
 | `addItem` | `({ title, phase, section, priority }) => void` | Always bumps `structuralVersion`. |
 | `removeItem` | `(id: string) => void` | Soft-delete (`deleted: true`); always bumps `structuralVersion`. |
 | `addResource` / `updateResource` / `removeResource` | `(id, ...) => void` | Mutate an item's `resources` array via `updateItem`. |
-| `flush` | `async () => void` | Immediately persists `items` to `localStorage` and (if signed in) Firebase, bypassing the debounce. |
+| `flush` | `async () => void` | Immediately persists `items` and `phases` to `localStorage` and (if signed in) Firebase, bypassing the debounce. |
 | `getUiState` / `setUiState` | `() => object` / `(state) => void` | Per-device UI prefs (open phases, filter, search) — never synced to Firebase. |
 
 ### Snapshot shape
@@ -38,8 +47,10 @@ Returns a store instance with the following methods.
   activeTemplateId: string | null,   // null only while onboardingDone === false
   startedTemplateIds: string[],      // issue #58 — every templateId this account has started
   onboardingDone: boolean | null, // null only before the first setUser() resolves
-  phases: TemplatePhase[],     // the active template's phase/section skeleton
+  phases: TemplatePhase[],     // the active roadmap's phase/section skeleton — code-derived
+                                // for a built-in template, user-authored (mutable) for a custom one
   hiddenTemplateIds: string[], // per-user; templates hidden from this user's onboarding picker
+  customRoadmaps: { id: string, title: string, description: string, createdAt: number }[], // issue #4
 }
 ```
 
@@ -86,8 +97,9 @@ exports `PHASES` and a synchronous `buildSeedItems()` in the same shape
 | `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, onChange` | Thin wrappers around Firebase Auth. |
 | `dbApi.listenRoadmap` | `(uid, templateId, callback, onError) => unsubscribe` | Realtime listener on `users/{uid}/roadmaps/{templateId}` (issue #58 — was `users/{uid}/roadmap`, no `templateId`). Only one listener is attached at a time; switching templates detaches the previous one first. |
 | `dbApi.saveRoadmap` | `(uid, templateId, payload) => Promise<void>` | Full overwrite of `users/{uid}/roadmaps/{templateId}`. |
-| `dbApi.getRoadmap` | `(uid, templateId) => Promise<{ version, items } \| null>` | One-time read of a specific template's node — used by `resolveRoadmapItems` when a started template isn't already in the in-memory `roadmapCache`. |
+| `dbApi.getRoadmap` | `(uid, templateId) => Promise<{ version, items, phases? } \| null>` | One-time read of a specific template's node — used by `resolveRoadmapItems` when a started template isn't already in the in-memory `roadmapCache`. `phases` is only ever meaningfully present for a custom roadmap (issue #4) — a built-in template's phases are code-derived, not read from here. |
+| `dbApi.deleteRoadmap` | `(uid, templateId) => Promise<void>` | Issue #4 — removes `users/{uid}/roadmaps/{templateId}` entirely. Only ever called for a custom roadmap the user has explicitly deleted; built-in template ids are never removed. |
 | `dbApi.getLegacyRoadmap` | `(uid) => Promise<{ version, items } \| null>` | Issue #58 — one-time read of the old singular `users/{uid}/roadmap` path. Only ever called during legacy-account migration in `setUser`; never written to. |
-| `dbApi.getMeta` | `(uid) => Promise<{ onboardingDone?, templateId?, activeTemplateId?, startedTemplateIds?, hiddenTemplateIds? } \| null>` | One-time read of `users/{uid}/meta`. `templateId` is the pre-#58 field, still read as a migration fallback; `activeTemplateId`/`startedTemplateIds` are the current fields. |
-| `dbApi.saveMeta` | `(uid, meta: { onboardingDone?, activeTemplateId?, startedTemplateIds?, hiddenTemplateIds? }) => Promise<void>` | Partial `update()` — does not overwrite the whole `meta` node. |
+| `dbApi.getMeta` | `(uid) => Promise<{ onboardingDone?, templateId?, activeTemplateId?, startedTemplateIds?, hiddenTemplateIds?, customRoadmaps? } \| null>` | One-time read of `users/{uid}/meta`. `templateId` is the pre-#58 field, still read as a migration fallback; `activeTemplateId`/`startedTemplateIds` are the current fields; `customRoadmaps` is issue #4. |
+| `dbApi.saveMeta` | `(uid, meta: { onboardingDone?, activeTemplateId?, startedTemplateIds?, hiddenTemplateIds?, customRoadmaps? }) => Promise<void>` | Partial `update()` — does not overwrite the whole `meta` node. |
 | `authErrorMessage` | `(error) => string` | Maps Firebase Auth error codes to user-facing copy. |

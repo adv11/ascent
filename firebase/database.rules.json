@@ -37,6 +37,15 @@
             "$index": {
               ".validate": "newData.isString()"
             }
+          },
+          "customRoadmaps": {
+            "$index": {
+              ".validate": "newData.hasChildren(['id', 'title', 'createdAt'])",
+              "id": { ".validate": "newData.isString()" },
+              "title": { ".validate": "newData.isString()" },
+              "description": { ".validate": "newData.isString()" },
+              "createdAt": { ".validate": "newData.isNumber()" }
+            }
           }
         }
       }

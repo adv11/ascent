@@ -11,6 +11,7 @@ vi.mock('../../src/services/firebase.js', () => ({
     saveMeta: vi.fn(() => Promise.resolve()),
     getRoadmap: vi.fn(() => Promise.resolve(null)),
     getLegacyRoadmap: vi.fn(() => Promise.resolve(null)),
+    deleteRoadmap: vi.fn(() => Promise.resolve()),
   },
   firebaseClock: vi.fn(() => null),
 }));
@@ -34,6 +35,7 @@ beforeEach(() => {
   dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] });
   dbApi.getRoadmap.mockResolvedValue(null);
   dbApi.getLegacyRoadmap.mockResolvedValue(null);
+  dbApi.deleteRoadmap.mockResolvedValue(undefined);
 });
 
 describe('subscribe / notify cycle', () => {
@@ -732,5 +734,211 @@ describe('hideTemplate / unhideTemplate', () => {
 
     await store.switchRoadmap('frontend');
     expect(store.getSnapshot().activeTemplateId).toBe('frontend');
+  });
+});
+
+// Manual roadmap creation (issue #4) — a user-authored roadmap has a
+// generated `croadmap-...` id instead of a built-in template id, starts with
+// zero phases/items, and its phase/section skeleton is fully mutable
+// (unlike a built-in template's fixed PHASES).
+describe('custom roadmaps — creation and identity (issue #4)', () => {
+  it('isCustomRoadmapId distinguishes generated roadmap ids from built-in template ids', () => {
+    const store = createRoadmapStore();
+    expect(store.isCustomRoadmapId('java-backend')).toBe(false);
+    expect(store.isCustomRoadmapId('blank')).toBe(false);
+    expect(store.isCustomRoadmapId('croadmap-123-abc')).toBe(true);
+  });
+
+  it('createCustomRoadmap seeds an empty roadmap, activates it, and persists its meta to Firebase', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'creator-user' });
+
+    const id = await store.createCustomRoadmap({ title: '  My Roadmap  ', description: ' A description ' });
+
+    expect(store.isCustomRoadmapId(id)).toBe(true);
+    expect(store.getSnapshot().activeTemplateId).toBe(id);
+    expect(store.getSnapshot().items).toEqual([]);
+    expect(store.getSnapshot().phases).toEqual([]);
+    expect(store.getSnapshot().customRoadmaps).toEqual([
+      { id, title: 'My Roadmap', description: 'A description', createdAt: expect.any(Number) }
+    ]);
+    expect(store.getSnapshot().startedTemplateIds).toContain(id);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('creator-user', { customRoadmaps: store.getSnapshot().customRoadmaps });
+  });
+
+  it('createCustomRoadmap rejects an empty title without mutating state', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'creator-user-2' });
+    const before = store.getSnapshot().customRoadmaps;
+
+    await expect(store.createCustomRoadmap({ title: '   ' })).rejects.toThrow();
+    expect(store.getSnapshot().customRoadmaps).toBe(before);
+  });
+
+  it('a previously created custom roadmap is loaded back (not re-seeded) from Firebase meta on the next sign-in', async () => {
+    dbApi.getMeta.mockResolvedValue({
+      onboardingDone: true,
+      activeTemplateId: 'croadmap-1-xyz',
+      startedTemplateIds: ['java-backend', 'croadmap-1-xyz'],
+      customRoadmaps: [{ id: 'croadmap-1-xyz', title: 'Existing', description: '', createdAt: 1 }]
+    });
+    dbApi.getRoadmap.mockImplementation((_uid, templateId) => (
+      templateId === 'croadmap-1-xyz'
+        ? Promise.resolve({ items: { a: { id: 'a', title: 'Topic', phase: 'P1', section: 'S1' } }, phases: [{ id: 'phase-1', title: 'P1', priority: 'P2', sections: [{ id: 'section-1', title: 'S1' }] }] })
+        : Promise.resolve(null)
+    ));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'returning-creator' });
+
+    expect(store.getSnapshot().activeTemplateId).toBe('croadmap-1-xyz');
+    expect(store.getSnapshot().customRoadmaps).toEqual([{ id: 'croadmap-1-xyz', title: 'Existing', description: '', createdAt: 1 }]);
+    expect(store.getSnapshot().phases).toEqual([{ id: 'phase-1', title: 'P1', priority: 'P2', sections: [{ id: 'section-1', title: 'S1' }] }]);
+    expect(store.getSnapshot().items.map(i => i.id)).toEqual(['a']);
+  });
+});
+
+describe('custom roadmaps — phase/section CRUD (issue #4)', () => {
+  async function setupCustomRoadmap(uid) {
+    const store = createRoadmapStore();
+    await store.setUser({ uid });
+    await store.createCustomRoadmap({ title: 'CRUD roadmap' });
+    return store;
+  }
+
+  it('addPhase appends a phase with a stable id and bumps structuralVersion', async () => {
+    vi.useFakeTimers();
+    const store = await setupCustomRoadmap('phase-user');
+    const before = store.getSnapshot().structuralVersion;
+
+    store.addPhase('  Phase One  ');
+
+    const phases = store.getSnapshot().phases;
+    expect(phases).toHaveLength(1);
+    expect(phases[0]).toMatchObject({ title: 'Phase One', priority: 'P2', sections: [] });
+    expect(phases[0].id).toEqual(expect.any(String));
+    expect(store.getSnapshot().structuralVersion).toBe(before + 1);
+  });
+
+  it('addPhase/addSection are a no-op on a built-in template', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'builtin-guard-user' }); // active = java-backend, per default mock
+    const phasesBefore = store.getSnapshot().phases;
+
+    store.addPhase('Should not be added');
+
+    expect(store.getSnapshot().phases).toBe(phasesBefore);
+  });
+
+  it('addSection appends a section under the given phase', async () => {
+    vi.useFakeTimers();
+    const store = await setupCustomRoadmap('section-user');
+    store.addPhase('Phase One');
+    const phaseId = store.getSnapshot().phases[0].id;
+
+    store.addSection(phaseId, '  Section One  ');
+
+    const sections = store.getSnapshot().phases[0].sections;
+    expect(sections).toHaveLength(1);
+    expect(sections[0]).toMatchObject({ title: 'Section One' });
+  });
+
+  it('renamePhase updates the phase title and re-files every item under the new title', async () => {
+    vi.useFakeTimers();
+    const store = await setupCustomRoadmap('rename-phase-user');
+    store.addPhase('Old Name');
+    const phaseId = store.getSnapshot().phases[0].id;
+    store.addSection(phaseId, 'Section');
+    store.addItem({ title: 'Topic', phase: 'Old Name', section: 'Section', priority: 'P2' });
+
+    store.renamePhase(phaseId, 'New Name');
+
+    expect(store.getSnapshot().phases[0].title).toBe('New Name');
+    expect(store.getSnapshot().items[0].phase).toBe('New Name');
+  });
+
+  it('removePhase deletes the phase and soft-deletes every item filed under it', async () => {
+    vi.useFakeTimers();
+    const store = await setupCustomRoadmap('remove-phase-user');
+    store.addPhase('Doomed Phase');
+    const phaseId = store.getSnapshot().phases[0].id;
+    store.addSection(phaseId, 'Section');
+    store.addItem({ title: 'Topic', phase: 'Doomed Phase', section: 'Section', priority: 'P2' });
+    const itemId = store.getSnapshot().items[0].id;
+
+    store.removePhase(phaseId);
+
+    expect(store.getSnapshot().phases).toEqual([]);
+    expect(store.getSnapshot().items).toEqual([]); // soft-deleted items are filtered out of the visible snapshot
+    expect(store.getSnapshot().allItems[itemId].deleted).toBe(true);
+  });
+
+  it('renameSection re-files items under a phase+section pair to the new section title', async () => {
+    vi.useFakeTimers();
+    const store = await setupCustomRoadmap('rename-section-user');
+    store.addPhase('Phase');
+    const phaseId = store.getSnapshot().phases[0].id;
+    store.addSection(phaseId, 'Old Section');
+    const sectionId = store.getSnapshot().phases[0].sections[0].id;
+    store.addItem({ title: 'Topic', phase: 'Phase', section: 'Old Section', priority: 'P2' });
+
+    store.renameSection(phaseId, sectionId, 'New Section');
+
+    expect(store.getSnapshot().phases[0].sections[0].title).toBe('New Section');
+    expect(store.getSnapshot().items[0].section).toBe('New Section');
+  });
+
+  it('removeSection deletes the section and soft-deletes every item filed under it, leaving sibling sections intact', async () => {
+    vi.useFakeTimers();
+    const store = await setupCustomRoadmap('remove-section-user');
+    store.addPhase('Phase');
+    const phaseId = store.getSnapshot().phases[0].id;
+    store.addSection(phaseId, 'Keep');
+    store.addSection(phaseId, 'Doomed');
+    const doomedSectionId = store.getSnapshot().phases[0].sections[1].id;
+    store.addItem({ title: 'Topic', phase: 'Phase', section: 'Doomed', priority: 'P2' });
+
+    store.removeSection(phaseId, doomedSectionId);
+
+    expect(store.getSnapshot().phases[0].sections).toHaveLength(1);
+    expect(store.getSnapshot().phases[0].sections[0].title).toBe('Keep');
+    expect(store.getSnapshot().items).toEqual([]);
+  });
+});
+
+describe('deleteCustomRoadmap (issue #4)', () => {
+  it('removes the roadmap from customRoadmaps/startedTemplateIds and deletes its Firebase node', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'delete-user' });
+    const id = await store.createCustomRoadmap({ title: 'To delete' });
+    await store.switchRoadmap('java-backend'); // make it inactive first
+
+    await store.deleteCustomRoadmap(id);
+
+    expect(store.getSnapshot().customRoadmaps).toEqual([]);
+    expect(store.getSnapshot().startedTemplateIds).not.toContain(id);
+    expect(dbApi.deleteRoadmap).toHaveBeenCalledWith('delete-user', id);
+  });
+
+  it('deleting the currently-active custom roadmap switches to the default built-in template first', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'delete-active-user' });
+    const id = await store.createCustomRoadmap({ title: 'Active one' });
+    expect(store.getSnapshot().activeTemplateId).toBe(id);
+
+    await store.deleteCustomRoadmap(id);
+
+    expect(store.getSnapshot().activeTemplateId).toBe('java-backend');
+    expect(store.getSnapshot().customRoadmaps).toEqual([]);
+  });
+
+  it('is a no-op on a built-in template id', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'delete-guard-user' });
+
+    await store.deleteCustomRoadmap('java-backend');
+
+    expect(dbApi.deleteRoadmap).not.toHaveBeenCalled();
+    expect(store.getSnapshot().activeTemplateId).toBe('java-backend');
   });
 });
