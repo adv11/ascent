@@ -1,6 +1,6 @@
 import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
 import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../data/templates/index.js';
-import { dbApi, firebaseClock } from './firebase.js';
+import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
 
 const LOCAL_KEY = KEYS.ROADMAP;
@@ -98,6 +98,7 @@ function migrateLocalRoadmapsShape() {
 }
 
 export function createRoadmapStore() {
+  const adapter = getStorageAdapter();
   let uid = null;
   let unsubscribeRoadmap = null;
   let items = buildSeedItems();
@@ -231,7 +232,7 @@ export function createRoadmapStore() {
 
   function attachRoadmapListener(listenerTemplateId) {
     if (unsubscribeRoadmap) return;
-    unsubscribeRoadmap = dbApi.listenRoadmap(uid, listenerTemplateId, snapshot => {
+    unsubscribeRoadmap = adapter.listenRoadmap(uid, listenerTemplateId, snapshot => {
       // Switching always detaches the previous listener before attaching the
       // next one, but if a callback for this (now-stale) listener was already
       // queued in the event loop before detachment took effect, this closure
@@ -289,12 +290,12 @@ export function createRoadmapStore() {
     const flushedStr = stableStringify({ items, phases: templatePhases });
     const payload = {
       version: ROADMAP_VERSION,
-      updatedAt: firebaseClock(),
+      updatedAt: adapter.now(),
       templateId,
       items,
       phases: templatePhases
     };
-    await dbApi.saveRoadmap(uid, templateId, payload);
+    await adapter.saveRoadmap(uid, templateId, payload);
     recentFlushedStrs.push(flushedStr);
     if (recentFlushedStrs.length > MAX_RECENT_FLUSHES) recentFlushedStrs.shift();
     dirty = false;
@@ -368,7 +369,7 @@ export function createRoadmapStore() {
     let remote = null;
     if (uid) {
       try {
-        remote = await dbApi.getRoadmap(uid, templateId);
+        remote = await adapter.getRoadmap(uid, templateId);
       } catch (error) {
         console.error('Failed to load roadmap from Firebase', error);
       }
@@ -438,7 +439,7 @@ export function createRoadmapStore() {
 
     let remoteMeta = null;
     try {
-      remoteMeta = await dbApi.getMeta(uid);
+      remoteMeta = await adapter.getMeta(uid);
     } catch (error) {
       console.error('Failed to load roadmap meta from Firebase', error);
     }
@@ -469,7 +470,7 @@ export function createRoadmapStore() {
       // onboarded.
       let legacyRoadmap = null;
       try {
-        legacyRoadmap = await dbApi.getLegacyRoadmap(uid);
+        legacyRoadmap = await adapter.getLegacyRoadmap(uid);
       } catch (error) {
         console.error('Failed to load legacy roadmap from Firebase', error);
       }
@@ -491,11 +492,11 @@ export function createRoadmapStore() {
         if (legacyRoadmap) {
           migratedLegacyItems = legacyRoadmap.items;
           // Copy-forward, never delete the old path — it stays as a safety net.
-          dbApi.saveRoadmap(uid, legacyTemplateId, { ...legacyRoadmap, templateId: legacyTemplateId }).catch(error => {
+          adapter.saveRoadmap(uid, legacyTemplateId, { ...legacyRoadmap, templateId: legacyTemplateId }).catch(error => {
             console.error('Failed to migrate legacy roadmap', error);
           });
         }
-        dbApi.saveMeta(uid, { startedTemplateIds, activeTemplateId, onboardingDone: true }).catch(error => {
+        adapter.saveMeta(uid, { startedTemplateIds, activeTemplateId, onboardingDone: true }).catch(error => {
           console.error('Failed to backfill onboarding meta', error);
         });
       } else {
@@ -522,7 +523,7 @@ export function createRoadmapStore() {
       let storedBlank = null;
       if (uid) {
         try {
-          storedBlank = await dbApi.getRoadmap(uid, 'blank');
+          storedBlank = await adapter.getRoadmap(uid, 'blank');
         } catch (error) {
           console.error('Failed to load blank roadmap for migration', error);
         }
@@ -555,16 +556,16 @@ export function createRoadmapStore() {
       startedTemplateIds = startedTemplateIds.map(id => (id === 'blank' ? migratedId : id));
 
       if (uid) {
-        dbApi.saveRoadmap(uid, migratedId, {
+        adapter.saveRoadmap(uid, migratedId, {
           version: ROADMAP_VERSION,
-          updatedAt: firebaseClock(),
+          updatedAt: adapter.now(),
           templateId: migratedId,
           items: migratedItems,
           phases: migratedPhases
         }).catch(error => {
           console.error('Failed to migrate blank roadmap content', error);
         });
-        dbApi.saveMeta(uid, { activeTemplateId, startedTemplateIds, customRoadmaps, onboardingDone: true }).catch(error => {
+        adapter.saveMeta(uid, { activeTemplateId, startedTemplateIds, customRoadmaps, onboardingDone: true }).catch(error => {
           console.error('Failed to save meta after blank-template migration', error);
         });
       }
@@ -662,7 +663,7 @@ export function createRoadmapStore() {
 
     if (uid) {
       try {
-        await dbApi.saveMeta(uid, { activeTemplateId, startedTemplateIds, onboardingDone: true });
+        await adapter.saveMeta(uid, { activeTemplateId, startedTemplateIds, onboardingDone: true });
       } catch (error) {
         console.error('Failed to save roadmap-switch meta', error);
       }
@@ -687,7 +688,7 @@ export function createRoadmapStore() {
     notify();
     if (uid) {
       try {
-        await dbApi.saveMeta(uid, { hiddenTemplateIds });
+        await adapter.saveMeta(uid, { hiddenTemplateIds });
       } catch (error) {
         console.error('Failed to save hidden template preference', error);
       }
@@ -727,7 +728,7 @@ export function createRoadmapStore() {
     persistLocalCustomRoadmaps();
     if (uid) {
       try {
-        await dbApi.saveMeta(uid, { customRoadmaps });
+        await adapter.saveMeta(uid, { customRoadmaps });
       } catch (error) {
         console.error('Failed to save custom roadmap meta', error);
       }
@@ -756,8 +757,8 @@ export function createRoadmapStore() {
     notify();
     if (uid) {
       try {
-        await dbApi.saveMeta(uid, { customRoadmaps, startedTemplateIds });
-        await dbApi.deleteRoadmap(uid, idToDelete);
+        await adapter.saveMeta(uid, { customRoadmaps, startedTemplateIds });
+        await adapter.deleteRoadmap(uid, idToDelete);
       } catch (error) {
         console.error('Failed to delete custom roadmap', error);
       }
