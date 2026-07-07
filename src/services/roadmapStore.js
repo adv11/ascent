@@ -846,6 +846,9 @@ export function createRoadmapStore() {
 
   function updateItem(id, patch) {
     if (!items[id]) return;
+    // Only a `done` toggle is cosmetic (see docs/architecture.md §5.1). A
+    // `notes` patch (issue #15) must NOT be added here — the notes indicator
+    // badge on the row needs structuralVersion to bump so it re-renders.
     const isCosmetic = Object.keys(patch).every(key => key === 'done');
     if (!isCosmetic) structuralVersion += 1;
     items[id] = {
@@ -869,6 +872,7 @@ export function createRoadmapStore() {
       custom: true,
       deleted: false,
       resources: [],
+      notes: '',
       createdAt: Date.now()
     };
     queueSave();
