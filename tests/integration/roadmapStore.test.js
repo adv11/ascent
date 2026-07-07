@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createRoadmapStore } from '../../src/services/roadmapStore.js';
 import { buildSeedItems } from '../../src/data/roadmap.js';
-import { dbApi } from '../../src/services/storage/adapterFactory.js';
+import { dbApi, getStorageAdapter } from '../../src/services/storage/adapterFactory.js';
 
 // Mocks the adapter roadmapStore.js gets from getStorageAdapter() (issue #5) —
 // still named/shaped like the old `dbApi` fake so the 60+ tests below that
 // call `dbApi.<method>.mockResolvedValue(...)` don't need to change.
+// `getStorageAdapter` is itself a vi.fn() (not a plain function) so the
+// "adapter reselection per sign-in" tests below can temporarily override its
+// implementation to return a different fake for a Google-shaped user.
 vi.mock('../../src/services/storage/adapterFactory.js', () => {
   const dbApi = {
     listenRoadmap: vi.fn(() => () => {}),
@@ -17,7 +20,7 @@ vi.mock('../../src/services/storage/adapterFactory.js', () => {
     deleteRoadmap: vi.fn(() => Promise.resolve()),
     now: vi.fn(() => null),
   };
-  return { getStorageAdapter: () => dbApi, dbApi };
+  return { getStorageAdapter: vi.fn(() => dbApi), dbApi };
 });
 
 beforeEach(() => {
@@ -28,6 +31,7 @@ beforeEach(() => {
   // before this file re-establishes its own defaults below.
   vi.resetAllMocks();
   vi.useRealTimers();
+  getStorageAdapter.mockImplementation(() => dbApi);
   dbApi.listenRoadmap.mockImplementation(() => () => {});
   dbApi.saveRoadmap.mockResolvedValue(undefined);
   dbApi.saveMeta.mockResolvedValue(undefined);
@@ -193,6 +197,45 @@ describe('sign-out guard (setUser contract)', () => {
   });
 });
 
+// Issue #5 part 2 — which backend applies now depends on which user signs
+// in, so setUser() must re-select the adapter on every call rather than the
+// store fixing it once at creation time.
+describe('adapter reselection per sign-in (issue #5 part 2)', () => {
+  it('calls getStorageAdapter with the signed-in user on every setUser()', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'user-1' });
+
+    expect(getStorageAdapter).toHaveBeenCalledWith({ uid: 'user-1' });
+  });
+
+  it('actually uses the adapter getStorageAdapter returns for that sign-in, not a stale one', async () => {
+    const googleFakeAdapter = {
+      listenRoadmap: vi.fn(() => () => {}),
+      saveRoadmap: vi.fn(() => Promise.resolve()),
+      getMeta: vi.fn(() => Promise.resolve({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] })),
+      saveMeta: vi.fn(() => Promise.resolve()),
+      getRoadmap: vi.fn(() => Promise.resolve(null)),
+      getLegacyRoadmap: vi.fn(() => Promise.resolve(null)),
+      deleteRoadmap: vi.fn(() => Promise.resolve()),
+      now: vi.fn(() => 'iso-timestamp'),
+    };
+    getStorageAdapter.mockImplementation(user => (
+      user?.providerData?.some(p => p.providerId === 'google.com') ? googleFakeAdapter : dbApi
+    ));
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'google-user', providerData: [{ providerId: 'google.com' }] });
+
+    expect(googleFakeAdapter.getMeta).toHaveBeenCalledWith('google-user');
+    expect(dbApi.getMeta).not.toHaveBeenCalled();
+
+    // A later sign-in as a non-Google user must switch back to the Firebase
+    // fake, not keep using whichever adapter the previous session picked.
+    await store.setUser({ uid: 'email-user', providerData: [{ providerId: 'password' }] });
+    expect(dbApi.getMeta).toHaveBeenCalledWith('email-user');
+  });
+});
+
 describe('stableStringify — Firebase echo detection', () => {
   it('does not bump structuralVersion when listenRoadmap echoes back the same data', async () => {
     let capturedCallback;
@@ -209,13 +252,9 @@ describe('stableStringify — Firebase echo detection', () => {
 
     const versionBeforeEcho = store.getSnapshot().structuralVersion;
 
-    // Simulate Firebase echoing back the same items (same content, potentially sorted keys)
+    // Simulate the adapter echoing back the same items (same content, potentially sorted keys)
     const currentItems = store.getSnapshot().allItems;
-    const echoSnapshot = {
-      exists: () => true,
-      val: () => ({ version: 3, items: currentItems }),
-    };
-    capturedCallback(echoSnapshot);
+    capturedCallback({ version: 3, items: currentItems });
 
     expect(store.getSnapshot().structuralVersion).toBe(versionBeforeEcho);
   });
@@ -238,11 +277,7 @@ describe('stableStringify — Firebase echo detection', () => {
     const firstId = Object.keys(differentItems)[0];
     differentItems[firstId] = { ...differentItems[firstId], done: true };
 
-    const diffSnapshot = {
-      exists: () => true,
-      val: () => ({ version: 3, items: differentItems }),
-    };
-    capturedCallback(diffSnapshot);
+    capturedCallback({ version: 3, items: differentItems });
 
     expect(store.getSnapshot().structuralVersion).toBe(versionBefore + 1);
   });
@@ -274,10 +309,7 @@ describe('stale listener guard (issue #58)', () => {
     // Manually invoke the old (already-detached) java-backend listener's
     // callback, simulating one last queued call slipping through.
     const versionBeforeStaleCallback = store.getSnapshot().structuralVersion;
-    javaCallback({
-      exists: () => true,
-      val: () => ({ version: 3, templateId: 'java-backend', items: { x: { id: 'x', done: true } } }),
-    });
+    javaCallback({ version: 3, templateId: 'java-backend', items: { x: { id: 'x', done: true } } });
 
     const snapshot = store.getSnapshot();
     expect(snapshot.activeTemplateId).toBe('piano');
@@ -301,10 +333,7 @@ describe('stale listener guard (issue #58)', () => {
     updatedItems[firstId] = { ...updatedItems[firstId], done: true };
     const versionBefore = store.getSnapshot().structuralVersion;
 
-    capturedCallback({
-      exists: () => true,
-      val: () => ({ version: 3, templateId: 'java-backend', items: updatedItems }),
-    });
+    capturedCallback({ version: 3, templateId: 'java-backend', items: updatedItems });
 
     const snapshot = store.getSnapshot();
     expect(snapshot.structuralVersion).toBe(versionBefore + 1);
@@ -345,10 +374,7 @@ describe('out-of-order echo guard — recentFlushedStrs (issue #58 hardening)', 
 
     // The FIRST flush's echo (the stale, unchecked seed) arrives late, after
     // the second flush has already completed and moved local state forward.
-    capturedCallback({
-      exists: () => true,
-      val: () => ({ version: 3, templateId: 'java-backend', items: seedItems }),
-    });
+    capturedCallback({ version: 3, templateId: 'java-backend', items: seedItems });
 
     const snapshot = store.getSnapshot();
     expect(snapshot.allItems[firstId].done).toBe(true); // the newer edit must survive
@@ -370,10 +396,7 @@ describe('out-of-order echo guard — recentFlushedStrs (issue #58 hardening)', 
     const fromAnotherDevice = { ...store.getSnapshot().allItems };
     fromAnotherDevice[firstId] = { ...fromAnotherDevice[firstId], done: true };
 
-    capturedCallback({
-      exists: () => true,
-      val: () => ({ version: 3, templateId: 'java-backend', items: fromAnotherDevice }),
-    });
+    capturedCallback({ version: 3, templateId: 'java-backend', items: fromAnotherDevice });
 
     expect(store.getSnapshot().allItems[firstId].done).toBe(true);
   });
