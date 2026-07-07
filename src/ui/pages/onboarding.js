@@ -4,6 +4,7 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createBrandMark } from '../components/brand.js';
 import { openBuildYourOwnGuide } from '../components/buildYourOwnGuide.js';
 import { openNewRoadmapModal } from '../components/newRoadmapModal.js';
+import { openImportRoadmapModal } from '../components/importRoadmapModal.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
@@ -113,6 +114,52 @@ export function renderOnboarding(app, { user, store }) {
       el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '+' }),
       el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
       el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' })
+    ]);
+    cardEls.push(cardEl);
+    return el('div', { role: 'listitem' }, [cardEl]);
+  }
+
+  // "Import roadmap" (issue #4) — AI-assisted alternative to building one by
+  // hand. openImportRoadmapModal() resolves already-validated, already-
+  // adapted { title, phases, items }, so this just hands it straight to
+  // createCustomRoadmap the same way handleCreate() does for a manual one —
+  // the only difference is the roadmap activates already populated instead
+  // of empty.
+  async function handleImport() {
+    if (picking) return;
+    const result = await openImportRoadmapModal();
+    if (!result) return;
+    picking = true;
+    setBusy(true);
+    try {
+      await store.createCustomRoadmap(result);
+      navigate('/app', true);
+      showToast('Roadmap imported', 'success');
+    } catch (error) {
+      console.error('Failed to import roadmap', error);
+      picking = false;
+      setBusy(false);
+      showToast('Could not import that roadmap. Try again.', 'error');
+    }
+  }
+
+  function buildImportCard() {
+    const cardEl = el('div', {
+      className: 'template-card template-card-import',
+      role: 'button',
+      tabindex: '0',
+      onClick: handleImport,
+      onKeydown: e => {
+        if (e.target !== cardEl) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleImport();
+        }
+      }
+    }, [
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '✨' }),
+      el('span', { className: 'template-card-name', text: 'Import roadmap' }),
+      el('span', { className: 'template-card-desc', text: 'Generate a roadmap with an AI assistant, then paste it in.' })
     ]);
     cardEls.push(cardEl);
     return el('div', { role: 'listitem' }, [cardEl]);
@@ -324,6 +371,7 @@ export function renderOnboarding(app, { user, store }) {
   }
 
   visibleGrid.appendChild(buildCreateCard());
+  visibleGrid.appendChild(buildImportCard());
   customRoadmaps.forEach(roadmap => visibleGrid.appendChild(buildCustomCard(roadmap)));
   TEMPLATES
     .filter(t => t.id === 'blank' || !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))

@@ -120,6 +120,10 @@ src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resour
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
 src/ui/components/newRoadmapModal.js    "Create your own roadmap" title/description modal (issue #4)
+src/ui/components/importRoadmapModal.js "Import roadmap" — Generate with AI / Paste & Import tabs (issue #4)
+src/data/importPrompt.js        versioned AI-import prompt template — IMPORT_PROMPT_VERSION, buildImportPrompt()
+src/core/roadmap/importValidator.js  pure validator for AI-import roadmap JSON — parseImportJson, validateImportPayload, validateImportText
+src/core/roadmap/schemaAdapter.js    pure converter: validated import JSON -> { phases, items } roadmapStore shape
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -241,6 +245,41 @@ blob + meta entry) — never usable on a built-in template id, which can only ev
 hidden (see `hideTemplate` above), never deleted. If it's the currently active roadmap,
 it switches to the default built-in template (`java-backend`) first so the app is never
 left without an active roadmap.
+
+**AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
+#4).** A second entry point next to "Create your own roadmap" — "Import roadmap"
+(`src/ui/components/importRoadmapModal.js`) opens a two-tab modal instead of an empty
+roadmap. **Tab 1, "Generate with AI"**: a read-only, versioned prompt block
+(`buildImportPrompt(topic)`, `IMPORT_PROMPT_VERSION`) with an editable topic line that
+live-updates the prompt, and a "Copy prompt" button (`navigator.clipboard.writeText`,
+falling back to a hidden-textarea + `execCommand('copy')` for older/non-secure
+contexts). **Tab 2, "Paste & Import"**: a textarea validated 300ms after each keystroke
+via `validateImportText()` (`src/core/roadmap/importValidator.js`) — a **pure** function
+(no DOM, no store, no Firebase) that parses the JSON and checks it against schema
+version 1 (`SUPPORTED_SCHEMA_VERSION`): `schemaVersion === 1`, non-empty `title`,
+non-empty `phases` array where every phase has a `title`/`priority ∈ {P0-P3}`/non-empty
+`sections` array, every section has a `title`/non-empty `items` array, every item is
+either a plain string (inherits the phase's priority) or a `["title","priority"]` tuple,
+and the total item count is ≤ 500 — returning an array of per-field error strings
+(`phases[i].sections[j].items[k] is invalid`, etc.), empty meaning valid. Only once
+valid does `adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`) — equally
+pure — convert the validated data into the exact `{ phases, items }` shape a custom
+roadmap needs (generating `phase-...`/`section-...`/`custom-...` ids the same way
+`addPhase`/`addSection`/`addItem` do), and the "Import roadmap" button enables. The
+validator and adapter are deliberately two separate pure modules: bumping the import
+wire format to a future schema version means adding a new adapter function, never
+touching the validator's rules or the other way around. The modal resolves
+`{ title, phases, items } | null` — the caller (`onboarding.js`'s `handleImport()`)
+passes it straight to `store.createCustomRoadmap({ title, phases, items })`, the exact
+same function the manual "Create your own roadmap" flow calls (just with the `phases`/
+`items` arguments populated instead of omitted). `roadmapStore.js` makes this work via a
+one-shot `pendingCustomSeeds` map: `createCustomRoadmap` stashes the seed keyed by the
+freshly generated id right before calling `switchRoadmap(id)`, and `fetchTemplateData`
+consumes (and deletes) it instead of returning the usual empty seed for a custom id — a
+manually-created roadmap simply has no entry there and falls through to the empty seed
+unchanged. From that point on an imported roadmap is indistinguishable from a manually
+built one — same Firebase path, same phase/section rename/delete controls, same
+`deleteCustomRoadmap` cleanup.
 
 **Flush-before-switch — an edit made just before switching must never be silently
 dropped or attributed to the wrong template.** Because `flush()` always saves whatever

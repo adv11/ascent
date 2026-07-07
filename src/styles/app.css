@@ -457,15 +457,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .template-card-hidden .btn { margin-top: auto; align-self: flex-start; }
 
-.template-card-create {
+.template-card-create, .template-card-import {
   align-items: center;
   justify-content: center;
   text-align: center;
   border-style: dashed;
   gap: 6px;
 }
-.template-card-create .template-card-icon { font-size: 36px; color: var(--brand); }
-.template-card-create .template-card-name { color: var(--brand-dark); }
+.template-card-create .template-card-icon, .template-card-import .template-card-icon { font-size: 36px; color: var(--brand); }
+.template-card-create .template-card-name, .template-card-import .template-card-name { color: var(--brand-dark); }
 
 /* Dashboard */
 .dashboard { min-height: 100vh; display: flex; flex-direction: column; }
@@ -537,6 +537,52 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .confirm-dialog-card { max-width: 440px; }
 .confirm-dialog-body { font-size: 14px; color: var(--muted); line-height: 1.6; }
 .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+/* Import roadmap modal (issue #4) */
+.import-modal-card { max-width: 560px; display: grid; gap: 4px; max-height: 88vh; overflow-y: auto; }
+.import-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.import-tab-btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.import-tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+.import-tab-panel { display: grid; gap: 12px; }
+.import-prompt-block {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  max-height: 260px;
+  overflow-y: auto;
+  color: var(--ink);
+}
+.import-paste-area { font-family: var(--mono); font-size: 12px; resize: vertical; }
+.import-errors {
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  margin: 0;
+  background: var(--status-error-bg);
+  border: 1px solid var(--status-error-border);
+  border-radius: var(--radius);
+  color: var(--status-error-text);
+  font-size: 12px;
+}
+.import-errors:empty { display: none; }
 
 .dashboard-header {
   background: var(--surface-glass);

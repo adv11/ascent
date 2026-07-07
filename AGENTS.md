@@ -126,6 +126,10 @@ src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resour
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
 src/ui/components/newRoadmapModal.js    "Create your own roadmap" title/description modal (issue #4)
+src/ui/components/importRoadmapModal.js "Import roadmap" — Generate with AI / Paste & Import tabs (issue #4)
+src/data/importPrompt.js        versioned AI-import prompt template — IMPORT_PROMPT_VERSION, buildImportPrompt()
+src/core/roadmap/importValidator.js  pure validator for AI-import roadmap JSON
+src/core/roadmap/schemaAdapter.js    pure converter: validated import JSON -> { phases, items } roadmapStore shape
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -242,6 +246,31 @@ re-files every item under the old title; removing soft-deletes every item under 
 `store.isCustomRoadmapId(activeTemplateId)`. `deleteCustomRoadmap(id)` permanently
 deletes (never usable on a built-in id, which can only be hidden) — switches to
 `java-backend` first if it was the active roadmap.
+
+**AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
+#4).** "Import roadmap" (`src/ui/components/importRoadmapModal.js`) is a second entry
+point next to "Create your own roadmap" — a two-tab modal. Tab 1 ("Generate with AI")
+shows a versioned, copyable prompt (`buildImportPrompt(topic)`, `IMPORT_PROMPT_VERSION`)
+with a "Copy prompt" button (Clipboard API, falling back to `execCommand('copy')`). Tab
+2 ("Paste & Import") validates the pasted text 300ms after each keystroke via
+`validateImportText()` (`src/core/roadmap/importValidator.js`, pure — no DOM/store/
+Firebase): valid JSON, `schemaVersion === 1`, non-empty `title`, non-empty `phases`
+array with valid `title`/`priority`/`sections` per phase, valid `title`/`items` per
+section, every item a string or `["title","priority"]` tuple, ≤ 500 total items —
+returns an array of per-field error strings, empty means valid. Only then does
+`adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`, equally pure) convert it
+into `{ phases, items }` (generating the same `phase-...`/`section-...`/`custom-...` ids
+`addPhase`/`addSection`/`addItem` do) and enable "Import roadmap". Validator and adapter
+are deliberately separate: a future schema version means a new adapter, not touching the
+validator's rules. The modal resolves `{ title, phases, items } | null`;
+`onboarding.js`'s `handleImport()` passes it straight to
+`store.createCustomRoadmap({ title, phases, items })` — the same function manual
+creation calls, just with `phases`/`items` populated. `roadmapStore.js` wires this via a
+one-shot `pendingCustomSeeds` map: `createCustomRoadmap` stashes the seed keyed by the
+new id right before `switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes)
+it instead of the usual empty seed for a custom id — manual creation has no entry there
+and falls through unchanged. From then on an imported roadmap is indistinguishable from
+a manually built one.
 
 **Flush-before-switch — an edit made just before switching must never be silently
 dropped or attributed to the wrong template.** Because `flush()` always saves whatever

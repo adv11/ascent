@@ -942,3 +942,70 @@ describe('deleteCustomRoadmap (issue #4)', () => {
     expect(store.getSnapshot().activeTemplateId).toBe('java-backend');
   });
 });
+
+// AI-assisted import (issue #4): createCustomRoadmap's optional phases/items
+// seed the roadmap already populated instead of empty — everything else
+// (activation, Firebase path, cache-first resolution) is identical to the
+// manual-creation path already covered above.
+describe('custom roadmaps — AI-import seeding (issue #4)', () => {
+  function importedSeed() {
+    return {
+      phases: [{ id: 'phase-import-1', title: 'Phase One', priority: 'P1', resourceKey: null, sections: [{ id: 'section-import-1', title: 'Section One' }] }],
+      items: {
+        'custom-import-1': { id: 'custom-import-1', title: 'Imported Topic', phase: 'Phase One', section: 'Section One', priority: 'P0', done: false, custom: true, deleted: false, resources: [], createdAt: 1 }
+      }
+    };
+  }
+
+  it('activates the new roadmap already populated with the given phases/items', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'import-user' });
+    const { phases: seedPhases, items: seedItems } = importedSeed();
+
+    const id = await store.createCustomRoadmap({ title: 'Imported Roadmap', phases: seedPhases, items: seedItems });
+
+    expect(store.getSnapshot().activeTemplateId).toBe(id);
+    expect(store.getSnapshot().phases).toEqual(seedPhases);
+    expect(store.getSnapshot().items.map(i => i.id)).toEqual(['custom-import-1']);
+  });
+
+  it('persists the seeded phases/items to Firebase once the debounced flush fires', async () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'import-flush-user' });
+    const { phases: seedPhases, items: seedItems } = importedSeed();
+
+    await store.createCustomRoadmap({ title: 'Imported Roadmap', phases: seedPhases, items: seedItems });
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(dbApi.saveRoadmap).toHaveBeenCalledWith(
+      'import-flush-user',
+      store.getSnapshot().activeTemplateId,
+      expect.objectContaining({ phases: seedPhases, items: seedItems })
+    );
+    vi.useRealTimers();
+  });
+
+  it('omitting phases/items still seeds a truly empty roadmap (manual-creation path is unaffected)', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'manual-still-empty-user' });
+
+    await store.createCustomRoadmap({ title: 'Manual Roadmap' });
+
+    expect(store.getSnapshot().phases).toEqual([]);
+    expect(store.getSnapshot().items).toEqual([]);
+  });
+
+  it('the seed is consumed exactly once — switching away and back reloads from the cache/Firebase, not the original seed object', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'import-reswitch-user' });
+    const { phases: seedPhases, items: seedItems } = importedSeed();
+    const id = await store.createCustomRoadmap({ title: 'Imported Roadmap', phases: seedPhases, items: seedItems });
+
+    await store.switchRoadmap('java-backend');
+    await store.switchRoadmap(id); // already started -> cache-first resolution, not the seed path again
+
+    expect(store.getSnapshot().phases).toEqual(seedPhases);
+    expect(store.getSnapshot().items.map(i => i.id)).toEqual(['custom-import-1']);
+  });
+});

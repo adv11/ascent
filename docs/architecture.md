@@ -1022,4 +1022,31 @@ inline rename/delete controls only when `store.isCustomRoadmapId(activeTemplateI
 Superseded the original issue #4's "default pinned/read-only roadmap" proposal — issue
 #51's starter-template system already gives every user a roadmap on first load, so a
 separate read-only "default" concept would have been redundant. AI-assisted import
-remains a follow-up, not implemented here.
+shipped separately — see the entry below.
+
+### 2026-07-07 — PR #61 — AI-assisted roadmap import (issue #4)
+
+Added the AI-import half of issue #4, on top of PR #60's manual-CRUD custom-roadmap
+data model. Two new pure modules with a strict one-way dependency (adapter depends on
+validator's output shape, never the reverse): `src/core/roadmap/importValidator.js`
+(`parseImportJson`/`validateImportPayload`/`validateImportText`) checks a pasted JSON
+string against schema version 1 — required `title`, non-empty `phases` with valid
+`title`/`priority ∈ {P0-P3}`/`sections`, non-empty `items` per section, each item a
+string or `["title","priority"]` tuple, and a 500-item cap — returning per-field error
+strings; `src/core/roadmap/schemaAdapter.js` (`adaptImportToRoadmap`) then converts
+already-validated data into the `{ phases, items }` shape `roadmapStore.createCustomRoadmap`
+expects, generating `phase-...`/`section-...`/`custom-...` ids the same way
+`addPhase`/`addSection`/`addItem` already did. `src/data/importPrompt.js` holds a
+versioned (`IMPORT_PROMPT_VERSION`), copyable prompt template. New
+`src/ui/components/importRoadmapModal.js` is a two-tab modal ("Generate with AI" /
+"Paste & Import", 300ms-debounced validation, Clipboard API with an `execCommand`
+fallback) resolving `{ title, phases, items } | null`. `roadmapStore.js`'s
+`createCustomRoadmap` gained optional `phases`/`items` parameters, threaded through a new
+one-shot `pendingCustomSeeds` map that `fetchTemplateData` consumes instead of the usual
+empty seed for a not-yet-started custom id — omitted (the manual-creation path), it falls
+through to the empty seed exactly as before, so this was a purely additive change to an
+already-shipped function's signature. `onboarding.js` gained a second action card,
+"Import roadmap", right after "Create your own roadmap", wired to the same
+`store.createCustomRoadmap` call. From activation onward an imported roadmap is
+identical to a manually-built one — same Firebase path, same phase/section CRUD
+controls, same `deleteCustomRoadmap` cleanup. This closes out issue #4 in full.

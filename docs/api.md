@@ -1,10 +1,10 @@
 # Ascent — Public Store & Service Contracts
 
 This document is the reference for the public contracts of `roadmapStore.js`,
-`firebase.js`, and `src/data/templates/index.js` — the surfaces other modules (and
-future contributors) are expected to code against. For the *why* behind these
-decisions, see `docs/architecture.md`. Update this file whenever one of these
-contracts changes shape.
+`firebase.js`, `src/data/templates/index.js`, and the AI-import modules under
+`src/core/roadmap/` — the surfaces other modules (and future contributors) are expected
+to code against. For the *why* behind these decisions, see `docs/architecture.md`.
+Update this file whenever one of these contracts changes shape.
 
 ## `createRoadmapStore()` — `src/services/roadmapStore.js`
 
@@ -18,7 +18,7 @@ Returns a store instance with the following methods.
 | `hideTemplate` | `async (templateId: string) => void` | Per-user preference only — adds `templateId` to `hiddenTemplateIds` and persists to `users/{uid}/meta/hiddenTemplateIds` (plus a local fallback). No-op for `'blank'` or an already-hidden id. Never touches the template's own content, any other account, or `startedTemplateIds`/the ability to switch to an already-started template. See `docs/architecture.md` §5.9. |
 | `unhideTemplate` | `async (templateId: string) => void` | Removes `templateId` from `hiddenTemplateIds` and re-persists. No-op if not currently hidden. |
 | `isCustomRoadmapId` | `(id: string) => boolean` | Issue #4 — `true` iff `id` is a user-created roadmap's generated id (`croadmap-<timestamp>-<random>`), never a built-in template id. The only place this distinction is made; every other function below keys off it. |
-| `createCustomRoadmap` | `async ({ title, description? }) => Promise<string>` | Issue #4 — generates a `croadmap-...` id, appends `{ id, title, description, createdAt }` to `customRoadmaps` (persisted to `users/{uid}/meta.customRoadmaps`), then activates it via `switchRoadmap(id)` (seeds empty: zero items, zero phases). Throws if `title` is empty/whitespace-only. Returns the new id. |
+| `createCustomRoadmap` | `async ({ title, description?, phases?, items? }) => Promise<string>` | Issue #4 (extended for AI-import) — generates a `croadmap-...` id, appends `{ id, title, description, createdAt }` to `customRoadmaps` (persisted to `users/{uid}/meta.customRoadmaps`), then activates it via `switchRoadmap(id)`. `phases`/`items` are optional: omitted, the roadmap seeds empty (manual "Create your own roadmap" flow); passed (from `adaptImportToRoadmap()`, AI-import flow), it activates already populated with that content instead — stashed in an internal one-shot `pendingCustomSeeds` map consumed by `fetchTemplateData`. Throws if `title` is empty/whitespace-only. Returns the new id. |
 | `deleteCustomRoadmap` | `async (id: string) => void` | Issue #4 — no-op unless `isCustomRoadmapId(id)`. Removes the entry from `customRoadmaps`/`startedTemplateIds`, deletes `users/{uid}/roadmaps/{id}` and its local blob. If `id` is the active roadmap, switches to `java-backend` first so the app is never left without an active roadmap. |
 | `addPhase` | `(title: string) => void` | Issue #4 — no-op unless the active roadmap `isCustomRoadmapId`. Appends `{ id, title, priority: 'P2', resourceKey: null, sections: [] }` to `phases`; bumps `structuralVersion`. |
 | `renamePhase` | `(phaseId: string, newTitle: string) => void` | Issue #4 — same custom-roadmap-only guard. Re-files every item whose `phase` matched the old title to `newTitle`. |
@@ -89,6 +89,33 @@ Every template module (`java-backend.js`, `frontend.js`, `data-science.js`,
 `genai-agentic-ai.js`, `math-grade12.js`, `piano.js`, `marketing.js`, `blank.js`)
 exports `PHASES` and a synchronous `buildSeedItems()` in the same shape
 `src/data/roadmap.js` always used — see `docs/architecture.md` for the full shape.
+
+## `src/core/roadmap/importValidator.js` — AI-import validation (issue #4)
+
+Pure — no DOM, no store, no Firebase.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `SUPPORTED_SCHEMA_VERSION` | `number` (currently `1`) | The only `schemaVersion` value `validateImportPayload` accepts. |
+| `parseImportJson` | `(rawText: string) => { data: object \| null, error: string \| null }` | `error` is set to a friendly message on a JSON parse failure; otherwise `data` is the parsed value and `error` is `null`. |
+| `validateImportPayload` | `(data: unknown) => string[]` | Empty array means valid. Checks (in order): top-level shape, `schemaVersion`, `title`, non-empty `phases`, then per-phase `title`/`priority`/`sections`, per-section `title`/`items`, per-item shape (string or `[title, priority]` tuple), and a 500-item total cap. Error strings include the `phases[i].sections[j].items[k]` path. |
+| `validateImportText` | `(rawText: string) => { valid: boolean, errors: string[], data: object \| null }` | Combines `parseImportJson` + `validateImportPayload` for UI call sites — `data` is only set when `valid` is `true`. |
+
+## `src/core/roadmap/schemaAdapter.js` — AI-import conversion (issue #4)
+
+Pure — no DOM, no store, no Firebase. Only ever called on data that has already passed
+`validateImportPayload`; does not re-validate.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `adaptImportToRoadmap` | `(data: object) => { phases: TemplatePhase[], items: Record<string, Item> }` | Converts a validated import payload into the exact shape `roadmapStore.createCustomRoadmap({ phases, items })` expects — generating `phase-...`/`section-...`/`custom-...` ids the same way `addPhase`/`addSection`/`addItem` do. A plain-string item inherits its phase's `priority`; a `[title, priority]` tuple uses its own. |
+
+## `src/data/importPrompt.js` — versioned AI-import prompt (issue #4)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `IMPORT_PROMPT_VERSION` | `number` (currently `1`) | Must match `SUPPORTED_SCHEMA_VERSION` in `importValidator.js` — bumping one without the other means the prompt asks for a schema the validator won't accept. |
+| `buildImportPrompt` | `(topic: string) => string` | Renders the full copyable prompt with `topic` as its last line (or a placeholder bracket if empty) — always a complete, ready-to-paste block, never a template with a blank left in it. |
 
 ## `src/services/firebase.js`
 

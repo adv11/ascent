@@ -110,6 +110,13 @@ export function createRoadmapStore() {
   // the onboarding picker can render a name/description for them (built-in
   // templates get theirs from src/data/templates/index.js instead).
   let customRoadmaps = [];
+  // One-shot seed content for a custom roadmap not yet activated (issue #4
+  // AI-import): createCustomRoadmap() stashes { phases, items } here, keyed
+  // by the freshly generated id, right before calling switchRoadmap(id) —
+  // fetchTemplateData() consumes (and deletes) it instead of the usual empty
+  // seed. Never touched for a manually-created (non-import) custom roadmap,
+  // which simply has no entry here and falls back to the empty seed.
+  let pendingCustomSeeds = {};
   // Every templateId this account has ever started — each one has its own
   // Firebase node (users/{uid}/roadmaps/{templateId}) and/or local blob.
   let startedTemplateIds = [];
@@ -315,6 +322,11 @@ export function createRoadmapStore() {
   // by resolveRoadmapItems just like a built-in template's saved progress is.
   async function fetchTemplateData(templateId) {
     if (isCustomRoadmapId(templateId)) {
+      const seed = pendingCustomSeeds[templateId];
+      if (seed) {
+        delete pendingCustomSeeds[templateId];
+        return { baseItems: seed.items, phases: seed.phases };
+      }
       return { baseItems: {}, phases: [] };
     }
     const [baseItems, phases] = await Promise.all([
@@ -387,6 +399,7 @@ export function createRoadmapStore() {
       customRoadmaps = [];
       startedTemplateIds = [];
       roadmapCache = {};
+      pendingCustomSeeds = {};
       dirty = false;
       recentFlushedStrs = [];
       structuralVersion += 1;
@@ -618,10 +631,18 @@ export function createRoadmapStore() {
   // switchRoadmap() path a built-in template uses — it seeds empty (zero
   // phases, zero items) since fetchTemplateData short-circuits for a custom
   // id, and the user builds it up from there with addPhase/addSection/addItem.
-  async function createCustomRoadmap({ title, description }) {
+  // `phases`/`items` are optional (issue #4 AI-import): omitted, this seeds
+  // a truly empty roadmap for the user to build manually via
+  // addPhase/addSection/addItem — passed, the roadmap activates already
+  // populated with the imported content (see schemaAdapter.js for the shape
+  // producing them). Either way it's the exact same activation path.
+  async function createCustomRoadmap({ title, description, phases: seedPhases, items: seedItems }) {
     const trimmedTitle = (title || '').trim();
     if (!trimmedTitle) throw new Error('Title is required');
     const id = genId('croadmap');
+    if (seedPhases || seedItems) {
+      pendingCustomSeeds[id] = { phases: seedPhases || [], items: seedItems || {} };
+    }
     const meta = { id, title: trimmedTitle, description: (description || '').trim(), createdAt: Date.now() };
     customRoadmaps = [...customRoadmaps, meta];
     persistLocalCustomRoadmaps();

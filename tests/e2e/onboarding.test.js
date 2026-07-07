@@ -5,15 +5,16 @@ import { test, expect } from './fixtures.js';
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 test.describe('onboarding — starter template picker (issue #51)', () => {
-  test('new guest sign-up lands on /onboarding, title stays Ascent, one card per template plus "Create your own roadmap"', async ({ page }) => {
+  test('new guest sign-up lands on /onboarding, title stays Ascent, one card per template plus "Create your own roadmap" and "Import roadmap"', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await expect(page).toHaveTitle('Ascent');
-    // 8 built-in templates + the "Create your own roadmap" card (issue #4).
-    await expect(page.locator('.template-card')).toHaveCount(9);
+    // 8 built-in templates + "Create your own roadmap" + "Import roadmap" (issue #4).
+    await expect(page.locator('.template-card')).toHaveCount(10);
     await expect(page.locator('.template-card-create')).toContainText('Create your own roadmap');
+    await expect(page.locator('.template-card-import')).toContainText('Import roadmap');
     await expect(page.locator('.template-card-name')).toContainText([
       'Java Backend Engineer', 'GenAI / Agentic AI Engineer', 'Frontend Developer', 'Data Scientist',
       '12th Grade Mathematics', 'Learning Piano', 'Marketing', 'Start blank'

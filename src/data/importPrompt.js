@@ -1,0 +1,45 @@
+// Versioned so a future schema change never breaks a prompt a user already
+// copied and saved somewhere — bump this and add a new adapter in
+// src/core/roadmap/schemaAdapter.js instead of mutating the existing shape.
+export const IMPORT_PROMPT_VERSION = 1;
+
+const VALID_PRIORITIES = 'P0|P1|P2|P3';
+
+// The `topic` line is rendered as the last line of the prompt so a user
+// copies one complete, ready-to-paste block — never a template with a blank
+// left for them to fill in after pasting.
+export function buildImportPrompt(topic) {
+  const topicLine = (topic || '').trim() || '[describe what this roadmap should cover]';
+  return `You are generating an Ascent roadmap JSON file.
+Output ONLY valid JSON — no markdown fences, no commentary.
+Follow this exact schema (version ${IMPORT_PROMPT_VERSION}):
+
+{
+  "schemaVersion": ${IMPORT_PROMPT_VERSION},
+  "title": "<roadmap title>",
+  "phases": [
+    {
+      "title": "<phase title>",
+      "priority": "<${VALID_PRIORITIES}>",
+      "sections": [
+        {
+          "title": "<section title>",
+          "items": [
+            "<item title>",
+            ["<item title>", "<${VALID_PRIORITIES}>"]
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- priority at the phase level indicates how critical the whole phase is (P0 = must-do, P3 = optional).
+- An item is either a plain string (inherits the phase's priority) or a ["title","priority"] tuple.
+- Do not add any fields beyond those listed above.
+- "phases" must have at least 1 entry; each phase must have at least 1 section; each section at least 1 item.
+- Keep the total number of items at or under 500.
+
+Generate a roadmap for: ${topicLine}`;
+}
