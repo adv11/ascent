@@ -98,10 +98,8 @@ function migrateLocalRoadmapsShape() {
 }
 
 export function createRoadmapStore() {
-  // Reselected per sign-in (see setUser) since which backend applies depends
-  // on which user is signed in (issue #5 part 2) — a null user (initial boot,
-  // or not yet signed in) is never a Google user, so this starts identical to
-  // today's Firebase-only behavior.
+  // Reselected per sign-in (see setUser) via the single getStorageAdapter()
+  // seam, so a future second backend never needs a call-site change here.
   let adapter = getStorageAdapter(null);
   let uid = null;
   let unsubscribeRoadmap = null;
@@ -428,9 +426,8 @@ export function createRoadmapStore() {
     if (unsubscribeRoadmap) unsubscribeRoadmap();
     unsubscribeRoadmap = null;
     uid = nextUid;
-    // Re-select the backend for this sign-in (issue #5 part 2) — a Google
-    // sign-in gets Drive, everyone else keeps Firebase. Must happen before any
-    // of this function's own adapter calls below.
+    // Re-select the backend for this sign-in. Must happen before any of this
+    // function's own adapter calls below.
     adapter = getStorageAdapter(nextUser);
 
     if (!uid) {

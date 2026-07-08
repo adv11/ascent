@@ -20,7 +20,6 @@ See the master tracker (issue #11) for current status of every item.
 - **#36** — Cross-device / responsive consistency — `priority:critical` for v1.0;
   real breakpoints, touch targets, iOS input zoom fix, safe-area insets
 - **#4** — Multi-roadmap support (custom roadmaps + AI import)
-- **#5** — Google Drive storage backend
 - **#15** — Notes field per roadmap topic
 - **#6** — Full UI/UX revamp (design system, sidebar, modals, component library)
 - **#12B** — Resource panel revamp (smart link detection + UI)

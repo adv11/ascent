@@ -21,7 +21,6 @@ vi.mock('../../../src/services/firebase.js', () => ({
 
 const { getStorageAdapter } = await import('../../../src/services/storage/adapterFactory.js');
 const { firebaseAdapter } = await import('../../../src/services/storage/FirebaseAdapter.js');
-const { googleDriveAdapter } = await import('../../../src/services/storage/GoogleDriveAdapter.js');
 
 describe('adapterFactory — getStorageAdapter', () => {
   it('returns the Firebase adapter for a null/missing user', () => {
@@ -39,13 +38,8 @@ describe('adapterFactory — getStorageAdapter', () => {
     expect(getStorageAdapter(emailUser)).toBe(firebaseAdapter);
   });
 
-  it('returns the Google Drive adapter for a Google-signed-in user', () => {
-    const googleUser = { uid: 'user-2', providerData: [{ providerId: 'google.com' }] };
-    expect(getStorageAdapter(googleUser)).toBe(googleDriveAdapter);
-  });
-
-  it('returns the Google Drive adapter even when providerData has multiple entries', () => {
-    const linkedUser = { uid: 'user-3', providerData: [{ providerId: 'password' }, { providerId: 'google.com' }] };
-    expect(getStorageAdapter(linkedUser)).toBe(googleDriveAdapter);
+  it('returns the Firebase adapter regardless of providerData contents', () => {
+    const linkedUser = { uid: 'user-3', providerData: [{ providerId: 'password' }, { providerId: 'anonymous' }] };
+    expect(getStorageAdapter(linkedUser)).toBe(firebaseAdapter);
   });
 });

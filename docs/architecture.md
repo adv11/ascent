@@ -637,119 +637,59 @@ started-but-not-active template; a hidden template that's also started stays vis
 Cross-reference: `CLAUDE.md §Multi-roadmap support`, `CLAUDE.md §Flush-before-switch`,
 `CLAUDE.md §Stale-listener guard`, `docs/api.md`.
 
-### 5.12 Storage adapter abstraction (Issue #5, part 1 of 3)
+### 5.12 Storage adapter abstraction (Issue #5, part 1)
 
 Everything above in §5.11 describes reads/writes as going straight to Firebase, because
-until this issue that was the only backend. Issue #5 asks for Google Drive as a second,
-opt-in backend, plus the full Google OAuth (GIS) sign-in flow and an account-migration
-path — too much for one PR, and the sign-in half needs an OAuth client ID only the
-product owner can provision. Split into three PRs, all tracked against issue #5:
+until this issue that was the only backend. Issue #5 originally set out to add Google
+Drive as a second, opt-in backend, plus a full Google OAuth (GIS) sign-in flow — that
+work (parts 2 and 3) was built, then removed; see the note at the end of this section.
+What stayed is part 1: `StorageAdapter` interface + `FirebaseAdapter` (`dbApi`'s exact
+logic, relocated) + a standalone `LocalStorageAdapter`. `roadmapStore.js` now calls
+whichever adapter `getStorageAdapter()` (`src/services/storage/adapterFactory.js`)
+returns, instead of importing `firebase.js`'s `dbApi` directly — today that's always
+`firebaseAdapter`, so this is purely an import-boundary move with no behavior change
+versus §5.11 above; the value is that a future second backend only means adding a branch
+inside `adapterFactory.js`, not touching `roadmapStore.js` or any feature built on it.
 
-1. **Part 1 (PR #66, merged)** — `StorageAdapter` interface + `FirebaseAdapter` (`dbApi`'s
-   exact logic, relocated) + a standalone `LocalStorageAdapter`. `roadmapStore.js` now
-   calls whichever adapter `getStorageAdapter()` (`src/services/storage/
-   adapterFactory.js`) returns, instead of importing `firebase.js`'s `dbApi` directly. No
-   behavior change — `adapterFactory.js` always returned `firebaseAdapter`, so every code
-   path in §5.11 above behaved identically; only the import boundary moved.
-2. **Part 2 (this section)** — `GoogleDriveAdapter` (conflict retry via etag,
-   visibility-based polling since Drive has no push) and `adapterFactory` branching by
-   auth type. See §5.13 below.
-3. **Later** — "Sign in with Google" UI, real GIS wiring, Firebase→Drive migration flow.
-   Needs a Google Cloud OAuth client ID only the product owner can provision; nothing in
-   production can reach `GoogleDriveAdapter` yet since no UI creates a
-   Google-authenticated user.
-
-**Why the interface differs from issue #5's own sketch.** The issue's proposed contract
-is `load(roadmapId)`/`save(roadmapId, data)` — one document, no user concept. That
-predates issues #58 and #4, which made the app multi-user *and* multi-roadmap-per-user;
-`roadmapStore.js` already calls Firebase with `(uid, templateId, ...)` on every roadmap
-method, plus a separate per-user `meta` document and a one-time legacy-migration read.
-`StorageAdapter` (`src/services/storage/StorageAdapter.js`) is shaped to match what
-`roadmapStore.js` actually calls, not the issue's simplified MVP text — see `docs/api.md`
-for the full method list. `getLegacyRoadmap` is optional (default resolves `null`) since
-only Firebase has pre-#58 data to migrate from; `now()` is adapter-specific (Firebase
-stamps its `serverTimestamp()` sentinel, a future Drive adapter would stamp an ISO date
-string) so each backend controls its own write-timestamp representation.
+**Why the interface differs from a naive single-document design.** A simple contract
+would be `load(roadmapId)`/`save(roadmapId, data)` — one document, no user concept. That
+doesn't match issues #58 and #4, which made the app multi-user *and*
+multi-roadmap-per-user; `roadmapStore.js` already calls Firebase with `(uid, templateId,
+...)` on every roadmap method, plus a separate per-user `meta` document and a one-time
+legacy-migration read. `StorageAdapter` (`src/services/storage/StorageAdapter.js`) is
+shaped to match what `roadmapStore.js` actually calls — see `docs/api.md` for the full
+method list. `getLegacyRoadmap` is optional (default resolves `null`) since only
+Firebase has pre-#58 data to migrate from; `now()` is adapter-specific (Firebase stamps
+its `serverTimestamp()` sentinel) so each backend controls its own write-timestamp
+representation. `listenRoadmap`'s callback receives the plain roadmap payload (or
+`null`) — never a backend-specific wrapper: `attachRoadmapListener` used to call
+`snapshot.exists()`/`snapshot.val()` directly on whatever the callback received, leaking
+Firebase's `DataSnapshot` shape through what was meant to be a generic interface. Fixed
+by having `FirebaseAdapter.listenRoadmap` unwrap its own snapshot internally
+(`callback(snapshot.exists() ? snapshot.val() : null)`) before ever invoking the
+callback.
 
 **`LocalStorageAdapter` is intentionally not wired into `roadmapStore.js` yet.**
 `roadmapStore.js` already maintains its own local-cache bookkeeping (`KEYS.ROADMAPS` and
 friends — see §5.11's "Store shape") independently of whichever remote adapter is
-active, and that is untouched by this PR. `LocalStorageAdapter` is a real, unit-tested
+active, and that is untouched here. `LocalStorageAdapter` is a real, unit-tested
 implementation of the same `StorageAdapter` contract over its own dedicated keys
-(`KEYS.LOCAL_ADAPTER_ROADMAPS`/`KEYS.LOCAL_ADAPTER_META`) — built now so a later PR can
+(`KEYS.LOCAL_ADAPTER_ROADMAPS`/`KEYS.LOCAL_ADAPTER_META`) — built so a later PR can
 select it (e.g. a true guest-only local mode, or an explicit offline-cache adapter)
 without redesigning the interface at that point. It is deliberately unreferenced by
 `adapterFactory.js` today; this is scope discipline, not an oversight.
 
-Cross-reference: `CLAUDE.md §Storage adapter abstraction`, `docs/api.md §Storage
-adapters`.
-
-### 5.13 `GoogleDriveAdapter` and the `listenRoadmap` interface leak it exposed (Issue #5, part 2 of 3)
-
-**The interface had a real defect, found while building the second adapter.**
-`attachRoadmapListener` in `roadmapStore.js` called `snapshot.exists()`/`snapshot.val()`
-directly on whatever `listenRoadmap`'s callback received — a Firebase `DataSnapshot`
-shape leaking straight through what was supposed to be a backend-agnostic interface.
-`GoogleDriveAdapter` has no such object at all (Drive has no realtime push — it polls)
-and cannot fake one polymorphically. Fixed as a small, necessary prerequisite before
-writing the new adapter: `listenRoadmap`'s callback contract is now
-`(payload: object | null) => void` — `FirebaseAdapter.listenRoadmap` unwraps its snapshot
-internally (`callback(snapshot.exists() ? snapshot.val() : null)`) before ever invoking
-the callback, so `roadmapStore.js` just uses the payload directly. Six test call sites in
-`tests/integration/roadmapStore.test.js` that manually invoked the callback with a fake
-`{ exists: () => true, val: () => ({...}) }` wrapper were simplified to pass the plain
-object.
-
-**`GoogleDriveAdapter`** (`src/services/storage/GoogleDriveAdapter.js`) stores one file
-per template (`ascent-roadmap-{templateId}.json`) plus `ascent-meta.json`, all in
-`appDataFolder`, via raw `fetch` against the Drive REST API (no SDK — consistent with the
-app's no-bundler approach). It's constructed with a `getAccessToken()` provider (and
-optional `onTokenExpired()`) rather than doing any OAuth itself, so it stays fully
-decoupled from *how* a token is obtained — that's part 3's job, wiring a real Google
-Identity Services flow to these two hooks.
-
-- **Save**: find-by-name → create (multipart) if missing, else `PATCH .../upload/drive/
-  v3/files/{id}?uploadType=media` with `If-Match: {etag}` — Drive v3 exposes the etag as
-  a response header, not a JSON field, so it's captured from the prior `GET`. On `412`,
-  re-`GET` the current content + fresh etag, merge with a small last-write-wins-per-item
-  helper (keyed by the existing `item.updatedAt` field), retry the `PATCH` once with the
-  new etag. `phases` isn't merged the same way — the local copy wins outright on
-  conflict, a deliberate scope simplification (custom-roadmap phase edits are rare and
-  far less likely to race than per-item toggles) versus a full field-by-field merge.
-- **Load**: find-by-name → `GET ?alt=media`, resolving `null` if no file exists — any
-  other failure (offline, network error) rejects like any other adapter failure,
-  relying on `resolveRoadmapItems`'s existing try/catch + local-blob fallback rather than
-  swallowing errors inside the adapter itself.
-- **Meta**: same find-by-name → GET/PATCH mechanics, but a simpler read-merge-write
-  without the etag-conflict-retry machinery `saveRoadmap` needs — meta writes (template
-  switches, hide/unhide) are infrequent and not per-keystroke.
-- **`listenRoadmap`**: Drive has no realtime push, so it polls on `visibilitychange`
-  (tab back to visible) and `focus` instead, per the issue's own spec. Unlike every other
-  method, this is a fire-and-forget path nothing awaits — so it catches its own errors
-  and routes them to the `onError` parameter, matching how `FirebaseAdapter`'s
-  `onValue(ref, callback, onError)` already behaves, rather than producing an unhandled
-  rejection.
-- **`now()`** returns `new Date().toISOString()` — this is *why* part 1 made
-  `StorageAdapter.now()` adapter-specific instead of a shared `Date.now()`.
-- **Token expiry**: a `401` from any request calls `onTokenExpired()` (a no-op until part
-  3 wires it to GIS's silent-refresh) and then rejects like any other failed request —
-  never thrown as an unhandled or user-facing error, since every existing caller already
-  handles a rejected adapter call gracefully.
-
-**`adapterFactory.getStorageAdapter(user)`** now branches on `user.providerData` —
-`providerId: 'google.com'` selects `googleDriveAdapter`, everything else (missing/null
-user, anonymous guest, email/password) selects `firebaseAdapter`, identical to before
-this backend existed. Since which backend applies depends on *who* is signed in (not a
-fixed, once-per-app-load choice), `roadmapStore.js`'s `adapter` binding changed from a
-`const` fixed at store creation to a `let` reassigned via `getStorageAdapter(nextUser)`
-at the top of every `setUser()` call, before any of that function's own adapter calls —
-so a later sign-in as a different auth type always re-selects the right backend.
-`switchRoadmap()` doesn't touch auth and so doesn't need to reselect. For every account
-that exists today (anonymous or email/password — no `providerData` with `google.com`),
-this resolves to `firebaseAdapter` exactly as before: no behavior change for any
-reachable user, since `googleDriveAdapter` is a singleton constructed with a placeholder
-token provider that throws if ever actually invoked, and nothing in production can
-create a Google-authenticated user until part 3 ships.
+**Google Drive was built (parts 2 and 3) and then removed.** Part 2 (PR #69) added a
+`GoogleDriveAdapter` — conflict retry via etag, visibility-based polling since Drive has
+no push — and `adapterFactory` branching by auth provider; it was always unreachable in
+production (no UI ever created a Google-authenticated user). Part 3 (PR #70, never
+merged) was the actual "Sign in with Google" UI/OAuth wiring. After real-world OAuth
+problems (popup timing, CSP, GIS silent refresh) cost two days without a reliable
+result, the decision was made it wasn't worth the ongoing cost right now — both were
+deleted (code, tests, docs) and issues #5/#71 closed. See the Build Log entry below for
+the removal PR. `adapterFactory.getStorageAdapter(user)` today ignores its `user`
+argument entirely and always returns `firebaseAdapter`; the parameter is kept so a
+future backend can branch on it again without a call-site change.
 
 Cross-reference: `CLAUDE.md §Storage adapter abstraction`, `docs/api.md §Storage
 adapters`.
@@ -1327,7 +1267,10 @@ unchanged.
 
 ### 2026-07-07 — PR #TBD — Google Drive storage adapter (issue #5, part 2/3)
 
-Second of three PRs implementing issue #5. See §5.13 above for the full design —
+*(This adapter, and part 3 below, were removed in the 2026-07-08 entry at the end of
+this log — kept here as an accurate record of what shipped and why, not current state.)*
+
+Second of three PRs implementing issue #5. See §5.13 (as it existed at the time) —
 `GoogleDriveAdapter` (Drive REST API via raw `fetch`, conflict retry via etag +
 last-write-wins-per-item merge, visibility/focus polling in place of realtime push) and
 `adapterFactory.getStorageAdapter(user)` branching on `providerData` — plus the
@@ -1350,3 +1293,41 @@ Google-shaped users); two new cases in `tests/integration/roadmapStore.test.js`'
 "adapter reselection per sign-in" block (`setUser` calls `getStorageAdapter` with the
 signed-in user; a later sign-in as a different auth type actually switches which
 adapter's methods get called, not a stale one from the previous session).
+
+### 2026-07-08 — PR #TBD — Remove Google Sign-In and the Google Drive storage adapter (issue #5 parts 2–3, issue #71)
+
+Part 3 of issue #5 (real "Sign in with Google" UI/GIS token wiring, PR #70) spent two
+days fighting real-world OAuth problems — popup timing losing the browser's user-gesture
+window across two chained popups, CSP blocking the GIS relay iframe, silent-refresh
+edge cases — without landing a version considered reliable enough to ship. Decision: not
+worth the ongoing cost right now. PR #70 was closed unmerged; its branch,
+`feat/issue-5-google-signin`, was never merged into `main`.
+
+Since part 2 (`GoogleDriveAdapter`, PR #69) was *only* reachable once part 3 shipped a
+real Google-authenticated user, dropping part 3 made part 2 permanently dead code, not
+just temporarily unreachable — so it was removed too: `src/services/storage/
+GoogleDriveAdapter.js` and its test deleted; `adapterFactory.js`'s `isGoogleUser`
+branch removed, `getStorageAdapter()` now unconditionally returns `firebaseAdapter`
+(the `user` parameter is kept, unused, as the seam a future backend would need); the
+Google-branch test cases in `adapterFactory.test.js` and the Google-specific fixture in
+`roadmapStore.test.js`'s "adapter reselection" test were replaced with backend-agnostic
+equivalents that still cover the real behavior (adapter is re-resolved on every
+`setUser()`, a later sign-in doesn't keep a stale previous adapter).
+
+**Part 1 (the `StorageAdapter`/`FirebaseAdapter`/`LocalStorageAdapter` interface, PR
+#66) was deliberately kept**, not reverted — it was already load-bearing for #58
+(multi-roadmap), #4 (custom roadmaps/import), #15 (notes), and #67 (dirty-guard), all
+built on top of `roadmapStore.js` calling "the active adapter" rather than `firebase.js`
+directly. With `adapterFactory.js` simplified to a single unconditional branch, this
+behaves identically to hard-wiring Firebase, at zero ongoing cost, while leaving the one
+seam a future second backend would plug into. See §5.12 (rewritten by this PR — the old
+§5.13 covering `GoogleDriveAdapter` internals was folded/removed) for the current-state
+description.
+
+Docs updated in the same pass: `CLAUDE.md`/`AGENTS.md` (storage adapter section
+trimmed, file map entry removed), `docs/api.md` (`GoogleDriveAdapter` section removed),
+`docs/roadmap.md` (Google Drive backend line removed from Future), `CHANGELOG.md`
+(part 2 entry removed, part 1 entry's forward-looking framing trimmed, new entry added).
+Issues #5 and #71 were closed; #18, #10, and #6 had stale Google/Drive references
+updated (they weren't about Google Sign-In themselves, just referenced it in passing);
+tracker issue #11 updated to match.
