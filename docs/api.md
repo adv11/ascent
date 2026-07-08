@@ -28,7 +28,7 @@ Returns a store instance with the following methods.
 | `removeSection` | `(phaseId: string, sectionId: string) => void` | Issue #4 — same guard. Soft-deletes every item filed under the removed section. |
 | `getSnapshot` | `(meta?: object) => Snapshot` | Synchronous; returns the current state merged with any extra `meta` fields. |
 | `updateItem` | `(id: string, patch: object) => void` | Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). A `{ notes }` patch (issue #15) is therefore non-cosmetic — never add `'notes'` to the cosmetic-check. |
-| `addItem` | `({ title, phase, section, priority }) => void` | Always bumps `structuralVersion`. Seeds `notes: ''`. |
+| `addItem` | `({ title, phase, section, priority }) => boolean` | Returns `false` (no-op, no `structuralVersion` bump) once the roadmap already holds 1,000 non-deleted items — issue #24's client-enforced cap, since Realtime Database rules can't count a map's children. Otherwise adds the item, bumps `structuralVersion`, seeds `notes: ''`, and returns `true`. Callers must check the return value. |
 | `removeItem` | `(id: string) => void` | Soft-delete (`deleted: true`); always bumps `structuralVersion`. |
 | `addResource` / `updateResource` / `removeResource` | `(id, ...) => void` | Mutate an item's `resources` array via `updateItem`. |
 | `flush` | `async () => void` | Immediately persists `items` and `phases` to `localStorage` and (if signed in) Firebase, bypassing the debounce. |
@@ -136,7 +136,7 @@ Pure — no DOM, no store, no Firebase. Only ever called on data that has alread
 
 | Export | Signature | Notes |
 |---|---|---|
-| `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, onChange` | Thin wrappers around Firebase Auth. |
+| `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, onChange` | Thin wrappers around Firebase Auth. `signOut()` (issue #24) delegates to `signOutWithCleanup()` (`src/services/authCleanup.js`), which deletes `users/{uid}` and the Auth record instead of a plain sign-out when the user is anonymous and unlinked — see `docs/adr/ADR-005-anonymous-user-lifecycle.md`. |
 | `authErrorMessage` | `(error) => string` | Maps Firebase Auth error codes to user-facing copy. |
 | `database` | Firebase `Database` instance | Consumed only by `FirebaseAdapter` (below) — no other module should read/write the Realtime Database directly. |
 | `firebaseClock` | `() => ServerValue` | Firebase's `serverTimestamp()` sentinel. Consumed only by `FirebaseAdapter.now()`. |

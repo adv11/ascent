@@ -233,7 +233,11 @@ export function renderDashboard(app, { user, store }) {
         onClick: () => {
           const title = input.value.trim();
           if (!title) return;
-          store.addItem({ title, phase: phase.title, section: section.title, priority: phase.priority });
+          const added = store.addItem({ title, phase: phase.title, section: section.title, priority: phase.priority });
+          if (!added) {
+            showToast('This roadmap has reached its 1,000-topic limit', 'error');
+            return;
+          }
           input.value = '';
           showToast(`Added "${title}"`, 'success');
         }

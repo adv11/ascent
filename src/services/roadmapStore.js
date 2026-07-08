@@ -6,6 +6,10 @@ import { KEYS } from './localStorageKeys.js';
 const LOCAL_KEY = KEYS.ROADMAP;
 const UI_KEY = KEYS.UI_STATE;
 
+// Firebase rules can't count a map's children directly, so the 1000-item-per-roadmap
+// cap (issue #24) is enforced here — the one place every new item is created.
+const MAX_ITEMS_PER_ROADMAP = 1000;
+
 // Firebase's onValue listener fires on every write to the path, including the
 // echo of writes this same client just made. Comparing with JSON.stringify
 // alone isn't enough because Realtime Database returns object keys sorted,
@@ -881,6 +885,8 @@ export function createRoadmapStore() {
   }
 
   function addItem({ title, phase, section, priority }) {
+    const activeCount = Object.values(items).filter(item => !item.deleted).length;
+    if (activeCount >= MAX_ITEMS_PER_ROADMAP) return false;
     const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     structuralVersion += 1;
     items[id] = {
@@ -897,6 +903,7 @@ export function createRoadmapStore() {
       createdAt: Date.now()
     };
     queueSave();
+    return true;
   }
 
   function removeItem(id) {

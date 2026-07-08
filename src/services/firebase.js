@@ -25,6 +25,7 @@ import {
   connectDatabaseEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 import { firebaseConfig } from './firebase.config.js';
+import { signOutWithCleanup } from './authCleanup.js';
 
 const app = initializeApp(firebaseConfig);
 
@@ -57,8 +58,21 @@ export const authApi = {
   guest() {
     return signInAnonymously(auth);
   },
+  // Anonymous Firebase Auth users are never re-authenticatable once the session
+  // token is gone, so an unlinked guest who signs out would otherwise leave
+  // orphaned roadmap data in the database forever (issue #24). Delete the
+  // account and its data on the way out instead. A guest who links to a real
+  // account first (signUp.js) is no longer anonymous by the time this runs, so
+  // that path is unaffected and never creates an orphan in the first place.
+  // The decision logic itself lives in authCleanup.js so it can be unit tested
+  // without a real Firebase project.
   signOut() {
-    return signOut(auth);
+    return signOutWithCleanup({
+      user: auth.currentUser,
+      removeUserData: uid => remove(ref(database, `users/${uid}`)),
+      deleteAuthUser: deleteUser,
+      plainSignOut: () => signOut(auth)
+    });
   },
   sendResetEmail(email) {
     return sendPasswordResetEmail(auth, email);

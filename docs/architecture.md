@@ -1331,3 +1331,51 @@ trimmed, file map entry removed), `docs/api.md` (`GoogleDriveAdapter` section re
 Issues #5 and #71 were closed; #18, #10, and #6 had stale Google/Drive references
 updated (they weren't about Google Sign-In themselves, just referenced it in passing);
 tracker issue #11 updated to match.
+
+### 2026-07-08 — PR #TBD — Firebase Database Rules hardening + anonymous data cleanup (issue #24)
+
+Four gaps identified in `firebase/database.rules.json`: no payload size limits, weak
+field-level type validation, no rules for the future `reports/` path (issue #9), and
+orphaned anonymous Firebase Auth users whose roadmap data outlived their session.
+
+**Rules (`firebase/database.rules.json`).** `version`/`updatedAt` under both
+`roadmap` (legacy) and `roadmaps/$templateId` now validate as `isNumber()` (or `null`
+for `updatedAt`, which is absent on very old writes) instead of only checking presence
+via `hasChildren`. A `$other: { ".validate": "false" }` catch-all under `users/$uid`
+rejects writes to any path other than `roadmap`, `roadmaps`, or `meta` — closing the gap
+where a buggy or malicious client could otherwise write arbitrary data anywhere under
+its own uid (still auth-scoped, just unbounded in shape). A `reports/$uid` stub
+(`.write` auth-scoped, `.read: false`) is added ahead of issue #9 actually using it, so
+that issue doesn't also need a rules PR before shipping — Firebase's default-deny for
+unmatched paths meant `reports/` had no access at all until this.
+
+Firebase's Rules Simulator/emulator has no per-`.validate` unit test harness wired into
+CI yet (issue #24 was explicitly blocked on issue #3's testing-infra work for this, which
+is still open) — the pass/fail matrix below was verified by hand against the local
+`firebase-tools` emulator and belongs in the PR description, not an automated suite. A
+follow-up once #3's Rules Simulator CI lands should convert this matrix into real tests.
+
+**Item count limit — client-side, not a rule.** Realtime Database rules cannot count a
+map's children directly, so the 1,000-item-per-roadmap soft cap lives in
+`roadmapStore.js`'s `addItem()` — the single place any new item is created — which now
+returns `false` (instead of mutating anything) once a roadmap already holds 1,000
+non-deleted items; `dashboard.js`'s "Add a custom topic…" row shows an error toast
+instead of "Added" when this happens. Soft-deleted items don't count toward the cap.
+
+**Anonymous data cleanup (Phase B, Option 2 — see
+`docs/adr/ADR-005-anonymous-user-lifecycle.md`).** `authApi.signOut()` in
+`src/services/firebase.js` now delegates to `signOutWithCleanup()`
+(`src/services/authCleanup.js`) — a small, dependency-injected function with no
+Firebase imports, extracted specifically so this branching logic is unit-testable in
+CI without a real `firebase.config.js` (that file is gitignored and doesn't exist on
+CI runners; `firebase.js` itself is never imported directly by any test in this repo
+for that reason). It checks `user.isAnonymous` before signing out: an unlinked guest
+gets `users/{uid}` removed from the database and their anonymous Firebase Auth record
+deleted (same delete-data-before-delete-auth order as `deleteAccount()`, for the same
+reason — the security rules would otherwise block the database cleanup once the Auth
+record is gone) instead of a plain sign-out, so no inaccessible orphan is left behind.
+A guest who links to a real account first (`linkGuest()`, already existing) is no
+longer anonymous by the time `signOut()` could ever run, so that path was already
+orphan-free and is unaffected. If the cleanup call itself throws (e.g. a stale token),
+it falls back to a plain sign-out rather than trapping the user in the app over a
+cleanup failure. See `tests/unit/firebaseSignOutCleanup.test.js` for the unit coverage.

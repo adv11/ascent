@@ -159,6 +159,44 @@ describe('structuralVersion contract', () => {
   });
 });
 
+// Issue #24 — Firebase rules can't count a map's children, so the 1000-item
+// cap per roadmap is enforced client-side, in the one place items are created.
+describe('addItem — per-roadmap item cap (issue #24)', () => {
+  it('rejects a new item once the roadmap already holds 1000 active items', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const initialCount = Object.values(store.getSnapshot().allItems).filter(i => !i.deleted).length;
+
+    for (let i = 0; i < 1000 - initialCount; i++) {
+      const ok = store.addItem({ title: `Topic ${i}`, phase: 'Java Core', section: 'Basics', priority: 'high' });
+      expect(ok).toBe(true);
+    }
+
+    const before = store.getSnapshot().structuralVersion;
+    const rejected = store.addItem({ title: 'One too many', phase: 'Java Core', section: 'Basics', priority: 'high' });
+
+    expect(rejected).toBe(false);
+    expect(store.getSnapshot().structuralVersion).toBe(before);
+    expect(Object.values(store.getSnapshot().allItems).filter(i => !i.deleted)).toHaveLength(1000);
+  });
+
+  it('a soft-deleted item does not count toward the cap', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const initialCount = Object.values(store.getSnapshot().allItems).filter(i => !i.deleted).length;
+
+    for (let i = 0; i < 1000 - initialCount; i++) {
+      store.addItem({ title: `Topic ${i}`, phase: 'Java Core', section: 'Basics', priority: 'high' });
+    }
+    const customIds = Object.keys(store.getSnapshot().allItems).filter(id => id.startsWith('custom-'));
+    store.removeItem(customIds[0]);
+
+    const ok = store.addItem({ title: 'Room again', phase: 'Java Core', section: 'Basics', priority: 'high' });
+
+    expect(ok).toBe(true);
+  });
+});
+
 describe('sign-out guard (setUser contract)', () => {
   it('setUser(null) after a non-null uid clears both localStorage keys', async () => {
     const store = createRoadmapStore();
