@@ -542,6 +542,59 @@ meta tag and the `firebase.json` hosting headers.
 - Every element that should stay left-aligned inside the flex column needs an explicit `align-self: flex-start` (or `text-align: left` for text content) — a bare `<button>` left in a stretched flex column centers its text by default (the browser's UA stylesheet), which is an easy regression to introduce when converting a card from `display: grid` (where `justify-self: start` did this job) to `display: flex`.
 Verify visually at at least three viewport widths (mobile ~390px, tablet ~820px, desktop ~1440px) before calling a card-grid change done — unit tests run in jsdom and cannot catch layout/height mismatches.
 
+**Responsive breakpoint scale — six tiers, not two (`src/styles/app.css`, issue #36).**
+`≤375px` (small phone) / `≤480px` (phone) / `≤768px` (tablet portrait) / `≤1024px`
+(tablet landscape / small laptop) / the untuned base styles for laptop–desktop /
+`≥1600px` (large/ultra-wide desktop, a `min-width` tier) replaces the old ad-hoc
+`920px`/`640px` pair — see the comment block above the `@media` rules at the bottom of
+`app.css` for the full rationale. Add new breakpoint-specific rules to the existing tier
+whose intent matches (don't invent a seventh number); if none fits, ask whether the new
+rule is really about screen width at all, since touch/hover capability (below) is a
+separate axis and should never be inferred from width.
+
+**Touch vs. hover capability must be detected with `(hover: …)`/`(pointer: …)` media
+features, never with a viewport-width media query as a stand-in (issue #36).** A
+touchscreen laptop, Surface, or iPad in landscape has a desktop-sized viewport but no
+reliable `:hover` — width-based detection gets this wrong in both directions (it also
+wrongly assumes every *narrow* viewport is touch-only, which breaks a narrow desktop
+browser window resized by a mouse user). `.check-actions` (the per-row Edit/resource
+controls, hidden via `opacity: 0` and revealed on `:hover`/`:focus-within`) is forced
+visible under `@media (hover: none), (pointer: coarse)` — not under a `max-width` query.
+Any future hover-reveal control must follow the same pattern. Touch targets
+(`.btn-icon`, `.btn-sm`, `.filter-chip`, `.check-item`) are raised to a ~44×44px minimum
+(WCAG 2.5.5) under `@media (pointer: coarse)` for the same reason — a mouse user at a
+narrow window shouldn't get oversized targets, and a touch user at a wide one should.
+See `docs/adr/ADR-006-responsive-breakpoints-touch-hover.md`.
+
+**No focusable field may render under 16px font-size on a phone/tablet viewport
+(`≤1024px`, issue #36).** iOS Safari auto-zooms the whole page when a focused input's
+computed font size is under 16px — jarring on every tap into `.field-input.compact` (the
+dense rename/add-topic rows) or `.search-input`. Fixed with a `≤1024px` override
+bumping `.field-input`/`.field-input.compact`/`.search-input`/`.import-paste-area` to
+`font-size: 16px` — scoped to that width tier (not unconditional) specifically so the
+denser desktop field styling is untouched, since desktop Safari/Chrome don't have this
+zoom behavior. Any new focusable field class must be added to that override.
+
+**`100vh` does not track a mobile browser's real visible height — use `100dvh` with a
+`100vh` fallback.** Mobile Safari/Chrome collapse and expand their address bar, so a
+fixed-height container sized with `100vh` alone can be cut off or jump when the browser
+chrome resizes. Every full-height container (`.app-shell`, `.auth-page`,
+`.onboarding-page`, `.dashboard`) declares `min-height: 100vh;` immediately followed by
+`min-height: 100dvh;` — the second declaration wins in browsers that support `dvh` and
+is silently ignored (falling back to the first) in ones that don't. Never remove the
+`100vh` line when adding a `100dvh` one; they're a pair, not a replacement.
+
+**Safe-area insets on fixed chrome (`viewport-fit=cover`, issue #36).** `index.html`'s
+viewport meta includes `viewport-fit=cover` (required for `env(safe-area-inset-*)` to
+resolve to anything nonzero) — this matters most because `public/manifest.json` sets
+`"display": "standalone"`, so an installed PWA has no browser chrome to keep content
+clear of a notch/Dynamic Island/gesture bar on its own. `.dashboard-header`, `.auth-page`,
+`.onboarding-page` pad their top/left/right with `max(<base>, env(safe-area-inset-*))`;
+`.item-panel` (fixed, full-height, right-edge) pads top/right/bottom directly; `.save-badge`
+and `.toast-stack` (fixed near the bottom) add `env(safe-area-inset-bottom)` to their
+`bottom` offset. Any new `position: fixed` element that touches an edge of the viewport
+needs the same treatment.
+
 **Never use the native `window.confirm()` — use `confirmDialog()` (`src/ui/components/confirmDialog.js`).** The browser's built-in confirm dialog can't be styled, breaks the app's own dark/light theming, and reads as unpolished in a customer-facing product. `confirmDialog({ title, message, confirmText, cancelText, danger })` returns a `Promise<boolean>` and renders the same `.modal-overlay`/`.modal-card` chrome as every other modal in the app (matches `showDeleteModal()` in `dashboard.js` and `openBuildYourOwnGuide()`), with Escape-to-cancel and click-outside-to-cancel built in. Pass `danger: true` for anything destructive/irreversible (delete, sign-out with unsaved changes, replacing a roadmap) to get the red confirm button; leave it `false` for reversible actions (e.g. hiding a template, which can be undone from "Show hidden templates"). Every call site does `if (!await confirmDialog({...})) return;` — same control flow as the old `confirm()`, so there's no excuse to reach for the native one out of convenience. Tests reach the dialog via `document.querySelector('.modal-overlay [data-action="confirm"|"cancel"]')` (Vitest/jsdom) or `page.locator('.modal-overlay[aria-label*="..."] [data-action="confirm"]')` (Playwright) — never via `page.on('dialog', ...)`, which only intercepts the native API this component replaced.
 
 **Brand mark is a home link on every authenticated/onboarding-adjacent page.** Clicking the "Ascent" logo/wordmark (`createBrandMark()`) always navigates somewhere predictable instead of sitting inert — `<a class="brand" href="#/signin">` on the sign-in/sign-up pages (already existed), and `<a class="brand" href="#/onboarding">` on the dashboard and onboarding pages (`src/ui/pages/dashboard.js`, `src/ui/pages/onboarding.js`), since `/onboarding` is the "all roadmaps" picker — the closest thing this app has to a home/index page. `.brand`'s CSS (`text-decoration: none; color: inherit;`) was already anchor-ready; only the wrapping element needed to change from a plain `<div>` to an `<a>`. Never make the brand mark a dead `<div>` on a page that has a sensible "home" to link to.
@@ -591,3 +644,21 @@ npm run dev            # serves at http://localhost:4173
 ```
 
 Manual browser check: sign in as guest, toggle several checklist items across phases (confirm no unrelated phase-cards flash), click a "N resources" badge (confirm it opens the edit panel and does not toggle the item), toggle the theme button on both auth screens and the dashboard (confirm it persists across reload).
+
+**Cross-device / responsive verification matrix (issue #36).** Required whenever a
+change touches `app.css`, `index.html`, or any page/component's layout — not just for
+issue #36 itself:
+- **Widths (DevTools device emulation, both themes):** 320, 375, 390, 414, 768, 820,
+  1024, 1280, 1440, 1920, 2560.
+- **Touch/hover:** with DevTools' device toolbar set to a touch-capable emulated
+  device, confirm `.check-actions` (the row Edit/resource controls) is visible without
+  hovering. With emulation off (plain mouse), confirm it's hidden until hover/focus.
+- **Touch targets:** at an emulated touch width, confirm `.btn-icon`/`.btn-sm`/
+  `.filter-chip`/checklist rows visually measure ~44×44px (DevTools' box-model
+  inspector on the computed style, not just eyeballing).
+- **Mobile browser chrome:** simulate the address-bar collapse/expand (scroll down
+  then up in an emulated mobile viewport) and confirm no fixed element (item panel,
+  toasts, save badge) jumps or gets cut off.
+- **Real devices, in addition to emulation, before merging:** one pass on real iOS
+  Safari and one on real Android Chrome — DevTools emulation does not reproduce iOS's
+  input auto-zoom or a real notch/gesture-bar safe area.

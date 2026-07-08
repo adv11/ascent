@@ -88,7 +88,7 @@
   --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html { scroll-behavior: smooth; }
 html, body { min-height: 100%; }
@@ -105,7 +105,7 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-.app-shell { min-height: 100vh; }
+.app-shell { min-height: 100vh; min-height: 100dvh; }
 
 /* Animations */
 .fade-in { animation: fade-in 420ms cubic-bezier(.2,.9,.3,1) both; }
@@ -263,9 +263,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* Auth pages */
 .auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 24px 16px 40px;
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   position: relative;
 }
 
@@ -331,9 +332,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* Onboarding template picker */
 .onboarding-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 24px 16px 40px;
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   position: relative;
 }
 
@@ -476,7 +478,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .template-card-create .template-card-name, .template-card-import .template-card-name { color: var(--brand-dark); }
 
 /* Dashboard */
-.dashboard { min-height: 100vh; display: flex; flex-direction: column; }
+.dashboard { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 
 .offline-banner {
   display: none;
@@ -596,7 +598,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   background: var(--surface-glass);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-glass);
-  padding: 18px 20px 20px;
+  padding: max(18px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 20px max(20px, env(safe-area-inset-left));
   box-shadow: var(--shadow-sm);
 }
 
@@ -912,6 +914,12 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 .check-actions { opacity: 0; transition: opacity 140ms ease; }
 .check-item:hover .check-actions, .check-item:focus-within .check-actions { opacity: 1; }
+/* A touch/coarse-pointer device (or one with no hover at all) has no reliable
+   :hover — width was previously used as a stand-in for this and broke on
+   touchscreen laptops/Surfaces/iPads at desktop-sized viewports (issue #36). */
+@media (hover: none), (pointer: coarse) {
+  .check-actions { opacity: 1; }
+}
 
 .add-row {
   display: flex;
@@ -945,6 +953,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   z-index: 201;
   display: flex;
   flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
   transform: translateX(100%);
   transition: transform 280ms cubic-bezier(.2,.9,.3,1);
 }
@@ -1021,8 +1032,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* Save badge */
 .save-badge {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: calc(20px + env(safe-area-inset-right));
   background: var(--panel);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -1052,7 +1063,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* Toasts */
 .toast-stack {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 300;
@@ -1077,24 +1088,82 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .toast-info { background: var(--emphasis-bg); color: var(--emphasis-text); }
 .toast-error { background: var(--danger); color: #fff; }
 
-/* Responsive */
-@media (max-width: 920px) {
+/* ==========================================================================
+   Responsive breakpoint scale (issue #36)
+
+   Six tiers, replacing the old ad-hoc 920/640 pair. Written mobile-up in this
+   comment for readability, but implemented as `max-width` overrides on top of
+   a desktop-first base (matching every other rule in this file), plus one
+   `min-width` tier for ultra-wide displays:
+
+     ≤375px   small phone   (iPhone SE, older/small Android)
+     ≤480px   phone         (most modern phones, portrait)
+     ≤768px   tablet portrait (iPad portrait)
+     ≤1024px  tablet landscape / small laptop (iPad landscape)
+     1025–1599px  laptop / desktop — the existing base styles, untuned
+     ≥1600px  large / ultra-wide desktop
+
+   Touch-capable vs. hover-capable is handled separately via the `(hover: …)`
+   / `(pointer: …)` media features above and below — never inferred from
+   viewport width. A touchscreen laptop or iPad landscape session is exactly
+   as capable of triggering the `pointer: coarse` tier as a phone is, and a
+   plain-mouse desktop at a narrow window should not get touch-sized targets.
+   ========================================================================== */
+
+@media (min-width: 1600px) {
+  .header-top, .hero-panel, .toolbar, .dashboard-content { max-width: 1320px; }
+}
+
+@media (max-width: 1024px) {
   .hero-panel { grid-template-columns: 1fr; }
   .toolbar { grid-template-columns: 1fr; }
   .toolbar-block.toolbar-right { justify-content: flex-start; }
 }
 
-@media (max-width: 640px) {
-  .dashboard-header { padding: 14px 12px 16px; }
-  .dashboard-content { padding: 16px 12px 88px; }
+@media (max-width: 768px) {
+  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
+  .dashboard-content { padding: 18px 16px 84px; }
   .progress-card { grid-template-columns: 1fr; }
-  .check-actions { opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
+  .dashboard-content { padding: 16px 12px 88px; }
   .item-panel { width: 100%; }
   .panel-footer { flex-direction: column; align-items: stretch; }
   .panel-footer-right { margin-left: 0; width: 100%; }
   .panel-footer-right .btn { flex: 1; }
   .confirm-dialog-actions { flex-direction: column; }
   .confirm-dialog-actions .btn { width: 100%; }
+}
+
+@media (max-width: 375px) {
+  .dashboard-content { padding: 14px 10px 88px; }
+  .modal-card { padding: 26px 20px 22px; }
+}
+
+/* iOS Safari auto-zooms the page when a focused input's computed font size
+   is under 16px. Scoped to phone/tablet widths (not a hover/pointer feature —
+   there's no reliable way to detect "is this WebKit's iOS text-zoom
+   behavior" — 1024px comfortably covers phones and tablets in either
+   orientation without changing the denser desktop field styling). */
+@media (max-width: 1024px) {
+  .field-input,
+  .field-input.compact,
+  .search-input,
+  .import-paste-area {
+    font-size: 16px;
+  }
+}
+
+/* Touch targets — WCAG 2.5.5 / platform guidance recommend ~44x44px minimum.
+   Gated on actual pointer capability, not viewport width (see the note atop
+   the breakpoint scale above). */
+@media (pointer: coarse) {
+  .btn-icon { width: 44px; height: 44px; }
+  .btn-sm { min-height: 44px; }
+  .filter-chip { min-height: 44px; }
+  .check-item { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

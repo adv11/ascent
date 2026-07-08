@@ -526,6 +526,37 @@ Never add a subscription without a paired teardown path.
 - Every element that should stay left-aligned inside the flex column needs an explicit `align-self: flex-start` (or `text-align: left` for text content) — a bare `<button>` left in a stretched flex column centers its text by default (the browser's UA stylesheet), which is an easy regression to introduce when converting a card from `display: grid` (where `justify-self: start` did this job) to `display: flex`.
 Verify visually at at least three viewport widths (mobile ~390px, tablet ~820px, desktop ~1440px) before calling a card-grid change done — unit tests run in jsdom and cannot catch layout/height mismatches.
 
+**Responsive breakpoint scale — six tiers (`src/styles/app.css`, issue #36).** `≤375`
+(small phone) / `≤480` (phone) / `≤768` (tablet portrait) / `≤1024` (tablet landscape /
+small laptop) / untuned base (laptop–desktop) / `≥1600` (ultra-wide, `min-width`)
+replaces the old `920px`/`640px` pair. Add new rules to the tier whose intent matches;
+don't invent a seventh number.
+
+**Touch vs. hover must be detected with `(hover: …)`/`(pointer: …)`, never viewport
+width (issue #36).** A touchscreen laptop/iPad-landscape has a desktop-sized viewport
+but no `:hover`. `.check-actions` is forced visible under
+`@media (hover: none), (pointer: coarse)`, not a `max-width` query — follow this for any
+future hover-reveal control. Touch targets (`.btn-icon`/`.btn-sm`/`.filter-chip`/
+`.check-item`) get a ~44px minimum under `@media (pointer: coarse)` (WCAG 2.5.5). See
+`docs/adr/ADR-006-responsive-breakpoints-touch-hover.md`.
+
+**No focusable field under 16px on `≤1024px` (issue #36).** iOS Safari auto-zooms on
+focusing a sub-16px input. `.field-input`/`.field-input.compact`/`.search-input`/
+`.import-paste-area` get `font-size: 16px` under a `≤1024px` override only — desktop
+styling is untouched. Add any new focusable field class to that override.
+
+**`100vh` doesn't track mobile browser chrome — pair it with `100dvh`.** Every
+full-height container (`.app-shell`, `.auth-page`, `.onboarding-page`, `.dashboard`)
+declares `min-height: 100vh;` then `min-height: 100dvh;` right after — a pair, never a
+replacement (the second wins where supported, falls back where not).
+
+**Safe-area insets on fixed chrome.** `index.html`'s viewport meta has
+`viewport-fit=cover` (`manifest.json` is `"display": "standalone"`, so an installed PWA
+has no browser chrome of its own to clear a notch). `.dashboard-header`/`.auth-page`/
+`.onboarding-page` pad with `max(<base>, env(safe-area-inset-*))`; `.item-panel`,
+`.save-badge`, `.toast-stack` add `env(safe-area-inset-*)` directly. Any new edge-touching
+`position: fixed` element needs the same.
+
 **Never use the native `window.confirm()` — use `confirmDialog()` (`src/ui/components/confirmDialog.js`).** The browser's built-in confirm dialog can't be styled, breaks the app's own dark/light theming, and reads as unpolished in a customer-facing product. `confirmDialog({ title, message, confirmText, cancelText, danger })` returns a `Promise<boolean>` and renders the same `.modal-overlay`/`.modal-card` chrome as every other modal in the app (matches `showDeleteModal()` in `dashboard.js` and `openBuildYourOwnGuide()`), with Escape-to-cancel and click-outside-to-cancel built in. Pass `danger: true` for anything destructive/irreversible (delete, sign-out with unsaved changes, replacing a roadmap) to get the red confirm button; leave it `false` for reversible actions (e.g. hiding a template, which can be undone from "Show hidden templates"). Every call site does `if (!await confirmDialog({...})) return;` — same control flow as the old `confirm()`, so there's no excuse to reach for the native one out of convenience. Tests reach the dialog via `document.querySelector('.modal-overlay [data-action="confirm"|"cancel"]')` (Vitest/jsdom) or `page.locator('.modal-overlay[aria-label*="..."] [data-action="confirm"]')` (Playwright) — never via `page.on('dialog', ...)`, which only intercepts the native API this component replaced.
 
 **Brand mark is a home link on every authenticated/onboarding-adjacent page.** Clicking the "Ascent" logo/wordmark (`createBrandMark()`) always navigates somewhere predictable instead of sitting inert — `<a class="brand" href="#/signin">` on the sign-in/sign-up pages (already existed), and `<a class="brand" href="#/onboarding">` on the dashboard and onboarding pages (`src/ui/pages/dashboard.js`, `src/ui/pages/onboarding.js`), since `/onboarding` is the "all roadmaps" picker — the closest thing this app has to a home/index page. `.brand`'s CSS (`text-decoration: none; color: inherit;`) was already anchor-ready; only the wrapping element needed to change from a plain `<div>` to an `<a>`. Never make the brand mark a dead `<div>` on a page that has a sensible "home" to link to.
@@ -573,3 +604,16 @@ Manual browser check: sign in as guest, toggle several checklist items across ph
 (confirm no unrelated phase-cards flash), click a "N resources" badge (confirm it opens
 the edit panel and does not toggle the item), toggle the theme button on both auth
 screens and the dashboard (confirm it persists across reload).
+
+**Cross-device / responsive verification matrix (issue #36).** Required for any change
+touching `app.css`, `index.html`, or page/component layout:
+- **Widths (DevTools emulation, both themes):** 320, 375, 390, 414, 768, 820, 1024,
+  1280, 1440, 1920, 2560.
+- **Touch/hover:** touch-emulated device → `.check-actions` visible without hover;
+  plain mouse → hidden until hover/focus.
+- **Touch targets:** at a touch-emulated width, `.btn-icon`/`.btn-sm`/`.filter-chip`/
+  checklist rows measure ~44×44px in the box-model inspector.
+- **Mobile chrome collapse:** scroll to simulate address-bar collapse/expand — no fixed
+  element (item panel, toasts, save badge) jumps or is cut off.
+- **Real devices before merging:** one pass on real iOS Safari, one on real Android
+  Chrome — emulation can't reproduce iOS input auto-zoom or a real safe-area notch.
