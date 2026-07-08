@@ -53,6 +53,21 @@ export class StorageAdapter {
     return Date.now();
   }
 
+  // Daily Todos (issue #56) — a separate, sibling data path from
+  // roadmap/roadmaps/meta above, optional with a safe no-op default so a
+  // backend without push support (e.g. LocalStorageAdapter) isn't forced to
+  // implement a fake listener. `_onData` receives the plain `{ [todoId]: {...} }`
+  // map (or `null`), same never-leak-the-backend-shape rule as listenRoadmap.
+  listenDailyTodos(_uid, onData) {
+    onData(null);
+    return () => {};
+  }
+
+  /** Full overwrite of the user's daily-todos map. */
+  saveDailyTodos(_uid, _payload) {
+    return Promise.resolve();
+  }
+
   /** Cleans up any open listeners/timers. No-op unless a backend needs it. */
   destroy() {}
 }

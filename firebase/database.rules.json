@@ -52,6 +52,17 @@
             }
           }
         },
+        "dailyTodos": {
+          "$todoId": {
+            ".validate": "newData.hasChildren(['id', 'title', 'createdAt', 'expiresAt', 'done'])",
+            "id": { ".validate": "newData.isString()" },
+            "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "createdAt": { ".validate": "newData.isNumber()" },
+            "expiresAt": { ".validate": "newData.isNumber()" },
+            "done": { ".validate": "newData.isBoolean()" },
+            "doneAt": { ".validate": "newData.isNumber() || newData.val() === null" }
+          }
+        },
         "$other": {
           ".validate": "false"
         }

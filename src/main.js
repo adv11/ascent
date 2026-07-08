@@ -1,5 +1,6 @@
 import { authApi } from './services/firebase.js';
 import { createRoadmapStore } from './services/roadmapStore.js';
+import { createDailyTodoStore } from './services/dailyTodoStore.js';
 import { initTheme } from './services/theme.js';
 import { migrateLocalStorageKeys } from './services/migration.js';
 import { startRouter, registerRoute, navigate, getRoute } from './ui/router.js';
@@ -13,6 +14,7 @@ initTheme();
 
 const app = document.getElementById('app');
 const store = createRoadmapStore();
+const dailyTodoStore = createDailyTodoStore();
 
 let currentUser = null;
 let routeCleanup = null;
@@ -23,7 +25,7 @@ function guardApp(renderFn) {
       routeCleanup();
       routeCleanup = null;
     }
-    routeCleanup = renderFn(app, { ...ctx, user: currentUser, store }) || null;
+    routeCleanup = renderFn(app, { ...ctx, user: currentUser, store, dailyTodoStore }) || null;
   };
 }
 
@@ -31,7 +33,7 @@ function guardApp(renderFn) {
 // sign-in's resolved state (Issue #51) — never a stale value from the previous user.
 authApi.onChange(async user => {
   currentUser = user;
-  await store.setUser(user);
+  await Promise.all([store.setUser(user), dailyTodoStore.setUser(user)]);
 
   const route = getRoute();
   const publicRoutes = ['/signin', '/signup'];

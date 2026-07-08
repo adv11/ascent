@@ -1457,3 +1457,83 @@ without importing the real `firebase.js`, which is unimportable in CI (gitignore
 This is defense in depth: the dashboard already hides the Delete-account button for
 anonymous users; this guard protects the API layer even if some future call site
 doesn't.
+
+### 2026-07-09 — PR #TBD — Daily Todos: rolling-deadline task list, separate from the roadmap (issue #56)
+
+A genuinely different rhythm from the roadmap — time-boxed vs. untimed, flat list vs.
+phased hierarchy, ephemeral vs. durable — so it gets its own store, its own UI card, and
+its own Firebase/localStorage path rather than being bolted onto `roadmapStore.js`.
+
+**Deviation from the original issue write-up, confirmed before implementation.** Issue
+#56 was written around a fixed 24-hour deadline (`expiresAt = createdAt + 24h`) for
+every todo. Before implementation began, the requirement was changed to let the user
+pick the duration per todo (a preset — 1h/3h/6h/12h/24h/48h — or a custom number of
+hours from 15 minutes to 7 days), confirmed in a comment on the issue. Everything else
+about the issue's design — rolling deadline (not calendar-midnight-reset), client-
+computed expiry (no server cron), a collapsed "Missed" section instead of deletion, no
+`structuralVersion` — is unchanged from the original write-up.
+
+**Store (`src/services/dailyTodoStore.js`).** A second instance of the `roadmapStore.js`
+"Store pattern" documented in `CLAUDE.md`/`AGENTS.md`: a mutable `items` map keyed by
+todo id, `subscribe`/`notify` pub-sub, and a 500ms debounced `queueSave()` that persists
+to `localStorage` (`KEYS.DAILY_TODOS`) immediately and to the storage adapter
+(`adapter.saveDailyTodos`) after the debounce. Reuses two things from `roadmapStore.js`
+rather than reinventing them: the sign-out privacy guard (`setUser`'s uid-transition
+check clears this store's own local data too — a second store is just as subject to
+"never load one user's localStorage into another user's session" as the first one), and
+the `stableStringify`-based Firebase-echo comparison (duplicated into this file rather
+than imported, so the two stores stay independent modules with no coupling between
+them). Deliberately drops `structuralVersion`: that optimization exists specifically to
+avoid rebuilding every roadmap phase-card on a `done` toggle, and this list is flat and
+capped at 20 active items, with no equivalent expensive re-render to protect — a plain
+re-render on every store change is fine here.
+
+**Storage.** `users/{uid}/dailyTodos/{todoId}` in Firebase, sibling to `roadmap`/
+`roadmaps`/`meta` under `users/{uid}` (not nested inside the roadmap tree).
+`StorageAdapter`'s base contract gained `listenDailyTodos`/`saveDailyTodos` as optional
+methods with a safe no-op default (mirrors `getLegacyRoadmap`'s optional-with-default
+pattern) — `LocalStorageAdapter` doesn't implement them (it has no push mechanism and
+isn't wired into either store today), `FirebaseAdapter` does, mirroring
+`listenRoadmap`/`saveRoadmap`'s exact shape (unwrap the `DataSnapshot` inside the
+adapter, never leak it through the callback). `firebase/database.rules.json` gained a
+validated `dailyTodos/$todoId` child (id/title/createdAt/expiresAt/done/doneAt) —
+the same per-field `.validate` pattern as `roadmap`/`roadmaps`, not a second style.
+
+**Client-side caps (`src/core/dailyTodo/limits.js`).** `MAX_TODO_TITLE_LENGTH` (200),
+`MAX_ACTIVE_TODOS` (20, since Realtime Database rules can't count a map's children —
+same reasoning as `roadmapStore.js`'s per-roadmap item cap), `MIN_DURATION_MS`/
+`MAX_DURATION_MS` (15 minutes / 7 days) and `DURATION_PRESETS` all live in their own
+dependency-free module, same reasoning as `core/roadmap/limits.js`: both
+`dailyTodoStore.js` and `dailyTodoPanel.js` need these without importing each other.
+
+**Pure time helpers (`src/ui/utils/dailyTodo.js`).** `isExpired(todo, now)`,
+`remainingMs(todo, now)`, `formatRemaining(ms)`, and `remainingBand(ms)` are pure, no
+DOM/Firebase dependency, `now` injectable for deterministic unit tests. Expiry is
+computed on every read, never stored/mutated — this app is static-hosted (Firebase
+Hosting, Spark/free tier, see ADR-003) with no Cloud Functions, so there is no way to
+run a background "at T+duration, mark this missed" job server-side.
+
+**UI (`src/ui/components/dailyTodoPanel.js`).** A card mounted in `dashboard.js` next
+to the hero/progress card, not inside the phase list. Reuses the existing Enter-to-add
+`.field-input.compact.inline-add` pattern (`renderAddRow` in `dashboard.js`) for the
+title input, plus a duration `<select>` (presets + "Custom…", which reveals an hours
+`<input type="number">`). A `setInterval` at 30s resolution re-renders the countdown
+text/color-band (`ok`/`warn`/`danger`, mapped to the existing `--brand`/`--p1`/`--p0`
+tokens — no new hex values). This is a new instance of the exact hazard
+`CLAUDE.md`/`AGENTS.md`'s "Component subscription cleanup" rule already covered for
+store subscriptions — a timer left running after the panel's DOM node is removed leaks
+the same way an unremoved subscription does. The panel returns its node with
+`node._cleanup` set (same convention `createThemeToggle()` already uses, rather than
+inventing a `{ node, cleanup }` return shape), calling both `clearInterval` and the
+store unsubscribe; wired into `dashboard.js`'s route cleanup alongside
+`themeToggleBtn._cleanup?.()`. Both `CLAUDE.md` and `AGENTS.md`'s subscription-cleanup
+paragraph were reworded to say "or clear the timer" so the rule reads as covering both
+cases going forward.
+
+**Wiring (`main.js`, `dashboard.js`).** `main.js` creates `dailyTodoStore` alongside the
+existing `store` (roadmap) at module scope, calls `dailyTodoStore.setUser(user)`
+alongside `store.setUser(user)` in the `authApi.onChange` handler (via `Promise.all`,
+so both resolve before the onboarding-routing decision runs), and passes it through
+`guardApp`'s ctx to every route. `dashboard.js` mounts `createDailyTodoPanel(dailyTodoStore)`
+only when a `dailyTodoStore` is present in ctx (existing dashboard tests that don't pass
+one still render without the panel, no test changes required for that reason alone).

@@ -18,4 +18,14 @@ describe('StorageAdapter base contract', () => {
     expect(typeof adapter.now()).toBe('number');
     expect(adapter.destroy()).toBeUndefined();
   });
+
+  it('provides a safe no-op default for daily todos (issue #56)', async () => {
+    const adapter = new StorageAdapter();
+    let received = 'unset';
+    const unsubscribe = adapter.listenDailyTodos('uid', data => { received = data; });
+    expect(received).toBeNull();
+    expect(typeof unsubscribe).toBe('function');
+    expect(unsubscribe()).toBeUndefined();
+    await expect(adapter.saveDailyTodos('uid', {})).resolves.toBeUndefined();
+  });
 });

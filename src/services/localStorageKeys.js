@@ -20,7 +20,10 @@ export const KEYS = {
   // wired into roadmapStore; reserved for a future guest-only/offline-cache
   // adapter selection.
   LOCAL_ADAPTER_ROADMAPS: 'ascent-local-adapter-roadmaps-v1',
-  LOCAL_ADAPTER_META: 'ascent-local-adapter-meta-v1'
+  LOCAL_ADAPTER_META: 'ascent-local-adapter-meta-v1',
+  // { [todoId]: {...} } — Daily Todos (issue #56), a separate rolling-deadline
+  // list stored independently of the roadmap stores above.
+  DAILY_TODOS: 'ascent-daily-todos-v1'
 };
 
 export function verifyDismissedKey(uid) {

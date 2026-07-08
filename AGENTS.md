@@ -113,6 +113,7 @@ src/services/firebase.config.example.js  committed template for the file above
 src/services/localStorageKeys.js  canonical `ascent-*` localStorage/sessionStorage key strings
 src/services/migration.js     one-time migration off the pre-rename `switchprep-*` key prefix
 src/services/roadmapStore.js  in-memory roadmap store: subscribe/notify, local + adapter save, onboarding detection
+src/services/dailyTodoStore.js  in-memory Daily Todos store (issue #56) — a separate, flat, rolling-deadline list; same subscribe/notify + debounced save pattern as roadmapStore.js, deliberately without structuralVersion
 src/services/storage/StorageAdapter.js       storage backend interface (issue #5) — required + optional methods
 src/services/storage/FirebaseAdapter.js      Realtime Database implementation (formerly firebase.js's dbApi)
 src/services/storage/LocalStorageAdapter.js  standalone localStorage implementation — not yet wired into roadmapStore.js
@@ -128,6 +129,7 @@ src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really)
 src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + theme toggle + card)
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
+src/ui/components/dailyTodoPanel.js  "Today's Todos" card (issue #56) — add form, live countdown, collapsed Missed section
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/buildYourOwnGuide.js  informational modal — "How do I build my own roadmap?"
@@ -137,6 +139,8 @@ src/data/importPrompt.js        versioned AI-import prompt template — IMPORT_P
 src/core/roadmap/importValidator.js  pure validator for AI-import roadmap JSON
 src/core/roadmap/schemaAdapter.js    pure converter: validated import JSON -> { phases, items } roadmapStore shape
 src/core/roadmap/limits.js           MAX_TITLE_LENGTH/MAX_RESOURCE_LABEL_LENGTH/MAX_RESOURCE_URL_LENGTH/isValidResource (issue #53) — dependency-free so itemPanel.js can import the caps without pulling in roadmapStore.js's Firebase-backed adapter chain
+src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/MIN_DURATION_MS/MAX_DURATION_MS/DURATION_PRESETS/clampDurationMs (issue #56) — dependency-free, same reasoning as core/roadmap/limits.js
+src/ui/utils/dailyTodo.js            pure time helpers for Daily Todos (issue #56) — isExpired/remainingMs/formatRemaining/remainingBand, no DOM/Firebase dependency
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -180,6 +184,27 @@ storage adapter (see below) after the debounce. Snapshots carry `saveState`
 (`saving`/`saved`/`local`/`synced`/`error`), a `structuralVersion` counter,
 `activeTemplateId`, `startedTemplateIds` (issue #58), `onboardingDone`, and `phases`
 (the current template's phase/section skeleton — see below).
+
+**Daily Todos store (`src/services/dailyTodoStore.js`, issue #56) — a second instance of
+the Store pattern above, not a first one to design from scratch.** Same mutable map +
+`subscribe`/`notify` + 500ms debounced `queueSave()` (local immediately, storage adapter
+after the debounce) + Firebase-echo guard (`stableStringify`-based, duplicated rather than
+imported from `roadmapStore.js` so the two stores stay independent) + sign-out privacy
+guard (a uid transition clears this store's own local data too — see "Sign-out contract"
+below, which applies here just as much as to the roadmap). The one thing it deliberately
+does **not** carry over is `structuralVersion`: that optimization exists specifically to
+avoid tearing down/rebuilding every phase-card on a roadmap `done` toggle, and this list is
+flat and small (≤20 active items, `MAX_ACTIVE_TODOS`) with no equivalent expensive
+re-render to protect — a plain re-render on every store change is fine here. Each todo's
+`expiresAt` is a rolling deadline computed once at creation
+(`createdAt + durationMs`, `durationMs` chosen per-todo by the user from presets or a
+custom hours value — `src/core/dailyTodo/limits.js`) and stored, never recomputed, so a
+device clock/timezone change can't retroactively move a deadline. Expiry itself
+(`isExpired`/`remainingMs`/`formatRemaining`/`remainingBand`, `src/ui/utils/dailyTodo.js`)
+is a pure, derived value computed on read — there is no server cron on this static-hosted
+app to run a background "mark expired" job, so a missed (expired, not done) todo just
+stops rendering as active and moves into a collapsed "Missed" section instead of ever
+being deleted.
 
 **Storage adapter abstraction (`src/services/storage/`, issue #5, part 1).**
 `roadmapStore.js` never imports `firebase.js` directly for roadmap/meta reads and
@@ -510,20 +535,24 @@ meta tag and the `firebase.json` hosting headers.
 
 **Anonymous Firebase Auth users must be explicitly deleted when they exit without linking, to prevent orphaned data (issue #24).** A guest session's anonymous UID can never be re-authenticated once the session ends, so if it's never linked to a real account (`authApi.linkGuest`), its roadmap data would otherwise sit in the database forever with no way to read, export, or delete it. `authApi.signOut()` (`src/services/firebase.js`) delegates to `signOutWithCleanup()` (`src/services/authCleanup.js` — a pure, dependency-injected function with no Firebase imports, kept separate specifically so it's unit-testable without a real Firebase project) which checks `user.isAnonymous` first: for an unlinked guest it removes `users/{uid}` from the database and then deletes the Auth record (same data-before-Auth-record order as `deleteAccount()`, and for the same reason), instead of a plain sign-out. A linked guest is no longer anonymous by the time they sign out, so that path is unaffected. If the cleanup call throws (e.g. a stale token), it falls back to a plain sign-out — never block the user from leaving the app over a cleanup failure. See `docs/adr/ADR-005-anonymous-user-lifecycle.md`.
 
-**Realtime Database rules — no path other than `roadmap`/`roadmaps`/`meta` may be written under `users/{uid}`, and `reports/{uid}` is reserved for issue #9.** `firebase/database.rules.json` has a `$other: { ".validate": "false" }` catch-all under `users/$uid` specifically to stop a buggy or malicious client from writing arbitrary data outside the known shape (still auth-scoped to that uid, just unbounded before this). If you add a genuinely new top-level field under a user's data, add an explicit `.validate` rule for it — never rely on the `$other` catch-all rejecting it silently as "good enough." Realtime Database rules cannot count a map's children, so a per-roadmap item cap is enforced client-side instead, in `roadmapStore.js`'s `addItem()` (the one place items are created) — it returns `false` instead of mutating anything once a roadmap already holds 800 non-deleted items (lowered from 1,000 in issue #53 — no real roadmap organically approaches even 800 topics); callers must check this return value and surface an error rather than assuming success.
+**Realtime Database rules — no path other than `roadmap`/`roadmaps`/`meta`/`dailyTodos` may be written under `users/{uid}`, and `reports/{uid}` is reserved for issue #9.** `firebase/database.rules.json` has a `$other: { ".validate": "false" }` catch-all under `users/$uid` specifically to stop a buggy or malicious client from writing arbitrary data outside the known shape (still auth-scoped to that uid, just unbounded before this). If you add a genuinely new top-level field under a user's data, add an explicit `.validate` rule for it — never rely on the `$other` catch-all rejecting it silently as "good enough." Realtime Database rules cannot count a map's children, so a per-roadmap item cap is enforced client-side instead, in `roadmapStore.js`'s `addItem()` (the one place items are created) — it returns `false` instead of mutating anything once a roadmap already holds 800 non-deleted items (lowered from 1,000 in issue #53 — no real roadmap organically approaches even 800 topics); callers must check this return value and surface an error rather than assuming success. The same client-side-cap pattern applies to `dailyTodoStore.js`'s `addTodo()` (issue #56) — active (not-done, not-expired) todos are capped at `MAX_ACTIVE_TODOS` (20).
 
 **Client-side length caps on title/resource fields (`src/core/roadmap/limits.js`, issue #53) — the client-side half of issue #24's server-side Firebase rules.** `MAX_TITLE_LENGTH` (200), `MAX_RESOURCE_LABEL_LENGTH` (120), and `MAX_RESOURCE_URL_LENGTH` (2048) live in their own dependency-free module — never define these constants directly in `roadmapStore.js`, since `itemPanel.js` needs to import just the numbers without pulling in `roadmapStore.js`'s Firebase-backed storage-adapter chain (`adapterFactory.js` → `FirebaseAdapter.js` → `firebase.js`'s `https://` SDK imports), which breaks under Node's ESM loader in any test that doesn't mock `firebase.js`. `roadmapStore.js`'s `addItem()`, `updateItem()`, `addResource()`, and `updateResource()` — the only places these fields are ever written — reject (returning `false`, mutating nothing) a value over these caps; callers must check the return value, same convention as the item-count cap above. `itemPanel.js`'s Save/Add-resource handlers and `dashboard.js`'s quick-add row surface a friendly message using the same constants before the store call is even attempted — always keep the UI-layer message and the store-layer cap using the same imported constant, never a hardcoded number in either place.
 
 **ESLint code-cleanliness gates (`eslint.config.js`, issue #53).** `complexity: 10`, `max-depth: 4`, `max-lines-per-function: { max: 80 }`, and `max-params: 4` run as `warn` on every PR via the existing `lint` CI job. They are intentionally `warn`, not `error` — several files (`itemPanel.js`, `signUp.js`, `onboarding.js`, `importRoadmapModal.js`, and parts of `roadmapStore.js` carrying many documented invariants) still exceed them and are out of this issue's scope. When you touch a function that's already flagged, prefer extracting a **named, module-scope function** (grep-able, independently unit-testable) over just shortening lines — see `renderFilterChips`/`renderPhaseCard` in `dashboard.js`, `buildSignInForm`/`buildResetForm` in `signIn.js`, and `applyRemoteSnapshot` in `roadmapStore.js` for the pattern. Don't flip these to `error` without first re-auditing the whole repo's violation count — they were left at `warn` specifically because zero violations was never reached repo-wide.
 
-**Component subscription cleanup — always unsubscribe on DOM removal.** Any component
-that calls `onThemeChange()`, or subscribes to any other module-level store or service,
-must capture the returned unsubscribe function and call it when the component is torn
-down. The pattern: attach the unsubscribe to the element as `el._cleanup = unsubscribe`,
+**Component subscription cleanup — always unsubscribe on DOM removal, or clear the timer.**
+Any component that calls `onThemeChange()`, subscribes to any other module-level store or
+service, or starts a `setInterval`/`setTimeout` that outlives a single render, must
+capture the returned unsubscribe function (or the timer id) and clean it up when the
+component is torn down. The pattern: attach the cleanup to the element as
+`el._cleanup = unsubscribe` (or a function that calls `clearInterval`/`clearTimeout`),
 have the component factory return `{ node, cleanup }` (or expose `_cleanup` for callers
 to collect), and wire the cleanup into the route's cleanup return in `main.js`. Failing
-to do this leaks dead DOM references and fires callbacks on removed nodes — see Issue #27.
-Never add a subscription without a paired teardown path.
+to do this leaks dead DOM references, fires callbacks on removed nodes, or leaves a timer
+running forever — see Issue #27 (subscriptions) and `dailyTodoPanel.js`'s 30s countdown
+`setInterval` (issue #56, the same hazard applied to a timer instead of a subscription).
+Never add a subscription or a long-lived timer without a paired teardown path.
 
 **Card/grid layout — every card in a row must be equal height, with variable-length content, not the grid's stretch behavior, being the thing you design around.** A CSS grid's cells stretch equally by default (`align-items: stretch`), but a card only visually fills that cell if the card element itself is sized to `height: 100%` and stacks its content as a flex column — otherwise each card sizes to its own content and rows visibly mismatch the moment one card's text runs longer than its neighbors (this exact bug hit `.template-card` in the onboarding template picker, `src/ui/pages/onboarding.js` / `src/styles/app.css` — same-row cards rendered at different heights because the card had no `height: 100%` and used `display: grid` with content-sized rows instead of a flex column). The required pattern for any new card-grid component:
 - Grid container: `display: grid; grid-template-columns: repeat(auto-fit, minmax(<min>, 1fr)); align-items: stretch;` so it reflows responsively across breakpoints without a bespoke media query per card count.

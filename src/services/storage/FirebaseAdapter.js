@@ -22,6 +22,20 @@ export class FirebaseAdapter extends StorageAdapter {
     return ref(database, `users/${uid}/meta`);
   }
 
+  dailyTodosRef(uid) {
+    return ref(database, `users/${uid}/dailyTodos`);
+  }
+
+  listenDailyTodos(uid, callback, onError) {
+    const todosRef = this.dailyTodosRef(uid);
+    onValue(todosRef, snapshot => callback(snapshot.exists() ? snapshot.val() : null), onError);
+    return () => off(todosRef);
+  }
+
+  saveDailyTodos(uid, payload) {
+    return set(this.dailyTodosRef(uid), payload);
+  }
+
   listenRoadmap(uid, templateId, callback, onError) {
     const roadmapRef = this.roadmapRef(uid, templateId);
     // Unwrap Firebase's DataSnapshot here so the adapter interface's callback

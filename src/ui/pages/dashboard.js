@@ -5,6 +5,7 @@ import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
+import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { createBrandMark } from '../components/brand.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { getTemplate } from '../../data/templates/index.js';
@@ -220,7 +221,7 @@ export function showDeleteModal() {
   passwordInput.focus();
 }
 
-export function renderDashboard(app, { user, store }) {
+export function renderDashboard(app, { user, store, dailyTodoStore }) {
   if (!user) {
     navigate('/signin', true);
     return;
@@ -633,6 +634,7 @@ export function renderDashboard(app, { user, store }) {
 
   const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
+  const dailyTodoPanel = dailyTodoStore ? createDailyTodoPanel(dailyTodoStore) : null;
 
   const shell = el('div', { className: 'dashboard fade-in' }, [
     verificationBanner,
@@ -711,6 +713,7 @@ export function renderDashboard(app, { user, store }) {
         ])
       ])
     ]),
+    dailyTodoPanel,
     content,
     saveBadge
   ]);
@@ -730,6 +733,7 @@ export function renderDashboard(app, { user, store }) {
 
   return () => {
     themeToggleBtn._cleanup?.();
+    dailyTodoPanel?._cleanup?.();
     unsubStore();
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);

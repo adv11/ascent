@@ -746,6 +746,102 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .search-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 4px var(--focus); }
 
+/* Daily Todos (issue #56) — a self-contained card, separate from the phase
+   list, sourced from its own store (dailyTodoStore.js), not roadmapStore. */
+.daily-todo-panel {
+  max-width: 1160px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+.daily-todo-heading {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.daily-todo-panel > .daily-todo-add-row,
+.daily-todo-panel > .daily-todo-list,
+.daily-todo-panel > .daily-todo-missed-toggle,
+.daily-todo-panel > .daily-todo-missed-list {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.daily-todo-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: none;
+}
+.daily-todo-add-row .inline-add { flex: 1; min-width: 160px; }
+.todo-duration-select { min-width: 110px; }
+.todo-custom-hours { width: 90px; }
+
+.daily-todo-list {
+  display: grid;
+  border-top: none;
+}
+.daily-todo-empty {
+  margin: 0;
+  padding: 14px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.daily-todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+}
+.daily-todo-item.done .daily-todo-title { text-decoration: line-through; color: var(--muted); }
+
+.daily-todo-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+.daily-todo-checkbox input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--brand); flex-shrink: 0; }
+.daily-todo-title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+
+.daily-todo-remaining {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.daily-todo-remaining.ok { color: var(--brand); }
+.daily-todo-remaining.warn { color: var(--p1); }
+.daily-todo-remaining.danger { color: var(--p0); }
+
+.daily-todo-missed-toggle {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--panel-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.daily-todo-missed-list {
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.daily-todo-missed-list .daily-todo-item { opacity: 0.75; }
+.daily-todo-missed-list .daily-todo-title { text-decoration: line-through; }
+
 .dashboard-content {
   flex: 1;
   max-width: 1160px;
@@ -1111,7 +1207,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    ========================================================================== */
 
 @media (min-width: 1600px) {
-  .header-top, .hero-panel, .toolbar, .dashboard-content { max-width: 1320px; }
+  .header-top, .hero-panel, .toolbar, .dashboard-content, .daily-todo-panel { max-width: 1320px; }
 }
 
 @media (max-width: 1024px) {
@@ -1123,12 +1219,14 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 @media (max-width: 768px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 18px 16px 84px; }
+  .daily-todo-panel { padding: 0 16px; }
   .progress-card { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 16px 12px 88px; }
+  .daily-todo-panel { padding: 0 12px; }
   .item-panel { width: 100%; }
   .panel-footer { flex-direction: column; align-items: stretch; }
   .panel-footer-right { margin-left: 0; width: 100%; }
@@ -1139,6 +1237,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 @media (max-width: 375px) {
   .dashboard-content { padding: 14px 10px 88px; }
+  .daily-todo-panel { padding: 0 10px; }
   .modal-card { padding: 26px 20px 22px; }
 }
 
