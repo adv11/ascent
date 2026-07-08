@@ -1364,13 +1364,18 @@ instead of "Added" when this happens. Soft-deleted items don't count toward the 
 
 **Anonymous data cleanup (Phase B, Option 2 — see
 `docs/adr/ADR-005-anonymous-user-lifecycle.md`).** `authApi.signOut()` in
-`src/services/firebase.js` now checks `auth.currentUser.isAnonymous` before signing
-out: an unlinked guest gets `users/{uid}` removed from the database and their anonymous
-Firebase Auth record deleted (same delete-data-before-del-auth order as
-`deleteAccount()`, for the same reason — the security rules would otherwise block the
-database cleanup once the Auth record is gone) instead of a plain `signOut()`, so no
-inaccessible orphan is left behind. A guest who links to a real account first
-(`linkGuest()`, already existing) is no longer anonymous by the time `signOut()` could
-ever run, so that path was already orphan-free and is unaffected. If the cleanup call
-itself throws (e.g. a stale token), `signOut()` falls back to a plain sign-out rather
-than trapping the user in the app over a cleanup failure.
+`src/services/firebase.js` now delegates to `signOutWithCleanup()`
+(`src/services/authCleanup.js`) — a small, dependency-injected function with no
+Firebase imports, extracted specifically so this branching logic is unit-testable in
+CI without a real `firebase.config.js` (that file is gitignored and doesn't exist on
+CI runners; `firebase.js` itself is never imported directly by any test in this repo
+for that reason). It checks `user.isAnonymous` before signing out: an unlinked guest
+gets `users/{uid}` removed from the database and their anonymous Firebase Auth record
+deleted (same delete-data-before-delete-auth order as `deleteAccount()`, for the same
+reason — the security rules would otherwise block the database cleanup once the Auth
+record is gone) instead of a plain sign-out, so no inaccessible orphan is left behind.
+A guest who links to a real account first (`linkGuest()`, already existing) is no
+longer anonymous by the time `signOut()` could ever run, so that path was already
+orphan-free and is unaffected. If the cleanup call itself throws (e.g. a stale token),
+it falls back to a plain sign-out rather than trapping the user in the app over a
+cleanup failure. See `tests/unit/firebaseSignOutCleanup.test.js` for the unit coverage.

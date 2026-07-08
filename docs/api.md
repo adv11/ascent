@@ -136,7 +136,7 @@ Pure — no DOM, no store, no Firebase. Only ever called on data that has alread
 
 | Export | Signature | Notes |
 |---|---|---|
-| `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, onChange` | Thin wrappers around Firebase Auth. `signOut()` (issue #24) deletes `users/{uid}` and the Auth record instead of a plain sign-out when `auth.currentUser.isAnonymous` and unlinked — see `docs/adr/ADR-005-anonymous-user-lifecycle.md`. |
+| `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, onChange` | Thin wrappers around Firebase Auth. `signOut()` (issue #24) delegates to `signOutWithCleanup()` (`src/services/authCleanup.js`), which deletes `users/{uid}` and the Auth record instead of a plain sign-out when the user is anonymous and unlinked — see `docs/adr/ADR-005-anonymous-user-lifecycle.md`. |
 | `authErrorMessage` | `(error) => string` | Maps Firebase Auth error codes to user-facing copy. |
 | `database` | Firebase `Database` instance | Consumed only by `FirebaseAdapter` (below) — no other module should read/write the Realtime Database directly. |
 | `firebaseClock` | `() => ServerValue` | Firebase's `serverTimestamp()` sentinel. Consumed only by `FirebaseAdapter.now()`. |

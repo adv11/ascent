@@ -25,6 +25,7 @@ import {
   connectDatabaseEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 import { firebaseConfig } from './firebase.config.js';
+import { signOutWithCleanup } from './authCleanup.js';
 
 const app = initializeApp(firebaseConfig);
 
@@ -63,19 +64,15 @@ export const authApi = {
   // account and its data on the way out instead. A guest who links to a real
   // account first (signUp.js) is no longer anonymous by the time this runs, so
   // that path is unaffected and never creates an orphan in the first place.
-  async signOut() {
-    const user = auth.currentUser;
-    if (user?.isAnonymous) {
-      try {
-        await remove(ref(database, `users/${user.uid}`));
-        await deleteUser(user);
-        return;
-      } catch {
-        // Cleanup failing (e.g. a stale token) must never block the user from
-        // leaving the app — fall through to a plain sign-out.
-      }
-    }
-    return signOut(auth);
+  // The decision logic itself lives in authCleanup.js so it can be unit tested
+  // without a real Firebase project.
+  signOut() {
+    return signOutWithCleanup({
+      user: auth.currentUser,
+      removeUserData: uid => remove(ref(database, `users/${uid}`)),
+      deleteAuthUser: deleteUser,
+      plainSignOut: () => signOut(auth)
+    });
   },
   sendResetEmail(email) {
     return sendPasswordResetEmail(auth, email);

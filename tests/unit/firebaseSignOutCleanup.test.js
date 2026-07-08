@@ -1,83 +1,57 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { signOutWithCleanup } from '../../src/services/authCleanup.js';
 
-// firebase.js talks to the real Firebase SDK over CDN URLs — mock those exact
-// specifiers (plus the gitignored config) so the module under test can load
-// in CI without a real Firebase project. This exercises the actual
-// issue #24 anonymous-cleanup logic in src/services/firebase.js, unlike
-// every other test in this repo which mocks firebase.js itself away.
-const removeMock = vi.fn(() => Promise.resolve());
-const deleteUserMock = vi.fn(() => Promise.resolve());
-const signOutMock = vi.fn(() => Promise.resolve());
-
-vi.mock('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js', () => ({
-  initializeApp: vi.fn(() => ({}))
-}));
-
-vi.mock('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js', () => ({
-  getAuth: vi.fn(() => ({ currentUser: null })),
-  onAuthStateChanged: vi.fn(),
-  signInAnonymously: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  createUserWithEmailAndPassword: vi.fn(),
-  signOut: signOutMock,
-  sendPasswordResetEmail: vi.fn(),
-  sendEmailVerification: vi.fn(),
-  setPersistence: vi.fn(),
-  browserLocalPersistence: {},
-  browserSessionPersistence: {},
-  deleteUser: deleteUserMock,
-  EmailAuthProvider: { credential: vi.fn() },
-  linkWithCredential: vi.fn(),
-  reauthenticateWithCredential: vi.fn(),
-  connectAuthEmulator: vi.fn()
-}));
-
-vi.mock('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js', () => ({
-  getDatabase: vi.fn(() => ({})),
-  ref: vi.fn((_db, path) => ({ path })),
-  remove: removeMock,
-  serverTimestamp: vi.fn(),
-  connectDatabaseEmulator: vi.fn()
-}));
-
-vi.mock('../../src/services/firebase.config.js', () => ({
-  firebaseConfig: {}
-}));
-
-describe('authApi.signOut — anonymous cleanup (issue #24)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
+// Pure unit test of the issue #24 anonymous-cleanup decision logic. This
+// deliberately does not import src/services/firebase.js — that module pulls
+// in the real Firebase SDK and a gitignored firebase.config.js that doesn't
+// exist in CI, so the branching logic was extracted into a dependency-free
+// helper (authCleanup.js) specifically to make it unit-testable.
+describe('signOutWithCleanup — anonymous cleanup (issue #24)', () => {
   it('deletes the database node and the anonymous auth user instead of a plain sign-out', async () => {
-    const { auth, authApi } = await import('../../src/services/firebase.js');
-    auth.currentUser = { uid: 'guest-1', isAnonymous: true };
+    const removeUserData = vi.fn(() => Promise.resolve());
+    const deleteAuthUser = vi.fn(() => Promise.resolve());
+    const plainSignOut = vi.fn(() => Promise.resolve());
+    const user = { uid: 'guest-1', isAnonymous: true };
 
-    await authApi.signOut();
+    await signOutWithCleanup({ user, removeUserData, deleteAuthUser, plainSignOut });
 
-    expect(removeMock).toHaveBeenCalledWith({ path: 'users/guest-1' });
-    expect(deleteUserMock).toHaveBeenCalledWith(auth.currentUser);
-    expect(signOutMock).not.toHaveBeenCalled();
+    expect(removeUserData).toHaveBeenCalledWith('guest-1');
+    expect(deleteAuthUser).toHaveBeenCalledWith(user);
+    expect(plainSignOut).not.toHaveBeenCalled();
   });
 
   it('falls back to a plain sign-out for a non-anonymous user', async () => {
-    const { auth, authApi } = await import('../../src/services/firebase.js');
-    auth.currentUser = { uid: 'real-1', isAnonymous: false };
+    const removeUserData = vi.fn(() => Promise.resolve());
+    const deleteAuthUser = vi.fn(() => Promise.resolve());
+    const plainSignOut = vi.fn(() => Promise.resolve());
+    const user = { uid: 'real-1', isAnonymous: false };
 
-    await authApi.signOut();
+    await signOutWithCleanup({ user, removeUserData, deleteAuthUser, plainSignOut });
 
-    expect(removeMock).not.toHaveBeenCalled();
-    expect(deleteUserMock).not.toHaveBeenCalled();
-    expect(signOutMock).toHaveBeenCalled();
+    expect(removeUserData).not.toHaveBeenCalled();
+    expect(deleteAuthUser).not.toHaveBeenCalled();
+    expect(plainSignOut).toHaveBeenCalled();
   });
 
   it('falls back to a plain sign-out if anonymous cleanup throws', async () => {
-    const { auth, authApi } = await import('../../src/services/firebase.js');
-    auth.currentUser = { uid: 'guest-2', isAnonymous: true };
-    removeMock.mockRejectedValueOnce(new Error('offline'));
+    const removeUserData = vi.fn(() => Promise.reject(new Error('offline')));
+    const deleteAuthUser = vi.fn(() => Promise.resolve());
+    const plainSignOut = vi.fn(() => Promise.resolve());
+    const user = { uid: 'guest-2', isAnonymous: true };
 
-    await authApi.signOut();
+    await signOutWithCleanup({ user, removeUserData, deleteAuthUser, plainSignOut });
 
-    expect(signOutMock).toHaveBeenCalled();
+    expect(plainSignOut).toHaveBeenCalled();
+  });
+
+  it('falls back to a plain sign-out when there is no current user', async () => {
+    const removeUserData = vi.fn();
+    const deleteAuthUser = vi.fn();
+    const plainSignOut = vi.fn(() => Promise.resolve());
+
+    await signOutWithCleanup({ user: null, removeUserData, deleteAuthUser, plainSignOut });
+
+    expect(removeUserData).not.toHaveBeenCalled();
+    expect(plainSignOut).toHaveBeenCalled();
   });
 });
