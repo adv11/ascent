@@ -8,7 +8,7 @@ import { dbApi, getStorageAdapter } from '../../src/services/storage/adapterFact
 // call `dbApi.<method>.mockResolvedValue(...)` don't need to change.
 // `getStorageAdapter` is itself a vi.fn() (not a plain function) so the
 // "adapter reselection per sign-in" tests below can temporarily override its
-// implementation to return a different fake for a Google-shaped user.
+// implementation to return a different fake for a specific user.
 vi.mock('../../src/services/storage/adapterFactory.js', () => {
   const dbApi = {
     listenRoadmap: vi.fn(() => () => {}),
@@ -197,10 +197,11 @@ describe('sign-out guard (setUser contract)', () => {
   });
 });
 
-// Issue #5 part 2 — which backend applies now depends on which user signs
-// in, so setUser() must re-select the adapter on every call rather than the
-// store fixing it once at creation time.
-describe('adapter reselection per sign-in (issue #5 part 2)', () => {
+// getStorageAdapter() is re-invoked on every setUser() rather than the store
+// fixing an adapter once at creation time, so a future second backend (or a
+// mid-session sign-out/sign-in-as-a-different-user) always gets re-resolved
+// instead of sticking with whatever was picked at store creation.
+describe('adapter reselection per sign-in', () => {
   it('calls getStorageAdapter with the signed-in user on every setUser()', async () => {
     const store = createRoadmapStore();
     await store.setUser({ uid: 'user-1' });
@@ -209,7 +210,7 @@ describe('adapter reselection per sign-in (issue #5 part 2)', () => {
   });
 
   it('actually uses the adapter getStorageAdapter returns for that sign-in, not a stale one', async () => {
-    const googleFakeAdapter = {
+    const otherFakeAdapter = {
       listenRoadmap: vi.fn(() => () => {}),
       saveRoadmap: vi.fn(() => Promise.resolve()),
       getMeta: vi.fn(() => Promise.resolve({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] })),
@@ -220,17 +221,17 @@ describe('adapter reselection per sign-in (issue #5 part 2)', () => {
       now: vi.fn(() => 'iso-timestamp'),
     };
     getStorageAdapter.mockImplementation(user => (
-      user?.providerData?.some(p => p.providerId === 'google.com') ? googleFakeAdapter : dbApi
+      user?.uid === 'other-user' ? otherFakeAdapter : dbApi
     ));
 
     const store = createRoadmapStore();
-    await store.setUser({ uid: 'google-user', providerData: [{ providerId: 'google.com' }] });
+    await store.setUser({ uid: 'other-user' });
 
-    expect(googleFakeAdapter.getMeta).toHaveBeenCalledWith('google-user');
+    expect(otherFakeAdapter.getMeta).toHaveBeenCalledWith('other-user');
     expect(dbApi.getMeta).not.toHaveBeenCalled();
 
-    // A later sign-in as a non-Google user must switch back to the Firebase
-    // fake, not keep using whichever adapter the previous session picked.
+    // A later sign-in as a different user must switch to whichever adapter
+    // getStorageAdapter now resolves, not keep using the previous session's.
     await store.setUser({ uid: 'email-user', providerData: [{ providerId: 'password' }] });
     expect(dbApi.getMeta).toHaveBeenCalledWith('email-user');
   });
