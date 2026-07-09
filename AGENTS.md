@@ -143,6 +143,7 @@ src/core/roadmap/schemaAdapter.js    pure converter: validated import JSON -> { 
 src/core/roadmap/limits.js           MAX_TITLE_LENGTH/MAX_RESOURCE_LABEL_LENGTH/MAX_RESOURCE_URL_LENGTH/isValidResource (issue #53) — dependency-free so itemPanel.js can import the caps without pulling in roadmapStore.js's Firebase-backed adapter chain
 src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/MIN_DURATION_MS/MAX_DURATION_MS/DURATION_PRESETS/clampDurationMs (issue #56) — dependency-free, same reasoning as core/roadmap/limits.js
 src/ui/utils/dailyTodo.js            pure time helpers for Daily Todos (issue #56) — isExpired/remainingMs/formatRemaining/remainingBand, no DOM/Firebase dependency
+src/ui/utils/customRoadmapIcon.js    pickCustomRoadmapIcon(id) (issue #61) — deterministic per-roadmap-id icon for custom/imported roadmap cards, no DOM/Firebase dependency
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -434,6 +435,17 @@ re-files every item under the old title; removing soft-deletes every item under 
 `store.isCustomRoadmapId(activeTemplateId)`. `deleteCustomRoadmap(id)` permanently
 deletes (never usable on a built-in id, which can only be hidden) — switches to
 `java-backend` first if it was the active roadmap.
+
+**Onboarding card affordances — delete must never look like hide (issue #61).** A
+custom/imported card's `×` (`buildCustomCard`) permanently deletes; a built-in
+template card's `×` (`buildCard`) only hides (reversible). They used to share the
+neutral `template-card-hide` class/glyph — now the custom card's button has its own
+`template-card-delete` class (trash icon 🗑, `--danger`/`--danger-border` tokens at
+rest, not just hover) so the destructive affordance signals up front. Never restyle
+one to look like the other. Every custom/imported card also used to render the same
+generic `✎` regardless of title — `pickCustomRoadmapIcon(id)`
+(`src/ui/utils/customRoadmapIcon.js`, pure) derives a stable icon from a hash of the
+roadmap's id, same id → same icon across sessions/devices, no schema change.
 
 **AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
 #4).** "Import roadmap" (`src/ui/components/importRoadmapModal.js`) is a second entry

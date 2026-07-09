@@ -9,6 +9,7 @@ import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
+import { pickCustomRoadmapIcon } from '../utils/customRoadmapIcon.js';
 
 // Shown once, right after a brand-new sign-up (Issue #51). A user who has already
 // picked a template can also reach this page later via the dashboard's "Switch
@@ -237,17 +238,17 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         }
       }
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '✎' }),
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: pickCustomRoadmapIcon(roadmap.id) }),
       el('span', { className: 'template-card-name', text: roadmap.title }),
       el('span', { className: 'template-card-desc', text: roadmap.description || 'Your own roadmap.' }),
       footerEl,
       el('button', {
         type: 'button',
-        className: 'template-card-hide',
+        className: 'template-card-delete',
         'data-action': 'delete',
         'aria-label': `Delete ${roadmap.title}`,
         title: `Delete ${roadmap.title}`,
-        text: '×',
+        text: '🗑',
         onClick: e => {
           e.stopPropagation();
           deleteCustomCard(roadmap, cardEl);

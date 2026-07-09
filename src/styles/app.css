@@ -433,6 +433,29 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .template-card-hide:hover { color: var(--danger); border-color: var(--danger-border); }
 
+/* Distinct from .template-card-hide (issue #61) — this button permanently
+   deletes a custom/imported roadmap and all its progress, unlike the neutral
+   hide button's reversible per-user visibility toggle. Styled danger-forward
+   at rest (not just on hover) so the destructive affordance is visible before
+   the click, not just caught by the confirmDialog after it. */
+.template-card-delete {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--danger-border);
+  background: var(--panel);
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.template-card-delete:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
 /* Corner info button on "Create your own roadmap" (issue #4 follow-up) —
    same slot/sizing as .template-card-hide, opening buildYourOwnGuide instead
    of hiding/deleting. Used to live only on the now-retired "blank" template

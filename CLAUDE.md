@@ -137,6 +137,7 @@ src/core/roadmap/schemaAdapter.js    pure converter: validated import JSON -> { 
 src/core/roadmap/limits.js           MAX_TITLE_LENGTH/MAX_RESOURCE_LABEL_LENGTH/MAX_RESOURCE_URL_LENGTH/isValidResource (issue #53) — dependency-free so itemPanel.js can import the caps without pulling in roadmapStore.js's Firebase-backed adapter chain
 src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/MIN_DURATION_MS/MAX_DURATION_MS/DURATION_PRESETS/clampDurationMs (issue #56) — dependency-free, same reasoning as core/roadmap/limits.js
 src/ui/utils/dailyTodo.js            pure time helpers for Daily Todos (issue #56) — isExpired/remainingMs/formatRemaining/remainingBand, no DOM/Firebase dependency
+src/ui/utils/customRoadmapIcon.js    pickCustomRoadmapIcon(id) (issue #61) — deterministic per-roadmap-id icon for custom/imported roadmap cards, no DOM/Firebase dependency
 src/styles/app.css            the entire design system (tokens, components, both themes)
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 firebase/database.rules.json  Realtime Database security rules
@@ -434,6 +435,25 @@ blob + meta entry) — never usable on a built-in template id, which can only ev
 hidden (see `hideTemplate` above), never deleted. If it's the currently active roadmap,
 it switches to the default built-in template (`java-backend`) first so the app is never
 left without an active roadmap.
+
+**Onboarding card affordances — the delete button must never look like the hide
+button (issue #61).** A custom/imported roadmap card's `×` (`buildCustomCard`,
+`onboarding.js`) permanently deletes the roadmap; a built-in template card's `×`
+(`buildCard`) only hides it, a reversible per-user preference. They used to share the
+same `template-card-hide` class and neutral glyph, so the difference was invisible
+until after the click, when the `confirmDialog` copy finally said so. The custom card's
+button now has its own `template-card-delete` class (`app.css`) — a trash icon (🗑),
+styled with the existing `--danger`/`--danger-border` tokens at rest, not just on
+hover — so the destructive affordance signals up front. Never restyle
+`template-card-delete` to look neutral, and never give the built-in hide button
+danger styling — the whole point is that a user can tell them apart at a glance.
+Also, every custom/imported roadmap card used to render the identical generic `✎`
+regardless of title, unlike a built-in template's unique per-topic icon (`template.icon`).
+`pickCustomRoadmapIcon(id)` (`src/ui/utils/customRoadmapIcon.js`, pure, dependency-free)
+derives a stable icon from a hash of the roadmap's id — same id always yields the same
+icon, across sessions and devices, with no new UI and no `customRoadmaps` schema
+change. If a real icon-picker UI is ever built, this hash-based default is what an
+unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
 **AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
 #4).** A second entry point next to "Create your own roadmap" — "Import roadmap"
