@@ -1232,6 +1232,21 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .inline-add { flex: 1; }
 
+/* "+ Add phase" (issue #65 follow-up) renders as a direct sibling of
+   .phase-card in .dashboard-content, not nested inside one — unlike
+   "+ Add section"/"Add a custom topic…", which already sit inside a fully
+   boxed .phase-body. Without its own framing it read as a bare flat strip
+   next to the bordered/shadowed phase-cards below it. Matches .phase-card's
+   box but keeps a dashed border throughout (rather than just the top edge)
+   as the same "this creates something new" cue used by
+   .template-card-create/.template-card-import/.template-card-hidden. */
+.add-row-standalone {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 16px;
+}
+
 /* Item panel */
 .panel-overlay {
   position: fixed;
