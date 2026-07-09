@@ -466,9 +466,14 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   // Generic "type a name, click to create" row (issue #4) — used for both
   // "+ Add phase" and "+ Add section", only ever rendered for a custom
   // roadmap (built-in templates' phase/section skeleton is fixed content).
-  function renderInlineCreate(placeholder, buttonLabel, onCreate) {
+  // "+ Add phase" renders as a direct sibling of `.phase-card` inside
+  // `.dashboard-content` (no wrapping box), unlike "+ Add section"/"Add a
+  // custom topic…" which render inside an already-boxed `.phase-body` — so
+  // it needs its own card framing to avoid looking like a rendering glitch
+  // next to the fully-boxed phase-cards (issue #65 follow-up).
+  function renderInlineCreate(placeholder, buttonLabel, onCreate, { standalone = false } = {}) {
     const input = el('input', { className: 'field-input compact inline-add', placeholder });
-    return el('div', { className: 'add-row' }, [
+    return el('div', { className: standalone ? 'add-row add-row-standalone' : 'add-row' }, [
       input,
       el('button', {
         type: 'button',
@@ -583,7 +588,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     if (isCustomRoadmap) {
       content.append(renderInlineCreate('New phase name…', '+ Add phase', title => {
         store.addPhase(title);
-      }));
+      }, { standalone: true }));
     }
 
     let visibleCount = 0;
