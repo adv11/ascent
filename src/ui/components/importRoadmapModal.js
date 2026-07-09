@@ -3,6 +3,10 @@ import { buildImportPrompt } from '../../data/importPrompt.js';
 import { validateImportText } from '../../core/roadmap/importValidator.js';
 import { adaptImportToRoadmap } from '../../core/roadmap/schemaAdapter.js';
 
+const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+const TIMEFRAMES = ['No deadline', '1 month', '3 months', '6 months', '1 year'];
+const GOALS = ['Interview prep', 'On-the-job upskilling', 'Academic or exam prep', 'Personal project or hobby'];
+
 function countItems(data) {
   return data.phases.reduce((total, phase) => (
     total + phase.sections.reduce((acc, section) => acc + section.items.length, 0)
@@ -26,11 +30,38 @@ async function copyToClipboard(text) {
   textarea.remove();
 }
 
-// "Import roadmap" (issue #4) — two tabs: "Generate with AI" (a versioned,
-// copyable prompt with an editable topic line) and "Paste & Import" (paste
-// AI output, validate on input, import once valid). Resolves
-// `{ title, phases, items } | null` (null on cancel/Escape/outside-click) —
-// the caller feeds the resolved value straight into
+// A row of toggle chips sharing one selection (reuses .filter-chip styling).
+// `getValue`/`onChange` let the caller own the selected value instead of
+// this helper tracking its own state — every field here just feeds
+// `refreshPrompt()`, so there's no local state worth owning separately.
+function buildChipGroup(values, getValue, onChange) {
+  const buttons = values.map(value => {
+    const btn = el('button', {
+      type: 'button',
+      className: `filter-chip ${getValue() === value ? 'active' : ''}`,
+      text: value
+    });
+    btn.addEventListener('click', () => {
+      onChange(getValue() === value ? '' : value);
+      buttons.forEach(b => b.classList.toggle('active', b.textContent === getValue()));
+    });
+    return btn;
+  });
+  return el('div', { className: 'import-option-chips' }, buttons);
+}
+
+// "Import roadmap" (issue #4). Issue #64 collapsed the original two-tab
+// "Generate with AI" / "Paste & Import" layout into one continuous,
+// top-to-bottom flow (topic → optional customization inputs → generated
+// prompt → copy button → paste box → validation feedback → import button) —
+// every real use of this feature does both halves in the same sitting, so
+// hiding the paste box behind a second tab was friction, not clarity. Part 2
+// added the customization inputs themselves: experience level, target
+// timeframe, goal/context, and an optional "already know" freeform note, all
+// optional and all feeding buildImportPrompt()'s `options` param — never the
+// JSON schema contract, so this needed no IMPORT_PROMPT_VERSION bump.
+// Resolves `{ title, phases, items } | null` (null on cancel/Escape/
+// outside-click) — the caller feeds the resolved value straight into
 // `store.createCustomRoadmap({ title, phases, items })`.
 export function openImportRoadmapModal() {
   return new Promise(resolve => {
@@ -42,20 +73,55 @@ export function openImportRoadmapModal() {
 
     const onKey = e => { if (e.key === 'Escape') close(null); };
 
-    // --- Tab 1: Generate with AI ---
+    // --- Topic + customization inputs ---
     const topicInput = el('textarea', {
       className: 'field-input',
       rows: '2',
       placeholder: 'e.g. Kubernetes for backend engineers'
     });
+
+    let experienceLevel = '';
+    let timeframe = '';
+    let goal = '';
+    const alreadyKnowInput = el('input', {
+      className: 'field-input',
+      type: 'text',
+      placeholder: 'e.g. already comfortable with Docker and basic networking'
+    });
+
     const promptBlock = el('pre', { className: 'import-prompt-block' });
     const copyBtn = el('button', { type: 'button', className: 'btn btn-secondary btn-sm', text: 'Copy prompt' });
 
     function refreshPrompt() {
-      promptBlock.textContent = buildImportPrompt(topicInput.value);
+      promptBlock.textContent = buildImportPrompt(topicInput.value, {
+        experienceLevel,
+        timeframe,
+        goal,
+        alreadyKnow: alreadyKnowInput.value
+      });
     }
+    const debouncedRefresh = debounce(refreshPrompt, 150);
+    topicInput.addEventListener('input', debouncedRefresh);
+    alreadyKnowInput.addEventListener('input', debouncedRefresh);
+
+    const experienceChips = buildChipGroup(EXPERIENCE_LEVELS, () => experienceLevel, value => {
+      experienceLevel = value;
+      refreshPrompt();
+    });
+    const timeframeChips = buildChipGroup(TIMEFRAMES, () => timeframe, value => {
+      timeframe = value;
+      refreshPrompt();
+    });
+    const goalSelect = el('select', { className: 'field-input' }, [
+      el('option', { value: '', text: 'No preference' }),
+      ...GOALS.map(value => el('option', { value, text: value }))
+    ]);
+    goalSelect.addEventListener('change', () => {
+      goal = goalSelect.value;
+      refreshPrompt();
+    });
+
     refreshPrompt();
-    topicInput.addEventListener('input', debounce(refreshPrompt, 150));
 
     let copyResetTimer;
     copyBtn.addEventListener('click', async () => {
@@ -69,16 +135,34 @@ export function openImportRoadmapModal() {
       copyResetTimer = setTimeout(() => { copyBtn.textContent = 'Copy prompt'; }, 1800);
     });
 
-    const generatePanel = el('div', { className: 'import-tab-panel' }, [
+    const generateSection = el('div', { className: 'import-tab-panel' }, [
       el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'What should this roadmap cover?' }),
         topicInput
+      ]),
+      el('div', { className: 'import-options' }, [
+        el('label', { className: 'field' }, [
+          el('span', { className: 'field-label', text: 'Experience level (optional)' }),
+          experienceChips
+        ]),
+        el('label', { className: 'field' }, [
+          el('span', { className: 'field-label', text: 'Target timeframe (optional)' }),
+          timeframeChips
+        ]),
+        el('label', { className: 'field' }, [
+          el('span', { className: 'field-label', text: 'Goal / context (optional)' }),
+          goalSelect
+        ]),
+        el('label', { className: 'field' }, [
+          el('span', { className: 'field-label', text: 'Already know (optional)' }),
+          alreadyKnowInput
+        ])
       ]),
       promptBlock,
       copyBtn
     ]);
 
-    // --- Tab 2: Paste & Import ---
+    // --- Paste & import ---
     const pasteArea = el('textarea', {
       className: 'field-input import-paste-area',
       rows: '10',
@@ -116,7 +200,7 @@ export function openImportRoadmapModal() {
       close({ title: lastValidData.title, phases, items });
     });
 
-    const pastePanel = el('div', { className: 'import-tab-panel', style: 'display:none' }, [
+    const pasteSection = el('div', { className: 'import-tab-panel' }, [
       el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Paste AI output' }),
         pasteArea
@@ -125,20 +209,6 @@ export function openImportRoadmapModal() {
       successMsg,
       importBtn
     ]);
-
-    // --- Tabs ---
-    const generateTabBtn = el('button', { type: 'button', className: 'import-tab-btn active', 'data-tab': 'generate', text: 'Generate with AI' });
-    const pasteTabBtn = el('button', { type: 'button', className: 'import-tab-btn', 'data-tab': 'paste', text: 'Paste & Import' });
-
-    function selectTab(tab) {
-      const isGenerate = tab === 'generate';
-      generateTabBtn.classList.toggle('active', isGenerate);
-      pasteTabBtn.classList.toggle('active', !isGenerate);
-      generatePanel.style.display = isGenerate ? '' : 'none';
-      pastePanel.style.display = isGenerate ? 'none' : '';
-    }
-    generateTabBtn.addEventListener('click', () => selectTab('generate'));
-    pasteTabBtn.addEventListener('click', () => selectTab('paste'));
 
     const overlay = el('div', {
       className: 'modal-overlay',
@@ -149,9 +219,8 @@ export function openImportRoadmapModal() {
     }, [
       el('div', { className: 'modal-card import-modal-card' }, [
         el('h2', { className: 'modal-title', text: 'Import roadmap' }),
-        el('div', { className: 'import-tabs', role: 'tablist' }, [generateTabBtn, pasteTabBtn]),
-        generatePanel,
-        pastePanel,
+        generateSection,
+        pasteSection,
         el('button', {
           type: 'button',
           className: 'btn btn-secondary btn-block',

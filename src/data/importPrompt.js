@@ -5,11 +5,28 @@ export const IMPORT_PROMPT_VERSION = 1;
 
 const VALID_PRIORITIES = 'P0|P1|P2|P3';
 
+// Customization inputs (issue #64 Part 2) only ever add lines to the
+// free-text instructions block below — never to the JSON schema contract
+// above, so a prompt copied before this existed still parses identically.
+// Each field is omitted entirely when unset, never rendered as an empty or
+// placeholder line, matching how the topic line already behaves.
+function buildOptionLines(options = {}) {
+  const lines = [];
+  if (options.experienceLevel) lines.push(`Experience level: ${options.experienceLevel}`);
+  if (options.timeframe) lines.push(`Target timeframe: ${options.timeframe}`);
+  if (options.goal) lines.push(`Goal / context: ${options.goal}`);
+  const alreadyKnow = (options.alreadyKnow || '').trim();
+  if (alreadyKnow) lines.push(`Already know: ${alreadyKnow}`);
+  return lines;
+}
+
 // The `topic` line is rendered as the last line of the prompt so a user
 // copies one complete, ready-to-paste block — never a template with a blank
 // left for them to fill in after pasting.
-export function buildImportPrompt(topic) {
+export function buildImportPrompt(topic, options) {
   const topicLine = (topic || '').trim() || '[describe what this roadmap should cover]';
+  const optionLines = buildOptionLines(options);
+  const optionsBlock = optionLines.length ? `\n${optionLines.join('\n')}` : '';
   return `You are generating an Ascent roadmap JSON file.
 Output ONLY valid JSON — no markdown fences, no commentary.
 Follow this exact schema (version ${IMPORT_PROMPT_VERSION}):
@@ -41,5 +58,5 @@ Rules:
 - "phases" must have at least 1 entry; each phase must have at least 1 section; each section at least 1 item.
 - Keep the total number of items at or under 500.
 
-Generate a roadmap for: ${topicLine}`;
+Generate a roadmap for: ${topicLine}${optionsBlock}`;
 }

@@ -130,7 +130,7 @@ Pure — no DOM, no store, no Firebase. Only ever called on data that has alread
 | Export | Signature | Notes |
 |---|---|---|
 | `IMPORT_PROMPT_VERSION` | `number` (currently `1`) | Must match `SUPPORTED_SCHEMA_VERSION` in `importValidator.js` — bumping one without the other means the prompt asks for a schema the validator won't accept. |
-| `buildImportPrompt` | `(topic: string) => string` | Renders the full copyable prompt with `topic` as its last line (or a placeholder bracket if empty) — always a complete, ready-to-paste block, never a template with a blank left in it. |
+| `buildImportPrompt` | `(topic: string, options?: { experienceLevel?: string, timeframe?: string, goal?: string, alreadyKnow?: string }) => string` | Renders the full copyable prompt with `topic` as the start of its last line (or a placeholder bracket if empty) — always a complete, ready-to-paste block, never a template with a blank left in it. `options` (issue #64 Part 2) appends one instruction line per set field after the topic line — `Experience level: …`, `Target timeframe: …`, `Goal / context: …`, `Already know: …` (trimmed) — each omitted entirely when unset/blank, never rendered as an empty line. These only ever change the free-text instructions block, never the JSON schema contract above it, so this needed no `IMPORT_PROMPT_VERSION` bump and a prompt copied before this existed still parses identically. |
 
 ## `src/services/firebase.js`
 

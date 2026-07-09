@@ -30,12 +30,12 @@ async function openImportModal(page) {
   return modal;
 }
 
-test.describe('AI-assisted roadmap import (issue #4)', () => {
-  test('the "Import roadmap" card opens a modal with "Generate with AI" active by default', async ({ page }) => {
+test.describe('AI-assisted roadmap import (issue #4, single-flow layout from issue #64)', () => {
+  test('the "Import roadmap" card opens a modal with the generate controls and paste box both visible', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const modal = await openImportModal(page);
-    await expect(modal.locator('.import-tab-btn.active')).toContainText('Generate with AI');
     await expect(modal.locator('.import-prompt-block')).toContainText('schemaVersion');
+    await expect(modal.locator('.import-paste-area')).toBeVisible();
   });
 
   test('typing a topic updates the copyable prompt, and "Copy prompt" copies it to the clipboard', async ({ page, context }) => {
@@ -54,10 +54,26 @@ test.describe('AI-assisted roadmap import (issue #4)', () => {
     expect(clipboardText).toContain('schemaVersion');
   });
 
+  test('selecting customization inputs updates the prompt without touching the JSON schema', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const modal = await openImportModal(page);
+
+    await modal.locator('.import-option-chips button', { hasText: 'Intermediate' }).click();
+    await modal.locator('.import-option-chips button', { hasText: '3 months' }).click();
+    await modal.locator('select').selectOption('Interview prep');
+    await modal.locator('.import-options input[type="text"]').fill('already comfortable with Docker');
+
+    const promptText = await modal.locator('.import-prompt-block').textContent();
+    expect(promptText).toContain('Experience level: Intermediate');
+    expect(promptText).toContain('Target timeframe: 3 months');
+    expect(promptText).toContain('Goal / context: Interview prep');
+    expect(promptText).toContain('Already know: already comfortable with Docker');
+    expect(promptText).toContain('"schemaVersion": 1');
+  });
+
   test('pasting invalid JSON shows field errors and keeps "Import roadmap" disabled', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const modal = await openImportModal(page);
-    await modal.locator('.import-tab-btn', { hasText: 'Paste & Import' }).click();
 
     await modal.locator('.import-paste-area').fill('{not valid json');
     await expect(modal.locator('.import-errors')).toContainText('Invalid JSON');
@@ -71,7 +87,6 @@ test.describe('AI-assisted roadmap import (issue #4)', () => {
   test('pasting valid JSON enables "Import roadmap", and importing renders the roadmap on the dashboard', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const modal = await openImportModal(page);
-    await modal.locator('.import-tab-btn', { hasText: 'Paste & Import' }).click();
 
     await modal.locator('.import-paste-area').fill(validImportJson());
     await expect(modal.locator('.form-message.success')).toContainText('2 topics found');
@@ -100,7 +115,6 @@ test.describe('AI-assisted roadmap import (issue #4)', () => {
   test('the imported roadmap also appears in the onboarding picker, like any other custom roadmap', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const modal = await openImportModal(page);
-    await modal.locator('.import-tab-btn', { hasText: 'Paste & Import' }).click();
     await modal.locator('.import-paste-area').fill(validImportJson());
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });

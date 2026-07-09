@@ -457,13 +457,17 @@ unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
 **AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
 #4).** A second entry point next to "Create your own roadmap" — "Import roadmap"
-(`src/ui/components/importRoadmapModal.js`) opens a two-tab modal instead of an empty
-roadmap. **Tab 1, "Generate with AI"**: a read-only, versioned prompt block
-(`buildImportPrompt(topic)`, `IMPORT_PROMPT_VERSION`) with an editable topic line that
-live-updates the prompt, and a "Copy prompt" button (`navigator.clipboard.writeText`,
-falling back to a hidden-textarea + `execCommand('copy')` for older/non-secure
-contexts). **Tab 2, "Paste & Import"**: a textarea validated 300ms after each keystroke
-via `validateImportText()` (`src/core/roadmap/importValidator.js`) — a **pure** function
+(`src/ui/components/importRoadmapModal.js`) opens a modal instead of an empty roadmap.
+Issue #64 collapsed the original two-tab "Generate with AI" / "Paste & Import" layout
+into **one continuous, top-to-bottom flow** — every real use of this feature does both
+halves in the same sitting, so a second tab just hid the paste box behind an extra
+click. From top to bottom: a topic field, a read-only versioned prompt block
+(`buildImportPrompt(topic, options)`, `IMPORT_PROMPT_VERSION`) with an editable topic
+line that live-updates the prompt, a "Copy prompt" button
+(`navigator.clipboard.writeText`, falling back to a hidden-textarea +
+`execCommand('copy')` for older/non-secure contexts), then the paste textarea itself,
+validated 300ms after each keystroke via `validateImportText()`
+(`src/core/roadmap/importValidator.js`) — a **pure** function
 (no DOM, no store, no Firebase) that parses the JSON and checks it against schema
 version 1 (`SUPPORTED_SCHEMA_VERSION`): `schemaVersion === 1`, non-empty `title`,
 non-empty `phases` array where every phase has a `title`/`priority ∈ {P0-P3}`/non-empty
@@ -489,6 +493,23 @@ manually-created roadmap simply has no entry there and falls through to the empt
 unchanged. From that point on an imported roadmap is indistinguishable from a manually
 built one — same Firebase path, same phase/section rename/delete controls, same
 `deleteCustomRoadmap` cleanup.
+
+**Prompt customization inputs (issue #64 Part 2).** Below the topic field, the generate
+section renders four optional inputs — Experience level (Beginner/Intermediate/Advanced,
+a chip group reusing `.filter-chip` styling), Target timeframe (No deadline/1 month/
+3 months/6 months/1 year, the same chip pattern), Goal/context (a `<select>`: Interview
+prep/On-the-job upskilling/Academic or exam prep/Personal project or hobby), and a
+freeform "Already know" text input — each feeding `buildImportPrompt(topic, options)`'s
+`options` param. Every field is optional (topic remains the only required input) and
+each appends exactly one line to the prompt's free-text instructions block when set
+(`Experience level: …`, etc.), omitted entirely when unset/blank — never an empty or
+placeholder line, matching how the topic line's own placeholder already worked. This is
+deliberately additive to the *instructions*, never the JSON schema contract above them
+in `importPrompt.js` — `importValidator.js`/`schemaAdapter.js` needed zero changes, and
+this required no `IMPORT_PROMPT_VERSION` bump, so a prompt copied before this existed
+still parses identically today. If you add a fifth customization field, follow the same
+pattern: one optional input, one omitted-when-unset line in `buildOptionLines()`
+(`src/data/importPrompt.js`), never a change to the schema block itself.
 
 **Flush-before-switch — an edit made just before switching must never be silently
 dropped or attributed to the wrong template.** Because `flush()` always saves whatever

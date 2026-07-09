@@ -1721,3 +1721,17 @@ at the shared CSS level: `align-items: safe center` (centers when content fits, 
 back to scrollable start-alignment when it doesn't) plus `overflow-y: auto` on
 `.modal-overlay` — one fix, every current and future modal benefits, no per-modal special
 case needed.
+
+### 2026-07-09 — PR #82 — Import roadmap: single-flow modal + AI-generation customization inputs (issue #64)
+
+`importRoadmapModal.js`'s "Generate with AI" / "Paste & Import" tab split was removed —
+`selectTab()`/`generateTabBtn`/`pasteTabBtn` deleted, both sections now render
+sequentially in one flow, and the now-dead `.import-tabs`/`.import-tab-btn` CSS rules
+were dropped. `buildImportPrompt()` (`src/data/importPrompt.js`) gained a second
+parameter, `options`, carrying four new optional customization inputs (experience level,
+target timeframe, goal/context, "already know") rendered as chip groups/a select/a text
+input above the generated prompt; each appends one line to the prompt's free-text
+instructions block when set, omitted entirely when unset. This only changes the
+instructions block, never the versioned JSON schema contract in the same file, so
+`IMPORT_PROMPT_VERSION` did not need to bump and `importValidator.js`/`schemaAdapter.js`
+were untouched.

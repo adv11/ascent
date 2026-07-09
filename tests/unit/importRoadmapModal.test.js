@@ -5,6 +5,10 @@ function getOverlay() {
   return document.querySelector('.modal-overlay');
 }
 
+function findButton(overlay, text) {
+  return [...overlay.querySelectorAll('button')].find(b => b.textContent === text);
+}
+
 function validJsonText() {
   return JSON.stringify({
     schemaVersion: 1,
@@ -22,15 +26,24 @@ beforeEach(() => {
   vi.useRealTimers();
 });
 
-describe('openImportRoadmapModal (issue #4)', () => {
-  it('opens on the "Generate with AI" tab by default, with a prompt reflecting the typed topic', () => {
+describe('openImportRoadmapModal (issue #4, collapsed to one flow in issue #64)', () => {
+  it('renders the generate controls and the paste textarea together on open, with no tabs or hidden panels', () => {
+    openImportRoadmapModal();
+    const overlay = getOverlay();
+
+    expect(overlay.querySelector('.import-tab-btn')).toBeNull();
+    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Generate a roadmap for:');
+    expect(overlay.querySelector('.import-paste-area')).not.toBeNull();
+
+    const panels = overlay.querySelectorAll('.import-tab-panel');
+    panels.forEach(panel => expect(panel.style.display).not.toBe('none'));
+  });
+
+  it('typing a topic updates the copyable prompt', () => {
     vi.useFakeTimers();
     openImportRoadmapModal();
     const overlay = getOverlay();
-    expect(overlay.querySelector('.import-tab-btn.active').textContent).toBe('Generate with AI');
-    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Generate a roadmap for:');
-
-    const topicInput = overlay.querySelector('textarea');
+    const topicInput = overlay.querySelector('textarea.field-input');
     topicInput.value = 'Rust for backend engineers';
     topicInput.dispatchEvent(new Event('input'));
     vi.advanceTimersByTime(150);
@@ -38,22 +51,49 @@ describe('openImportRoadmapModal (issue #4)', () => {
     vi.useRealTimers();
   });
 
-  it('switching to "Paste & Import" hides the generate panel and shows the paste panel', () => {
+  it('selecting an experience level chip updates the prompt and toggles off on a second click', () => {
     openImportRoadmapModal();
     const overlay = getOverlay();
-    const [generateBtn, pasteBtn] = overlay.querySelectorAll('.import-tab-btn');
+    const beginnerChip = [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'Beginner');
 
-    pasteBtn.click();
-    expect(pasteBtn.classList.contains('active')).toBe(true);
-    expect(generateBtn.classList.contains('active')).toBe(false);
-    expect(overlay.querySelectorAll('.import-tab-panel')[0].style.display).toBe('none');
-    expect(overlay.querySelectorAll('.import-tab-panel')[1].style.display).toBe('');
+    beginnerChip.click();
+    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Experience level: Beginner');
+    expect(beginnerChip.classList.contains('active')).toBe(true);
+
+    beginnerChip.click();
+    expect(overlay.querySelector('.import-prompt-block').textContent).not.toContain('Experience level:');
+    expect(beginnerChip.classList.contains('active')).toBe(false);
+  });
+
+  it('selecting a timeframe chip and a goal updates the prompt', () => {
+    openImportRoadmapModal();
+    const overlay = getOverlay();
+    const oneMonthChip = [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === '1 month');
+    oneMonthChip.click();
+    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Target timeframe: 1 month');
+
+    const goalSelect = overlay.querySelector('select.field-input');
+    goalSelect.value = 'Interview prep';
+    goalSelect.dispatchEvent(new Event('change'));
+    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Goal / context: Interview prep');
+  });
+
+  it('typing "already know" text updates the prompt', () => {
+    vi.useFakeTimers();
+    openImportRoadmapModal();
+    const overlay = getOverlay();
+    const alreadyKnowInput = overlay.querySelectorAll('input.field-input')[0];
+    alreadyKnowInput.value = 'already comfortable with Docker';
+    alreadyKnowInput.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(150);
+    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Already know: already comfortable with Docker');
+    vi.useRealTimers();
   });
 
   it('the "Import roadmap" button starts disabled and stays disabled while the pasted text is empty', () => {
     openImportRoadmapModal();
     const overlay = getOverlay();
-    const importBtn = [...overlay.querySelectorAll('button')].find(b => b.textContent === 'Import roadmap');
+    const importBtn = findButton(overlay, 'Import roadmap');
     expect(importBtn.disabled).toBe(true);
   });
 
@@ -62,7 +102,7 @@ describe('openImportRoadmapModal (issue #4)', () => {
     openImportRoadmapModal();
     const overlay = getOverlay();
     const pasteArea = overlay.querySelector('.import-paste-area');
-    const importBtn = [...overlay.querySelectorAll('button')].find(b => b.textContent === 'Import roadmap');
+    const importBtn = findButton(overlay, 'Import roadmap');
 
     pasteArea.value = '{not valid json';
     pasteArea.dispatchEvent(new Event('input'));
@@ -78,7 +118,7 @@ describe('openImportRoadmapModal (issue #4)', () => {
     openImportRoadmapModal();
     const overlay = getOverlay();
     const pasteArea = overlay.querySelector('.import-paste-area');
-    const importBtn = [...overlay.querySelectorAll('button')].find(b => b.textContent === 'Import roadmap');
+    const importBtn = findButton(overlay, 'Import roadmap');
 
     pasteArea.value = validJsonText();
     pasteArea.dispatchEvent(new Event('input'));
@@ -94,7 +134,7 @@ describe('openImportRoadmapModal (issue #4)', () => {
     const promise = openImportRoadmapModal();
     const overlay = getOverlay();
     const pasteArea = overlay.querySelector('.import-paste-area');
-    const importBtn = [...overlay.querySelectorAll('button')].find(b => b.textContent === 'Import roadmap');
+    const importBtn = findButton(overlay, 'Import roadmap');
 
     pasteArea.value = validJsonText();
     pasteArea.dispatchEvent(new Event('input'));
@@ -113,7 +153,7 @@ describe('openImportRoadmapModal (issue #4)', () => {
   it('resolves null when Cancel is clicked', async () => {
     const promise = openImportRoadmapModal();
     const overlay = getOverlay();
-    [...overlay.querySelectorAll('button')].find(b => b.textContent === 'Cancel').click();
+    findButton(overlay, 'Cancel').click();
     await expect(promise).resolves.toBeNull();
     expect(getOverlay()).toBeNull();
   });
@@ -136,7 +176,7 @@ describe('openImportRoadmapModal (issue #4)', () => {
 
     openImportRoadmapModal();
     const overlay = getOverlay();
-    const copyBtn = [...overlay.querySelectorAll('button')].find(b => b.textContent.includes('Copy prompt'));
+    const copyBtn = findButton(overlay, 'Copy prompt');
     copyBtn.click();
     await Promise.resolve();
 

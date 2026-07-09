@@ -449,28 +449,45 @@ roadmap's id, same id → same icon across sessions/devices, no schema change.
 
 **AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
 #4).** "Import roadmap" (`src/ui/components/importRoadmapModal.js`) is a second entry
-point next to "Create your own roadmap" — a two-tab modal. Tab 1 ("Generate with AI")
-shows a versioned, copyable prompt (`buildImportPrompt(topic)`, `IMPORT_PROMPT_VERSION`)
-with a "Copy prompt" button (Clipboard API, falling back to `execCommand('copy')`). Tab
-2 ("Paste & Import") validates the pasted text 300ms after each keystroke via
-`validateImportText()` (`src/core/roadmap/importValidator.js`, pure — no DOM/store/
-Firebase): valid JSON, `schemaVersion === 1`, non-empty `title`, non-empty `phases`
-array with valid `title`/`priority`/`sections` per phase, valid `title`/`items` per
-section, every item a string or `["title","priority"]` tuple, ≤ 500 total items —
-returns an array of per-field error strings, empty means valid. Only then does
-`adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`, equally pure) convert it
-into `{ phases, items }` (generating the same `phase-...`/`section-...`/`custom-...` ids
-`addPhase`/`addSection`/`addItem` do) and enable "Import roadmap". Validator and adapter
-are deliberately separate: a future schema version means a new adapter, not touching the
-validator's rules. The modal resolves `{ title, phases, items } | null`;
-`onboarding.js`'s `handleImport()` passes it straight to
-`store.createCustomRoadmap({ title, phases, items })` — the same function manual
-creation calls, just with `phases`/`items` populated. `roadmapStore.js` wires this via a
-one-shot `pendingCustomSeeds` map: `createCustomRoadmap` stashes the seed keyed by the
-new id right before `switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes)
-it instead of the usual empty seed for a custom id — manual creation has no entry there
-and falls through unchanged. From then on an imported roadmap is indistinguishable from
-a manually built one.
+point next to "Create your own roadmap". Issue #64 collapsed the original two-tab
+"Generate with AI" / "Paste & Import" layout into **one continuous, top-to-bottom
+flow** — every real use does both halves in the same sitting, so a second tab just hid
+the paste box behind an extra click. Top to bottom: a topic field, a versioned, copyable
+prompt (`buildImportPrompt(topic, options)`, `IMPORT_PROMPT_VERSION`) with a "Copy
+prompt" button (Clipboard API, falling back to `execCommand('copy')`), then the paste
+textarea, validated 300ms after each keystroke via `validateImportText()`
+(`src/core/roadmap/importValidator.js`, pure — no DOM/store/Firebase): valid JSON,
+`schemaVersion === 1`, non-empty `title`, non-empty `phases` array with valid
+`title`/`priority`/`sections` per phase, valid `title`/`items` per section, every item a
+string or `["title","priority"]` tuple, ≤ 500 total items — returns an array of
+per-field error strings, empty means valid. Only then does `adaptImportToRoadmap()`
+(`src/core/roadmap/schemaAdapter.js`, equally pure) convert it into `{ phases, items }`
+(generating the same `phase-...`/`section-...`/`custom-...` ids `addPhase`/`addSection`/
+`addItem` do) and enable "Import roadmap". Validator and adapter are deliberately
+separate: a future schema version means a new adapter, not touching the validator's
+rules. The modal resolves `{ title, phases, items } | null`; `onboarding.js`'s
+`handleImport()` passes it straight to `store.createCustomRoadmap({ title, phases,
+items })` — the same function manual creation calls, just with `phases`/`items`
+populated. `roadmapStore.js` wires this via a one-shot `pendingCustomSeeds` map:
+`createCustomRoadmap` stashes the seed keyed by the new id right before
+`switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes) it instead of the
+usual empty seed for a custom id — manual creation has no entry there and falls through
+unchanged. From then on an imported roadmap is indistinguishable from a manually built
+one.
+
+**Prompt customization inputs (issue #64 Part 2).** Below the topic field, four optional
+inputs feed `buildImportPrompt(topic, options)`'s `options` param: Experience level
+(Beginner/Intermediate/Advanced chips, reusing `.filter-chip` styling), Target timeframe
+(No deadline/1 month/3 months/6 months/1 year chips), Goal/context (a `<select>`:
+Interview prep/On-the-job upskilling/Academic or exam prep/Personal project or hobby),
+and a freeform "Already know" text input. All optional (topic stays the only required
+field); each appends exactly one instructions-block line when set (`Experience level:
+…`, etc.), omitted entirely when unset/blank — never an empty/placeholder line, same as
+the topic line's own placeholder. This only ever changes the prompt's free-text
+instructions, never the JSON schema contract in the same file, so `importValidator.js`/
+`schemaAdapter.js` needed zero changes and no `IMPORT_PROMPT_VERSION` bump was required —
+a prompt copied before this existed still parses identically. A fifth field follows the
+same pattern: one optional input, one omitted-when-unset line in `buildOptionLines()`.
 
 **Flush-before-switch — an edit made just before switching must never be silently
 dropped or attributed to the wrong template.** Because `flush()` always saves whatever
