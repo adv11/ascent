@@ -54,7 +54,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
 });
 
 test.describe('onboarding — switch template from the dashboard (issue #58: non-destructive, concurrent progress)', () => {
-  test('"Switch template" reaches the picker with a "Back to my roadmap" link, which returns without changes', async ({ page }) => {
+  test('sidebar "My Roadmaps" reaches the picker with a "Back to my roadmap" link, which returns without changes', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/');
     await page.click('text=Continue as guest');
@@ -62,7 +62,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     const backBtn = page.locator('button', { hasText: 'Back to my roadmap' });
     await expect(backBtn).toBeVisible();
@@ -80,7 +80,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
@@ -98,7 +98,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     const currentCard = page.locator('.template-card', { hasText: 'Java Backend Engineer' });
@@ -127,7 +127,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await frontendChecks.nth(1).click();
     await expect(page.locator('.save-badge')).toBeVisible();
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
@@ -136,7 +136,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
 
     await page.locator('.check-item').nth(0).click();
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     // Now that Data Scientist is active, Frontend is "In progress" (started,
     // not active) rather than disappearing.
@@ -148,7 +148,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await expect(page.locator('.check-item').nth(0)).toHaveAttribute('aria-checked', 'true');
     await expect(page.locator('.check-item').nth(1)).toHaveAttribute('aria-checked', 'true');
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
     // Data Science's own check must also still be intact.

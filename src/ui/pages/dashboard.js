@@ -5,8 +5,9 @@ import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
-import { createBrandMark } from '../components/brand.js';
 import { confirmDialog } from '../components/confirmDialog.js';
+import { createSidebar } from '../components/sidebar.js';
+import { createTopbar } from '../components/topbar.js';
 import { getTemplate } from '../../data/templates/index.js';
 import { MAX_TITLE_LENGTH } from '../../core/roadmap/limits.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
@@ -255,7 +256,6 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const saveBadge = el('div', { className: 'save-badge', id: 'saveBadge' });
   const syncPill = el('span', { className: 'sync-pill', text: 'Syncing' });
 
-  const userLabel = user.isAnonymous ? 'Guest session' : (user.email || 'Signed in');
   const userPillClass = user.isAnonymous ? 'guest' : 'online';
   const activeTemplateId = store.getSnapshot().activeTemplateId;
   const isCustomRoadmap = store.isCustomRoadmapId(activeTemplateId);
@@ -732,86 +732,72 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     dailyTodoNavBadge.setAttribute('aria-label', `Today's Todos — "${soonest.title}", ${formatRemaining(ms)}${active.length > 1 ? `, ${active.length} active todos` : ''}`);
   }
 
-  const shell = el('div', { className: 'dashboard fade-in' }, [
-    verificationBanner,
-    offlineBanner,
-    el('header', { className: 'dashboard-header' }, [
-      el('div', { className: 'header-top' }, [
-        el('a', {
-          className: 'brand',
-          href: '#/onboarding',
-          'aria-label': 'Ascent — all roadmaps'
-        }, createBrandMark({ tagline: 'Your personal progress command center' })),
-        el('div', { className: 'header-actions' }, [
-          themeToggleBtn,
-          dailyTodoNavBadge,
-          syncPill,
-          el('span', { className: 'user-chip', text: userLabel }),
-          user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
-          el('button', {
-            type: 'button',
-            className: 'btn btn-ghost btn-sm',
-            text: 'Switch template',
-            onClick: () => navigate('/onboarding')
-          }),
-          !user.isAnonymous ? el('button', {
-            type: 'button',
-            className: 'btn btn-ghost btn-sm btn-danger-text',
-            text: 'Delete account',
-            onClick: () => showDeleteModal()
-          }) : null,
-          el('button', {
-            type: 'button',
-            className: 'btn btn-ghost btn-sm',
-            text: 'Sign out',
-            onClick: async () => {
-              if (user.isAnonymous && store.getSnapshot().dirty) {
-                if (!await confirmDialog({
-                  title: 'Sign out anyway?',
-                  message: 'You have unsaved changes. Guest session data is only stored on this device and will be cleared on sign-out.',
-                  confirmText: 'Sign out',
-                  danger: true
-                })) return;
-              }
-              await authApi.signOut();
-              navigate('/signin', true);
-            }
-          })
-        ].filter(Boolean))
-      ]),
-      el('div', { className: 'hero-panel' }, [
-        el('div', { className: 'hero-copy' }, [
-          el('div', { className: 'current-roadmap-badge' }, [
-            el('span', { 'aria-hidden': 'true', text: currentTemplate.icon }),
-            el('span', { text: `${currentTemplate.name} roadmap` })
+  // Issue #6 Phase 2 — app shell (sidebar + topbar) replaces the old
+  // single `.header-top` action row. Identity/sign-out/delete-account now
+  // live in the sidebar footer; "Switch template" is superseded by the
+  // sidebar's "My Roadmaps" nav item (same destination, #/onboarding).
+  // `.dashboard` stays on the outer element (alongside the new
+  // `.app-shell-2` layout class) since e2e/unit tests already assert on it
+  // as the dashboard-is-rendered marker.
+  const sidebar = createSidebar({
+    activeRoute: '/app',
+    user,
+    store,
+    onDeleteAccount: user.isAnonymous ? null : () => showDeleteModal()
+  });
+  const topbar = createTopbar({
+    breadcrumb: `Roadmaps / ${currentTemplate.name}`,
+    user,
+    syncPill,
+    themeToggleBtn,
+    dailyTodoNavBadge,
+    onToggleMobileSidebar: () => sidebar._toggleMobile()
+  });
+
+  const shell = el('div', { className: 'app-shell-2 dashboard fade-in' }, [
+    sidebar,
+    sidebar._backdrop,
+    el('div', { className: 'app-shell-main' }, [
+      topbar,
+      el('div', { className: 'app-content' }, [
+        verificationBanner,
+        offlineBanner,
+        el('header', { className: 'dashboard-header' }, [
+          el('div', { className: 'hero-panel' }, [
+            el('div', { className: 'hero-copy' }, [
+              el('div', { className: 'current-roadmap-badge' }, [
+                el('span', { 'aria-hidden': 'true', text: currentTemplate.icon }),
+                el('span', { text: `${currentTemplate.name} roadmap` })
+              ]),
+              el('h1', { className: 'hero-title', text: 'Learn it. Revise it. Track it.' }),
+              el('p', { className: 'hero-text', text: 'Every topic, resource, and priority — all in one editable checklist that syncs across your devices.' })
+            ]),
+            el('div', { className: 'progress-card' }, [
+              el('div', { className: 'progress-stat' }, [
+                doneStat,
+                el('span', { className: 'stat-label', text: ' of ' }),
+                totalStat,
+                el('span', { className: 'stat-label', text: ' done' })
+              ]),
+              el('div', { className: 'progress-track' }, [progressFill]),
+              el('div', { className: 'progress-percent' }, [percentStat, el('span', { text: '%' })])
+            ])
           ]),
-          el('h1', { className: 'hero-title', text: 'Learn it. Revise it. Track it.' }),
-          el('p', { className: 'hero-text', text: 'Every topic, resource, and priority — all in one editable checklist that syncs across your devices.' })
+          el('div', { className: 'toolbar' }, [
+            el('div', { className: 'toolbar-block' }, [
+              el('span', { className: 'toolbar-label', text: 'Priority' }),
+              filterContainer
+            ]),
+            el('div', { className: 'toolbar-block toolbar-right' }, [
+              searchInput,
+              toggleAllBtn
+            ])
+          ])
         ]),
-        el('div', { className: 'progress-card' }, [
-          el('div', { className: 'progress-stat' }, [
-            doneStat,
-            el('span', { className: 'stat-label', text: ' of ' }),
-            totalStat,
-            el('span', { className: 'stat-label', text: ' done' })
-          ]),
-          el('div', { className: 'progress-track' }, [progressFill]),
-          el('div', { className: 'progress-percent' }, [percentStat, el('span', { text: '%' })])
-        ])
-      ]),
-      el('div', { className: 'toolbar' }, [
-        el('div', { className: 'toolbar-block' }, [
-          el('span', { className: 'toolbar-label', text: 'Priority' }),
-          filterContainer
-        ]),
-        el('div', { className: 'toolbar-block toolbar-right' }, [
-          searchInput,
-          toggleAllBtn
-        ])
+        content,
+        saveBadge
       ])
-    ]),
-    content,
-    saveBadge
+    ])
   ]);
 
   app.replaceChildren(shell);
@@ -834,6 +820,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
 
   return () => {
     themeToggleBtn._cleanup?.();
+    sidebar._cleanup?.();
     unsubStore();
     unsubDailyTodo?.();
     if (dailyTodoTickTimer) clearInterval(dailyTodoTickTimer);

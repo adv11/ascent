@@ -124,7 +124,7 @@ test.describe('AI-assisted roadmap import (issue #4, single-flow layout from iss
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
-    await page.locator('button', { hasText: 'Switch template' }).click();
+    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     const card = page.locator('.template-card', { hasText: 'Imported Roadmap' });
