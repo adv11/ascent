@@ -844,7 +844,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .daily-todo-icon { font-size: 20px; line-height: 1; color: var(--accent); }
 .daily-todo-heading {
-  margin: 0;
+  margin: 0 auto 0 0;
   font-size: 15px;
   font-weight: 800;
 }
@@ -866,6 +866,48 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .daily-todo-info-btn:hover { color: var(--accent); border-color: var(--accent); }
 .daily-todo-info-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+
+/* Collapse/expand toggle (issue #83) — reuses the exact same chevron-rotate
+   language as .phase-card/.chevron (dashboard.js's phase cards) so the two
+   "expandable section" affordances in the app read consistently: pointing
+   right (0deg) when collapsed, rotated to point down (90deg) when expanded.
+   Unlike .phase-card, the *expanded* state is the rotated one here since
+   that's this panel's default/common state. */
+.daily-todo-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.daily-todo-collapse-btn:hover { color: var(--accent); border-color: var(--accent); }
+.daily-todo-collapse-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+.daily-todo-collapse-btn .chevron { font-size: 15px; }
+.daily-todo-panel:not(.collapsed) .daily-todo-collapse-btn .chevron { transform: rotate(90deg); }
+
+/* Only shown while collapsed (below) — a small "N active" reminder so
+   shrinking the panel never fully hides whether there's anything to come
+   back for. */
+.daily-todo-count-badge {
+  display: none;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
 /* Inner rows no longer stack as their own bordered boxes — they sit flush
    inside .daily-todo-panel's own card padding, divided by hairlines, so the
    whole thing reads as one card rather than a heading floating above a
@@ -877,6 +919,19 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   background: transparent;
   border: none;
 }
+/* Collapsed state (issue #83) — shrinks the panel down to just its heading
+   row so a growing todo list doesn't push the roadmap card grid further
+   down the page each time one is added. Never the first-run default — see
+   the KEYS.DAILY_TODOS_COLLAPSED comment in localStorageKeys.js and the
+   `collapsed` initialization in dailyTodoPanel.js. */
+.daily-todo-panel.collapsed > .daily-todo-add-row,
+.daily-todo-panel.collapsed > .daily-todo-list,
+.daily-todo-panel.collapsed > .daily-todo-missed-toggle,
+.daily-todo-panel.collapsed > .daily-todo-missed-list {
+  display: none;
+}
+.daily-todo-panel.collapsed .daily-todo-heading-row { margin-bottom: 0; }
+.daily-todo-panel.collapsed .daily-todo-count-badge { display: inline-flex; }
 .daily-todo-add-row {
   display: flex;
   flex-wrap: wrap;
@@ -1422,7 +1477,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .btn-sm { min-height: 44px; }
   .filter-chip { min-height: 44px; }
   .check-item { min-height: 44px; }
-  .daily-todo-delete, .daily-todo-info-btn { width: 44px; height: 44px; }
+  .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn { width: 44px; height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

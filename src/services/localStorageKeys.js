@@ -23,7 +23,13 @@ export const KEYS = {
   LOCAL_ADAPTER_META: 'ascent-local-adapter-meta-v1',
   // { [todoId]: {...} } — Daily Todos (issue #56), a separate rolling-deadline
   // list stored independently of the roadmap stores above.
-  DAILY_TODOS: 'ascent-daily-todos-v1'
+  DAILY_TODOS: 'ascent-daily-todos-v1',
+  // Collapse/expand state of the Today's Todos panel (issue #83) — a purely
+  // cosmetic, device-level preference, not account data, so it follows
+  // THEME's pattern (plain localStorage, read/written directly by the
+  // component, never cleared on sign-out) rather than UI_STATE's per-account
+  // pattern (owned by roadmapStore.js, cleared by clearLocal() on sign-out).
+  DAILY_TODOS_COLLAPSED: 'ascent-daily-todos-collapsed'
 };
 
 export function verifyDismissedKey(uid) {
