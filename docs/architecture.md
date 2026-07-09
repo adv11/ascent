@@ -1756,3 +1756,29 @@ in the first place. A new CI step (`.github/workflows/ci.yml`, `pr-checklist` jo
 a PR if root `CLAUDE.md` exceeds 220 lines, so the same unbounded growth pattern can't
 silently recur. Root `CLAUDE.md` is now ~216 lines / ~2,030 words — no application
 source, test, or Firebase-rules code changed as part of this.
+
+### 2026-07-09 — PR TBD — Design token system refinement, Phase 1 of the enterprise UI/UX revamp (issue #6)
+
+Issue #6 is a 10-phase, multi-week revamp (tokens → app shell → component library →
+dashboard/auth/landing redesign → animations → responsive → a11y → PWA assets); per its
+own readiness-study comment and this repo's "each phase is a separate PR" convention,
+this PR is scoped to Phase 1 (design tokens) only — Phases 2–10 remain future work.
+Added a typography scale, spacing scale, motion tokens (easing curves + durations), a
+numbered brand/accent/neutral color scale, and a `--surface-0`..`--surface-3` hierarchy
+to `src/styles/app.css`'s `:root`/`:root[data-theme='dark']` blocks; `--surface-0/1/2`
+alias the existing theme-flipping `--soft`/`--panel`/`--panel-2` tokens rather than
+duplicating them, so they stay theme-correct with a single definition, while
+`--surface-3` (a new "deepest inset" literal) needed its own per-theme value since it
+isn't an alias. Refined `--shadow-sm`/`--shadow-md`/`--shadow-lg` to a subtler, layered
+look and added `--shadow-xs`/`--shadow-xl`/`--shadow-brand` — every existing consumer
+picks up the refined values automatically via the same token names, verified visually
+across both themes at desktop and mobile widths (no regressions). `Plus Jakarta Sans`
+is now loaded in `index.html` alongside `Inter` as `--font-display`, unused until a
+later phase applies it to headings. Migrated ~40 exact-match hardcoded `font-size`
+declarations (and a few exact-match transition durations/easings) to the new tokens —
+deliberately excluded icon/emoji glyph sizes and mono/numeric badges (a different
+concern from typographic text scale) and deliberately did not migrate every
+`padding`/`margin`/`gap` in the file to the new spacing scale, since the file already
+follows a consistent base-4 spacing convention and a wholesale mechanical pass would be
+a large, high-review-burden diff with no visual or behavioral benefit — later phases'
+new components should reach for `--space-*` directly instead.
