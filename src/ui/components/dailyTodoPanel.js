@@ -5,6 +5,7 @@ import { openDailyTodoGuide } from './dailyTodoGuide.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
 import { MAX_TODO_TITLE_LENGTH, MAX_ACTIVE_TODOS, DURATION_PRESETS, MIN_DURATION_MS, MAX_DURATION_MS } from '../../core/dailyTodo/limits.js';
 import { getTemplate } from '../../data/templates/index.js';
+import { KEYS } from '../../services/localStorageKeys.js';
 
 const CUSTOM_VALUE = 'custom';
 const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms || DURATION_PRESETS[0].ms;
@@ -231,6 +232,33 @@ export function createDailyTodoPanel(store, roadmapStore) {
     ].filter(Boolean));
   }
 
+  // Purely cosmetic, device-level preference — see the KEYS.DAILY_TODOS_COLLAPSED
+  // comment in localStorageKeys.js for why this reads/writes localStorage
+  // directly (THEME's pattern) instead of going through roadmapStore's
+  // per-account getUiState/setUiState. Absent key (a brand-new browser, or a
+  // returning user's first visit on a new device) reads as `false` —
+  // expanded — so first sign-in always shows the full panel, never
+  // pre-collapsed.
+  let collapsed = localStorage.getItem(KEYS.DAILY_TODOS_COLLAPSED) === 'true';
+
+  const countBadge = el('span', { className: 'daily-todo-count-badge' });
+  const collapseBtn = el('button', {
+    type: 'button',
+    className: 'daily-todo-collapse-btn',
+    onClick: () => {
+      collapsed = !collapsed;
+      localStorage.setItem(KEYS.DAILY_TODOS_COLLAPSED, String(collapsed));
+      applyCollapsedState();
+    }
+  }, [el('span', { className: 'chevron', 'aria-hidden': 'true', text: '›' })]);
+
+  function applyCollapsedState() {
+    node.classList.toggle('collapsed', collapsed);
+    collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+    collapseBtn.setAttribute('aria-label', collapsed ? 'Expand Today\'s Todos' : 'Collapse Today\'s Todos');
+    collapseBtn.title = collapsed ? 'Expand' : 'Collapse';
+  }
+
   function render() {
     const now = Date.now();
     const todos = store.getSnapshot().todos;
@@ -249,6 +277,10 @@ export function createDailyTodoPanel(store, roadmapStore) {
     missedList.replaceChildren();
     missed.forEach(todo => missedList.append(renderRow(todo, now)));
     if (!missed.length) missedList.hidden = true;
+
+    // Only rendered while collapsed (see CSS) — shown so shrinking the panel
+    // never fully hides whether there's anything to come back for.
+    countBadge.textContent = active.length === 1 ? '1 active' : `${active.length} active`;
   }
 
   const unsubStore = store.subscribe(render);
@@ -258,6 +290,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
     el('div', { className: 'daily-todo-heading-row' }, [
       el('span', { className: 'daily-todo-icon', 'aria-hidden': 'true', text: '⏱' }),
       el('h2', { className: 'daily-todo-heading', text: "Today's Todos" }),
+      countBadge,
       el('button', {
         type: 'button',
         className: 'daily-todo-info-btn',
@@ -265,13 +298,16 @@ export function createDailyTodoPanel(store, roadmapStore) {
         title: "About Today's Todos",
         text: 'ℹ',
         onClick: () => openDailyTodoGuide()
-      })
+      }),
+      collapseBtn
     ]),
     addForm,
     activeList,
     missedToggle,
     missedList
   ]);
+
+  applyCollapsedState();
 
   node._cleanup = () => {
     unsubStore();

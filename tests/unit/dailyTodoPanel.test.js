@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createDailyTodoPanel } from '../../src/ui/components/dailyTodoPanel.js';
 import { MAX_ACTIVE_TODOS } from '../../src/core/dailyTodo/limits.js';
+import { KEYS } from '../../src/services/localStorageKeys.js';
 
 // A minimal fake store — the panel only depends on subscribe/getSnapshot/addTodo/setDone,
 // not on the real dailyTodoStore's Firebase-backed persistence.
@@ -46,6 +47,9 @@ beforeEach(() => {
   // blanket document.body.innerHTML reset would detach that cached root
   // from the document without toast.js ever knowing to recreate it.
   document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+  // The collapse toggle (issue #83) persists to localStorage — clear it so
+  // one test's collapse/expand doesn't leak into the next.
+  localStorage.removeItem(KEYS.DAILY_TODOS_COLLAPSED);
 });
 
 afterEach(() => {
@@ -369,5 +373,55 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
     expect(dialog.textContent).not.toContain('untouched');
     dialog.querySelector('[data-action="cancel"]').click();
     node._cleanup();
+  });
+
+  describe('collapse/expand (issue #83)', () => {
+    it('defaults to expanded when no preference is stored — first sign-in never starts collapsed', () => {
+      const node = createDailyTodoPanel(createFakeStore());
+      expect(node.classList.contains('collapsed')).toBe(false);
+      expect(node.querySelector('.daily-todo-collapse-btn').getAttribute('aria-expanded')).toBe('true');
+      node._cleanup();
+    });
+
+    it('clicking the collapse button collapses the panel and persists the preference', () => {
+      const node = createDailyTodoPanel(createFakeStore());
+      node.querySelector('.daily-todo-collapse-btn').click();
+
+      expect(node.classList.contains('collapsed')).toBe(true);
+      expect(node.querySelector('.daily-todo-collapse-btn').getAttribute('aria-expanded')).toBe('false');
+      expect(localStorage.getItem(KEYS.DAILY_TODOS_COLLAPSED)).toBe('true');
+      node._cleanup();
+    });
+
+    it('clicking it again expands and persists that too', () => {
+      const node = createDailyTodoPanel(createFakeStore());
+      const btn = node.querySelector('.daily-todo-collapse-btn');
+      btn.click();
+      btn.click();
+
+      expect(node.classList.contains('collapsed')).toBe(false);
+      expect(localStorage.getItem(KEYS.DAILY_TODOS_COLLAPSED)).toBe('false');
+      node._cleanup();
+    });
+
+    it('starts collapsed when a prior session already stored that preference', () => {
+      localStorage.setItem(KEYS.DAILY_TODOS_COLLAPSED, 'true');
+      const node = createDailyTodoPanel(createFakeStore());
+
+      expect(node.classList.contains('collapsed')).toBe(true);
+      expect(node.querySelector('.daily-todo-collapse-btn').getAttribute('aria-expanded')).toBe('false');
+      node._cleanup();
+    });
+
+    it('shows an active-todo count badge that stays in sync as todos are added', () => {
+      const store = createFakeStore();
+      const node = createDailyTodoPanel(store);
+      store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+
+      expect(node.querySelector('.daily-todo-count-badge').textContent).toBe('1 active');
+      store.addTodo({ title: 'Task 2', durationMs: 60 * 60 * 1000 });
+      expect(node.querySelector('.daily-todo-count-badge').textContent).toBe('2 active');
+      node._cleanup();
+    });
   });
 });
