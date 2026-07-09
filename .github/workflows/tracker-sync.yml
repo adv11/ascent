@@ -5,6 +5,23 @@ on:
     types: [opened, closed]
     branches: [main]
 
+# All runs of this workflow read-modify-write the SAME resource (issue #11's
+# body), regardless of which PR/branch triggered them. Without this, two runs
+# triggered close together (e.g. one PR's merge event and another PR's opened
+# event) can interleave: run B's GET fetches the tracker body before run A's
+# PUT lands, so run B's PUT — a full-body replace — silently overwrites run
+# A's update with a stale copy. This is exactly what caused issue #56's row
+# to keep showing "🔀 PR #76 open" after PR #76 had already merged: PR #77's
+# later runs re-saved a snapshot taken before #56's merge-update was written.
+# A single fixed group name (not scoped to `github.ref`/PR number) serializes
+# every run of this workflow against every other one; `cancel-in-progress:
+# false` queues a newer run behind an in-flight older one instead of
+# cancelling it, since cancelling would drop that PR's tracker update
+# entirely rather than just delaying it.
+concurrency:
+  group: tracker-sync-issue-11
+  cancel-in-progress: false
+
 jobs:
   sync:
     name: Update tracker #11
