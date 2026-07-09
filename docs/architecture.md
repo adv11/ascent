@@ -1530,22 +1530,32 @@ store unsubscribe; wired into `dashboard.js`'s route cleanup alongside
 paragraph were reworded to say "or clear the timer" so the rule reads as covering both
 cases going forward.
 
-**Wiring (`main.js`, `dashboard.js`).** `main.js` creates `dailyTodoStore` alongside the
+**Wiring (`main.js`, `onboarding.js`).** `main.js` creates `dailyTodoStore` alongside the
 existing `store` (roadmap) at module scope, calls `dailyTodoStore.setUser(user)`
 alongside `store.setUser(user)` in the `authApi.onChange` handler (via `Promise.all`,
 so both resolve before the onboarding-routing decision runs), and passes it through
-`guardApp`'s ctx to every route. `dashboard.js` mounts `createDailyTodoPanel(dailyTodoStore)`
-only when a `dailyTodoStore` is present in ctx (existing dashboard tests that don't pass
-one still render without the panel, no test changes required for that reason alone).
+`guardApp`'s ctx to every route. `onboarding.js` mounts
+`createDailyTodoPanel(dailyTodoStore)` only when a `dailyTodoStore` is present in ctx,
+right after the page heading and above `visibleGrid` (the template cards) —
+`dailyTodoPanel?._cleanup?.()` is added to `renderOnboarding`'s existing cleanup return,
+alongside `themeToggleBtn._cleanup?.()`.
 
-**Placement follow-up.** Initially mounted between the header and the phase-list
-`content` — technically correct (the store is independent of any roadmap) but visually
-read as *part of* whichever roadmap's dashboard you were looking at, since it rendered
-directly below the hero card showing that roadmap's name/progress. Moved inside
-`<header class="dashboard-header">`, between `.header-top` (brand/nav) and `.hero-panel`
-(the roadmap name/progress card), so it's now the first thing under the nav bar —
-visually ahead of and separate from the active roadmap, matching the fact that switching
-or hiding a roadmap never touches this data.
+**Placement follow-up — tried twice.** First mounted on `dashboard.js`, between the
+header and the phase-list `content` — technically correct (the store is independent of
+any roadmap) but visually read as *part of* whichever roadmap's dashboard you were
+looking at. Moved once within `dashboard.js` (inside `<header class="dashboard-header">`,
+above `.hero-panel`) on the theory that "above the roadmap hero" was separate enough —
+it wasn't; the dashboard route itself is inherently per-roadmap (`renderDashboard`
+bounces straight back to `/onboarding` if no template is active yet), so anything
+rendered there reads as belonging to whatever roadmap is currently loaded, no matter
+where in the page it sits. Moved a second time — off `dashboard.js` entirely, onto
+`onboarding.js`, which is the one route in the app that is genuinely roadmap-agnostic
+(it's the "all roadmaps" picker, reachable via "Switch template" regardless of which
+roadmap, if any, is active). `dashboard.js` no longer imports `createDailyTodoPanel` or
+accepts a `dailyTodoStore` param at all. Lesson for any future "make X feel independent
+of Y" placement decision in this app: check whether the *page/route* itself is scoped to
+Y, not just where inside that page's DOM the element sits — a global feature inside a
+scoped page reads as scoped no matter how it's positioned there.
 
 **Cleanup follow-up — `removeTodo` and the guide modal.** Two gaps found once the
 feature was actually used: (1) a done todo stayed visible (struck through) forever with

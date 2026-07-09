@@ -129,7 +129,7 @@ src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really)
 src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + theme toggle + card)
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
-src/ui/components/dailyTodoPanel.js  "Today's Todos" card (issue #56) — add form, live countdown, collapsed Missed section, delete-when-finished, info button
+src/ui/components/dailyTodoPanel.js  "Today's Todos" card (issue #56) — add form, live countdown, collapsed Missed section, delete-when-finished, info button; mounted on onboarding.js (roadmap-agnostic), not dashboard.js
 src/ui/components/dailyTodoGuide.js  informational modal reachable from the Daily Todos card's ℹ button — explains the rolling-deadline/Missed/delete model (issue #56 follow-up)
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications
@@ -214,13 +214,20 @@ Without this, the Missed section and the done-but-still-visible rows in the acti
 would both grow forever with no way to clean them up. `dailyTodoPanel.js` also gets a
 corner ℹ button (`openDailyTodoGuide()`, `src/ui/components/dailyTodoGuide.js`, same
 pattern as `buildYourOwnGuide.js`) explaining the rolling-deadline/preset-duration/
-Missed/delete model in place, since this feature has no other onboarding. **Placement in
-`dashboard.js`: the Daily Todos card renders inside `<header class="dashboard-header">`,
-between `.header-top` (the nav bar) and `.hero-panel` (the active-roadmap name/progress
-card) — deliberately above and visually separate from the roadmap hero, not nested
-inside the phase-list content below it, since the data itself is global to the user and
-untouched by which roadmap is active or by switching/hiding one.** If you ever add
-another place that shows roadmap-specific chrome, don't sandwich Daily Todos inside it.
+Missed/delete model in place, since this feature has no other onboarding. **Placement:
+the Daily Todos card lives on `onboarding.js` — the "Pick a starting roadmap"/"Switch
+your starter roadmap" screen — not on `dashboard.js` at all.** It was tried on the
+dashboard first (rendered inside the header, above the roadmap hero) but that still read
+as belonging to whichever roadmap happened to be active, since the dashboard *is*
+per-roadmap. Since Daily Todos data is genuinely global to the user (never touched by
+which roadmap is active, or by starting/switching/hiding one), it now renders on the one
+screen that is itself roadmap-agnostic — right after the page heading, above the
+template grid. `main.js`'s `guardApp` already threads `dailyTodoStore` through to every
+route's ctx (originally added for the dashboard instance), so `onboarding.js` picking it
+up needed no wiring change there — just `createDailyTodoPanel(dailyTodoStore)` mounted
+in `renderOnboarding`'s own returned node, with `dailyTodoPanel?._cleanup?.()` added to
+its existing cleanup return alongside `themeToggleBtn._cleanup?.()`. If you ever consider
+moving it again, dashboard.js is specifically the wrong place — it's the roadmap view.
 
 **Storage adapter abstraction (`src/services/storage/`, issue #5, part 1).**
 `roadmapStore.js` never imports `firebase.js` directly for roadmap/meta reads and

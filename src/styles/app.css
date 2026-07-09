@@ -755,6 +755,16 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   padding: 0 20px;
   box-sizing: border-box;
 }
+/* On the onboarding "all roadmaps" page, .onboarding-inner already caps
+   width at 880px and every sibling (header, template-grid) sits flush
+   against it with no extra inset of its own — the dashboard-header's 20px
+   side padding above exists to match that page's own edge padding, which
+   onboarding-page doesn't share, so it's dropped here instead. */
+.onboarding-inner > .daily-todo-panel {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
 .daily-todo-heading-row {
   display: flex;
   align-items: center;
@@ -1250,7 +1260,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    ========================================================================== */
 
 @media (min-width: 1600px) {
-  .header-top, .hero-panel, .toolbar, .dashboard-content, .daily-todo-panel { max-width: 1320px; }
+  .header-top, .hero-panel, .toolbar, .dashboard-content { max-width: 1320px; }
 }
 
 @media (max-width: 1024px) {
@@ -1262,14 +1272,12 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 @media (max-width: 768px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 18px 16px 84px; }
-  .daily-todo-panel { padding: 0 16px; }
   .progress-card { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 16px 12px 88px; }
-  .daily-todo-panel { padding: 0 12px; }
   .item-panel { width: 100%; }
   .panel-footer { flex-direction: column; align-items: stretch; }
   .panel-footer-right { margin-left: 0; width: 100%; }
@@ -1280,7 +1288,6 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 @media (max-width: 375px) {
   .dashboard-content { padding: 14px 10px 88px; }
-  .daily-todo-panel { padding: 0 10px; }
   .modal-card { padding: 26px 20px 22px; }
 }
 

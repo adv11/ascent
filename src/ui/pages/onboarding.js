@@ -5,6 +5,7 @@ import { createBrandMark } from '../components/brand.js';
 import { openBuildYourOwnGuide } from '../components/buildYourOwnGuide.js';
 import { openNewRoadmapModal } from '../components/newRoadmapModal.js';
 import { openImportRoadmapModal } from '../components/importRoadmapModal.js';
+import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
@@ -18,7 +19,7 @@ import { TEMPLATES } from '../../data/templates/index.js';
 // any other template's data. Every built-in template can also be hidden from
 // the picker — a per-user preference (see roadmapStore.hideTemplate) that never
 // affects other users, the template itself, or an already-started roadmap's data.
-export function renderOnboarding(app, { user, store }) {
+export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   if (!user) {
     navigate('/signin', true);
     return;
@@ -381,6 +382,11 @@ export function renderOnboarding(app, { user, store }) {
   renderHiddenToggle();
 
   const themeToggleBtn = createThemeToggle();
+  // Rendered on this page (not the roadmap dashboard) precisely because it's
+  // independent of any single roadmap — this is the "all roadmaps" screen,
+  // so Daily Todos lives here instead of looking like it belongs to whichever
+  // roadmap happens to be active (issue #56 follow-up).
+  const dailyTodoPanel = dailyTodoStore ? createDailyTodoPanel(dailyTodoStore) : null;
   const backBtn = isSwitchingTemplate
     ? el('button', {
       type: 'button',
@@ -407,6 +413,7 @@ export function renderOnboarding(app, { user, store }) {
             : 'Choose a template to get started. You can add, edit, or remove topics anytime after, and start more templates later without losing progress.'
         })
       ]),
+      dailyTodoPanel,
       visibleGrid,
       hiddenSection
     ].filter(Boolean))
@@ -417,5 +424,6 @@ export function renderOnboarding(app, { user, store }) {
 
   return () => {
     themeToggleBtn._cleanup?.();
+    dailyTodoPanel?._cleanup?.();
   };
 }
