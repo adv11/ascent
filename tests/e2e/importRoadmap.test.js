@@ -63,11 +63,16 @@ test.describe('AI-assisted roadmap import (issue #4, single-flow layout from iss
     await modal.locator('select').selectOption('Interview prep');
     await modal.locator('.import-options input[type="text"]').fill('already comfortable with Docker');
 
-    const promptText = await modal.locator('.import-prompt-block').textContent();
+    // "Already know" is debounced (150ms), unlike the chip/select clicks above,
+    // which update synchronously — wait for its line to actually land before
+    // reading the full prompt text, or this assertion races the debounce.
+    const promptBlock = modal.locator('.import-prompt-block');
+    await expect(promptBlock).toContainText('Already know: already comfortable with Docker');
+
+    const promptText = await promptBlock.textContent();
     expect(promptText).toContain('Experience level: Intermediate');
     expect(promptText).toContain('Target timeframe: 3 months');
     expect(promptText).toContain('Goal / context: Interview prep');
-    expect(promptText).toContain('Already know: already comfortable with Docker');
     expect(promptText).toContain('"schemaVersion": 1');
   });
 
