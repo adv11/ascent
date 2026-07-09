@@ -1782,3 +1782,35 @@ concern from typographic text scale) and deliberately did not migrate every
 follows a consistent base-4 spacing convention and a wholesale mechanical pass would be
 a large, high-review-burden diff with no visual or behavioral benefit — later phases'
 new components should reach for `--space-*` directly instead.
+
+### 2026-07-09 — PR TBD — Fix: picking a roadmap right before setUser() resolves silently no-op'd and bounced back to onboarding
+
+Reported directly as "the app hangs after picking a roadmap, I have to reload." Root
+cause was in `roadmapStore.js`'s `switchRoadmap(templateId)`, not anything UI-visible:
+its opening no-op guard (`if (requestedTemplateId === activeTemplateId) return;`) is
+meant to skip redundant work when a user re-picks the roadmap they're already on, but
+`activeTemplateId` defaults to the placeholder `'java-backend'` at module init, before
+any sign-in's `setUser()` call has resolved — and `'java-backend'` also happens to be
+`TEMPLATES[0]`, the first card `/onboarding` renders. A user who clicked that first card
+before their brand-new sign-in's still-in-flight `setUser()` (a real Firebase read,
+observed taking well over a second under real network conditions) had resolved would
+trigger this guard as a false positive: `switchRoadmap` returned immediately, seeding
+nothing and never setting `onboardingDone`, while `onboarding.js`'s `pickTemplate()`
+still unconditionally navigated to `/app` right after. The dashboard would render
+briefly on top of an empty, not-actually-onboarded store; moments later the slow
+`setUser()` call would resolve with the real `onboardingDone: false` and `main.js`'s
+`authApi.onChange` handler would bounce the user straight back to `/onboarding` — every
+retry hitting the same race until the in-memory timing happened to close on its own.
+The pre-existing `stateCallId` staleness guard (documented in `.claude/rules/
+roadmap-store.md`) was never the problem — it works correctly once both async calls
+actually participate in bumping the shared counter; the bug was that `switchRoadmap`'s
+own no-op guard let it skip past *without* bumping the counter at all, so the guard
+never got a chance to protect anything. Fixed by requiring `onboardingDone` to also
+already be `true` before treating a same-id pick as a no-op — the guard now expresses
+"you're already on this roadmap and have genuinely finished onboarding," matching the
+equivalent check `onboarding.js`'s own `isSwitchingTemplate` guard already made at the
+UI layer for the same class of race (see the code comment in `pickTemplate()`). A
+regression test simulates the exact race (`switchRoadmap('java-backend')` called before
+an unresolved `setUser()` promise settles) in `tests/integration/roadmapStore.test.js`.
+No schema, Firebase-rules, or public store-contract change — a one-line guard fix plus
+a comment explaining why.

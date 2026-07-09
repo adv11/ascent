@@ -787,6 +787,54 @@ describe('switchRoadmap — concurrent progress across templates', () => {
     expect(dbApi.saveMeta).not.toHaveBeenCalled();
   });
 
+  // Regression test for a real production bug: picking the first template
+  // (java-backend, TEMPLATES[0]) before a brand-new sign-in's own setUser()
+  // call has resolved used to be a false-positive no-op, since
+  // `activeTemplateId` defaults to the placeholder 'java-backend' at module
+  // init (before any sign-in). switchRoadmap('java-backend') would see
+  // requestedTemplateId === activeTemplateId and return immediately —
+  // seeding nothing and never setting onboardingDone — so the UI would
+  // navigate to the dashboard on an unseeded, not-actually-onboarded store,
+  // then bounce straight back to /onboarding once the slow setUser() call
+  // finally resolved with the real (onboardingDone: false) state. Users hit
+  // this as "clicking a roadmap does nothing and the app seems to hang."
+  it('switchRoadmap(\'java-backend\') actually seeds and onboards, even when called before a slow setUser() resolves', async () => {
+    dbApi.getMeta.mockResolvedValue(null); // brand-new account, no meta yet
+    dbApi.getLegacyRoadmap.mockResolvedValue(null);
+
+    let resolveMeta;
+    dbApi.getMeta.mockImplementation(() => new Promise(resolve => { resolveMeta = resolve; }));
+
+    const store = createRoadmapStore();
+    const setUserPromise = store.setUser({ uid: 'race-user' }); // intentionally not awaited yet
+
+    // At this point activeTemplateId is still the module-init placeholder
+    // ('java-backend') and onboardingDone is still its initial null — exactly
+    // the state a real /onboarding page render would see before setUser()
+    // resolves.
+    expect(store.getSnapshot().activeTemplateId).toBe('java-backend');
+    expect(store.getSnapshot().onboardingDone).toBeFalsy();
+
+    await store.switchRoadmap('java-backend');
+
+    const afterSwitch = store.getSnapshot();
+    expect(afterSwitch.onboardingDone).toBe(true);
+    expect(afterSwitch.activeTemplateId).toBe('java-backend');
+    expect(afterSwitch.startedTemplateIds).toEqual(['java-backend']);
+    expect(Object.keys(afterSwitch.allItems).length).toBeGreaterThan(0);
+
+    // The slow setUser() call resolving afterward must not clobber the
+    // freshly-switched, genuinely-onboarded state (the pre-existing
+    // stateCallId staleness guard handles this once switchRoadmap actually
+    // participates instead of no-op'ing past it).
+    resolveMeta(null);
+    await setUserPromise;
+
+    const final = store.getSnapshot();
+    expect(final.onboardingDone).toBe(true);
+    expect(final.activeTemplateId).toBe('java-backend');
+  });
+
   it('stateCallId staleness guard: a slow switchRoadmap() call superseded by a faster one does not clobber its state', async () => {
     dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend', 'frontend'] });
     const store = createRoadmapStore();

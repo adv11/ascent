@@ -634,7 +634,17 @@ export function createRoadmapStore() {
   // (cache-first, never re-seeded), a not-yet-started one is seeded fresh.
   // Neither path ever touches any other template's stored items (issue #58).
   async function switchRoadmap(requestedTemplateId) {
-    if (requestedTemplateId === activeTemplateId) return;
+    // `&& onboardingDone` matters: `activeTemplateId` defaults to the
+    // placeholder 'java-backend' before any sign-in's setUser() has resolved
+    // (module init, above). If a user reaches /onboarding and picks the
+    // first template (also 'java-backend', TEMPLATES[0]) before their
+    // still-in-flight setUser() call finishes, this would otherwise be a
+    // false-positive no-op — never seeding data or setting onboardingDone —
+    // and the dashboard would briefly render, then bounce straight back to
+    // /onboarding once the slow setUser() call resolves and correctly
+    // determines onboardingDone is actually false. See the "switchRoadmap —
+    // false-positive no-op before setUser() resolves" test below.
+    if (requestedTemplateId === activeTemplateId && onboardingDone) return;
 
     const callId = ++stateCallId;
     const isStale = () => callId !== stateCallId;
