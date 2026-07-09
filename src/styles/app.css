@@ -903,18 +903,21 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .daily-todo-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
 .daily-todo-item.done .daily-todo-title { text-decoration: line-through; color: var(--muted); }
 
+/* flex: 1 so the title column absorbs all the row's slack width — without
+   it, .daily-todo-remaining (below) had no fixed anchor and its horizontal
+   position drifted per-row depending on how long the title text was. */
 .daily-todo-checkbox {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  flex: 1;
   min-width: 0;
 }
 .daily-todo-checkbox input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
@@ -930,8 +933,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   white-space: nowrap;
 }
 
+/* Fixed width + right-aligned, always rendered (see renderRow in
+   dailyTodoPanel.js) — every row's status text now lines up flush against
+   the same edge regardless of title length or done state, instead of
+   floating at whatever position `justify-content: space-between` happened
+   to leave it. */
 .daily-todo-remaining {
   flex-shrink: 0;
+  min-width: 84px;
+  text-align: right;
   font-size: 12px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -940,6 +950,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .daily-todo-remaining.ok { color: var(--brand); }
 .daily-todo-remaining.warn { color: var(--p1); }
 .daily-todo-remaining.danger { color: var(--p0); }
+.daily-todo-remaining.done { color: var(--muted); font-weight: 700; }
 
 .daily-todo-delete {
   flex-shrink: 0;

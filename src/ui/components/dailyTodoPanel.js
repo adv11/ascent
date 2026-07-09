@@ -210,7 +210,15 @@ export function createDailyTodoPanel(store, roadmapStore) {
         el('span', { className: 'daily-todo-title', text: todo.title }),
         roadmapName ? el('span', { className: 'daily-todo-linked-badge', title: `Linked to a topic in ${roadmapName}`, text: `via ${roadmapName}` }) : null
       ].filter(Boolean)),
-      !todo.done ? el('span', { className: `daily-todo-remaining ${band}`, text: formatRemaining(ms) }) : null,
+      // Always rendered (never conditional on todo.done) and given a fixed
+      // width in CSS — this used to be a `!todo.done ? ... : null` node,
+      // which meant a done row had two flex children instead of three and
+      // `justify-content: space-between` floated the countdown at a
+      // different horizontal position on every row depending on how long
+      // the title text was. A fixed-width, right-aligned column keeps every
+      // row's status text flush against the same edge regardless of title
+      // length or done state.
+      el('span', { className: `daily-todo-remaining ${todo.done ? 'done' : band}`, text: todo.done ? 'Done' : formatRemaining(ms) }),
       el('button', {
         type: 'button',
         className: 'daily-todo-delete',

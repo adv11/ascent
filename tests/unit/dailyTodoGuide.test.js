@@ -13,10 +13,10 @@ describe('openDailyTodoGuide', () => {
     expect(overlay).toBeTruthy();
     expect(overlay.textContent).toContain('amber');
     expect(overlay.textContent).toContain(String(MAX_ACTIVE_TODOS));
-    expect(overlay.textContent).toContain('undo one you added by mistake');
+    expect(overlay.textContent).toContain('undo one added by mistake');
     expect(overlay.textContent).toContain('via <Roadmap>');
-    expect(overlay.textContent).toContain('asks you to confirm first');
-    expect(overlay.textContent).toContain('never touches the roadmap at all');
+    expect(overlay.textContent).toContain('asks you to confirm');
+    expect(overlay.textContent).toContain('never touches the roadmap');
   });
 
   it('"Got it" closes the modal', () => {

@@ -71,7 +71,7 @@ describe('createDailyTodoPanel', () => {
     node._cleanup();
   });
 
-  it('checking the box marks it done, strikes it through, and drops its countdown', () => {
+  it('checking the box marks it done, strikes it through, and swaps its countdown for a fixed "Done" status', () => {
     const store = createFakeStore();
     store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
     const node = createDailyTodoPanel(store);
@@ -82,7 +82,13 @@ describe('createDailyTodoPanel', () => {
 
     const item = node.querySelector('.daily-todo-item');
     expect(item.classList.contains('done')).toBe(true);
-    expect(item.querySelector('.daily-todo-remaining')).toBeNull();
+    // The status column is always rendered (issue #78) so every row's
+    // status text lines up in the same fixed-width slot regardless of done
+    // state — a done row shows "Done" instead of disappearing entirely.
+    const remaining = item.querySelector('.daily-todo-remaining');
+    expect(remaining).toBeTruthy();
+    expect(remaining.classList.contains('done')).toBe(true);
+    expect(remaining.textContent).toBe('Done');
     node._cleanup();
   });
 
