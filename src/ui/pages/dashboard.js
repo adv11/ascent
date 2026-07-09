@@ -9,6 +9,7 @@ import { createBrandMark } from '../components/brand.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { getTemplate } from '../../data/templates/index.js';
 import { MAX_TITLE_LENGTH } from '../../core/roadmap/limits.js';
+import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
 
 // `templatePhases` is the current user's chosen template's phase/section skeleton
 // (store.getSnapshot().phases) rather than a hardcoded import, so a template with
@@ -220,7 +221,7 @@ export function showDeleteModal() {
   passwordInput.focus();
 }
 
-export function renderDashboard(app, { user, store }) {
+export function renderDashboard(app, { user, store, dailyTodoStore }) {
   if (!user) {
     navigate('/signin', true);
     return;
@@ -634,6 +635,39 @@ export function renderDashboard(app, { user, store }) {
   const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
 
+  // Small header notification badge (not a per-roadmap feature — Daily Todos
+  // are intentionally global, see onboarding.js) surfacing the soonest active
+  // todo's countdown no matter which roadmap is currently open. Links to
+  // /onboarding, the only page the actual todo list/editor lives on.
+  const dailyTodoNavText = el('span', { className: 'daily-todo-nav-text' });
+  const dailyTodoNavBadge = dailyTodoStore ? el('a', {
+    href: '#/onboarding',
+    className: 'daily-todo-nav-badge',
+    title: "Today's Todos",
+    hidden: true
+  }, [
+    el('span', { className: 'daily-todo-nav-icon', 'aria-hidden': 'true', text: '⏱' }),
+    dailyTodoNavText
+  ]) : null;
+
+  function updateDailyTodoBadge() {
+    if (!dailyTodoStore) return;
+    const now = Date.now();
+    const active = dailyTodoStore.getSnapshot().todos
+      .filter(t => !t.done && !isExpired(t, now))
+      .sort((a, b) => a.expiresAt - b.expiresAt);
+    if (!active.length) {
+      dailyTodoNavBadge.hidden = true;
+      return;
+    }
+    const soonest = active[0];
+    const ms = remainingMs(soonest, now);
+    dailyTodoNavBadge.hidden = false;
+    dailyTodoNavBadge.className = `daily-todo-nav-badge ${remainingBand(ms)}`;
+    dailyTodoNavText.textContent = active.length > 1 ? `${formatRemaining(ms)} · ${active.length} due` : formatRemaining(ms);
+    dailyTodoNavBadge.setAttribute('aria-label', `Today's Todos — "${soonest.title}", ${formatRemaining(ms)}${active.length > 1 ? `, ${active.length} active todos` : ''}`);
+  }
+
   const shell = el('div', { className: 'dashboard fade-in' }, [
     verificationBanner,
     offlineBanner,
@@ -646,6 +680,7 @@ export function renderDashboard(app, { user, store }) {
         }, createBrandMark({ tagline: 'Your personal progress command center' })),
         el('div', { className: 'header-actions' }, [
           themeToggleBtn,
+          dailyTodoNavBadge,
           syncPill,
           el('span', { className: 'user-chip', text: userLabel }),
           user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
@@ -721,6 +756,11 @@ export function renderDashboard(app, { user, store }) {
   lastStructuralVersion = store.getSnapshot().structuralVersion;
   render(store.getSnapshot());
 
+  // 30s resolution matches dailyTodoPanel.js's own countdown tick — enough
+  // for hour/minute-granularity text without a busier interval.
+  const unsubDailyTodo = dailyTodoStore ? dailyTodoStore.subscribe(updateDailyTodoBadge) : null;
+  const dailyTodoTickTimer = dailyTodoStore ? setInterval(updateDailyTodoBadge, 30000) : null;
+
   function setOnlineState() {
     offlineBanner.classList.toggle('show', !navigator.onLine);
   }
@@ -731,6 +771,8 @@ export function renderDashboard(app, { user, store }) {
   return () => {
     themeToggleBtn._cleanup?.();
     unsubStore();
+    unsubDailyTodo?.();
+    if (dailyTodoTickTimer) clearInterval(dailyTodoTickTimer);
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);
     clearTimeout(saveBadgeTimer);

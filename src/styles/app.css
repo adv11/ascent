@@ -631,6 +631,37 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .sync-dot.error { background: var(--danger); }
 
+/* Small header notification for the soonest active Daily Todo (issue #56
+   follow-up) — visible on every roadmap's dashboard, not just the
+   onboarding page the todo list itself lives on, since todos are global.
+   Reuses the same ok/warn/danger status-color families as
+   daily-todo-remaining's countdown bands (src/ui/utils/dailyTodo.js
+   remainingBand) rather than inventing new colors, so the urgency reads
+   consistently wherever a todo countdown appears. Hidden entirely (not just
+   emptied) when there is no active todo — see updateDailyTodoBadge in
+   dashboard.js. */
+.daily-todo-nav-badge[hidden] { display: none; }
+.daily-todo-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 10px;
+  border-radius: 999px;
+  text-decoration: none;
+  border: 1px solid var(--status-ok-border);
+  background: var(--status-ok-bg);
+  color: var(--status-ok-text);
+  transition: transform 0.15s ease;
+}
+.daily-todo-nav-badge:hover, .daily-todo-nav-badge:focus-visible { transform: translateY(-1px); }
+.daily-todo-nav-badge:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+.daily-todo-nav-badge.warn { background: var(--status-warn-bg); color: var(--status-warn-text); border-color: var(--status-warn-border); }
+.daily-todo-nav-badge.danger { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); }
+.daily-todo-nav-icon { font-size: 13px; line-height: 1; }
+
 .hero-panel {
   max-width: 1160px;
   margin: 0 auto 18px;
@@ -747,23 +778,32 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .search-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 4px var(--focus); }
 
 /* Daily Todos (issue #56) — a self-contained card, separate from the phase
-   list, sourced from its own store (dailyTodoStore.js), not roadmapStore. */
+   list, sourced from its own store (dailyTodoStore.js), not roadmapStore.
+   Deliberately styled with the same glass-card chrome as .template-card
+   (surface-glass background, radius-lg, shadow-md) so it visually belongs
+   to the same "card" family on the onboarding grid, but with an --accent
+   (not --brand) border/icon color — --accent is already used app-wide as
+   the "not the roadmap-teal" token (progress bar highlight, glow-accent),
+   so reusing it here (rather than inventing a new color) is what makes it
+   read as "a different kind of card" in both themes without a special case. */
 .daily-todo-panel {
   max-width: 1160px;
   margin: 0 auto 18px;
   width: 100%;
-  padding: 0 20px;
   box-sizing: border-box;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 18px 20px 16px;
 }
 /* On the onboarding "all roadmaps" page, .onboarding-inner already caps
    width at 880px and every sibling (header, template-grid) sits flush
-   against it with no extra inset of its own — the dashboard-header's 20px
-   side padding above exists to match that page's own edge padding, which
-   onboarding-page doesn't share, so it's dropped here instead. */
+   against it with no extra inset of its own. */
 .onboarding-inner > .daily-todo-panel {
   max-width: none;
   margin: 0;
-  padding: 0;
 }
 .daily-todo-heading-row {
   display: flex;
@@ -771,6 +811,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   gap: 8px;
   margin: 0 0 10px;
 }
+.daily-todo-icon { font-size: 20px; line-height: 1; color: var(--accent); }
 .daily-todo-heading {
   margin: 0;
   font-size: 15px;
@@ -792,22 +833,26 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   cursor: pointer;
   padding: 0;
 }
-.daily-todo-info-btn:hover { color: var(--brand); border-color: var(--brand); }
+.daily-todo-info-btn:hover { color: var(--accent); border-color: var(--accent); }
 .daily-todo-info-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+/* Inner rows no longer stack as their own bordered boxes — they sit flush
+   inside .daily-todo-panel's own card padding, divided by hairlines, so the
+   whole thing reads as one card rather than a heading floating above a
+   separate stack of boxes. */
 .daily-todo-panel > .daily-todo-add-row,
 .daily-todo-panel > .daily-todo-list,
 .daily-todo-panel > .daily-todo-missed-toggle,
 .daily-todo-panel > .daily-todo-missed-list {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: transparent;
+  border: none;
 }
 .daily-todo-add-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 12px 16px;
-  border-radius: var(--radius) var(--radius) 0 0;
-  border-bottom: none;
+  padding: 0 0 14px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
 }
 .daily-todo-add-row .inline-add { flex: 1; min-width: 160px; }
 .todo-duration-select { min-width: 110px; }
@@ -819,7 +864,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .daily-todo-empty {
   margin: 0;
-  padding: 14px 16px;
+  padding: 14px 0;
   color: var(--muted);
   font-size: 13px;
 }
@@ -829,7 +874,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 10px 0;
   border-top: 1px solid var(--line);
 }
 .daily-todo-item.done .daily-todo-title { text-decoration: line-through; color: var(--muted); }
@@ -841,7 +886,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   cursor: pointer;
   min-width: 0;
 }
-.daily-todo-checkbox input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--brand); flex-shrink: 0; }
+.daily-todo-checkbox input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
 .daily-todo-title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 
 .daily-todo-remaining {
@@ -878,10 +923,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   display: block;
   width: 100%;
   text-align: left;
-  padding: 10px 16px;
+  padding: 10px 0;
   border-top: 1px solid var(--line);
-  border-radius: 0 0 var(--radius) var(--radius);
-  background: var(--panel-2);
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
   font: inherit;
   font-size: 13px;

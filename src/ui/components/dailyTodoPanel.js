@@ -176,6 +176,7 @@ export function createDailyTodoPanel(store) {
 
   const node = el('section', { className: 'daily-todo-panel' }, [
     el('div', { className: 'daily-todo-heading-row' }, [
+      el('span', { className: 'daily-todo-icon', 'aria-hidden': 'true', text: '⏱' }),
       el('h2', { className: 'daily-todo-heading', text: "Today's Todos" }),
       el('button', {
         type: 'button',

@@ -229,6 +229,21 @@ in `renderOnboarding`'s own returned node, with `dailyTodoPanel?._cleanup?.()` a
 its existing cleanup return alongside `themeToggleBtn._cleanup?.()`. If you ever consider
 moving it again, dashboard.js is specifically the wrong place — it's the roadmap view.
 
+**Cross-roadmap awareness — the header badge, not the editor, on `dashboard.js`.**
+Since a signed-in user spends most of their time on the dashboard rather than the
+onboarding picker, `dashboard.js` re-imports `dailyTodoStore` for exactly one purpose: a
+small pill (`.daily-todo-nav-badge`, next to the theme toggle) showing the soonest active
+todo's live countdown (`"⏱ 46m left"`, or `"⏱ 46m left · 3 due"` once more than one is
+active), reusing the same `isExpired`/`remainingMs`/`formatRemaining`/`remainingBand`
+helpers and the same ok/warn/danger status-color families the todo list's own countdown
+uses. It's read-only and link-only (`<a href="#/onboarding">`) — no add/done/delete
+affordance lives here, only in `dailyTodoPanel.js` itself — so this is not a second copy
+of the editor, just a notification that one exists. Hidden entirely (`hidden` attribute,
+not just emptied) when there's no active todo. Subscribes to `dailyTodoStore` and ticks
+its own 30s `setInterval` (matching `dailyTodoPanel.js`'s own cadence), both cleaned up
+in `renderDashboard`'s existing route-cleanup return — same "Component subscription
+cleanup" rule as everything else with a subscription or timer.
+
 **Storage adapter abstraction (`src/services/storage/`, issue #5, part 1).**
 `roadmapStore.js` never imports `firebase.js` directly for roadmap/meta reads and
 writes — it calls whichever adapter `getStorageAdapter(user)` (`adapterFactory.js`)
