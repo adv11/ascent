@@ -1,6 +1,7 @@
 import { el, isValidUrl } from '../dom.js';
 import { confirmDialog } from './confirmDialog.js';
 import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../core/roadmap/limits.js';
+import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 
 // Issue #15 — plain-string notes field, capped at 5000 chars (enforced both
 // here via the textarea's native maxlength and in roadmapStore/schema docs).
@@ -79,18 +80,38 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
       return;
     }
     resources.forEach((resource, index) => {
-      const row = el('div', { className: 'resource-row' }, [
+      const linkType = detectLinkType(resource.url);
+      const meta = LINK_TYPE_META[linkType];
+      const urlWarning = el('p', { className: 'field-error resource-url-warning', text: '' });
+
+      const urlInput = el('input', {
+        className: 'field-input compact',
+        value: resource.url,
+        'aria-label': 'Resource URL',
+        onInput: e => { resources[index] = { ...resources[index], url: e.target.value }; },
+        // Issue #22/#12B Phase 4 — an edited existing resource URL was never
+        // re-validated, only a newly-added one. Re-validate on blur so a
+        // javascript:/data: URI typed into an existing row is caught before
+        // Save, not just at add-time.
+        onBlur: () => {
+          const value = resources[index].url.trim();
+          urlWarning.textContent = value && !isValidUrl(value) ? 'Enter a valid http or https URL.' : '';
+        }
+      });
+
+      const row = el('div', { className: 'resource-card' }, [
+        el('div', { className: 'resource-card-header' }, [
+          el('span', { className: `link-badge ${meta.badgeClass}`, text: `${meta.icon} ${meta.label}` })
+        ]),
         el('div', { className: 'resource-meta' }, [
           el('input', {
-            className: 'field-input compact',
+            className: 'field-input compact resource-label-input',
             value: resource.label,
+            'aria-label': 'Resource label',
             onInput: e => { resources[index] = { ...resources[index], label: e.target.value }; }
           }),
-          el('input', {
-            className: 'field-input compact',
-            value: resource.url,
-            onInput: e => { resources[index] = { ...resources[index], url: e.target.value }; }
-          })
+          urlInput,
+          urlWarning
         ]),
         el('div', { className: 'resource-actions' }, [
           el('a', { className: 'btn btn-ghost btn-sm', href: isValidUrl(resource.url) ? resource.url : '#', target: '_blank', rel: 'noopener noreferrer', text: 'Open' }),

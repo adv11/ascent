@@ -123,3 +123,53 @@ describe('itemPanel — notes field (issue #15)', () => {
     expect(document.activeElement).toBe(getPanel().querySelector('.notes-textarea'));
   });
 });
+
+describe('itemPanel — resource card UI (issue #12B Phase 2/4)', () => {
+  it('renders a link-type badge per resource, detected from its URL', () => {
+    openItemPanel({
+      item: {
+        ...baseItem,
+        resources: [
+          { label: 'Tutorial', url: 'https://www.youtube.com/watch?v=abc' },
+          { label: 'Repo', url: 'https://github.com/adv11/SwitchPrep' }
+        ]
+      }
+    });
+    const badges = getPanel().querySelectorAll('.resource-card .link-badge');
+    expect(badges).toHaveLength(2);
+    expect(badges[0].textContent).toContain('YouTube');
+    expect(badges[0].classList.contains('link-badge-youtube')).toBe(true);
+    expect(badges[1].textContent).toContain('GitHub');
+    expect(badges[1].classList.contains('link-badge-github')).toBe(true);
+  });
+
+  it('shows an inline warning when an existing resource URL is edited to something invalid, on blur', () => {
+    openItemPanel({
+      item: { ...baseItem, resources: [{ label: 'Docs', url: 'https://example.com' }] }
+    });
+    const urlInput = getPanel().querySelector('.resource-card input[aria-label="Resource URL"]');
+    const warning = getPanel().querySelector('.resource-url-warning');
+    expect(warning.textContent).toBe('');
+
+    urlInput.value = 'javascript:alert(1)';
+    urlInput.dispatchEvent(new Event('input'));
+    urlInput.dispatchEvent(new Event('blur'));
+    expect(warning.textContent).toBe('Enter a valid http or https URL.');
+  });
+
+  it('clears the inline warning once the URL is edited back to something valid', () => {
+    openItemPanel({
+      item: { ...baseItem, resources: [{ label: 'Docs', url: 'https://example.com' }] }
+    });
+    const urlInput = getPanel().querySelector('.resource-card input[aria-label="Resource URL"]');
+    urlInput.value = 'not-a-url';
+    urlInput.dispatchEvent(new Event('input'));
+    urlInput.dispatchEvent(new Event('blur'));
+    expect(getPanel().querySelector('.resource-url-warning').textContent).not.toBe('');
+
+    urlInput.value = 'https://valid-again.com';
+    urlInput.dispatchEvent(new Event('input'));
+    urlInput.dispatchEvent(new Event('blur'));
+    expect(getPanel().querySelector('.resource-url-warning').textContent).toBe('');
+  });
+});

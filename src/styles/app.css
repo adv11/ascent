@@ -2021,7 +2021,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .notes-status.error { color: var(--status-warn-text); }
 
 .resource-list { display: grid; gap: 10px; }
-.resource-row {
+.resource-card {
   display: grid;
   gap: 8px;
   padding: 10px;
@@ -2029,9 +2029,42 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border-radius: var(--radius);
   background: var(--panel-2);
 }
+.resource-card-header { display: flex; align-items: center; }
 .resource-meta { display: grid; gap: 6px; }
 .resource-actions { display: flex; gap: 8px; }
 .resource-add { display: grid; gap: 8px; margin-top: 10px; }
+.resource-url-warning { margin: 0; }
+
+/* Issue #12B — link-type badge, one color per detectLinkType() result
+   (src/ui/utils/linkDetector.js). Colors match the issue's spec table;
+   each pair is tuned per-theme via app.css's dark-mode :root override block
+   the same way every other semantic color token is. */
+.link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.link-badge-youtube { color: #dc2626; border-color: #fecaca; }
+.link-badge-github { color: var(--ink); background: var(--line); border-color: var(--line); }
+.link-badge-google-doc,
+.link-badge-google-drive { color: #2563eb; border-color: #bfdbfe; }
+.link-badge-medium { color: #16a34a; border-color: #bbf7d0; }
+.link-badge-stackoverflow { color: #ea580c; border-color: #fed7aa; }
+.link-badge-notion,
+.link-badge-article { color: var(--muted); }
+
+:root[data-theme='dark'] .link-badge-youtube { color: #f87171; border-color: #5b2330; }
+:root[data-theme='dark'] .link-badge-google-doc,
+:root[data-theme='dark'] .link-badge-google-drive { color: #60a5fa; border-color: #1e3a5f; }
+:root[data-theme='dark'] .link-badge-medium { color: #4ade80; border-color: #1e4620; }
+:root[data-theme='dark'] .link-badge-stackoverflow { color: #fb923c; border-color: #5a3113; }
 
 .muted { color: var(--muted); }
 .small { font-size: 12px; }

@@ -16,6 +16,47 @@ import { openAddToDailyTodoModal } from '../components/addToDailyTodoModal.js';
 import { MAX_ACTIVE_TODOS } from '../../core/dailyTodo/limits.js';
 import { createProgressRing } from '../components/progressRing.js';
 import { animateCountUp } from '../../utils/countUp.js';
+import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
+import { attachTooltip } from '../components/tooltip.js';
+
+// Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
+// "most valuable" type (a video worth watching over a plain article, etc.)
+// wins the inline icon when a topic has resources of more than one type.
+const RESOURCE_TYPE_PRIORITY = ['youtube', 'github', 'notion', 'google-doc', 'google-drive', 'medium', 'stackoverflow', 'article'];
+const RESOURCE_TYPE_NOUN = {
+  youtube: 'video', github: 'repo', notion: 'page', 'google-doc': 'doc',
+  'google-drive': 'file', medium: 'article', stackoverflow: 'answer', article: 'link'
+};
+
+function buildResourceCountBadge(item, onOpen) {
+  const { primaryIcon, breakdown } = summarizeResourceTypes(item.resources);
+  const badge = el('button', {
+    type: 'button',
+    className: 'resource-count',
+    'data-action': 'resources',
+    'aria-label': `View resources for ${item.title}`,
+    onClick: e => { e.stopPropagation(); onOpen(); }
+  }, [
+    el('span', { 'aria-hidden': 'true', text: `${primaryIcon} ` }),
+    el('span', { text: `${item.resources.length} resource${item.resources.length > 1 ? 's' : ''}` })
+  ]);
+  attachTooltip(badge, breakdown);
+  return badge;
+}
+
+function summarizeResourceTypes(resources) {
+  const counts = {};
+  resources.forEach(r => {
+    const type = detectLinkType(r.url);
+    counts[type] = (counts[type] || 0) + 1;
+  });
+  const orderedTypes = RESOURCE_TYPE_PRIORITY.filter(type => counts[type]);
+  const primaryIcon = LINK_TYPE_META[orderedTypes[0]].icon;
+  const breakdown = orderedTypes
+    .map(type => `${LINK_TYPE_META[type].icon} ${counts[type]} ${RESOURCE_TYPE_NOUN[type]}${counts[type] > 1 ? 's' : ''}`)
+    .join(' · ');
+  return { primaryIcon, breakdown };
+}
 
 // `templatePhases` is the current user's chosen template's phase/section skeleton
 // (store.getSnapshot().phases) rather than a hardcoded import, so a template with
@@ -623,21 +664,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       el('div', { className: 'check-body' }, [
         el('span', { className: 'check-title', text: item.title }),
         el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
-        item.resources?.length ? el('button', {
-          type: 'button',
-          className: 'resource-count',
-          'data-action': 'resources',
-          'aria-label': `View resources for ${item.title}`,
-          text: `${item.resources.length} resource${item.resources.length > 1 ? 's' : ''}`,
-          onClick: e => {
-            e.stopPropagation();
-            openItemPanel({
-              item,
-              onSave: patch => store.updateItem(item.id, patch),
-              onDelete: () => store.removeItem(item.id)
-            });
-          }
-        }) : null,
+        item.resources?.length ? buildResourceCountBadge(item, () => openItemPanel({
+          item,
+          onSave: patch => store.updateItem(item.id, patch),
+          onDelete: () => store.removeItem(item.id)
+        })) : null,
         item.notes ? el('button', {
           type: 'button',
           className: 'notes-indicator',
