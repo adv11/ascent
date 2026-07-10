@@ -87,6 +87,27 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     expect(getConfirmDialog()).toBeNull();
   });
 
+  // issue #6 Phase 5 follow-up — a user reported picking a roadmap
+  // "hanging" with no feedback. Traced to (1) unprotected Firebase calls
+  // that could hang forever (fixed with withTimeout.js/FirebaseAdapter.js,
+  // outside this component's scope) and (2) this catch block silently
+  // resetting the UI with zero user-facing message on a genuine failure —
+  // indistinguishable from success without noticing the cards quietly
+  // re-enabling. Matches the existing "shows an error toast ... for an
+  // imported roadmap" test's pattern above for the import path.
+  it('shows an error toast and re-enables cards when switchRoadmap fails', async () => {
+    const switchRoadmap = vi.fn().mockRejectedValue(new Error('Timed out loading roadmap from Firebase'));
+    const { app, navigate } = await setup({ switchRoadmap });
+    const pianoCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Learning Piano'));
+
+    pianoCard.click();
+
+    await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalledWith('piano'));
+    await vi.waitFor(() => expect(pianoCard.classList.contains('picking')).toBe(false));
+    await vi.waitFor(() => expect(document.querySelector('.toast')?.textContent).toMatch(/could not open/i));
+    expect(navigate).not.toHaveBeenCalledWith('/app', true);
+  });
+
   it('disables every card while a pick is in flight, to prevent a double-submit', async () => {
     let resolvePick;
     const switchRoadmap = vi.fn(() => new Promise(resolve => { resolvePick = resolve; }));
