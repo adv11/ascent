@@ -101,23 +101,25 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     }
   }
 
+  // Issue #6 Phase 9 — the card is now a plain (non-interactive) wrapper div;
+  // the "pick" action lives on the real nested <button class="template-card-pick">
+  // instead of the wrapper carrying role="button" around another focusable
+  // button (the corner info button) — see the CSS comment on
+  // .template-card-pick for why. `cardEl` still gets pushed to cardEls (used
+  // by the "picking" state class toggles elsewhere) since that's the outer
+  // visual card, not the inner button.
   function buildCreateCard() {
-    const cardEl = el('div', {
-      className: 'template-card template-card-create',
-      role: 'button',
-      tabindex: '0',
-      onClick: handleCreate,
-      onKeydown: e => {
-        if (e.target !== cardEl) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleCreate();
-        }
-      }
+    const pickBtn = el('button', {
+      type: 'button',
+      className: 'template-card-pick',
+      onClick: handleCreate
     }, [
       el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '+' }),
       el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
-      el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' }),
+      el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' })
+    ]);
+    const cardEl = el('div', { className: 'template-card template-card-create' }, [
+      pickBtn,
       el('button', {
         type: 'button',
         className: 'template-card-info-corner',
@@ -125,10 +127,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'aria-label': 'How do I build my own roadmap?',
         title: 'How do I build my own roadmap?',
         text: 'ℹ',
-        onClick: e => {
-          e.stopPropagation();
-          openBuildYourOwnGuide({ onOpenImport: handleImport });
-        }
+        onClick: () => openBuildYourOwnGuide({ onOpenImport: handleImport })
       })
     ]);
     cardEls.push(cardEl);
@@ -227,24 +226,24 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         : null;
     const footerEl = el('div', { className: 'template-card-footer' }, [badgeEl].filter(Boolean));
 
-    const cardEl = el('div', {
-      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
-      role: 'button',
-      tabindex: '0',
+    const pickBtn = el('button', {
+      type: 'button',
+      className: 'template-card-pick',
       'aria-current': isCurrent ? 'true' : null,
-      onClick: () => pickCustomRoadmap(roadmap, cardEl),
-      onKeydown: e => {
-        if (e.target !== cardEl) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          pickCustomRoadmap(roadmap, cardEl);
-        }
-      }
+      onClick: () => pickCustomRoadmap(roadmap, cardEl)
     }, [
       el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: pickCustomRoadmapIcon(roadmap.id) }),
       el('span', { className: 'template-card-name', text: roadmap.title }),
       el('span', { className: 'template-card-desc', text: roadmap.description || 'Your own roadmap.' }),
-      footerEl,
+      footerEl
+    ]);
+    // Issue #6 Phase 9 — see buildCard()'s identical comment: plain wrapper,
+    // role="button" moved onto the nested .template-card-pick button so the
+    // delete button is a sibling, not nested inside another button.
+    const cardEl = el('div', {
+      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`
+    }, [
+      pickBtn,
       el('button', {
         type: 'button',
         className: 'template-card-delete',
@@ -252,10 +251,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'aria-label': `Delete ${roadmap.title}`,
         title: `Delete ${roadmap.title}`,
         text: '🗑',
-        onClick: e => {
-          e.stopPropagation();
-          deleteCustomCard(roadmap, cardEl);
-        }
+        onClick: () => deleteCustomCard(roadmap, cardEl)
       })
     ]);
 
@@ -274,24 +270,25 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         : null;
     const footerEl = el('div', { className: 'template-card-footer' }, [countEl, badgeEl]);
 
-    const cardEl = el('div', {
-      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
-      role: 'button',
-      tabindex: '0',
+    const pickBtn = el('button', {
+      type: 'button',
+      className: 'template-card-pick',
       'aria-current': isCurrent ? 'true' : null,
-      onClick: () => pickTemplate(template, cardEl),
-      onKeydown: e => {
-        if (e.target !== cardEl) return; // let the nested hide/info button handle its own keys
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          pickTemplate(template, cardEl);
-        }
-      }
+      onClick: () => pickTemplate(template, cardEl)
     }, [
       el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: template.icon }),
       el('span', { className: 'template-card-name', text: template.name }),
       el('span', { className: 'template-card-desc', text: template.description }),
-      footerEl,
+      footerEl
+    ]);
+    // Issue #6 Phase 9 — the card is a plain wrapper; role="button" moved off
+    // it onto the real nested .template-card-pick button so the hide button
+    // (a second, independently-focusable control) is a sibling, not nested
+    // inside another button — see the .template-card-pick CSS comment.
+    const cardEl = el('div', {
+      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`
+    }, [
+      pickBtn,
       el('button', {
         type: 'button',
         className: 'template-card-hide',
@@ -299,10 +296,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'aria-label': `Hide ${template.name}`,
         title: `Hide ${template.name}`,
         text: '×',
-        onClick: e => {
-          e.stopPropagation();
-          hideTemplate(template, cardEl);
-        }
+        onClick: () => hideTemplate(template, cardEl)
       })
     ]);
 

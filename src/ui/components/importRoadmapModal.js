@@ -1,4 +1,5 @@
 import { el, debounce } from '../dom.js';
+import { attachFocusTrap } from './modal.js';
 import { buildImportPrompt } from '../../data/importPrompt.js';
 import { validateImportText } from '../../core/roadmap/importValidator.js';
 import { adaptImportToRoadmap } from '../../core/roadmap/schemaAdapter.js';
@@ -66,12 +67,10 @@ function buildChipGroup(values, getValue, onChange) {
 export function openImportRoadmapModal() {
   return new Promise(resolve => {
     function close(result) {
-      window.removeEventListener('keydown', onKey);
+      detachTrap();
       overlay.remove();
       resolve(result);
     }
-
-    const onKey = e => { if (e.key === 'Escape') close(null); };
 
     // --- Topic + customization inputs ---
     const topicInput = el('textarea', {
@@ -210,27 +209,27 @@ export function openImportRoadmapModal() {
       importBtn
     ]);
 
+    const card = el('div', { className: 'modal-card import-modal-card' }, [
+      el('h2', { className: 'modal-title', text: 'Import roadmap' }),
+      generateSection,
+      pasteSection,
+      el('button', {
+        type: 'button',
+        className: 'btn btn-secondary btn-block',
+        text: 'Cancel',
+        onClick: () => close(null)
+      })
+    ]);
+
     const overlay = el('div', {
       className: 'modal-overlay',
       role: 'dialog',
       'aria-modal': 'true',
       'aria-label': 'Import roadmap',
       onClick: e => { if (e.target === overlay) close(null); }
-    }, [
-      el('div', { className: 'modal-card import-modal-card' }, [
-        el('h2', { className: 'modal-title', text: 'Import roadmap' }),
-        generateSection,
-        pasteSection,
-        el('button', {
-          type: 'button',
-          className: 'btn btn-secondary btn-block',
-          text: 'Cancel',
-          onClick: () => close(null)
-        })
-      ])
-    ]);
+    }, [card]);
 
-    window.addEventListener('keydown', onKey);
+    const detachTrap = attachFocusTrap(card, { onEscape: () => close(null) });
     document.body.appendChild(overlay);
     topicInput.focus();
   });

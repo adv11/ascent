@@ -34,15 +34,32 @@ export function fuzzyMatch(query, target) {
 // component library, not the integration; `openCommandPalette` here is the
 // reusable primitive a later phase calls with real data.
 export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
-  const input = el('input', { className: 'command-palette-input', type: 'text', placeholder, 'aria-label': placeholder });
-  const list = el('div', { className: 'command-palette-list', role: 'listbox' });
+  const listId = 'command-palette-list';
+  const input = el('input', {
+    className: 'command-palette-input',
+    type: 'text',
+    placeholder,
+    'aria-label': placeholder,
+    // Issue #6 Phase 9 — WAI-ARIA combobox pattern: the input owns the
+    // listbox via aria-controls and announces the currently-active option
+    // via aria-activedescendant (updated in render() below), rather than
+    // moving DOM focus onto each option as arrow keys are pressed.
+    role: 'combobox',
+    'aria-expanded': 'true',
+    'aria-controls': listId,
+    'aria-autocomplete': 'list'
+  });
+  const list = el('div', { className: 'command-palette-list', role: 'listbox', id: listId });
   let filtered = items;
   let activeIndex = 0;
+
+  function optionId(i) { return `command-palette-option-${i}`; }
 
   function render() {
     list.replaceChildren(...filtered.map((item, i) => el('button', {
       type: 'button',
       role: 'option',
+      id: optionId(i),
       className: `command-palette-item${i === activeIndex ? ' active' : ''}`,
       'aria-selected': String(i === activeIndex),
       onClick: () => select(i)
@@ -50,6 +67,7 @@ export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
       el('span', { className: 'command-palette-item-title', text: item.title }),
       item.subtitle ? el('span', { className: 'command-palette-item-subtitle', text: item.subtitle }) : null
     ].filter(Boolean))));
+    input.setAttribute('aria-activedescendant', filtered.length ? optionId(activeIndex) : '');
   }
 
   function select(i) {

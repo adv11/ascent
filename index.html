@@ -42,6 +42,11 @@
   <link rel="stylesheet" href="./src/styles/app.css">
 </head>
 <body>
+  <!-- Issue #6 Phase 9 — visually hidden until focused; jumps past the
+       sidebar/topbar (dashboard.js) or nav bar (landing.js) chrome those
+       pages render into #app. Lives outside #app deliberately, since #app's
+       own content is torn down and rebuilt on every route change. -->
+  <a href="#main-content" class="skip-link">Skip to content</a>
   <div id="app" class="app-shell"></div>
   <script type="module" src="./src/main.js"></script>
 </body>

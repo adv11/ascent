@@ -36,13 +36,17 @@ function resolveRoadmapName(roadmapStore, templateId) {
 // it's only consulted when completing/reverting a todo that was created via
 // a roadmap topic's "add to Today's Todos" button (dashboard.js).
 export function createDailyTodoPanel(store, roadmapStore) {
+  // Issue #6 Phase 9 — axe-core flagged both fields as missing an accessible
+  // name; a placeholder alone doesn't count as one (it vanishes on input and
+  // most screen readers don't reliably announce it as a label anyway).
   const titleInput = el('input', {
     className: 'field-input compact inline-add',
     placeholder: 'Add a todo, due in…',
+    'aria-label': 'New todo title',
     maxlength: String(MAX_TODO_TITLE_LENGTH)
   });
 
-  const durationSelect = el('select', { className: 'field-input compact todo-duration-select' }, [
+  const durationSelect = el('select', { className: 'field-input compact todo-duration-select', 'aria-label': 'Due in' }, [
     ...DURATION_PRESETS.map(p => el('option', { value: String(p.ms), text: p.label })),
     el('option', { value: CUSTOM_VALUE, text: 'Custom…' })
   ]);

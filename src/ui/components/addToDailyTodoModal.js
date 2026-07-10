@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { attachFocusTrap } from './modal.js';
 import { MAX_TODO_TITLE_LENGTH, DURATION_PRESETS, MIN_DURATION_MS, MAX_DURATION_MS } from '../../core/dailyTodo/limits.js';
 
 const CUSTOM_VALUE = 'custom';
@@ -14,12 +15,10 @@ const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms
 export function openAddToDailyTodoModal({ topicTitle }) {
   return new Promise(resolve => {
     function close(result) {
-      window.removeEventListener('keydown', onKey);
+      detachTrap();
       overlay.remove();
       resolve(result);
     }
-
-    const onKey = e => { if (e.key === 'Escape') close(null); };
 
     const message = el('p', { className: 'form-message', text: '' });
     const titleInput = el('input', {
@@ -101,20 +100,20 @@ export function openAddToDailyTodoModal({ topicTitle }) {
       })
     ]);
 
+    const card = el('div', { className: 'modal-card' }, [
+      el('h2', { className: 'modal-title', text: "Add to Today's Todos" }),
+      form
+    ]);
+
     const overlay = el('div', {
       className: 'modal-overlay',
       role: 'dialog',
       'aria-modal': 'true',
       'aria-label': "Add to Today's Todos",
       onClick: e => { if (e.target === overlay) close(null); }
-    }, [
-      el('div', { className: 'modal-card' }, [
-        el('h2', { className: 'modal-title', text: "Add to Today's Todos" }),
-        form
-      ])
-    ]);
+    }, [card]);
 
-    window.addEventListener('keydown', onKey);
+    const detachTrap = attachFocusTrap(card, { onEscape: () => close(null) });
     document.body.appendChild(overlay);
     titleInput.focus();
     titleInput.select();
