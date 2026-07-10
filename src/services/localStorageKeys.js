@@ -41,3 +41,21 @@ export const KEYS = {
 export function verifyDismissedKey(uid) {
   return `ascent-verify-dismissed-${uid}`;
 }
+
+// Backup-reminder bookkeeping (issue #18 follow-up) — three small per-uid
+// timestamps, same keyed-by-uid pattern as verifyDismissedKey above (not a
+// fixed KEYS entry, since there's one value per account, not per device).
+// Device-level, never synced to Firebase or cleared on sign-out — a purely
+// local nudge, same precedent as DAILY_TODOS_COLLAPSED/SIDEBAR_COLLAPSED,
+// and harmless to leave behind since it's namespaced by uid already.
+export function backupFirstSeenAtKey(uid) {
+  return `ascent-backup-first-seen-${uid}`;
+}
+
+export function lastBackupAtKey(uid) {
+  return `ascent-last-backup-at-${uid}`;
+}
+
+export function backupReminderDismissedAtKey(uid) {
+  return `ascent-backup-reminder-dismissed-${uid}`;
+}

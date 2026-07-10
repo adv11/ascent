@@ -19,16 +19,35 @@ beforeEach(() => {
 });
 
 describe('openImportBackupModal (issue #18)', () => {
-  it('shows the new-vs-existing diff summary computed from the current roadmap', () => {
+  it('shows the new-vs-existing diff summary computed from the current roadmap, in end-user "topic" language', () => {
     openImportBackupModal(
       { 'existing-1': { title: 'Already here' } },
       backupData({ 'existing-1': {}, 'new-1': {}, 'new-2': {} })
     );
     const overlay = getOverlay();
 
-    expect(overlay.textContent).toContain('3 items found in this backup');
-    expect(overlay.textContent).toContain('1 already exist');
-    expect(overlay.textContent).toContain('2 are new');
+    expect(overlay.textContent).toContain('This backup has 3 topics');
+    expect(overlay.textContent).toContain('1 topic already in your current roadmap');
+    expect(overlay.textContent).toContain('2 topics new');
+    expect(overlay.textContent).not.toContain('item');
+  });
+
+  it('phrases the summary for an all-new backup without an awkward "0 topics" clause', () => {
+    openImportBackupModal({}, backupData({ 'new-1': {}, 'new-2': {} }));
+    expect(getOverlay().textContent).toContain('all new — none of them are in your current roadmap yet');
+  });
+
+  it('phrases the summary for a backup that is entirely already restored', () => {
+    openImportBackupModal(
+      { 'existing-1': {}, 'existing-2': {} },
+      backupData({ 'existing-1': {}, 'existing-2': {} })
+    );
+    expect(getOverlay().textContent).toContain('every one of them is already in your current roadmap');
+  });
+
+  it('the merge button label adapts to whether there is anything new to add', () => {
+    openImportBackupModal({ 'existing-1': {} }, backupData({ 'existing-1': {} }));
+    expect(findButton(getOverlay(), 'Merge').textContent).toBe('Merge (updates 1 topic)');
   });
 
   it('resolves "merge" when Merge is clicked', async () => {

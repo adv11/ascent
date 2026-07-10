@@ -5,6 +5,7 @@ import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
+import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { attachFocusTrap } from '../components/modal.js';
 import { createSidebar } from '../components/sidebar.js';
@@ -1023,6 +1024,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
 
   const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
+  const backupReminderBanner = createBackupReminderBanner({ user, store });
 
   // Small header notification badge (not a per-roadmap feature — Daily Todos
   // are intentionally global, see onboarding.js) surfacing the soonest active
@@ -1086,6 +1088,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       topbar,
       el('div', { className: 'app-content' }, [
         verificationBanner,
+        backupReminderBanner,
         offlineBanner,
         el('header', { className: 'dashboard-header' }, [
           // Issue #6 Phase 4.4 — the "Official/read-only" lock-badge concept

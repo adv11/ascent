@@ -17,10 +17,15 @@ paths:
   - "src/ui/components/importBackupModal.js"
   - "src/ui/components/newRoadmapModal.js"
   - "src/ui/components/sidebar.js"
+  - "src/ui/components/backupReminderBanner.js"
   - "src/ui/utils/backupTransfer.js"
+  - "src/ui/utils/backupActions.js"
+  - "src/ui/utils/backupReminder.js"
   - "tests/unit/backupSchema*"
   - "tests/unit/backupValidator*"
   - "tests/unit/importBackupModal*"
+  - "tests/unit/backupActions*"
+  - "tests/unit/backupReminder*"
   - "src/ui/components/buildYourOwnGuide.js"
   - "src/ui/components/itemPanel.js"
   - "src/ui/utils/customRoadmapIcon.js"
@@ -615,7 +620,30 @@ rather than a dedicated settings screen, since issue #16 (account settings page)
 exist yet — move it there once it does. Available to every signed-in identity,
 **including an anonymous guest session** (not gated behind `!user.isAnonymous` the way
 "Delete account" is) — local-only progress with no Firebase account behind it is exactly
-the data most at risk of being lost.
+the data most at risk of being lost. `exportBackupJson`/`exportBackupCsv`/
+`importBackupFromFile` (`src/ui/utils/backupActions.js`) hold this logic, not `sidebar.js`
+itself — extracted so `backupReminderBanner.js`'s "Download backup" CTA (below) and the
+dropdown's own menu item share one implementation instead of drifting apart.
+
+**Periodic backup reminder — nudging, not nagging (issue #18 follow-up).** Nothing
+prompted a user to actually take a backup — export/import above was purely opt-in and
+easy to forget existed entirely. `src/ui/components/backupReminderBanner.js`
+(`createBackupReminderBanner({ user, store })`) is a dismissible banner, same shape as
+`verificationBanner.js` — a plain function returning a node or `null`, decided once at
+mount, no subscription/timer of its own — shown on the dashboard once
+`REMINDER_AFTER_MS` (14 days, `src/ui/utils/backupReminder.js`) has passed since a
+user's last JSON backup, or since their account was first seen if they've never taken
+one; never shown for a roadmap with no real progress (`item.done || item.custom`, same
+check `roadmapStore.js`'s own internal `hasRealProgress` makes). "Download backup"
+exports immediately and dismisses; "Not now" starts a `SNOOZE_AFTER_DISMISS_MS` (7 day)
+quiet window rather than closing it forever. All three timestamps
+(`backupFirstSeenAtKey`/`lastBackupAtKey`/`backupReminderDismissedAtKey`,
+`localStorageKeys.js`) are keyed per-uid — same pattern as `verifyDismissedKey` above —
+device-level, never synced to Firebase, never explicitly cleared on sign-out (harmless,
+since each key already carries the uid and a stale timestamp for a different account
+does nothing). Only `exportBackupJson` calls `markBackupTaken()` — a CSV export never
+does, since CSV is one-way/lossy and isn't a restorable backup. Shown for an anonymous
+guest session too, same reasoning as the dropdown items themselves.
 
 `item.completedAt: number | null` (prerequisite for issue #8's progress analytics) is
 set automatically by `updateItem()` — `Date.now()` the moment a patch flips `done`

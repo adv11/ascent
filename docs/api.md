@@ -176,6 +176,41 @@ established, applied to the schema above.
 | `downloadTextFile` | `(filename: string, content: string, mimeType: string) => void` | Client-side only — a throwaway `Blob`/`URL.createObjectURL()`/`<a download>` click, no server round trip. |
 | `readFileAsText` | `(file: File) => Promise<string>` | Wraps `FileReader.readAsText`. |
 
+## `src/ui/utils/backupActions.js` — shared export/import handlers (issue #18 follow-up)
+
+Extracted out of `sidebar.js` so its account-dropdown menu items and
+`backupReminderBanner.js`'s "Download backup" CTA drive identical logic instead of two
+copies drifting apart.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `exportBackupJson` | `(store) => void` | Downloads the JSON backup and calls `markBackupTaken(uid)` (below) — the only export path that resets the backup-reminder clock. |
+| `exportBackupCsv` | `(store) => void` | Downloads the CSV — never calls `markBackupTaken`, since a CSV isn't a restorable backup. |
+| `importBackupFromFile` | `async (store, file: File) => void` | Validates, shows the diff-summary modal, sanitizes resource URLs (`isValidUrl()`), applies Merge/Overwrite via `store.importBackupItems()`/`store.removeItem()`, and shows a result toast. |
+
+## `src/ui/utils/backupReminder.js` — periodic backup-reminder timing (issue #18 follow-up)
+
+Pure aside from `localStorage`/`Date.now()` — no DOM. Backs `backupReminderBanner.js`.
+Every function is keyed per-uid (`localStorageKeys.js`'s `backupFirstSeenAtKey`/
+`lastBackupAtKey`/`backupReminderDismissedAtKey`), same pattern as
+`verifyDismissedKey` — device-level, never synced to Firebase, never cleared on
+sign-out (harmless since it's just a timestamp, already namespaced by uid).
+
+| Export | Signature | Notes |
+|---|---|---|
+| `REMINDER_AFTER_MS` | `number` (14 days) | How long since the last backup (or first-seen, if none) before the reminder becomes due. |
+| `SNOOZE_AFTER_DISMISS_MS` | `number` (7 days) | How long a "Not now" dismissal suppresses the reminder before it can resurface. |
+| `ensureBackupFirstSeenAt` | `(uid: string, now?: number) => void` | Idempotent — call on every dashboard render; only writes once per uid, establishing a brand-new account's 14-day countdown baseline so it's never nagged on day one. |
+| `markBackupTaken` | `(uid: string, now?: number) => void` | Called by `exportBackupJson` only — resets the "since last backup" clock. |
+| `dismissBackupReminder` | `(uid: string, now?: number) => void` | Called by the banner's "Not now" (and by "Download backup", which also dismisses). |
+| `shouldShowBackupReminder` | `(uid: string, hasRealProgress: boolean, now?: number) => boolean` | `false` for a signed-out user or a roadmap with no real progress; otherwise `true` once `REMINDER_AFTER_MS` has elapsed since the later of last-backup/first-seen, unless still inside a post-dismissal snooze window. |
+
+## `src/ui/components/backupReminderBanner.js` — periodic backup nudge (issue #18 follow-up)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `createBackupReminderBanner` | `({ user, store }) => HTMLElement \| null` | Same shape as `verificationBanner.js` — a plain function returning a node or `null` (never rendered), decided once at mount, no subscription/timer of its own. Shown for an anonymous guest session too. |
+
 ## `src/ui/utils/linkDetector.js` — resource link-type detection (issue #12B Phase 1)
 
 Pure — no DOM, no side effects.

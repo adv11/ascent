@@ -1,14 +1,10 @@
-import { el, isValidUrl } from '../dom.js';
+import { el } from '../dom.js';
 import { createBrandMark } from './brand.js';
 import { createAvatar } from './avatar.js';
 import { createDropdown } from './dropdown.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
-import { buildRoadmapExport, buildRoadmapCsv, exportFileBaseName } from '../../core/roadmap/backupSchema.js';
-import { validateBackupText } from '../../core/roadmap/backupValidator.js';
-import { downloadTextFile, readFileAsText } from '../utils/backupTransfer.js';
-import { openImportBackupModal } from './importBackupModal.js';
-import { showToast } from './toast.js';
+import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../utils/backupActions.js';
 
 // Issue #6 Phase 2.1. Nav list is deliberately just Dashboard + My Roadmaps —
 // the original spec also listed Resources/Settings, but neither page exists
@@ -25,75 +21,6 @@ function readCollapsed() {
   return localStorage.getItem(KEYS.SIDEBAR_COLLAPSED) === '1';
 }
 
-// Data export/backup (issue #18) — "Download backup"/"Export CSV" live in the
-// account dropdown for now since the account settings page (#16) this was
-// originally scoped to doesn't exist yet; move these there once it does.
-function handleExportJson(store) {
-  const snapshot = store.getSnapshot();
-  const payload = buildRoadmapExport(snapshot);
-  downloadTextFile(`${exportFileBaseName(snapshot.activeTemplateId)}.json`, JSON.stringify(payload, null, 2), 'application/json');
-  showToast('Backup downloaded.', 'success');
-}
-
-function handleExportCsv(store) {
-  const snapshot = store.getSnapshot();
-  const csv = buildRoadmapCsv(snapshot);
-  downloadTextFile(`${exportFileBaseName(snapshot.activeTemplateId)}.csv`, csv, 'text/csv');
-  showToast('CSV exported.', 'success');
-}
-
-// Import from JSON (issue #18 Phase B). Validates, shows a diff summary, then
-// restores through roadmapStore.importBackupItems()/removeItem() — never by
-// mutating store state directly — so structuralVersion/queueSave fire
-// correctly, same contract every other store mutation already has.
-async function handleImportFile(store, file) {
-  if (!file) return;
-  let text;
-  try {
-    text = await readFileAsText(file);
-  } catch {
-    showToast('Could not read that file.', 'error');
-    return;
-  }
-
-  const result = validateBackupText(text);
-  if (!result.valid) {
-    showToast(result.errors[0] || 'That file is not a valid Ascent backup.', 'error');
-    return;
-  }
-
-  const snapshot = store.getSnapshot();
-  const mode = await openImportBackupModal(snapshot.allItems, result.data);
-  if (!mode) return;
-
-  // Resource URLs are untrusted input here just like anywhere else a URL
-  // enters the store (root CLAUDE.md's "Resource URLs must be validated
-  // before use as href") — strip any non-http(s) resource before it ever
-  // reaches importBackupItems(), the same save-time guard itemPanel.js
-  // applies to a manually entered resource.
-  const sanitizedItems = {};
-  Object.entries(result.data.items).forEach(([id, item]) => {
-    sanitizedItems[id] = {
-      ...item,
-      resources: (item.resources || []).filter(resource => isValidUrl(resource?.url))
-    };
-  });
-
-  if (mode === 'overwrite') {
-    const keepIds = new Set(Object.keys(sanitizedItems));
-    Object.keys(snapshot.allItems).forEach(id => {
-      if (!keepIds.has(id) && !snapshot.allItems[id].deleted) store.removeItem(id);
-    });
-  }
-
-  const outcome = store.importBackupItems(sanitizedItems);
-  const restoredCount = outcome.added + outcome.updated;
-  showToast(
-    `Restored ${restoredCount} item${restoredCount === 1 ? '' : 's'}${outcome.skipped ? ` (${outcome.skipped} skipped)` : ''}.`,
-    restoredCount ? 'success' : 'error'
-  );
-}
-
 // Extracted out of createSidebar() (issue #18) — builds the account
 // dropdown's item list and the hidden file input "Import backup…" clicks to
 // open a picker. Backup export/import is available to every signed-in
@@ -108,13 +35,13 @@ function buildAccountMenu({ user, store, identityTrigger, onDeleteAccount }) {
     onChange: () => {
       const file = importInput.files?.[0];
       importInput.value = '';
-      if (file) handleImportFile(store, file);
+      if (file) importBackupFromFile(store, file);
     }
   });
 
   const dropdownItems = [
-    { text: 'Download backup (JSON)', onClick: () => handleExportJson(store) },
-    { text: 'Export CSV', onClick: () => handleExportCsv(store) },
+    { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
+    { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
     { text: 'Import backup…', onClick: () => importInput.click() }
   ];
   if (!user.isAnonymous && onDeleteAccount) {

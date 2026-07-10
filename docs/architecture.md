@@ -2437,3 +2437,55 @@ New tests: `tests/unit/backupSchema.test.js`, `tests/unit/backupValidator.test.j
 done-cycling, merge/add/un-delete/skip/cap behavior, and cross-uid field stripping.
 `npm test` (584 passed) and `npm run lint` (0 errors, same 24 pre-existing warnings)
 green.
+
+### 2026-07-11 — PR TBD — Periodic backup reminder + clearer restore wording (issue #18 follow-up)
+
+Two gaps found live after issue #18 shipped: nothing in the app ever prompted a user to
+actually take a backup (purely opt-in, easy to forget existed), and the restore-backup
+confirmation modal's copy read as internal/technical ("item(s)", an em-dash stat line,
+tradeoffs crammed into button labels) rather than something an end user skimming it cold
+would find clear.
+
+`src/ui/utils/backupReminder.js` (pure aside from `localStorage`/`Date.now()`) is the new
+timing logic: `shouldShowBackupReminder(uid, hasRealProgress, now)` returns true once 14
+days (`REMINDER_AFTER_MS`) have passed since a user's last JSON backup — or since their
+account was first seen, for one who's never taken one, so a brand-new account isn't
+nagged on day one — unless a "Not now" dismissal started a 7-day snooze
+(`SNOOZE_AFTER_DISMISS_MS`) that hasn't elapsed yet. Three new per-uid `localStorage` keys
+(`localStorageKeys.js`, same keyed-by-uid shape as the existing `verifyDismissedKey`)
+back it — device-level, never synced to Firebase, never explicitly cleared on sign-out
+(harmless, since each key already carries the uid). `src/ui/components/
+backupReminderBanner.js` (`createBackupReminderBanner({ user, store })`) is the banner
+itself, deliberately built the same way as the existing `verificationBanner.js` — a
+plain function returning a node or `null`, decided once at mount, no subscription/timer
+to clean up — wired into `dashboard.js` right next to it. Shown for an anonymous guest
+session too, same reasoning issue #18's export/import menu items already used: local-only
+progress is exactly the data most at risk of being lost.
+
+`exportBackupJson`/`exportBackupCsv`/`importBackupFromFile` were pulled out of
+`sidebar.js` into a new shared `src/ui/utils/backupActions.js` — the reminder banner's
+"Download backup" button and the account dropdown's own menu item now call one shared
+implementation instead of `sidebar.js` growing a second copy. Only `exportBackupJson`
+calls the new `markBackupTaken()` — a CSV export never resets the reminder clock, since
+CSV is one-way/lossy and isn't a restorable backup.
+
+`importBackupModal.js`'s copy was rewritten end to end: "item(s)" → "topic(s)" (matching
+every other user-facing string in the app — `itemPanel.js`'s "Edit topic", the
+800-topic-limit toast — the one place in the whole export/import surface that hadn't
+matched), the diff summary is now a plain sentence (`summarySentence()`, handles the
+all-new and all-already-restored cases with distinct, more natural phrasing instead of
+an awkward "0 new" clause) instead of a stat-line concatenation, and Merge/Overwrite's
+actual tradeoff is spelled out in two full sentences above the buttons rather than packed
+into the button text itself — the buttons now just name the action
+(`mergeButtonLabel()` still adapts its count phrasing, "Overwrite my whole roadmap with
+this backup" instead of a parenthetical).
+
+New tests: `tests/unit/backupReminder.test.js`, `tests/unit/backupActions.test.js`,
+`tests/unit/backupReminderBanner.test.js`, updated wording assertions in
+`tests/unit/importBackupModal.test.js`. Verified live via Playwright against
+`npm run dev`: a fresh guest account shows no reminder; backdating the account's
+first-seen timestamp 15 days and reloading shows it; clicking "Download backup" from the
+banner both downloads the file and dismisses it; the reworded restore modal reads
+correctly with a real 485-topic backup file. Screenshots committed to
+`docs/screenshots/issue-18-export-import/`. `npm test` (608 passed) and `npm run lint`
+(0 errors, same 24 pre-existing warnings) green.

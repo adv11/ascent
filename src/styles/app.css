@@ -1173,6 +1173,21 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .verification-msg { flex: 1; min-width: 0; }
 .verification-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
 
+.backup-reminder-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--brand-light);
+  border-bottom: 1px solid var(--brand-light-border);
+  color: var(--brand-dark);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.backup-reminder-icon { font-size: var(--text-base); }
+.backup-reminder-msg { flex: 1; min-width: 220px; font-weight: 500; }
+
 .modal-overlay {
   position: fixed;
   inset: 0;
