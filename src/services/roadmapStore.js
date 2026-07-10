@@ -97,6 +97,47 @@ function genId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// completedAt (issue #18, prerequisite for #8's analytics): set once when
+// `done` flips false -> true, cleared when it flips back. A missing field
+// means "never completed" (backward compat, same precedent as `item.notes`).
+// Extracted out of updateItem() so that function's own complexity stays
+// under the eslint `complexity` gate (root CLAUDE.md).
+function withDerivedCompletedAt(patch, wasDone) {
+  if (patch.done === true && !wasDone) return { ...patch, completedAt: Date.now() };
+  if (patch.done === false) return { ...patch, completedAt: null };
+  return patch;
+}
+
+// Shared by setItemDoneInTemplate()'s cached/cold cross-roadmap paths below —
+// its active-template path goes through updateItem()/withDerivedCompletedAt()
+// instead, so this only needs to cover the two paths that build a patched
+// item object directly. Extracted to keep setItemDoneInTemplate's own
+// complexity from growing further (root CLAUDE.md's eslint gate).
+function todoCompletionFields(done) {
+  const timestamp = done ? Date.now() : null;
+  return { completedViaTodoAt: timestamp, completedAt: timestamp };
+}
+
+function nonEmptyString(value) {
+  return typeof value === 'string' && value.trim() ? value : '';
+}
+
+// A backup item's own `title`/`phase`/`section` strings, or `null` if any
+// fails the same shape/length check addItem()/updateItem() enforce.
+// Extracted out of normalizeBackupItem() to keep its complexity down.
+function normalizeBackupFields(incoming) {
+  const title = nonEmptyString(incoming?.title).trim();
+  const phase = nonEmptyString(incoming?.phase);
+  const section = nonEmptyString(incoming?.section);
+  const titleOk = title && title.length <= MAX_TITLE_LENGTH;
+  return (titleOk && phase && section) ? { title, phase, section } : null;
+}
+
+function backupCompletedAt(incoming, done) {
+  if (!done) return null;
+  return Number.isFinite(incoming.completedAt) ? incoming.completedAt : Date.now();
+}
+
 function readLocalCustomRoadmaps() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEYS.CUSTOM_ROADMAPS) || '[]');
@@ -905,12 +946,17 @@ export function createRoadmapStore() {
     if (Array.isArray(patch.resources) && !patch.resources.every(isValidResource)) return false;
     // Only a `done` toggle is cosmetic (see docs/architecture.md §5.1). A
     // `notes` patch (issue #15) must NOT be added here — the notes indicator
-    // badge on the row needs structuralVersion to bump so it re-renders.
+    // badge on the row needs structuralVersion to bump so it re-renders. The
+    // cosmetic check runs against the caller's own patch keys, before
+    // `completedAt` (below) is folded in — `completedAt` is a derived,
+    // internal side effect of a `done` toggle, not something callers set
+    // directly, so a plain `{ done }` toggle from dashboard.js stays cosmetic
+    // exactly like it always has (issue #18).
     const isCosmetic = Object.keys(patch).every(key => key === 'done');
     if (!isCosmetic) structuralVersion += 1;
     items[id] = {
       ...items[id],
-      ...patch,
+      ...withDerivedCompletedAt(patch, items[id].done),
       updatedAt: Date.now()
     };
     queueSave();
@@ -955,7 +1001,12 @@ export function createRoadmapStore() {
     const cached = roadmapCache[templateId];
     if (cached?.items) {
       if (!cached.items[itemId] || cached.items[itemId].deleted) return { ok: false, title: null };
-      const patchedItem = { ...cached.items[itemId], done, completedViaTodoAt: done ? Date.now() : null, updatedAt: Date.now() };
+      const patchedItem = {
+        ...cached.items[itemId],
+        done,
+        ...todoCompletionFields(done),
+        updatedAt: Date.now()
+      };
       const nextItems = { ...cached.items, [itemId]: patchedItem };
       cached.items = nextItems;
       persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: cached.phases });
@@ -988,7 +1039,12 @@ export function createRoadmapStore() {
     const baseItems = remote?.items || localBlob?.items;
     if (!baseItems?.[itemId] || baseItems[itemId].deleted) return { ok: false, title: null };
     const basePhases = normalizeStringArray(remote?.phases) || normalizeStringArray(localBlob?.phases) || [];
-    const patchedItem = { ...baseItems[itemId], done, completedViaTodoAt: done ? Date.now() : null, updatedAt: Date.now() };
+    const patchedItem = {
+      ...baseItems[itemId],
+      done,
+      ...todoCompletionFields(done),
+      updatedAt: Date.now()
+    };
     const nextItems = { ...baseItems, [itemId]: patchedItem };
     persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: basePhases });
     if (uid) {
@@ -1022,6 +1078,7 @@ export function createRoadmapStore() {
       section,
       priority,
       done: false,
+      completedAt: null,
       custom: true,
       deleted: false,
       resources: [],
@@ -1066,6 +1123,93 @@ export function createRoadmapStore() {
     updateItem(id, { resources: next });
   }
 
+  const VALID_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
+
+  // Normalizes one backup-file item into this store's own field shape, or
+  // returns `null` if it fails the same per-field caps addItem/updateItem
+  // enforce. Extracted out of importBackupItems() so that function's own
+  // complexity stays under the eslint `complexity` gate (root CLAUDE.md).
+  function normalizeBackupItem(incoming) {
+    const fields = normalizeBackupFields(incoming);
+    if (!fields) return null;
+
+    const done = !!incoming.done;
+    return {
+      ...fields,
+      priority: VALID_PRIORITIES.includes(incoming.priority) ? incoming.priority : 'P2',
+      done,
+      completedAt: backupCompletedAt(incoming, done),
+      resources: Array.isArray(incoming.resources) ? incoming.resources.filter(isValidResource) : [],
+      notes: typeof incoming.notes === 'string' ? incoming.notes.slice(0, 5000) : ''
+    };
+  }
+
+  // Restores items from a validated JSON backup (issue #18) into the
+  // currently active roadmap. This is the store's own equivalent of
+  // addItem()/updateItem() for a whole batch at once — UI call sites (the
+  // import modal) go through this single method rather than ever touching
+  // `items` directly, same "no direct items mutation" contract addItem/
+  // updateItem already give every other caller. `backupItems` is the
+  // already-schema-validated `items` map from a backup payload (see
+  // src/core/roadmap/backupValidator.js) — this function re-checks the same
+  // per-field caps addItem/updateItem enforce (title length, resource
+  // label/url length, the per-roadmap item-count cap) since a backup file is
+  // untrusted input, not just re-trusting the validator.
+  //
+  // Deliberately preserves each backup item's own id rather than generating a
+  // fresh one like addItem() does: restoring the same export back into the
+  // same account needs to recognize "this item already exists" by id so a
+  // repeated import is idempotent (merges instead of duplicating), and the
+  // diff-summary UI (diffBackupItems) counts new-vs-existing the same way.
+  // Restoring into a different account just means every id is unrecognized
+  // and everything imports as new — there is no uid stored on an item to
+  // "strip", so cross-account import is naturally safe with no extra step.
+  function importBackupItems(backupItems) {
+    if (!backupItems || typeof backupItems !== 'object') return { added: 0, updated: 0, skipped: 0 };
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    Object.entries(backupItems).forEach(([id, incoming]) => {
+      const normalized = normalizeBackupItem(incoming);
+      if (!normalized) {
+        skipped += 1;
+        return;
+      }
+
+      if (items[id]) {
+        items[id] = {
+          ...items[id],
+          ...normalized,
+          deleted: false,
+          updatedAt: Date.now()
+        };
+        updated += 1;
+        return;
+      }
+
+      const activeCount = Object.values(items).filter(item => !item.deleted).length;
+      if (activeCount >= MAX_ITEMS_PER_ROADMAP) {
+        skipped += 1;
+        return;
+      }
+      items[id] = {
+        id,
+        ...normalized,
+        custom: true,
+        deleted: false,
+        createdAt: Date.now()
+      };
+      added += 1;
+    });
+
+    if (added || updated) {
+      structuralVersion += 1;
+      queueSave();
+    }
+    return { added, updated, skipped };
+  }
+
   migrateLocalRoadmapsShape();
   loadLocal();
 
@@ -1096,6 +1240,7 @@ export function createRoadmapStore() {
     addResource,
     updateResource,
     removeResource,
+    importBackupItems,
     flush,
     getUiState() {
       try {

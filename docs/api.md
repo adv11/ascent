@@ -27,10 +27,11 @@ Returns a store instance with the following methods.
 | `renameSection` | `(phaseId: string, sectionId: string, newTitle: string) => void` | Issue #4 — same guard. Re-files matching items to the new section title. |
 | `removeSection` | `(phaseId: string, sectionId: string) => void` | Issue #4 — same guard. Soft-deletes every item filed under the removed section. |
 | `getSnapshot` | `(meta?: object) => Snapshot` | Synchronous; returns the current state merged with any extra `meta` fields. |
-| `updateItem` | `(id: string, patch: object) => void` | Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). A `{ notes }` patch (issue #15) is therefore non-cosmetic — never add `'notes'` to the cosmetic-check. |
-| `addItem` | `({ title, phase, section, priority }) => boolean` | Returns `false` (no-op, no `structuralVersion` bump) once the roadmap already holds 1,000 non-deleted items — issue #24's client-enforced cap, since Realtime Database rules can't count a map's children. Otherwise adds the item, bumps `structuralVersion`, seeds `notes: ''`, and returns `true`. Callers must check the return value. |
+| `updateItem` | `(id: string, patch: object) => boolean` | Returns `false` (no-op) if `id` doesn't exist or the patch fails a length cap. Bumps `structuralVersion` unless `patch` only touches `done` (see architecture.md §5.1). A `{ notes }` patch (issue #15) is therefore non-cosmetic — never add `'notes'` to the cosmetic-check. Issue #18: a `patch.done` transition also derives `completedAt` internally (`Date.now()` on `false -> true`, `null` on `true -> false`) — this derived field is applied *after* the cosmetic-check runs against the caller's own patch keys, so a plain `{ done }` toggle still stays cosmetic. |
+| `addItem` | `({ title, phase, section, priority }) => boolean` | Returns `false` (no-op, no `structuralVersion` bump) once the roadmap already holds 800 non-deleted items (issue #53, lowered from 1,000) — Realtime Database rules can't count a map's children. Otherwise adds the item, bumps `structuralVersion`, seeds `notes: ''`/`completedAt: null`, and returns `true`. Callers must check the return value. |
 | `removeItem` | `(id: string) => void` | Soft-delete (`deleted: true`); always bumps `structuralVersion`. |
 | `addResource` / `updateResource` / `removeResource` | `(id, ...) => void` | Mutate an item's `resources` array via `updateItem`. |
+| `importBackupItems` | `(backupItems: Record<string, object>) => { added: number, updated: number, skipped: number }` | Issue #18 — restores a validated JSON backup's `items` map (see "Backup export/import" below) into the active roadmap. Preserves each item's own id (merges onto a matching existing id instead of duplicating — including un-deleting a soft-deleted match); a genuinely new id is subject to the same 800-item cap `addItem` enforces. Re-validates title/resource caps itself (a backup file is untrusted input). Bumps `structuralVersion` once and calls `queueSave()` once if anything was added/updated; a call where everything was skipped is a total no-op. Never mutates `items` directly from outside the store — the one entry point UI import call sites use. |
 | `flush` | `async () => void` | Immediately persists `items` and `phases` to `localStorage` and (if signed in) Firebase, bypassing the debounce. |
 | `getUiState` / `setUiState` | `() => object` / `(state) => void` | Per-device UI prefs (open phases, filter, search) — never synced to Firebase. |
 
@@ -40,9 +41,13 @@ Returns a store instance with the following methods.
 {
   id: string, title: string, phase: string, section: string, priority: 'P0' | 'P1' | 'P2' | 'P3',
   done: boolean,
+  completedAt?: number | null,  // issue #18 — Date.now() set on done false->true, null on true->false.
+                                 // Missing/null both mean "never completed" (backward compat, same as notes).
   custom: boolean, deleted: boolean,
   resources: { label: string, url: string }[],
   notes?: string,     // issue #15 — plain text, ≤ 5000 chars. Missing/'' both mean "no notes".
+  completedViaTodoAt?: number | null,  // issue #56 follow-up — set only via setItemDoneInTemplate()
+                                        // (a linked Daily Todo), distinct from completedAt above.
   createdAt: number, updatedAt?: number,
 }
 ```
@@ -131,6 +136,45 @@ Pure — no DOM, no store, no Firebase. Only ever called on data that has alread
 |---|---|---|
 | `IMPORT_PROMPT_VERSION` | `number` (currently `1`) | Must match `SUPPORTED_SCHEMA_VERSION` in `importValidator.js` — bumping one without the other means the prompt asks for a schema the validator won't accept. |
 | `buildImportPrompt` | `(topic: string, options?: { experienceLevel?: string, timeframe?: string, goal?: string, alreadyKnow?: string }) => string` | Renders the full copyable prompt with `topic` as the start of its last line (or a placeholder bracket if empty) — always a complete, ready-to-paste block, never a template with a blank left in it. `options` (issue #64 Part 2) appends one instruction line per set field after the topic line — `Experience level: …`, `Target timeframe: …`, `Goal / context: …`, `Already know: …` (trimmed) — each omitted entirely when unset/blank, never rendered as an empty line. These only ever change the free-text instructions block, never the JSON schema contract above it, so this needed no `IMPORT_PROMPT_VERSION` bump and a prompt copied before this existed still parses identically. |
+
+## `src/core/roadmap/backupSchema.js` — backup export format (issue #18)
+
+Pure — no DOM, no store, no Firebase. A distinct schema/versioning track from
+`importValidator.js`/`schemaAdapter.js` above (AI-import) — this snapshots/restores a
+roadmap the user already has, not a generated payload that seeds a new one.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `EXPORT_SCHEMA_VERSION` | `number` (currently `1`) | Bumped only when the exported/imported item shape changes in a way an older app version couldn't read. Unrelated to `importValidator.js`'s `SUPPORTED_SCHEMA_VERSION` — do not conflate the two. |
+| `buildRoadmapExport` | `(snapshot: Snapshot) => BackupPayload` | `snapshot` is a `roadmapStore.getSnapshot()` result. Excludes soft-deleted (`deleted: true`) items. `BackupPayload`: `{ schemaVersion, exportedAt: string (ISO), exportedByUid: string \| null, templateId: string, itemCount: number, items: Record<string, BackupItem> }`, `BackupItem`: `{ title, phase, section, priority, done, completedAt, resources, notes }` (a subset of the full Item shape — no `id`/`custom`/`deleted`/`createdAt`/`updatedAt`/`completedViaTodoAt`, none of which a restore needs). `exportedByUid` is informational only, never read back on import — there is nothing to "strip" for a cross-account restore. |
+| `buildRoadmapCsv` | `(snapshot: Snapshot) => string` | Flattened, RFC 4180-quoted (CRLF rows, doubled internal quotes) view for spreadsheet review — one row per non-deleted item, columns `phase,section,title,priority,done,completedAt,resourceCount,notes`. One-way — there is no CSV import, since a flat row has no resource-object slots to round-trip. |
+| `exportFileBaseName` | `(templateId: string) => string` | `ascent-roadmap-<sanitized-templateId>-YYYY-MM-DD`; callers append `.json`/`.csv`. |
+
+## `src/core/roadmap/backupValidator.js` — backup JSON validation (issue #18)
+
+Pure — no DOM, no store, no Firebase. Same parse/validate split `importValidator.js`
+established, applied to the schema above.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `SUPPORTED_BACKUP_SCHEMA_VERSION` | `number` (currently `1`, re-exported from `backupSchema.js`'s `EXPORT_SCHEMA_VERSION`) | The only `schemaVersion` `validateBackupPayload` accepts. |
+| `parseBackupJson` | `(rawText: string) => { data: object \| null, error: string \| null }` | Same contract as `parseImportJson`. |
+| `validateBackupPayload` | `(data: unknown) => string[]` | Empty array means valid. Checks top-level shape, `schemaVersion`, the `items` map's presence, then per-item `title`/`phase`/`section`/`priority ∈ P0-P3`. Error strings are `items.<id>.<field> is invalid`. Stops collecting past 30 errors (`...additional errors omitted.`) so a badly-mangled file doesn't produce an unusable wall of text. |
+| `validateBackupText` | `(rawText: string) => { valid: boolean, errors: string[], data: object \| null }` | Combines `parseBackupJson` + `validateBackupPayload`; `data` only set when `valid`. |
+| `diffBackupItems` | `(currentAllItems: Record<string, Item>, backupItems: Record<string, object>) => { totalCount, existingCount, newCount }` | Pure count-only diff for the import confirmation UI — matches by id against `currentAllItems` (includes soft-deleted items, so restoring over a deleted one correctly counts as "already exists"). Never mutates. |
+
+## `src/ui/components/importBackupModal.js` — restore confirmation UI (issue #18)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `openImportBackupModal` | `(currentAllItems, backupData) => Promise<'merge' \| 'overwrite' \| null>` | Shows the `diffBackupItems()` summary and resolves the user's choice — `null` on cancel/Escape/outside-click. Never shown for an invalid file (callers run `validateBackupText` first). Built as an ad hoc `attachFocusTrap()` modal (`confirmDialog.js`'s pattern), not `openModal()` — the latter's `close()` has no callback hook for Escape/outside-click, which a promise-resolving modal needs. |
+
+## `src/ui/utils/backupTransfer.js` — download/file-read DOM helpers (issue #18)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `downloadTextFile` | `(filename: string, content: string, mimeType: string) => void` | Client-side only — a throwaway `Blob`/`URL.createObjectURL()`/`<a download>` click, no server round trip. |
+| `readFileAsText` | `(file: File) => Promise<string>` | Wraps `FileReader.readAsText`. |
 
 ## `src/ui/utils/linkDetector.js` — resource link-type detection (issue #12B Phase 1)
 

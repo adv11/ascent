@@ -160,6 +160,202 @@ describe('structuralVersion contract', () => {
   });
 });
 
+// Issue #18 — completedAt is a prerequisite for #8's progress analytics.
+// Set once on a false -> true transition, cleared on true -> false, and a
+// plain `{ done }` toggle stays cosmetic (no structuralVersion bump) even
+// though completedAt is folded into the same in-memory patch internally.
+describe('completedAt (issue #18)', () => {
+  it('sets completedAt when done flips false -> true', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1700000000000);
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    store.updateItem(firstId, { done: true });
+
+    expect(store.getSnapshot().allItems[firstId].completedAt).toBe(1700000000000);
+  });
+
+  it('clears completedAt when done flips true -> false', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    store.updateItem(firstId, { done: true });
+    store.updateItem(firstId, { done: false });
+
+    expect(store.getSnapshot().allItems[firstId].completedAt).toBeNull();
+  });
+
+  it('does not re-stamp completedAt on a redundant done:true patch', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1700000000000);
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    store.updateItem(firstId, { done: true });
+    vi.setSystemTime(1700000099999);
+    store.updateItem(firstId, { done: true, notes: 'still working through this' });
+
+    expect(store.getSnapshot().allItems[firstId].completedAt).toBe(1700000000000);
+  });
+
+  it('cycling done true -> false -> true stays cosmetic and never bumps structuralVersion', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const initial = store.getSnapshot().structuralVersion;
+
+    store.updateItem(firstId, { done: true });
+    store.updateItem(firstId, { done: false });
+    store.updateItem(firstId, { done: true });
+
+    expect(store.getSnapshot().structuralVersion).toBe(initial);
+    expect(store.getSnapshot().allItems[firstId].completedAt).not.toBeNull();
+  });
+
+  it('a fresh item from addItem starts with completedAt: null', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    store.addItem({ title: 'New Topic', phase: 'Java Core', section: 'Basics', priority: 'P2' });
+    const added = Object.values(store.getSnapshot().allItems).find(item => item.title === 'New Topic');
+
+    expect(added.completedAt).toBeNull();
+  });
+});
+
+// Issue #18 Phase B — restoring a JSON backup goes through this one store
+// method rather than ever mutating `items` directly, same contract addItem/
+// updateItem already give every other caller.
+describe('importBackupItems (issue #18)', () => {
+  function backupItem(overrides = {}) {
+    return {
+      title: 'Imported topic',
+      phase: 'Java Core',
+      section: 'Basics',
+      priority: 'P2',
+      done: false,
+      completedAt: null,
+      resources: [],
+      notes: '',
+      ...overrides
+    };
+  }
+
+  it('adds a brand-new id as a new item and bumps structuralVersion', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const initial = store.getSnapshot().structuralVersion;
+
+    const outcome = store.importBackupItems({ 'brand-new-id': backupItem() });
+
+    expect(outcome).toEqual({ added: 1, updated: 0, skipped: 0 });
+    expect(store.getSnapshot().allItems['brand-new-id'].title).toBe('Imported topic');
+    expect(store.getSnapshot().structuralVersion).toBe(initial + 1);
+  });
+
+  it('merges onto a matching existing id instead of duplicating it', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const originalTitle = store.getSnapshot().allItems[firstId].title;
+
+    const outcome = store.importBackupItems({
+      [firstId]: backupItem({ title: 'Restored title', done: true, completedAt: 1700000000000 })
+    });
+
+    expect(outcome).toEqual({ added: 0, updated: 1, skipped: 0 });
+    const restored = store.getSnapshot().allItems[firstId];
+    expect(restored.title).toBe('Restored title');
+    expect(restored.title).not.toBe(originalTitle);
+    expect(restored.done).toBe(true);
+    expect(restored.completedAt).toBe(1700000000000);
+  });
+
+  it('un-deletes a soft-deleted item it matches by id', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    store.removeItem(firstId);
+    expect(store.getSnapshot().allItems[firstId].deleted).toBe(true);
+
+    store.importBackupItems({ [firstId]: backupItem() });
+
+    expect(store.getSnapshot().allItems[firstId].deleted).toBe(false);
+  });
+
+  it('skips an item missing a required field without touching anything else', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+
+    const outcome = store.importBackupItems({ 'bad-id': backupItem({ title: '' }) });
+
+    expect(outcome).toEqual({ added: 0, updated: 0, skipped: 1 });
+    expect(store.getSnapshot().allItems['bad-id']).toBeUndefined();
+  });
+
+  it('drops a resource that fails isValidResource', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+
+    store.importBackupItems({
+      'brand-new-id': backupItem({
+        resources: [
+          { label: 'Good link', url: 'https://example.com' },
+          { label: 'x'.repeat(MAX_RESOURCE_LABEL_LENGTH + 1), url: 'https://example.com' }
+        ]
+      })
+    });
+
+    expect(store.getSnapshot().allItems['brand-new-id'].resources).toEqual([
+      { label: 'Good link', url: 'https://example.com' }
+    ]);
+  });
+
+  it('never exceeds the per-roadmap item cap for genuinely new items', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const startingCount = store.getSnapshot().items.length;
+    const backupItems = {};
+    for (let i = 0; i < 900 - startingCount; i += 1) {
+      backupItems[`overflow-${i}`] = backupItem({ title: `Overflow ${i}` });
+    }
+
+    const outcome = store.importBackupItems(backupItems);
+
+    expect(outcome.skipped).toBeGreaterThan(0);
+    expect(store.getSnapshot().items.length).toBeLessThanOrEqual(800);
+  });
+
+  it('is a no-op that never bumps structuralVersion when everything is skipped', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    const initial = store.getSnapshot().structuralVersion;
+
+    const outcome = store.importBackupItems({ 'bad-id': backupItem({ phase: '' }) });
+
+    expect(outcome).toEqual({ added: 0, updated: 0, skipped: 1 });
+    expect(store.getSnapshot().structuralVersion).toBe(initial);
+  });
+
+  // Items never carry a uid — importing a backup exported from a different
+  // account (or the same one) restores identically either way, since
+  // ownership is scoped by which store/account instance you call this on,
+  // never by anything inside the item payload itself.
+  it('ignores any extraneous fields (like a uid) on the incoming item', () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+
+    store.importBackupItems({
+      'brand-new-id': backupItem({ uid: 'someone-elses-uid', exportedByUid: 'someone-elses-uid' })
+    });
+
+    const imported = store.getSnapshot().allItems['brand-new-id'];
+    expect(imported.uid).toBeUndefined();
+    expect(imported.exportedByUid).toBeUndefined();
+  });
+});
+
 // Issue #24 — Firebase rules can't count a map's children, so a per-roadmap
 // item cap is enforced client-side, in the one place items are created.
 // Lowered from 1,000 to 800 in issue #53 (no real roadmap organically

@@ -14,7 +14,13 @@ paths:
   - "src/ui/components/dailyTodoGuide.js"
   - "src/ui/components/addToDailyTodoModal.js"
   - "src/ui/components/importRoadmapModal.js"
+  - "src/ui/components/importBackupModal.js"
   - "src/ui/components/newRoadmapModal.js"
+  - "src/ui/components/sidebar.js"
+  - "src/ui/utils/backupTransfer.js"
+  - "tests/unit/backupSchema*"
+  - "tests/unit/backupValidator*"
+  - "tests/unit/importBackupModal*"
   - "src/ui/components/buildYourOwnGuide.js"
   - "src/ui/components/itemPanel.js"
   - "src/ui/utils/customRoadmapIcon.js"
@@ -559,5 +565,72 @@ This same guard also applies to `dailyTodoStore.js` (see "Daily Todos store" abo
 `.claude/rules/auth-security.md` for the auth-side half of the sign-out flow.
 
 **Realtime Database rules — no path other than `roadmap`/`roadmaps`/`meta`/`dailyTodos` may be written under `users/{uid}`, and `reports/{uid}` is reserved for issue #9.** `firebase/database.rules.json` has a `$other: { ".validate": "false" }` catch-all under `users/$uid` specifically to stop a buggy or malicious client from writing arbitrary data outside the known shape (still auth-scoped to that uid, just unbounded before this). If you add a genuinely new top-level field under a user's data, add an explicit `.validate` rule for it — never rely on the `$other` catch-all rejecting it silently as "good enough." Realtime Database rules cannot count a map's children, so a per-roadmap item cap is enforced client-side instead, in `roadmapStore.js`'s `addItem()` (the one place items are created) — it returns `false` instead of mutating anything once a roadmap already holds 800 non-deleted items (lowered from 1,000 in issue #53 — no real roadmap organically approaches even 800 topics); callers must check this return value and surface an error rather than assuming success. The same client-side-cap pattern applies to `dailyTodoStore.js`'s `addTodo()` (issue #56) — active (not-done, not-expired) todos are capped at `MAX_ACTIVE_TODOS` (20).
+
+**Data export/backup and JSON restore (issue #18).** `src/core/roadmap/backupSchema.js`
+(`buildRoadmapExport`/`buildRoadmapCsv`/`exportFileBaseName`) and
+`src/core/roadmap/backupValidator.js` (`parseBackupJson`/`validateBackupPayload`/
+`validateBackupText`/`diffBackupItems`) are a second pure validator/schema pair
+alongside `importValidator.js`/`schemaAdapter.js` above — same parse/validate split,
+same `schemaVersion` pattern, but a completely different JSON shape: this one
+snapshots/restores a roadmap the user already has, item-by-item (including `done`/
+`completedAt`/`resources`/`notes`), not a generated roadmap-shape payload that seeds a
+brand-new custom roadmap. Never conflate `EXPORT_SCHEMA_VERSION` with
+`SUPPORTED_SCHEMA_VERSION` — they version unrelated formats and happen to both currently
+be `1`. Export only ever includes the active roadmap's non-deleted items (soft-deleted
+ones are tombstones, not something a backup should resurrect) and is entirely
+client-side — `URL.createObjectURL(new Blob(...))` via `downloadTextFile()`
+(`src/ui/utils/backupTransfer.js`), no server involved. CSV export is deliberately
+one-way (no CSV import) — a flat row has no resource-object slots to round-trip, so
+re-importing a CSV would silently drop every resource link.
+
+Restore goes through a new `roadmapStore.importBackupItems(backupItems)` — the store's
+own batch equivalent of `addItem()`/`updateItem()`, so UI call sites never mutate
+`items` directly, same contract every other store mutation already has. It deliberately
+**preserves each backup item's own id** rather than generating a fresh one the way
+`addItem()` does: restoring the same export back into the same account needs to
+recognize "this item already exists" by id so a repeated import merges instead of
+duplicating, and the diff-summary confirmation (`openImportBackupModal()`,
+`src/ui/components/importBackupModal.js`, using `diffBackupItems()`) counts
+new-vs-existing the same way. It re-validates every item against the same caps
+`addItem`/`updateItem` enforce (title length, resource label/url length, the
+`MAX_ITEMS_PER_ROADMAP` cap) since a backup file is untrusted input, not just re-trusting
+`validateBackupPayload()`'s shape check. There is no per-item `uid` to "strip" on a
+cross-account import — an item never carried one to begin with, only an informational
+`exportedByUid` at the payload's top level, never read back on import — so importing
+into a different account just means every id is unrecognized and everything imports as
+new; no special-casing needed. Resource URLs are untrusted input here exactly like
+anywhere else a URL enters the store (see "Resource URLs must be validated" above) —
+`sidebar.js`'s import handler strips any resource whose `url` fails `isValidUrl()`
+before it ever reaches `importBackupItems()`, the same save-time guard `itemPanel.js`
+applies to a manually entered resource; `roadmapStore.js` itself still only checks
+`isValidResource()` (label/url length), matching every other store-level resource
+mutation's existing behavior. The confirmation modal offers **Merge** (add new,
+update matching-id existing, leave everything else untouched) or **Overwrite** (also
+soft-deletes — via the existing `removeItem()`, never a direct mutation — anything
+currently in the roadmap that isn't in the backup file); both still only ever call
+public store methods.
+
+Placement: export/import lives in the account dropdown (`sidebar.js`'s `buildAccountMenu()`)
+rather than a dedicated settings screen, since issue #16 (account settings page) doesn't
+exist yet — move it there once it does. Available to every signed-in identity,
+**including an anonymous guest session** (not gated behind `!user.isAnonymous` the way
+"Delete account" is) — local-only progress with no Firebase account behind it is exactly
+the data most at risk of being lost.
+
+`item.completedAt: number | null` (prerequisite for issue #8's progress analytics) is
+set automatically by `updateItem()` — `Date.now()` the moment a patch flips `done`
+`false -> true`, `null` the moment it flips back — via a `withDerivedCompletedAt()`
+helper applied *after* the existing cosmetic-check runs against the caller's own patch
+keys, so a plain `{ done }` toggle from the dashboard checklist stays cosmetic (no
+`structuralVersion` bump) exactly like it always has; `completedAt` is a derived,
+internal side effect, never something a caller sets directly. A missing field means
+"never completed" — same backward-compat precedent as `item.notes`. `addItem()` seeds
+`completedAt: null` on every new item. `setItemDoneInTemplate()`'s cached/cold
+cross-roadmap paths (its active-template path already goes through `updateItem()`) set
+the same field alongside the existing `completedViaTodoAt` via a small
+`todoCompletionFields()` helper — the two fields are related but distinct:
+`completedViaTodoAt` only tracks completion through a linked Daily Todo (cleared the
+moment either side is unchecked, per the "Linking a roadmap topic" section above), while
+`completedAt` tracks completion generally, through any path.
 
 **Client-side length caps on title/resource fields (`src/core/roadmap/limits.js`, issue #53) — the client-side half of issue #24's server-side Firebase rules.** `MAX_TITLE_LENGTH` (200), `MAX_RESOURCE_LABEL_LENGTH` (120), and `MAX_RESOURCE_URL_LENGTH` (2048) live in their own dependency-free module — never define these constants directly in `roadmapStore.js`, since `itemPanel.js` needs to import just the numbers without pulling in `roadmapStore.js`'s Firebase-backed storage-adapter chain (`adapterFactory.js` → `FirebaseAdapter.js` → `firebase.js`'s `https://` SDK imports), which breaks under Node's ESM loader in any test that doesn't mock `firebase.js`. `roadmapStore.js`'s `addItem()`, `updateItem()`, `addResource()`, and `updateResource()` — the only places these fields are ever written — reject (returning `false`, mutating nothing) a value over these caps; callers must check the return value, same convention as the item-count cap above. `itemPanel.js`'s Save/Add-resource handlers and `dashboard.js`'s quick-add row surface a friendly message using the same constants before the store call is even attempted — always keep the UI-layer message and the store-layer cap using the same imported constant, never a hardcoded number in either place.

@@ -2376,3 +2376,64 @@ addition to (not instead of) the existing viewport-room check. `.section-label` 
 only sticky element that can share a positioning context with a tooltip trigger
 anywhere in this app today; a future tooltip caller that needs to coexist with a
 different sticky element should extend that selector, not redesign the approach.
+
+### 2026-07-11 — PR TBD — Data export & backup: JSON/CSV export, JSON import-restore, `completedAt` (issue #18)
+
+Two new pure modules under `src/core/roadmap/`, alongside — not replacing —
+`importValidator.js`/`schemaAdapter.js` (the AI-import pair): `backupSchema.js`
+(`buildRoadmapExport`/`buildRoadmapCsv`/`exportFileBaseName`, `EXPORT_SCHEMA_VERSION`)
+and `backupValidator.js` (`parseBackupJson`/`validateBackupPayload`/`validateBackupText`/
+`diffBackupItems`, `SUPPORTED_BACKUP_SCHEMA_VERSION`). Same parse/validate-split
+convention the AI-import pair established, but a structurally different JSON: this one
+is a versioned snapshot of a roadmap the user already has (item `done`/`completedAt`/
+`resources`/`notes` included) for backup/restore, not a generated-content payload that
+seeds a brand-new custom roadmap. See `docs/adr/ADR-008-backup-export-schema-versioning.md`
+for the exact-match-reject-no-migration-yet versioning policy and why it was chosen over
+a semver/auto-migrate scheme. The two `schemaVersion` numbers are unrelated and
+must never be conflated even though both currently read `1`.
+
+`roadmapStore.js` gained `importBackupItems(backupItems)` — a new public method, the
+store's own batch equivalent of `addItem()`/`updateItem()`, so the import UI never
+pokes `items` directly. It preserves each backup item's own id (unlike `addItem()`'s
+always-fresh one) so re-importing the same export merges instead of duplicating, and
+re-validates every item against the same title-length/resource/`MAX_ITEMS_PER_ROADMAP`
+caps `addItem`/`updateItem` already enforce, since a backup file is untrusted input.
+Also added `item.completedAt: number | null`, set by `updateItem()` (via a new
+`withDerivedCompletedAt()` helper) the moment a patch flips `done` `false -> true`,
+cleared on `true -> false` — applied *after* the existing done-only cosmetic check, so a
+plain `{ done }` toggle still never bumps `structuralVersion`. `setItemDoneInTemplate()`'s
+cached/cold cross-roadmap paths set the same field via a small `todoCompletionFields()`
+helper, alongside the pre-existing `completedViaTodoAt` (a related but distinct field —
+the former tracks completion generally, the latter only completion through a linked
+Daily Todo). This is a prerequisite for issue #8's progress analytics, which needs a
+completion timeline reconstructable from a backup.
+
+New UI: `src/ui/components/importBackupModal.js` (`openImportBackupModal()`, an ad hoc
+promise-resolving modal built the same way as `confirmDialog.js`/`importRoadmapModal.js`
+— not `openModal()`, whose `close()` has no callback hook for the Escape/outside-click
+paths a promise-based modal needs) shows a diff summary ("X items found, Y already
+exist, Z new") and a Merge/Overwrite/Cancel choice. `src/ui/utils/backupTransfer.js`
+(`downloadTextFile`/`readFileAsText`) are the DOM-only client-side download/file-read
+helpers — export needs no server round trip. `sidebar.js`'s account dropdown
+(`buildAccountMenu()`, new) gained "Download backup (JSON)"/"Export CSV"/"Import
+backup…", available to **every** signed-in identity including an anonymous guest
+session (previously the dropdown didn't render at all for a guest) — local-only
+progress is exactly the data most at risk of being lost. "Delete account" stays gated
+to a non-anonymous user with `onDeleteAccount` provided, unchanged. Placed here rather
+than a dedicated settings page since issue #16 (account settings) doesn't exist yet.
+
+A resource's `url` is re-validated against `isValidUrl()` (http/https only) in
+`sidebar.js`'s import handler before it ever reaches `importBackupItems()` — the same
+save-time guard `itemPanel.js` applies to a manually entered resource — since a backup
+JSON file is exactly as untrusted as any other external input. There is no per-item
+`uid` anywhere in this store's item shape to "strip" on a cross-account import; only an
+informational `exportedByUid` at the payload's top level, never read back on import —
+importing into a different account just means every id is unrecognized and everything
+imports as new, no special-casing required.
+
+New tests: `tests/unit/backupSchema.test.js`, `tests/unit/backupValidator.test.js`,
+`tests/unit/importBackupModal.test.js`, and two new `describe` blocks in
+`tests/integration/roadmapStore.test.js` (`completedAt`, `importBackupItems`) covering
+done-cycling, merge/add/un-delete/skip/cap behavior, and cross-uid field stripping.
+`npm test` (584 passed) and `npm run lint` (0 errors, same 24 pre-existing warnings)
+green.

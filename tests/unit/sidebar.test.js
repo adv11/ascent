@@ -78,10 +78,16 @@ describe('createSidebar — mobile drawer', () => {
 });
 
 describe('createSidebar — account identity', () => {
-  it('renders a plain (non-dropdown) identity trigger for an anonymous user', async () => {
+  // Issue #18 — an anonymous/guest session's local-only progress is exactly
+  // the data most at risk of being lost, so backup export/import is offered
+  // here too, unlike "Delete account" which stays signed-in-only below.
+  it('gives an anonymous user a backup-only dropdown with no "Delete account" item', async () => {
     const node = await freshSidebar({ activeRoute: '/app', user: { isAnonymous: true }, store: fakeStore() });
     expect(node.querySelector('.app-sidebar-identity').textContent).toContain('Guest session');
-    expect(node.querySelector('.dropdown')).toBeNull();
+    expect(node.querySelector('.dropdown')).not.toBeNull();
+    expect(node.querySelector('.dropdown-item-danger')).toBeNull();
+    const itemText = Array.from(node.querySelectorAll('.dropdown-item')).map(el => el.textContent);
+    expect(itemText).toEqual(['Download backup (JSON)', 'Export CSV', 'Import backup…']);
   });
 
   it('wraps the identity in a dropdown with a "Delete account" item for a signed-in user', async () => {
