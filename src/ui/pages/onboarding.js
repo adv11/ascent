@@ -72,6 +72,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       picking = false;
       setBusy(false);
       cardEl.classList.remove('picking');
+      showToast('Could not open that roadmap. Check your connection and try again.', 'error');
     }
   }
 
@@ -197,6 +198,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       picking = false;
       setBusy(false);
       cardEl.classList.remove('picking');
+      showToast('Could not open that roadmap. Check your connection and try again.', 'error');
     }
   }
 

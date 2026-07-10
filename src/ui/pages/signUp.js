@@ -4,6 +4,8 @@ import { auth, authApi, authErrorMessage } from '../../services/firebase.js';
 import { showToast } from '../components/toast.js';
 import { authShell } from '../components/authShell.js';
 import { scorePassword, makePasswordToggle } from '../utils/password.js';
+import { isValidEmailFormat, attachFieldValidationIcon } from '../utils/fieldValidation.js';
+import { setButtonLoading } from '../utils/buttonLoading.js';
 
 export function renderSignUp(app, { user }) {
   if (user && !user.isAnonymous) {
@@ -13,6 +15,8 @@ export function renderSignUp(app, { user }) {
 
   const message = el('p', { className: 'form-message', text: '' });
   const email = el('input', { className: 'field-input', type: 'email', placeholder: 'you@example.com', autocomplete: 'username' });
+  const emailWrap = el('div', { className: 'field-input-wrap' }, [email]);
+  const emailValidation = attachFieldValidationIcon(emailWrap);
   const password = el('input', { className: 'field-input', type: 'password', placeholder: 'Minimum 6 characters', autocomplete: 'new-password' });
   const confirmPassword = el('input', { className: 'field-input', type: 'password', placeholder: 'Repeat your password', autocomplete: 'new-password' });
   const confirmError = el('p', { className: 'field-error', text: '' });
@@ -32,11 +36,25 @@ export function renderSignUp(app, { user }) {
   function checkConfirmMatch() {
     if (confirmPassword.value && confirmPassword.value !== password.value) {
       confirmError.textContent = 'Passwords do not match.';
+      confirmValidation.setState(false);
       return false;
     }
     confirmError.textContent = '';
+    confirmValidation.setState(confirmPassword.value ? true : null);
     return true;
   }
+
+  // Issue #6 Phase 5.3 — blur validation on email/password; confirm-password
+  // reuses the same ✓/✕ icon but drives it from the existing real-time
+  // checkConfirmMatch() (on 'input') above instead of a redundant blur
+  // listener, so the icon and the .field-error text never disagree.
+  email.addEventListener('blur', () => {
+    const v = email.value.trim();
+    emailValidation.setState(v ? isValidEmailFormat(v) : null);
+  });
+  password.addEventListener('blur', () => {
+    passwordValidation.setState(password.value ? scorePassword(password.value) > 0 : null);
+  });
 
   password.addEventListener('input', () => {
     updateStrength(scorePassword(password.value));
@@ -68,6 +86,7 @@ export function renderSignUp(app, { user }) {
     }
     confirmError.textContent = '';
     setBusy(true);
+    setButtonLoading(submitBtn, true, 'Creating account…');
     try {
       const current = auth.currentUser;
       if (current?.isAnonymous) {
@@ -84,6 +103,7 @@ export function renderSignUp(app, { user }) {
       message.className = 'form-message error';
     } finally {
       setBusy(false);
+      setButtonLoading(submitBtn, false);
     }
   }
 
@@ -102,25 +122,30 @@ export function renderSignUp(app, { user }) {
     }
   });
 
+  const passwordWrap = el('div', { className: 'field-input-wrap has-toggle' }, [
+    password,
+    makePasswordToggle(password),
+  ]);
+  const passwordValidation = attachFieldValidationIcon(passwordWrap);
+  const confirmWrap = el('div', { className: 'field-input-wrap has-toggle' }, [
+    confirmPassword,
+    makePasswordToggle(confirmPassword),
+  ]);
+  const confirmValidation = attachFieldValidationIcon(confirmWrap);
+
   const form = el('form', { className: 'auth-form', onSubmit: handleSubmit }, [
     el('label', { className: 'field' }, [
       el('span', { className: 'field-label', text: 'Email' }),
-      email
+      emailWrap
     ]),
     el('div', { className: 'field' }, [
       el('span', { className: 'field-label', text: 'Create a password' }),
-      el('div', { className: 'field-input-wrap' }, [
-        password,
-        makePasswordToggle(password),
-      ]),
+      passwordWrap,
       strengthMeter,
     ]),
     el('div', { className: 'field' }, [
       el('span', { className: 'field-label', text: 'Confirm password' }),
-      el('div', { className: 'field-input-wrap' }, [
-        confirmPassword,
-        makePasswordToggle(confirmPassword),
-      ]),
+      confirmWrap,
       confirmError,
     ]),
     message,

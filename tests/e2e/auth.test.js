@@ -7,8 +7,14 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 test('page loads and shows sign-in screen', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.brand-name')).toBeVisible({ timeout: 10_000 });
-  await expect(page.locator('.brand-name')).toContainText('Ascent');
+  // issue #6 Phase 5 added a second, decorative "Ascent" wordmark inside the
+  // aria-hidden marketing panel (.auth-marketing) — `.brand-name` alone now
+  // matches two elements. getByRole('link', ...) resolves to just the real,
+  // navigable brand link since aria-hidden content is excluded from the
+  // accessibility tree.
+  const brandLink = page.getByRole('link', { name: 'Ascent' });
+  await expect(brandLink).toBeVisible({ timeout: 10_000 });
+  await expect(brandLink).toContainText('Ascent');
 });
 
 test('theme toggle is visible on sign-in screen', async ({ page }) => {

@@ -4,6 +4,8 @@ import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { showToast } from '../components/toast.js';
 import { authShell } from '../components/authShell.js';
 import { makePasswordToggle } from '../utils/password.js';
+import { isValidEmailFormat, attachFieldValidationIcon } from '../utils/fieldValidation.js';
+import { setButtonLoading } from '../utils/buttonLoading.js';
 
 // Split out of buildSignInForm below purely to keep that function under the
 // max-lines-per-function threshold (issue #53) — same behavior as before.
@@ -33,6 +35,8 @@ export function buildSignInForm({ prefillEmail = '', onForgotPassword }) {
     className: 'field-input', type: 'email',
     placeholder: 'you@example.com', autocomplete: 'username'
   });
+  const emailWrap = el('div', { className: 'field-input-wrap' }, [emailInput]);
+  const emailValidation = attachFieldValidationIcon(emailWrap);
   const passwordInput = el('input', {
     className: 'field-input', type: 'password',
     placeholder: 'Your password', autocomplete: 'current-password'
@@ -44,6 +48,14 @@ export function buildSignInForm({ prefillEmail = '', onForgotPassword }) {
   rememberCheckbox.checked = true;
 
   if (prefillEmail) emailInput.value = prefillEmail;
+
+  // Issue #6 Phase 5.3 — only shown after the field has actually been left
+  // (never before), and never flags an empty field as invalid — that's what
+  // the plain "Enter email and password." submit-time message already covers.
+  emailInput.addEventListener('blur', () => {
+    const v = emailInput.value.trim();
+    emailValidation.setState(v ? isValidEmailFormat(v) : null);
+  });
 
   function setBusy(busy) {
     submitBtn.disabled = busy;
@@ -63,6 +75,7 @@ export function buildSignInForm({ prefillEmail = '', onForgotPassword }) {
       return;
     }
     setBusy(true);
+    setButtonLoading(submitBtn, true, 'Signing in…');
     try {
       await authApi.setPersistence(rememberCheckbox.checked);
       await authApi.signIn(emailVal, passVal);
@@ -73,6 +86,7 @@ export function buildSignInForm({ prefillEmail = '', onForgotPassword }) {
       message.className = 'form-message error';
     } finally {
       setBusy(false);
+      setButtonLoading(submitBtn, false);
     }
   }
 
@@ -83,7 +97,7 @@ export function buildSignInForm({ prefillEmail = '', onForgotPassword }) {
   return el('form', { className: 'auth-form', onSubmit: handleSubmit }, [
     el('label', { className: 'field' }, [
       el('span', { className: 'field-label', text: 'Email' }),
-      emailInput
+      emailWrap
     ]),
     el('div', { className: 'field' }, [
       el('div', { className: 'field-label-row' }, [
@@ -138,6 +152,7 @@ export function buildResetForm({ prefillEmail = '', onBack, onSuccess }) {
       return;
     }
     setBusy(true);
+    setButtonLoading(sendBtn, true, 'Sending…');
     try {
       await authApi.sendResetEmail(emailVal);
       onSuccess(emailVal);
@@ -147,6 +162,7 @@ export function buildResetForm({ prefillEmail = '', onBack, onSuccess }) {
         message.textContent = 'Network error. Check your connection and try again.';
         message.className = 'form-message error';
         setBusy(false);
+        setButtonLoading(sendBtn, false);
       } else {
         onSuccess(emailVal);
       }

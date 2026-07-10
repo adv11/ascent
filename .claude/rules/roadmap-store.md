@@ -197,6 +197,30 @@ internally before invoking the callback. This interface is shaped around what
 document), not a naive single-roadmap MVP shape — see `docs/architecture.md` §5.12 for
 why.
 
+**Every one-time Firebase read/write in `FirebaseAdapter.js` is wrapped in a 15s
+timeout (`src/services/storage/withTimeout.js`, issue #6 Phase 5 follow-up).**
+Firebase's Realtime Database SDK has no built-in timeout — a stalled WebSocket
+connection (a strict content/tracker blocker holding the connection open-but-silent, a
+flaky network, a corporate proxy) leaves a bare `get()`/`set()`/`update()`/`remove()`
+promise pending forever, with no rejection to catch. This was a real, reported bug:
+`switchRoadmap()`'s `await flush()` (which itself awaits `adapter.saveRoadmap()`) and
+`await adapter.saveMeta()` have no timeout of their own, so a stalled connection left
+`onboarding.js`'s `pickTemplate()`/`pickCustomRoadmap()` stuck in a "picking" state
+indefinitely — every card disabled, no error, no way out but a page reload. Every
+caller of `getRoadmap`/`getMeta`/`getLegacyRoadmap`/`saveRoadmap`/`saveMeta` already
+try/catches the call and falls back to a local blob or a fresh seed (see the
+"Watch the Firebase echo" and initial-load sections below) — so turning an infinite
+hang into a timely rejection needed zero changes to that fallback logic, only to
+`FirebaseAdapter.js` itself. `listenRoadmap`/`listenDailyTodos` (subscriptions, not
+one-shot promises) are deliberately **not** wrapped — a stalled listener just means no
+update arrives, and the existing stale-listener guard already handles a listener being
+replaced. If you add a new one-time Firebase call to `FirebaseAdapter.js`, wrap it with
+`withTimeout()` too — an unwrapped one silently reintroduces this exact hang.
+`onboarding.js`'s `pickTemplate()`/`pickCustomRoadmap()` catch blocks also now show an
+error toast on failure (previously silent — the cards just quietly re-enabled with no
+explanation, indistinguishable from success without noticing); keep that pairing if you
+add another `switchRoadmap()` call site.
+
 `FirebaseAdapter` carries `dbApi`'s exact former logic with no behavior change. Since
 which backend applies is resolved per sign-in (not a fixed, once-per-app-load choice),
 `roadmapStore.js`'s `adapter` binding is a `let` reassigned via
