@@ -1873,3 +1873,58 @@ one) carries over the previous page's scroll position — confirmed pre-existing
 (`router.js` is untouched by this PR, and the same carryover reproduces on unmodified
 `main`), not something this PR's sidebar/topbar work introduced. Worth its own
 follow-up issue rather than folding into this one.
+
+### 2026-07-10 — PR TBD — Component library expansion — Phase 3 of the enterprise UI/UX revamp (issue #6)
+
+Third of #6's 10 phases. Eight new primitives in `src/ui/components/`, each with its own
+unit test file — this phase is the library itself, not integration; none of these are
+mounted on any real page yet.
+
+- `skeleton.js` — `createSkeletonText()`/`createSkeletonCard()`, shimmer-animated
+  loading placeholders (`@keyframes shimmer`, respects `prefers-reduced-motion`).
+- `emptyState.js` — `createEmptyState({ icon, title, message, actionText, onAction })`.
+  A single flexible factory rather than the original spec's three hardcoded SVG
+  illustrations: this codebase has no illustration assets anywhere — every icon today
+  is a plain emoji glyph (`template.icon`, `.daily-todo-icon`, etc.) — so an `icon`
+  option plays the same "friendly visual" role without introducing a new asset type.
+- `tooltip.js` — `attachTooltip(triggerEl, text)`. Positions above by default, flips
+  below when `getBoundingClientRect().top` doesn't leave room (checked on
+  `mouseenter`/`focus`, not on mount, since a trigger's position can change after
+  attach — e.g. inside a scrollable list).
+- `modal.js` — `openModal({ content, ariaLabel, className, closeOnOverlayClick })`.
+  Adds a real focus trap (Tab/Shift+Tab cycle within the card's focusable elements),
+  Escape close, body scroll lock (`body.scroll-locked`, the same class the sidebar's
+  mobile drawer already introduced in Phase 2), and a spring-entry animation
+  (`.modal-card-enter`, using Phase 1's `--duration-enter`/`--ease-spring` tokens) on
+  top of the existing `.modal-overlay`/`.modal-card` classes `confirmDialog.js` already
+  established. Deliberately additive, not a forced migration —
+  `confirmDialog.js`/`buildYourOwnGuide.js`/etc. already work correctly and aren't
+  touched by this PR; a later phase (or issue #9's feedback widget) can build on
+  `openModal()` directly instead of hand-rolling the overlay/card boilerplate again.
+- `tabs.js` — `createTabs({ items, initialId })`. Left/Right cycles (wrapping),
+  Home/End jump to first/last, full ARIA `tablist`/`tab`/`tabpanel` roles with
+  `aria-controls`/`aria-labelledby` cross-references. Not retrofitted onto the existing
+  import-roadmap modal — issue #64 deliberately collapsed that modal's two tabs into
+  one continuous flow, and reintroducing tabs there would undo that fix.
+- `progressRing.js` — `createProgressRing(pct, { size, strokeWidth })`, an animated SVG
+  circle (`stroke-dashoffset` transition using `--duration-enter`/`--ease-spring`) with
+  an imperative `_setPct()` updater for later phases that need to animate it in place
+  rather than re-creating the node. Track/fill colors reuse `--track-bg`/`--brand`,
+  matching `.progress-track`/`.progress-fill`'s existing linear equivalent.
+- `notificationBadge.js` — `createNotificationBadge(count, { max })`. A plain dot when
+  `count` is falsy, otherwise the count capped at `"<max>+"` past `max` (default 99) —
+  a three-digit exact count stops being legible in a small circular badge.
+- `commandPalette.js` — `openCommandPalette(items, { placeholder })` (built on
+  `modal.js` above) plus `bindCommandPaletteShortcut(onOpen)` for the `Cmd+K`/`Ctrl+K`
+  binding, and an exported `fuzzyMatch(query, target)` — a dependency-free subsequence
+  matcher (every character of the query must appear in the target, in order,
+  case-insensitively), scored so a tighter contiguous match beats the same letters
+  spread across a longer string, the same intuition fzf/VS Code's Quick Open use
+  without needing their full algorithm. Wiring this to real roadmap items/sections/
+  phases (the original spec's actual use case) is Phase 4's job once the dashboard
+  itself is redesigned.
+
+Verified visually via a throwaway local HTML harness (not committed — deleted before
+this PR's diff) mounting all eight components in both themes; caught zero real bugs in
+the components themselves (one cosmetic mojibake in the harness's own missing
+`<meta charset>`, unrelated to any component logic).
