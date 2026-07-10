@@ -2074,3 +2074,60 @@ after the fix (no regression), and reran the full 11-width/2-theme `verify-chang
 matrix plus dark-mode/sign-up screenshots on the redesigned panel — zero horizontal
 overflow, zero console errors. `npm test` (492 passed, 5 new) and `npm run lint`
 (0 errors) green.
+
+### 2026-07-10 — PR TBD — Landing page, Phase 6 of enterprise UI/UX revamp (issue #6)
+
+New `src/ui/pages/landing.js` renders at `'#/'` for signed-out visitors — the route
+used to be an unconditional redirect to `/signin`. `main.js`'s `'/'` handler now checks
+`currentUser` first and bounces an already-authenticated visitor straight to `/app`
+before this page ever mounts; `'/'` was also added to the `authApi.onChange` listener's
+`publicRoutes` list so the same check re-runs if auth state resolves after the initial
+render (the same "flash then redirect" characteristic `/signin` already had before this
+change, not a new class of behavior).
+
+Sections: nav (brand + in-page scroll links + sign-in/sign-up actions), hero
+(headline/subhead/CTAs beside a decorative dashboard mock), a 2-card features strip, a
+3-step "how it works," a real derived stat line, and a CTA footer. The hero's dashboard
+preview is built entirely from `el()` divs (a mock card with four progress bars at
+fixed widths via a capped set of `.landing-mock-fill-1`..`-4` classes, per the
+"never set an inline style" convention) rather than a committed screenshot/PNG asset —
+keeps the "no build step, no bundler, no external dependency" convention intact instead
+of needing a Playwright-based image-generation step for one hero graphic.
+
+Two deliberate deviations from the original issue #6 Phase 6 spec, both following
+precedent already established elsewhere in this issue rather than inventing a new
+answer: the features strip stays at 2 cards (template / build-your-own), not the
+original 3 — the third ("Drive sync") was dropped along with #5's Google Drive backend
+closing as not planned, and inventing a replacement feature just to keep a three-card
+grid would be marketing copy for something that doesn't exist. And there's no
+fabricated "social proof" quote block — the same call Phase 5's auth marketing panel
+already made (a fake testimonial reads as deceptive on a product moving toward real
+paying users) — replaced with the same real, `TEMPLATES.length`-derived stat line used
+in both places, so the number can never drift out of sync with the actual template
+registry.
+
+Nav "Features"/"How it works" links smooth-scroll to in-page sections
+(`element.scrollIntoView`, respecting `prefers-reduced-motion` via both a JS
+`matchMedia` check and the existing global reduced-motion CSS override) via plain
+`<button>` click handlers rather than real `href="#landing-features"` anchors — the
+hash router treats any hash change as a route lookup, so a real anchor would 404 into
+the `/signin` fallback instead of scrolling.
+
+**Every existing e2e spec's `page.goto('/')` needed updating** (38 call sites across
+`auth.test.js`, `brand.test.js`, `customRoadmap.test.js`, `importRoadmap.test.js`,
+`onboarding.test.js`, `itemNotes.test.js`, `responsive.test.js`) to
+`page.goto('/#/signin')`, since `'/'` no longer auto-redirects to sign-in for a
+signed-out session — each of those specs actually wants the sign-in screen, not the new
+landing page, so this is a mechanical fixup rather than a behavior change to any of
+them. New `tests/e2e/landing.test.js` covers the landing page itself: renders at `'/'`
+for a signed-out visitor, both CTA buttons navigate to the correct route, the nav's
+scroll-link moves the viewport without changing the route, and the feature-card count.
+
+Verified live: `npm test` (499 passed, 7 new) and `npm run lint` (0 errors) green;
+`npx playwright test` (24 passed, 33 skipped — Firebase-emulator-gated) green, including
+the 5 new landing specs. Screenshotted the page at desktop (1440px) and mobile (390px)
+widths in both themes via a throwaway Playwright driver (not committed) — hero collapses
+to a single column with the mock preview reordered above the copy at the existing
+`≤1024px` breakpoint tier (reused, not a new number), CTA buttons stack full-width at
+`≤480px`, dark theme resolves correctly with no hardcoded colors. Confirmed no console
+errors beyond the pre-existing, unrelated `frame-ancestors` CSP-in-meta-tag warning.

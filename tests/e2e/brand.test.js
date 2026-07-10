@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures.js';
 
 test('title is Ascent', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await expect(page).toHaveTitle('Ascent');
 });
 
@@ -17,7 +17,7 @@ test('existing user with the pre-rename theme key migrates with no data loss', a
   await page.addInitScript(() => {
     window.localStorage.setItem('switchprep-theme', 'dark');
   });
-  await page.goto('/');
+  await page.goto('/#/signin');
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect

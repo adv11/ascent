@@ -8,6 +8,7 @@ import { renderSignIn } from './ui/pages/signIn.js';
 import { renderSignUp } from './ui/pages/signUp.js';
 import { renderDashboard } from './ui/pages/dashboard.js';
 import { renderOnboarding } from './ui/pages/onboarding.js';
+import { renderLanding } from './ui/pages/landing.js';
 
 migrateLocalStorageKeys();
 initTheme();
@@ -36,7 +37,7 @@ authApi.onChange(async user => {
   await Promise.all([store.setUser(user), dailyTodoStore.setUser(user)]);
 
   const route = getRoute();
-  const publicRoutes = ['/signin', '/signup'];
+  const publicRoutes = ['/', '/signin', '/signup'];
 
   if (!user) {
     if (!publicRoutes.includes(route)) navigate('/signin', true);
@@ -56,6 +57,17 @@ registerRoute('/signin', guardApp(renderSignIn));
 registerRoute('/signup', guardApp(renderSignUp));
 registerRoute('/onboarding', guardApp(renderOnboarding));
 registerRoute('/app', guardApp(renderDashboard));
-registerRoute('/', () => navigate(currentUser ? '/app' : '/signin', true));
+// Marketing landing page for signed-out visitors (issue #6 Phase 6); an
+// already-signed-in user is bounced to '/app' here instead of ever rendering
+// it — the authApi.onChange listener above additionally treats '/' as a
+// public route and redoes this same check once auth state resolves, in case
+// it resolves after this initial render already ran.
+registerRoute('/', () => {
+  if (currentUser) {
+    navigate('/app', true);
+    return;
+  }
+  renderLanding(app);
+});
 
 startRouter('/signin');

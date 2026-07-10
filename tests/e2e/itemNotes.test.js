@@ -12,7 +12,7 @@ async function openFirstItemPanel(page) {
 test.describe('personal notes per topic (issue #15)', () => {
   test('adding a note, closing, and reopening the panel shows the note restored', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -30,7 +30,7 @@ test.describe('personal notes per topic (issue #15)', () => {
 
   test('a saved note shows the notes indicator on the roadmap row, and clicking it focuses the notes textarea', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -54,7 +54,7 @@ test.describe('personal notes per topic (issue #15)', () => {
 
   test('notes survive a page reload', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();

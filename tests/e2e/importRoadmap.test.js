@@ -21,7 +21,7 @@ function validImportJson() {
 }
 
 async function openImportModal(page) {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.click('text=Continue as guest');
   await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
   await page.click('.template-card-import');

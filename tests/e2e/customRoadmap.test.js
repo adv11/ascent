@@ -7,7 +7,7 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 test.describe('manual roadmap creation — full phase/section/topic CRUD (issue #4)', () => {
   test('creating a roadmap, adding a phase, a section, and a topic all render correctly', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -44,7 +44,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
   test('renaming a phase and a section updates their titles and keeps the topic filed correctly', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.click('.template-card-create');
@@ -72,7 +72,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
   test('deleting a section removes its topics; deleting a phase removes the whole card', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.click('.template-card-create');
@@ -99,7 +99,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
   test('the onboarding picker lists the custom roadmap with a delete button, and deleting it removes the card', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.click('.template-card-create');
@@ -122,7 +122,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
   test('cancelling the create modal does not create a roadmap', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 

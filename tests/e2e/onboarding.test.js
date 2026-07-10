@@ -7,7 +7,7 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 test.describe('onboarding — starter template picker (issue #51)', () => {
   test('new guest sign-up lands on /onboarding, title stays Ascent, one card per template plus "Create your own roadmap" and "Import roadmap"', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await expect(page).toHaveTitle('Ascent');
@@ -25,7 +25,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
 
   test('picking Java Backend Engineer lands on /app with the Java roadmap', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -38,7 +38,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
 
   test('returning user (already picked a template) skips onboarding on reload', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -56,7 +56,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
 test.describe('onboarding — switch template from the dashboard (issue #58: non-destructive, concurrent progress)', () => {
   test('sidebar "My Roadmaps" reaches the picker with a "Back to my roadmap" link, which returns without changes', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -74,7 +74,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
 
   test('picking a new template switches instantly with no confirmation dialog', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -92,7 +92,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
 
   test('the currently active template is marked "Current", and re-picking it just returns to the dashboard unchanged', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -116,7 +116,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
   // lose either one's checked-off items.
   test('two templates keep fully independent progress across repeated switches', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Frontend Developer' }).click();
@@ -159,7 +159,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
 test.describe('onboarding — hiding and restoring templates', () => {
   test('hiding a template removes its card, and it can be restored from "Show hidden templates"', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -186,7 +186,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
 
   test('dismissing the hide confirmation leaves the card in place', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -203,7 +203,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
   // now has a hide button with no exceptions.
   test('every built-in template card has a hide button, including the ones that used to be exceptions', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -218,7 +218,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
 
   test('a hidden template stays hidden across a reload (persisted per-user)', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -235,7 +235,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
 test.describe('onboarding — "build your own roadmap" guide (issue #4 follow-up)', () => {
   test('the corner info button on "Create your own roadmap" opens a guide explaining manual and AI-assisted roadmap building', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
@@ -255,7 +255,7 @@ test.describe('onboarding — "build your own roadmap" guide (issue #4 follow-up
 
   test('the guide\'s "Open Import roadmap" button closes the guide and opens the import modal directly', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/');
+    await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 

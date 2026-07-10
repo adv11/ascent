@@ -295,6 +295,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .btn-block { width: 100%; }
 .btn-sm { min-height: 34px; padding: 6px 12px; font-size: var(--text-sm); }
+.btn-lg { min-height: 48px; padding: 12px 24px; font-size: var(--text-md); }
 .btn-icon { width: 36px; height: 36px; padding: 0; font-size: 22px; line-height: 1; }
 
 .link { color: var(--brand-dark); font-weight: 700; text-decoration: none; }
@@ -2115,6 +2116,205 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .toast-error { background: var(--danger); color: #fff; }
 
 /* ==========================================================================
+   Landing page (issue #6 Phase 6) — marketing page for signed-out visitors
+   at '#/'. Self-contained section; nothing here is reused by any other page.
+   ========================================================================== */
+
+.landing-page { min-height: 100vh; min-height: 100dvh; background: var(--soft); overflow-x: hidden; }
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6);
+}
+.landing-nav-links { display: flex; gap: var(--space-6); }
+.landing-nav-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  font-size: var(--text-base);
+  cursor: pointer;
+  padding: 0;
+}
+.landing-nav-link:hover { color: var(--ink); }
+.landing-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); border-radius: 4px; }
+.landing-nav-actions { display: flex; align-items: center; gap: var(--space-3); }
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: var(--space-12);
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6) var(--space-16);
+}
+.landing-hero-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-4);
+  color: var(--ink);
+}
+.landing-hero-subtitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--muted);
+  margin: 0 0 var(--space-8);
+  max-width: 46ch;
+}
+.landing-hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
+.landing-hero-stat { font-size: var(--text-sm); color: var(--faint); margin: 0; }
+
+.landing-hero-mock { display: flex; justify-content: center; }
+.landing-mock-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+.landing-mock-head { display: flex; gap: 6px; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--line); }
+.landing-mock-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+.landing-mock-body { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-5); }
+.landing-mock-row { display: flex; align-items: center; gap: var(--space-3); }
+.landing-mock-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--brand);
+  background: var(--brand-light);
+  flex-shrink: 0;
+}
+.landing-mock-bar { flex: 1; height: 10px; border-radius: 999px; background: var(--track-bg); overflow: hidden; }
+.landing-mock-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--brand); }
+.landing-mock-fill-1 { width: 92%; }
+.landing-mock-fill-2 { width: 68%; }
+.landing-mock-fill-3 { width: 100%; }
+.landing-mock-fill-4 { width: 45%; }
+
+.landing-section-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+  text-align: center;
+  margin: 0 0 var(--space-8);
+  color: var(--ink);
+}
+
+.landing-features, .landing-steps { max-width: 1160px; margin: 0 auto; padding: var(--space-12) var(--space-6); }
+
+.landing-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+  gap: var(--space-6);
+}
+.feature-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-8);
+}
+.feature-card-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  margin-bottom: var(--space-5);
+}
+.feature-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); margin: 0 0 var(--space-2); color: var(--ink); }
+.feature-card-text { font-size: var(--text-base); line-height: var(--leading-relaxed); color: var(--muted); margin: 0; }
+
+.landing-steps-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+  gap: var(--space-6);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.step-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6) var(--space-6);
+}
+.step-card-number {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-5);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-2xl);
+  color: var(--line-strong);
+}
+.step-card-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  margin-bottom: var(--space-4);
+}
+.step-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-md); margin: 0 0 var(--space-2); color: var(--ink); }
+.step-card-text { font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--muted); margin: 0; }
+
+.landing-proof { text-align: center; padding: 0 var(--space-6) var(--space-12); }
+.landing-proof-text { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); color: var(--brand-dark); max-width: 52ch; margin: 0 auto; }
+
+.landing-cta {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+}
+.landing-cta-title { font-family: var(--font-display); font-weight: 800; font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); margin: 0; color: var(--ink); }
+
+.landing-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-6);
+  border-top: 1px solid var(--line);
+}
+.landing-footer-copy { font-size: var(--text-sm); color: var(--faint); margin: 0; }
+
+/* ==========================================================================
    Responsive breakpoint scale (issue #36)
 
    Six tiers, replacing the old ad-hoc 920/640 pair. Written mobile-up in this
@@ -2147,11 +2347,18 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
      the sole (full-width) column: today's original centered-card layout. */
   .auth-page { grid-template-columns: 1fr; }
   .auth-marketing { display: none; }
+  /* issue #6 Phase 6/8 — hero collapses to a single column; mock preview
+     drops below the copy instead of sitting beside it. */
+  .landing-hero { grid-template-columns: 1fr; text-align: center; }
+  .landing-hero-subtitle { margin-left: auto; margin-right: auto; }
+  .landing-hero-actions { justify-content: center; }
+  .landing-hero-mock { order: -1; }
 }
 
 @media (max-width: 768px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 18px 16px 84px; }
+  .landing-nav-links { display: none; }
 }
 
 @media (max-width: 480px) {
@@ -2163,6 +2370,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .panel-footer-right .btn { flex: 1; }
   .confirm-dialog-actions { flex-direction: column; }
   .confirm-dialog-actions .btn { width: 100%; }
+  .landing-hero-title { font-size: var(--text-3xl); }
+  .landing-hero-actions { flex-direction: column; align-items: stretch; }
+  .landing-hero-actions .btn { width: 100%; }
+  .landing-cta-title { font-size: var(--text-2xl); }
 }
 
 @media (max-width: 375px) {

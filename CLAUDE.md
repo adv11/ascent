@@ -105,6 +105,7 @@ src/ui/pages/signIn.js        sign-in screen — see .claude/rules/auth-security
 src/ui/pages/signUp.js        sign-up screen — see .claude/rules/auth-security.md
 src/ui/pages/onboarding.js    starter template picker (route: /onboarding) — see .claude/rules/roadmap-store.md
 src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really) — see .claude/rules/roadmap-store.md and ui-styling.md
+src/ui/pages/landing.js       marketing page at route: / for signed-out visitors (issue #6 Phase 6); an already-signed-in visitor is routed straight to /app instead
 src/ui/components/authShell.js   shared chrome for signIn/signUp — split layout (issue #6 Phase 5) + authMarketingPanel.js left panel
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
