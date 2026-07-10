@@ -10,7 +10,14 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    // Data Scientist, not Java Backend Engineer — its first phase ("Python
+    // for Data Science", 19 items) stays under LARGE_PHASE_ITEM_THRESHOLD
+    // (40), so the animation actually plays. Java Backend Engineer's first
+    // two phases ("Core Java": 60, "Spring and Spring Boot": 63) exceed it,
+    // which is the whole point of that threshold (see dashboard.js) — but it
+    // means those phases skip straight to the end state with no mid-frame to
+    // observe here, which is what this test needs to exercise.
+    await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
     const firstCard = page.locator('.phase-card').first();
@@ -33,7 +40,10 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    // Data Scientist — see the comment on the collapse test above; its
+    // second phase ("Mathematics for Machine Learning", 14 items) also
+    // stays under LARGE_PHASE_ITEM_THRESHOLD.
+    await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
     const secondCard = page.locator('.phase-card').nth(1);
