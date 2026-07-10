@@ -962,7 +962,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .app-sidebar.collapsed .app-sidebar-identity { justify-content: center; padding: var(--space-1) 0; }
 .app-sidebar.collapsed .app-sidebar-signout { width: 32px; height: 32px; font-size: var(--text-md); }
 
-/* A near-black, high-opacity, theme-agnostic overlay — not the lighter
+/* A near-opaque, theme-agnostic overlay — not the lighter
    `rgba(15, 23, 42, 0.5)` `.modal-overlay` uses. That value reads fine over
    `.modal-overlay`'s content because a bright, opaque `.modal-card` sits
    centered on top of it, drawing the eye; the mobile sidebar drawer has no
@@ -971,15 +971,21 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    already close to this same navy, the old value barely dimmed anything and
    the dashboard behind it stayed fully readable, reading as a broken
    half-transparent mess rather than a real modal overlay (reported live,
-   issue #18 follow-up). `backdrop-filter: blur` adds a bit of extra visual
-   separation on top of the higher opacity alone.
-   Do not lower this back toward `.modal-overlay`'s value. */
+   issue #18 follow-up). A first pass at `0.78` opacity + a `2px` blur was
+   still not enough — dashboard text (`P2`/`P3`, "Expand all", stat numbers)
+   stayed legible right through it, which read as "still broken," not just
+   "a bit dim" (reported live again, second screenshot). This needs to look
+   solid, not like frosted glass: opacity all the way up to `0.94` and a much
+   stronger `10px` blur, so the drawer reads as the only interactive surface
+   left on screen. Do not lower either value back down without re-verifying
+   against a live screenshot in dark theme — the whole point is that no
+   dashboard text should be readable behind it anymore. */
 .app-sidebar-backdrop {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 16, 0.78);
-  backdrop-filter: blur(2px);
+  background: rgba(2, 6, 16, 0.94);
+  backdrop-filter: blur(10px);
   z-index: 199;
 }
 .app-sidebar-backdrop.show { display: block; }
