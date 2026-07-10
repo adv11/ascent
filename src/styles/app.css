@@ -962,11 +962,24 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .app-sidebar.collapsed .app-sidebar-identity { justify-content: center; padding: var(--space-1) 0; }
 .app-sidebar.collapsed .app-sidebar-signout { width: 32px; height: 32px; font-size: var(--text-md); }
 
+/* A near-black, high-opacity, theme-agnostic overlay — not the lighter
+   `rgba(15, 23, 42, 0.5)` `.modal-overlay` uses. That value reads fine over
+   `.modal-overlay`'s content because a bright, opaque `.modal-card` sits
+   centered on top of it, drawing the eye; the mobile sidebar drawer has no
+   such focal card — the backdrop *is* most of the visible screen once the
+   drawer is open — so in dark theme, where the page's own background is
+   already close to this same navy, the old value barely dimmed anything and
+   the dashboard behind it stayed fully readable, reading as a broken
+   half-transparent mess rather than a real modal overlay (reported live,
+   issue #18 follow-up). `backdrop-filter: blur` adds a bit of extra visual
+   separation on top of the higher opacity alone.
+   Do not lower this back toward `.modal-overlay`'s value. */
 .app-sidebar-backdrop {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(2, 6, 16, 0.78);
+  backdrop-filter: blur(2px);
   z-index: 199;
 }
 .app-sidebar-backdrop.show { display: block; }
