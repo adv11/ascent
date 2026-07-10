@@ -6,7 +6,7 @@ import { test, expect } from './fixtures.js';
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 test('page loads and shows sign-in screen', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   // issue #6 Phase 5 added a second, decorative "Ascent" wordmark inside the
   // aria-hidden marketing panel (.auth-marketing) — `.brand-name` alone now
   // matches two elements. getByRole('link', ...) resolves to just the real,
@@ -18,13 +18,13 @@ test('page loads and shows sign-in screen', async ({ page }) => {
 });
 
 test('theme toggle is visible on sign-in screen', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await expect(page.locator('button[aria-label*="mode"]')).toBeVisible({ timeout: 10_000 });
 });
 
 test('guest session starts, lands on the onboarding picker, and reaches the dashboard after picking a template', async ({ page }) => {
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.click('text=Continue as guest');
   await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -33,20 +33,20 @@ test('guest session starts, lands on the onboarding picker, and reaches the dash
 });
 
 test('"Forgot password?" link is visible on sign-in screen', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await expect(page.locator('.forgot-link')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('.forgot-link')).toContainText('Forgot password?');
 });
 
 test('"Forgot password?" opens reset view with correct title', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.click('.forgot-link');
   await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
   await expect(page.locator('[type="submit"]')).toContainText('Send reset link');
 });
 
 test('"Back to sign in" from reset view restores sign-in form', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.fill('input[type="email"]', 'back@example.com');
   await page.click('.forgot-link');
   await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
@@ -56,7 +56,7 @@ test('"Back to sign in" from reset view restores sign-in form', async ({ page })
 });
 
 test('reset view shows validation error on empty submit', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.click('.forgot-link');
   await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
   await page.locator('input[type="email"]').fill('');
@@ -66,7 +66,7 @@ test('reset view shows validation error on empty submit', async ({ page }) => {
 
 test('reset flow shows success state with emulator', async ({ page }) => {
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.click('.forgot-link');
   await expect(page.locator('.auth-title')).toContainText('Reset your password', { timeout: 5_000 });
   await page.fill('input[type="email"]', 'nobody@example.com');
@@ -80,7 +80,7 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
 
-  await page.goto('/');
+  await page.goto('/#/signin');
   await page.click('text=Continue as guest');
   await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
@@ -125,7 +125,7 @@ test('sign-up confirm mismatch shows error and does not navigate', async ({ page
 });
 
 test('show/hide toggle on sign-in password field changes input type', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/signin');
   await expect(page.locator('.auth-title')).toContainText('Welcome back', { timeout: 10_000 });
   const pwdInput = page.locator('input[type="password"]').first();
   await expect(pwdInput).toHaveAttribute('type', 'password');
