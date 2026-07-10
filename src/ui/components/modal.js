@@ -2,6 +2,40 @@ import { el } from '../dom.js';
 
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+// Issue #6 Phase 9 — extracted out of openModal() below so every other ad hoc
+// `.modal-overlay`/`.modal-card` implementation in the app (confirmDialog.js,
+// newRoadmapModal.js, importRoadmapModal.js, addToDailyTodoModal.js,
+// buildYourOwnGuide.js, dailyTodoGuide.js, dashboard.js's showDeleteModal) can
+// get real Tab-cycling focus containment without duplicating this logic —
+// they already had Escape-to-close, but none of them kept Tab focus inside
+// the dialog, so a sighted keyboard user (or screen-reader user in browse
+// mode) could Tab straight out into the page behind the overlay. Returns a
+// cleanup function; callers must call it when the dialog closes, the same
+// "always pair a subscription with its teardown" rule as everything else in
+// this app (root CLAUDE.md's "Component subscription cleanup").
+export function attachFocusTrap(containerEl, { onEscape } = {}) {
+  function onKey(e) {
+    if (e.key === 'Escape') {
+      onEscape?.();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const focusable = Array.from(containerEl.querySelectorAll(FOCUSABLE_SELECTOR)).filter(elmt => !elmt.disabled);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+  window.addEventListener('keydown', onKey);
+  return () => window.removeEventListener('keydown', onKey);
+}
+
 // Issue #6 Phase 3.5 — a generic modal builder with a focus trap, Escape/
 // outside-click close, body scroll lock, and a spring entry animation using
 // the Phase 1 motion tokens. Reuses the existing `.modal-overlay`/`.modal-card`
@@ -20,29 +54,10 @@ export function openModal({ content, ariaLabel, className = '', closeOnOverlayCl
   function close() {
     if (closed) return;
     closed = true;
-    window.removeEventListener('keydown', onKey);
+    detachTrap();
     document.body.classList.remove('scroll-locked');
     overlay.remove();
     previouslyFocused?.focus?.();
-  }
-
-  function onKey(e) {
-    if (e.key === 'Escape') {
-      close();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const focusable = Array.from(card.querySelectorAll(FOCUSABLE_SELECTOR)).filter(elmt => !elmt.disabled);
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
   }
 
   const card = el('div', { className: `modal-card modal-card-enter ${className}`.trim() },
@@ -57,7 +72,7 @@ export function openModal({ content, ariaLabel, className = '', closeOnOverlayCl
   }, [card]);
 
   const previouslyFocused = document.activeElement;
-  window.addEventListener('keydown', onKey);
+  const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.classList.add('scroll-locked');
   document.body.appendChild(overlay);
   card.querySelector(FOCUSABLE_SELECTOR)?.focus();

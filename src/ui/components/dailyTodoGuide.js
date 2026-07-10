@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { attachFocusTrap } from './modal.js';
 import { MAX_ACTIVE_TODOS } from '../../core/dailyTodo/limits.js';
 
 // Informational modal reachable from the Daily Todos card's corner ℹ button
@@ -8,11 +9,9 @@ import { MAX_ACTIVE_TODOS } from '../../core/dailyTodo/limits.js';
 // self-imposed deadlines, not another way to track roadmap topics.
 export function openDailyTodoGuide() {
   function close() {
-    window.removeEventListener('keydown', onKey);
+    detachTrap();
     overlay.remove();
   }
-
-  const onKey = e => { if (e.key === 'Escape') close(); };
 
   // Condensed from an earlier 3-heading/8-paragraph version (issue #78) —
   // same facts, tightened into one short paragraph per heading so the modal
@@ -64,7 +63,7 @@ export function openDailyTodoGuide() {
     onClick: e => { if (e.target === overlay) close(); }
   }, [card]);
 
-  window.addEventListener('keydown', onKey);
+  const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.appendChild(overlay);
 
   return close;

@@ -153,4 +153,61 @@ describe('animatePhaseBody', () => {
     expect(body.style.display).toBe('block');
     expect(animateSpy).not.toHaveBeenCalled();
   });
+
+  // Regression test for a real, reported bug: a `.section-label` inside
+  // `.phase-body` is `position: sticky`, and `overflow: hidden` (set below
+  // for the height animation's clipping) makes an element a scroll
+  // container — which per spec becomes the sticky positioning context for
+  // any sticky descendant. Every section label recalculated its "stuck"
+  // position against the still-animating container instead of the page,
+  // visibly overlapping sibling content for the animation's duration.
+  // `.phase-body-animating` (app.css) drops `.section-label` to `position:
+  // static` for exactly that window — this test asserts the class is
+  // present for the animation's duration and gone once it settles, on both
+  // the opening and closing paths.
+  describe('phase-body-animating class (sticky-section-label overlap fix)', () => {
+    it('is present while opening (overflow: hidden is set) and removed once the animation finishes', async () => {
+      const { card, body } = buildPhaseCard(false);
+      Object.defineProperty(body, 'scrollHeight', { value: 300, configurable: true });
+
+      animatePhaseBody(card, true);
+
+      expect(body.classList.contains('phase-body-animating')).toBe(true);
+      expect(body.style.overflow).toBe('hidden');
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(body.classList.contains('phase-body-animating')).toBe(false);
+    });
+
+    it('is present while closing and removed once the animation finishes', async () => {
+      const { card, body } = buildPhaseCard(true);
+      vi.spyOn(body, 'getBoundingClientRect').mockReturnValue({ height: 400 });
+
+      animatePhaseBody(card, false);
+
+      expect(body.classList.contains('phase-body-animating')).toBe(true);
+      expect(body.style.overflow).toBe('hidden');
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(body.classList.contains('phase-body-animating')).toBe(false);
+    });
+
+    it('is never added on the reduced-motion path, since there is no animating overflow:hidden window to guard against', () => {
+      vi.spyOn(window, 'matchMedia').mockImplementation(query => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }));
+      const { card, body } = buildPhaseCard(false);
+
+      animatePhaseBody(card, true);
+
+      expect(body.classList.contains('phase-body-animating')).toBe(false);
+    });
+  });
 });

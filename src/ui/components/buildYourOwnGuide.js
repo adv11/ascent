@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { attachFocusTrap } from './modal.js';
 
 // Informational modal reachable from "Create your own roadmap"'s corner ℹ
 // button (issue #4 follow-up — used to live on the now-retired "blank"
@@ -11,11 +12,9 @@ import { el } from '../dom.js';
 // that logic here.
 export function openBuildYourOwnGuide({ onOpenImport } = {}) {
   function close() {
-    window.removeEventListener('keydown', onKey);
+    detachTrap();
     overlay.remove();
   }
-
-  const onKey = e => { if (e.key === 'Escape') close(); };
 
   const footerButtons = [
     onOpenImport
@@ -63,7 +62,7 @@ export function openBuildYourOwnGuide({ onOpenImport } = {}) {
     onClick: e => { if (e.target === overlay) close(); }
   }, [card]);
 
-  window.addEventListener('keydown', onKey);
+  const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.appendChild(overlay);
 
   return close;

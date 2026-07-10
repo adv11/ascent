@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { attachFocusTrap } from './modal.js';
 
 // "Create your own roadmap" (issue #4) — collects a title (required) and an
 // optional description, matching the same `.modal-overlay`/`.modal-card`
@@ -8,12 +9,10 @@ import { el } from '../dom.js';
 export function openNewRoadmapModal() {
   return new Promise(resolve => {
     function close(result) {
-      window.removeEventListener('keydown', onKey);
+      detachTrap();
       overlay.remove();
       resolve(result);
     }
-
-    const onKey = e => { if (e.key === 'Escape') close(null); };
 
     const message = el('p', { className: 'form-message', text: '' });
     const titleInput = el('input', {
@@ -59,20 +58,20 @@ export function openNewRoadmapModal() {
       })
     ]);
 
+    const card = el('div', { className: 'modal-card' }, [
+      el('h2', { className: 'modal-title', text: 'Create your own roadmap' }),
+      form
+    ]);
+
     const overlay = el('div', {
       className: 'modal-overlay',
       role: 'dialog',
       'aria-modal': 'true',
       'aria-label': 'Create your own roadmap',
       onClick: e => { if (e.target === overlay) close(null); }
-    }, [
-      el('div', { className: 'modal-card' }, [
-        el('h2', { className: 'modal-title', text: 'Create your own roadmap' }),
-        form
-      ])
-    ]);
+    }, [card]);
 
-    window.addEventListener('keydown', onKey);
+    const detachTrap = attachFocusTrap(card, { onEscape: () => close(null) });
     document.body.appendChild(overlay);
     titleInput.focus();
   });

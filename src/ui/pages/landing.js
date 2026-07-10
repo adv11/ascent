@@ -180,15 +180,20 @@ function buildFooter() {
 // main.js routes an already-signed-in user straight to '/app' before this
 // ever renders, so this function never needs to check `user` itself.
 export function renderLanding(app) {
+  // Issue #6 Phase 9 — id="main-content"/tabindex="-1" is the skip link's
+  // jump target (index.html), so Tab from page load can bypass the nav bar
+  // straight to the hero.
   const node = el('div', { className: 'landing-page' }, [
     buildNav(),
-    buildHero(),
-    buildFeatures(),
-    buildSteps(),
-    el('section', { className: 'landing-proof' }, [
-      el('p', { className: 'landing-proof-text', text: landingProofLine() })
+    el('main', { id: 'main-content', tabindex: '-1' }, [
+      buildHero(),
+      buildFeatures(),
+      buildSteps(),
+      el('section', { className: 'landing-proof' }, [
+        el('p', { className: 'landing-proof-text', text: landingProofLine() })
+      ]),
+      buildCta()
     ]),
-    buildCta(),
     buildFooter()
   ]);
   app.replaceChildren(node);

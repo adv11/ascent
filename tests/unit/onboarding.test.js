@@ -106,7 +106,7 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     const switchRoadmap = vi.fn().mockResolvedValue(undefined);
     const { app, navigate } = await setup({ switchRoadmap });
     const pianoCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Learning Piano'));
-    pianoCard.click();
+    pianoCard.querySelector('.template-card-pick').click();
     await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalledWith('piano'));
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
     expect(getConfirmDialog()).toBeNull();
@@ -125,7 +125,7 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     const { app, navigate } = await setup({ switchRoadmap });
     const pianoCard = [...app.querySelectorAll('.template-card')].find(b => b.textContent.includes('Learning Piano'));
 
-    pianoCard.click();
+    pianoCard.querySelector('.template-card-pick').click();
 
     await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalledWith('piano'));
     await vi.waitFor(() => expect(pianoCard.classList.contains('picking')).toBe(false));
@@ -142,12 +142,39 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     // createCustomRoadmap) fires.
     const cards = [...app.querySelectorAll('.template-card')];
 
-    cards[2].click();
+    cards[2].querySelector('.template-card-pick').click();
 
     expect(cards[0].classList.contains('is-disabled')).toBe(true);
     expect(cards[1].classList.contains('is-disabled')).toBe(true);
     expect(cards[3].classList.contains('is-disabled')).toBe(true);
     resolvePick();
+  });
+
+  // Real, reported bug: picking a roadmap awaits a Firebase round-trip
+  // (store.switchRoadmap()) before navigating, and the only feedback used to
+  // be the clicked card's faint opacity dim (.picking) — indistinguishable
+  // from unresponsive lag on anything slower than an instant local network.
+  // buildPickingOverlay() (onboarding.js) covers the clicked card with a
+  // spinner + "Opening…" for the duration of the wait.
+  it('shows a spinner + "Opening…" overlay on the clicked card while a pick is in flight, then navigates away once it resolves', async () => {
+    let resolvePick;
+    const switchRoadmap = vi.fn(() => new Promise(resolve => { resolvePick = resolve; }));
+    const { app, navigate } = await setup({ switchRoadmap });
+    const pianoCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Learning Piano'));
+
+    pianoCard.querySelector('.template-card-pick').click();
+
+    const overlay = pianoCard.querySelector('.template-card-picking-overlay');
+    expect(overlay).not.toBeNull();
+    expect(overlay.textContent).toMatch(/opening/i);
+    expect(pianoCard.classList.contains('picking')).toBe(true);
+
+    // On success the page navigates away (no DOM left to clean up in the
+    // real app) rather than clearing `.picking` — the overlay is only ever
+    // explicitly removed on the failure path (see the "shows an error toast
+    // and re-enables cards" test above).
+    resolvePick();
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 
   it('every built-in template card has a hide (×) button — "blank" is retired, no more exceptions', async () => {
@@ -238,7 +265,7 @@ describe('onboarding page — switch-template mode (onboardingDone === true)', (
     const { app, navigate } = await setup({ onboardingDone: true, activeTemplateId: 'java-backend', switchRoadmap });
 
     const dataScienceCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Data Scientist'));
-    dataScienceCard.click();
+    dataScienceCard.querySelector('.template-card-pick').click();
 
     expect(getConfirmDialog()).toBeNull();
     await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalledWith('data-science'));
@@ -252,7 +279,7 @@ describe('onboarding page — switch-template mode (onboardingDone === true)', (
     const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
     expect(javaCard.querySelector('.template-card-current-badge')?.textContent).toBe('Current');
 
-    javaCard.click();
+    javaCard.querySelector('.template-card-pick').click();
 
     expect(getConfirmDialog()).toBeNull();
     expect(switchRoadmap).not.toHaveBeenCalled();
@@ -312,7 +339,7 @@ describe('onboarding page — create-your-own roadmap (issue #4)', () => {
     const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-new');
     const { app, navigate } = await setup({ createCustomRoadmap });
 
-    app.querySelector('.template-card-create').click();
+    app.querySelector('.template-card-create .template-card-pick').click();
 
     await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalledWith({ title: 'My Roadmap', description: 'Notes' }));
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
@@ -324,7 +351,7 @@ describe('onboarding page — create-your-own roadmap (issue #4)', () => {
     const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-new');
     const { app, navigate } = await setup({ createCustomRoadmap });
 
-    app.querySelector('.template-card-create').click();
+    app.querySelector('.template-card-create .template-card-pick').click();
 
     await vi.waitFor(() => expect(openNewRoadmapModal).toHaveBeenCalled());
     expect(createCustomRoadmap).not.toHaveBeenCalled();
@@ -370,7 +397,7 @@ describe('onboarding page — create-your-own roadmap (issue #4)', () => {
     const card = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Interview prep'));
     expect(card.querySelector('.template-card-current-badge')).toBeTruthy();
 
-    card.click();
+    card.querySelector('.template-card-pick').click();
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
     expect(switchRoadmap).not.toHaveBeenCalled();
   });

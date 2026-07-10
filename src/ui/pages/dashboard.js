@@ -6,6 +6,7 @@ import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
 import { confirmDialog } from '../components/confirmDialog.js';
+import { attachFocusTrap } from '../components/modal.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
 import { getTemplate } from '../../data/templates/index.js';
@@ -108,11 +109,27 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
     }, [
       `${label} `,
       el('span', { className: 'chip-count', text: `${done}/${total}` }),
+      // Issue #6 Phase 9 — a plain <span> with only an onClick was never
+      // reachable by keyboard (a nested <button> inside this chip's own
+      // <button> isn't valid HTML), so a keyboard-only user could clear the
+      // active filter by re-clicking the chip itself but never via this
+      // faster inline control at all. role="button" + tabindex + Enter/Space
+      // handling is the standard pattern for a non-native interactive
+      // element nested this way — same shape as .check-item's own
+      // role="checkbox" handling elsewhere in this file.
       isActive && p !== 'ALL' ? el('span', {
         className: 'filter-chip-clear',
+        role: 'button',
+        tabindex: '0',
         'aria-label': `Clear ${label} filter`,
         text: '✕',
         onClick: e => {
+          e.stopPropagation();
+          onFilterChange('ALL');
+        },
+        onKeydown: e => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
           e.stopPropagation();
           onFilterChange('ALL');
         }
@@ -157,6 +174,11 @@ const LARGE_PHASE_ITEM_THRESHOLD = 40;
 // function ever got to read it. Measuring must happen while the card is
 // still visually open, before the class change takes effect.
 export function animatePhaseBody(phaseCardEl, opening) {
+  // Issue #6 Phase 9 — kept in sync here (not in the onToggle callback) so
+  // every caller of animatePhaseBody gets the right aria-expanded value for
+  // free, the same way the 'open' class itself is handled below.
+  phaseCardEl.querySelector('.phase-head')?.setAttribute('aria-expanded', String(opening));
+
   const phaseBodyEl = phaseCardEl.querySelector('.phase-body');
   if (!phaseBodyEl) {
     phaseCardEl.classList.toggle('open', opening);
@@ -200,6 +222,18 @@ export function animatePhaseBody(phaseCardEl, opening) {
       phaseBodyEl.style.display = 'none';
       return;
     }
+    // `overflow: hidden` (below) makes `.phase-body` a scroll container for
+    // the CSS Overflow spec's purposes — and per the Position spec, that
+    // makes it the sticky positioning context for every `.section-label`
+    // inside it (normally the page/viewport is). For the animation's
+    // duration, each sticky label recalculates its "stuck" position against
+    // this tiny/growing container instead of the page, which is exactly the
+    // reported bug: labels briefly jump and overlap sibling content before
+    // snapping to their correct position once `overflow` is cleared below.
+    // `.phase-body-animating` (app.css) drops `.section-label` to `position:
+    // static` for exactly this window so there's nothing for the browser to
+    // reposition mid-animation.
+    phaseBodyEl.classList.add('phase-body-animating');
     phaseBodyEl.style.display = 'block';
     phaseBodyEl.style.overflow = 'hidden';
     phaseBodyEl.style.height = `${current}px`;
@@ -208,6 +242,7 @@ export function animatePhaseBody(phaseCardEl, opening) {
       phaseBodyEl.style.display = 'none';
       phaseBodyEl.style.height = '';
       phaseBodyEl.style.overflow = '';
+      phaseBodyEl.classList.remove('phase-body-animating');
     };
     return;
   }
@@ -217,6 +252,7 @@ export function animatePhaseBody(phaseCardEl, opening) {
     phaseBodyEl.style.display = 'block';
     return;
   }
+  phaseBodyEl.classList.add('phase-body-animating');
   phaseBodyEl.style.display = 'block';
   phaseBodyEl.style.overflow = 'hidden';
   phaseBodyEl.style.height = '0px';
@@ -225,6 +261,7 @@ export function animatePhaseBody(phaseCardEl, opening) {
   anim.onfinish = () => {
     phaseBodyEl.style.height = '';
     phaseBodyEl.style.overflow = '';
+    phaseBodyEl.classList.remove('phase-body-animating');
   };
 }
 
@@ -266,6 +303,7 @@ export function renderPhaseCard(phase, pi, {
     el('button', {
       type: 'button',
       className: 'phase-head',
+      'aria-expanded': String(isOpen),
       onClick: () => onToggle(pi)
     }, [
       el('span', { className: 'phase-index', text: String(pi + 1).padStart(2, '0') }),
@@ -277,7 +315,7 @@ export function renderPhaseCard(phase, pi, {
       // working unchanged.
       createProgressRing(pct, { size: 28, strokeWidth: 3 }),
       el('span', { className: 'phase-progress sr-only', text: `${sectionDone}/${sectionTotal}` }),
-      el('span', { className: 'chevron', text: '›' })
+      el('span', { className: 'chevron', 'aria-hidden': 'true', text: '›' })
     ]),
     el('div', { className: 'phase-body' }, [
       (isCustomRoadmap && phase.id) ? renderPhaseManageRow(phase) : null,
@@ -335,7 +373,7 @@ export function showDeleteModal() {
     setBusy(true);
     try {
       await authApi.deleteAccount(pass);
-      overlay.remove();
+      closeModal();
       showToast('Account deleted.', 'success');
       navigate('/signin', true);
     } catch (err) {
@@ -356,15 +394,24 @@ export function showDeleteModal() {
     cancelBtn
   ]);
 
-  const overlay = el('div', { className: 'modal-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Delete account' }, [
-    el('div', { className: 'modal-card' }, [
-      el('h2', { className: 'modal-title', text: 'Delete account' }),
-      form
-    ])
+  const card = el('div', { className: 'modal-card' }, [
+    el('h2', { className: 'modal-title', text: 'Delete account' }),
+    form
   ]);
 
-  cancelBtn.addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  const overlay = el('div', { className: 'modal-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Delete account' }, [card]);
+
+  // Issue #6 Phase 9 — this modal had neither Escape-to-close nor a focus
+  // trap before (every other ad hoc modal in the app already had at least
+  // Escape); attachFocusTrap() gives it both in one call, same as everywhere
+  // else.
+  function closeModal() {
+    detachTrap();
+    overlay.remove();
+  }
+  const detachTrap = attachFocusTrap(card, { onEscape: closeModal });
+  cancelBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
   document.body.appendChild(overlay);
   passwordInput.focus();
@@ -427,8 +474,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       render(store.getSnapshot());
     }
   });
-  const content = el('main', { className: 'dashboard-content' });
-  const saveBadge = el('div', { className: 'save-badge', id: 'saveBadge' });
+  const content = el('main', { className: 'dashboard-content', id: 'main-content', tabindex: '-1' });
+  // Issue #6 Phase 9 — aria-live so "Saving…"/"Saved to cloud"/"Save failed"
+  // reaches a screen-reader user instead of only ever being a silent visual
+  // change; 'polite' since a save-state change is never urgent enough to
+  // interrupt whatever the user is doing.
+  const saveBadge = el('div', { className: 'save-badge', id: 'saveBadge', 'aria-live': 'polite', role: 'status' });
   const syncPill = el('span', { className: 'sync-pill', text: 'Syncing' });
 
   const userPillClass = user.isAnonymous ? 'guest' : 'online';
@@ -532,24 +583,43 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     // set of discrete delay classes (CSS below) gets the same staggered
     // fan-in effect without violating it.
     const enteringClass = isNew ? `entering entering-delay-${Math.min(sectionIdx, 6)}` : '';
+    // Issue #6 Phase 9 — role="checkbox" moved off the whole row and onto
+    // just .check-box below. axe-core's no-focusable-content rule (WCAG
+    // 4.1.2) correctly flags a role="checkbox" element that contains other
+    // focusable descendants — the Edit button, resource-count badge, and
+    // add-todo button inside this row are all real, independently-focusable
+    // controls, which an ARIA checkbox (a leaf widget in the accessibility
+    // tree) isn't allowed to contain. The row itself keeps its onClick
+    // (click-anywhere-to-toggle, guarded by the data-action convention
+    // below) purely as a mouse/touch convenience — it carries no ARIA role
+    // of its own now, so it isn't part of the accessibility tree as an
+    // interactive control; keyboard toggling now happens via .check-box's
+    // own role/tabindex/keydown handling.
     return el('div', {
       className: `check-item ${item.done ? 'done' : ''} ${enteringClass}`,
-      role: 'checkbox',
-      tabindex: '0',
-      'aria-checked': String(item.done),
       dataset: { id: item.id },
       onClick: e => {
         if (e.target.closest('[data-action]')) return;
         toggleDone(item);
-      },
-      onKeydown: e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          toggleDone(item);
-        }
       }
     }, [
-      el('div', { className: 'check-box' }, [el('span', { className: 'check-mark', text: '✓' })]),
+      el('div', {
+        className: 'check-box',
+        role: 'checkbox',
+        tabindex: '0',
+        'aria-checked': String(item.done),
+        'aria-label': item.title,
+        onClick: e => {
+          e.stopPropagation();
+          toggleDone(item);
+        },
+        onKeydown: e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleDone(item);
+          }
+        }
+      }, [el('span', { className: 'check-mark', 'aria-hidden': 'true', text: '✓' })]),
       el('div', { className: 'check-body' }, [
         el('span', { className: 'check-title', text: item.title }),
         el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
@@ -872,7 +942,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       const row = content.querySelector(`.check-item[data-id="${CSS.escape(item.id)}"]`);
       if (!row) return;
       row.classList.toggle('done', !!item.done);
-      row.setAttribute('aria-checked', String(!!item.done));
+      row.querySelector('.check-box')?.setAttribute('aria-checked', String(!!item.done));
     });
 
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });

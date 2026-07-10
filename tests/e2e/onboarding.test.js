@@ -145,14 +145,14 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
     // Frontend's two earlier checks must still be checked — no data loss.
-    await expect(page.locator('.check-item').nth(0)).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('.check-item').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.check-item').nth(0).locator('.check-box')).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.check-item').nth(1).locator('.check-box')).toHaveAttribute('aria-checked', 'true');
 
     await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
     // Data Science's own check must also still be intact.
-    await expect(page.locator('.check-item').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.check-item').nth(0).locator('.check-box')).toHaveAttribute('aria-checked', 'true');
   });
 });
 

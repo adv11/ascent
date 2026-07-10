@@ -2198,7 +2198,89 @@ confirmed the fix for the "measure after the class already changed" bug above by
 watching the collapse actually animate instead of vanishing on click.
 `npm test` (503 passed, 4 new) and `npm run lint` (0 errors) green.
 
-### 2026-07-10 — PR TBD — Animation race-condition fix + always-confirm sign-out (reported live)
+### 2026-07-10 — PR TBD — Responsive + accessibility pass, Phases 8-9 of enterprise UI/UX revamp (issue #6)
+
+New devDependency: `@axe-core/playwright`. No new source files — changes confined to
+`index.html`, `app.css`, `dashboard.js`, `onboarding.js`, and six modal components, plus
+new/updated tests.
+
+**Phase 8 (responsive)** turned out mostly already done (#36's breakpoint scale, Phase
+2's sidebar drawer, Phase 4's sticky headers/filter chips). Two real gaps closed: the
+item panel now slides up full-screen from the bottom instead of side-sliding at
+`≤480px` (reusing the existing tier, not a new number), and the filter-chip row scrolls
+horizontally instead of wrapping at the same tier.
+
+**Phase 9 (accessibility)** was verified with real tooling, not a read-through —
+`tests/e2e/accessibility.test.js` runs `@axe-core/playwright` against
+landing/sign-in/sign-up/onboarding/dashboard (the last two gated behind
+`FIREBASE_CONFIGURED` like every other guest-session e2e spec), asserting zero
+critical/serious violations. Running it for real against the app (not just reading the
+issue's checklist) surfaced bugs a manual pass had missed:
+
+**WCAG 4.1.2 — nested focusable content inside `role="checkbox"`/`role="button"`.**
+`.check-item` (`dashboard.js`) and `.template-card` (`onboarding.js`'s
+`buildCard`/`buildCustomCard`/`buildCreateCard`) both carried their interactive ARIA
+role on the *outer* element while containing genuinely separate focusable children (the
+Edit/resource-count/add-todo buttons; the hide/delete/info corner button) — an ARIA
+checkbox or button is specified as a leaf widget, and axe correctly flags a
+`no-focusable-content` violation for both. Fixed by moving the role onto a dedicated
+inner element instead of the whole card/row: `.check-box` (not `.check-item`) is now the
+actual `role="checkbox"` target, with its own `aria-label` (the item's title) since it no
+longer inherits an accessible name from sibling text; a new `.template-card-pick`
+button (not `.template-card`) is the "pick this template" target, with the corner
+button now a true DOM sibling instead of nested inside another interactive element.
+`.template-card` itself keeps its full original visual styling (background, border,
+shadow, padding) on what's now a plain, non-interactive wrapper div — `.template-card-pick`
+is deliberately unstyled beyond filling the card as transparent flex-column content, and
+a new `.template-card:has(.template-card-pick:focus-visible)` selector preserves the
+exact same hover/focus lift-and-glow effect the card used to get from its own
+`:focus-visible`. Every unit (`onboarding.test.js`) and e2e locator that used to click
+the row/card directly was updated to target the new inner button — `patchDoneStates()`
+in `dashboard.js` now sets `aria-checked` on `.check-box`, not the row.
+
+**Six ad hoc modals had no real focus trap.** `modal.js`'s `openModal()` (Phase 3)
+already had one; `confirmDialog.js`, `newRoadmapModal.js`, `importRoadmapModal.js`,
+`addToDailyTodoModal.js`, `buildYourOwnGuide.js`, `dailyTodoGuide.js`, and
+`dashboard.js`'s account-deletion modal each had their own copy-pasted Escape-only
+`keydown` handler (the deletion modal didn't even have that). Extracted the working
+Tab-cycling logic out of `openModal()` into a new exported `attachFocusTrap(containerEl,
+{ onEscape })` — every modal now calls this one implementation instead of seven
+divergent ones.
+
+**A handful of smaller, concrete fixes**, each confirmed as a real gap rather than
+assumed: `aria-expanded` on `.phase-head` (kept in sync inside `animatePhaseBody()`
+itself, so every caller gets it free); `aria-live="polite"` on the toast stack (had
+none) and the dashboard's save-status badge; `role="combobox"`/`aria-activedescendant`
+on the command palette's input; `aria-label` added to the Daily Todos panel's inline
+quick-add title input and duration select (a placeholder alone doesn't count as an
+accessible name — axe caught this one directly); the active filter chip's inline "✕
+clear" control changed from an unreachable bare `<span onClick>` (a real `<button>`
+nested inside the chip's own `<button>` isn't valid HTML) to `role="button"` +
+`tabindex="0"` + Enter/Space handling; `aria-hidden="true"` added to the decorative
+`.chevron`/`.check-mark` glyphs.
+
+**Color contrast.** Manually computed the actual WCAG contrast ratio for every
+`--muted`/`--faint` usage against the exact background each is painted over (not just
+eyeballed) — `--faint` was as low as 2.4:1 in the worst case. Both tokens darkened
+slightly (documented in the `app.css` token comments with before/after hex) to clear
+4.5:1 in both themes while staying visibly one step lighter than body text. Separately,
+axe's automated `color-contrast` rule reported two more violations
+(`.phase-name`/`.badge.P0`) whose reported foreground/background hex values didn't match
+`getComputedStyle()`'s actual values at all — a confirmed sampler false positive (likely
+from the progress-ring SVG/box-shadow this layout overlaps), not a real bug; that one
+axe rule is disabled in the automated test, every other rule stays fully enforced. See
+the code comment in `accessibility.test.js` for the exact repro numbers.
+
+Verified live: the full 65-test e2e suite (including 5 new accessibility specs and the
+onboarding-restructuring fallout) passed against a real local Firebase emulator, not
+just the `FIREBASE_CONFIGURED`-skipped subset that runs without one. A separate
+throwaway Playwright driver (not committed) drove the app with `page.keyboard.press()`
+only — skip-link is the first Tab stop, `.template-card-pick` is focusable and
+Enter-activates it, `.check-box` is focusable and Space toggles `aria-checked`, a modal's
+focus stayed trapped across 8 Tabs, and Escape closed it. `npm test` (503 passed) and
+`npm run lint` (0 errors) green.
+
+### 2026-07-10 — PR #99 — Animation race-condition fix + always-confirm sign-out (reported live)
 
 Two live bug reports fixed together, one new file (`src/ui/utils/signOut.js`).
 
