@@ -1814,3 +1814,62 @@ regression test simulates the exact race (`switchRoadmap('java-backend')` called
 an unresolved `setUser()` promise settles) in `tests/integration/roadmapStore.test.js`.
 No schema, Firebase-rules, or public store-contract change — a one-line guard fix plus
 a comment explaining why.
+
+### 2026-07-09 — PR TBD — App shell: sidebar + topbar — Phase 2 of the enterprise UI/UX revamp (issue #6)
+
+Second of #6's 10 phases (each its own PR, per the issue's own convention and Phase 1's
+precedent). Replaces `dashboard.js`'s old single `.header-top` action row (brand, theme
+toggle, sync pill, user chip, Switch template / Create account / Delete account / Sign
+out buttons all crammed into one flex row) with a persistent two-column app shell.
+
+Four new components, each independently unit-tested:
+- `src/ui/components/avatar.js` — `initialsFor(user)` (pure) + `createAvatar(user, size)`.
+  Initials-only; no photo source exists anywhere in the auth stack (no Google sign-in).
+- `src/ui/components/dropdown.js` — a generic floating menu (`createDropdown(trigger,
+  items, { align })`), keyboard-navigable (Up/Down cycles items, Escape closes and
+  returns focus to the trigger, click/focus outside closes). Reusable primitive, not
+  sidebar-specific — Phase 3's component library is expected to reach for it again.
+- `src/ui/components/sidebar.js` — brand mark (home link), nav (`Dashboard` → `/app`,
+  `My Roadmaps` → `/onboarding`), a manual desktop icon-rail collapse toggle (persisted
+  to a new `KEYS.SIDEBAR_COLLAPSED` localStorage key, same device-level-preference
+  pattern as `KEYS.DAILY_TODOS_COLLAPSED`), and a footer (avatar + email + sign-out
+  icon button, plus a `createDropdown`-wrapped identity trigger holding "Delete account"
+  for a signed-in — non-anonymous — user only).
+- `src/ui/components/topbar.js` — breadcrumb, sync pill, "Create account" CTA (guest
+  only), theme toggle, and a hamburger button (CSS-hidden ≥640px) wired to the
+  sidebar's own `_toggleMobile()`.
+
+**Spec deviations, all confirmed against the current codebase before implementing:**
+the original issue text listed `Resources`/`Settings` nav items and a storage-backend
+indicator — dropped, per the issue's own readiness-study comment: neither page exists
+yet (confirmed against `main.js`'s route table) and Firebase is the only backend (#5
+closed as not planned). "Switch template" is superseded by the sidebar's "My Roadmaps"
+nav item (identical destination, `#/onboarding`) — the 8 e2e tests across
+`onboarding.test.js`/`customRoadmap.test.js`/`importRoadmap.test.js` that clicked the
+old button now click `.nav-item:has-text("My Roadmaps")` instead.
+
+**Responsive**, per the original spec: fixed 240px sidebar ≥1024px; automatic icon-only
+56px rail 640–1023px (CSS-only, not persisted — independent of the manual desktop
+collapse above); hidden below 640px, opening as a drawer (translateX slide, backdrop,
+`body.scroll-locked`) on hamburger tap. `dashboard.js` keeps its existing `.dashboard`
+class on the same element as the new `.app-shell-2` layout class (rather than replacing
+it) specifically so the many existing e2e/unit tests asserting `.dashboard` as the
+dashboard-is-rendered marker needed no changes.
+
+**Real layout bug found and fixed during manual verification, not a pre-existing one:**
+`.app-shell-2`'s CSS Grid defaults to `align-items: stretch`, so `.app-sidebar` — a
+grid cell sibling of the (very tall, for a long roadmap) main-content column — stretched
+to match that column's full height rather than the viewport's. Measured at ~5700px tall
+against the Java Backend Engineer template's 484 seeded items, pushing the sidebar
+footer far below the visible viewport. Fixed with `align-items: start` on the grid
+container plus `position: sticky; top: 0; height: 100dvh; overflow-y: auto` on
+`.app-sidebar` itself — pins it to the viewport while `.app-content` scrolls past
+underneath, with its own scrollbar as a safety net for a sidebar nav list that someday
+outgrows the viewport (not needed by today's two-item nav, but cheap to include now).
+
+Not fixed, and explicitly out of scope for this PR: verification also surfaced that
+`router.js` has no scroll-restoration logic at all, so any route change (not just this
+one) carries over the previous page's scroll position — confirmed pre-existing
+(`router.js` is untouched by this PR, and the same carryover reproduces on unmodified
+`main`), not something this PR's sidebar/topbar work introduced. Worth its own
+follow-up issue rather than folding into this one.

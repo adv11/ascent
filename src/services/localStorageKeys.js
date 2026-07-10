@@ -29,7 +29,13 @@ export const KEYS = {
   // THEME's pattern (plain localStorage, read/written directly by the
   // component, never cleared on sign-out) rather than UI_STATE's per-account
   // pattern (owned by roadmapStore.js, cleared by clearLocal() on sign-out).
-  DAILY_TODOS_COLLAPSED: 'ascent-daily-todos-collapsed'
+  DAILY_TODOS_COLLAPSED: 'ascent-daily-todos-collapsed',
+  // Manual desktop icon-rail collapse for .app-sidebar (issue #6 Phase 2) — a
+  // device-level cosmetic preference, same pattern as DAILY_TODOS_COLLAPSED
+  // above (not per-account, never cleared on sign-out). Independent of the
+  // automatic tablet-width icon-rail breakpoint, which is CSS-only and not
+  // persisted.
+  SIDEBAR_COLLAPSED: 'ascent-sidebar-collapsed'
 };
 
 export function verifyDismissedKey(uid) {
