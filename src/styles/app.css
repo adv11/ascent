@@ -1083,13 +1083,20 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* issue #6 Phase 4.1 fix — was `display: grid` with no columns, which
    auto-places each child (the number, the "%" span) into its own implicit
    row instead of sitting inline, stacking "0" above "%" instead of reading
-   "0%". flex + baseline keeps them on one line regardless of font-size
-   mismatch between the two children. */
+   "0%". flex keeps them on one line regardless of font-size mismatch
+   between the two children. `align-items: center`, not `baseline` — this
+   box (64px, sized to match the SVG ring) is much taller than the text's
+   own line box, and baseline alignment only lines up items' text baselines
+   with each other, it does not center that line within extra container
+   height — the previous `baseline` value rendered "0%" pinned near the
+   container's top-left instead of centered inside the ring (caught from a
+   live screenshot, not visible in a DOM-position-only check, since the
+   flex box's own bounding rect was already pixel-perfect). */
 .stat-tile-ring-value {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
