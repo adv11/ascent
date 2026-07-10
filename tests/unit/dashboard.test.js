@@ -52,6 +52,52 @@ describe('renderFilterChips (issue #53)', () => {
     chips.find(c => c.dataset.p === 'P1').click();
     expect(onFilterChange).toHaveBeenCalledWith('P1');
   });
+
+  // Issue #6 Phase 4.3 — inline clear ✕ on the active non-ALL chip.
+  it('shows a clear ✕ only on the active non-ALL chip', async () => {
+    const chips = await build(items, 'P0', () => {});
+    const p0 = chips.find(c => c.dataset.p === 'P0');
+    const all = chips.find(c => c.dataset.p === 'ALL');
+    const p1 = chips.find(c => c.dataset.p === 'P1');
+    expect(p0.querySelector('.filter-chip-clear')).not.toBeNull();
+    expect(all.querySelector('.filter-chip-clear')).toBeNull();
+    expect(p1.querySelector('.filter-chip-clear')).toBeNull();
+  });
+
+  it('clicking the clear ✕ calls onFilterChange with ALL', async () => {
+    const onFilterChange = vi.fn();
+    const chips = await build(items, 'P0', onFilterChange);
+    const p0 = chips.find(c => c.dataset.p === 'P0');
+    p0.querySelector('.filter-chip-clear').click();
+    expect(onFilterChange).toHaveBeenCalledWith('ALL');
+  });
+});
+
+describe('formatLastSynced (issue #6 Phase 4.4)', () => {
+  async function format(ms) {
+    const { formatLastSynced } = await import('../../src/ui/pages/dashboard.js');
+    return formatLastSynced(ms);
+  }
+
+  it('returns a "not synced" message when never synced', async () => {
+    expect(await format(null)).toBe('Not synced yet');
+  });
+
+  it('reads "just now" under a minute', async () => {
+    expect(await format(5_000)).toBe('Last synced just now');
+  });
+
+  it('reads minutes ago under an hour', async () => {
+    expect(await format(125_000)).toBe('Last synced 2m ago');
+  });
+
+  it('reads hours ago under a day', async () => {
+    expect(await format(7_200_000)).toBe('Last synced 2h ago');
+  });
+
+  it('falls back to a date beyond a day', async () => {
+    expect(await format(90_000_000)).toMatch(/^Last synced \S/);
+  });
 });
 
 describe('renderPhaseCard (issue #53)', () => {
@@ -84,6 +130,13 @@ describe('renderPhaseCard (issue #53)', () => {
     expect(card.tagName).toBe('SECTION');
     expect(card.querySelector('.phase-name').textContent).toBe('Phase One');
     expect(card.querySelector('.phase-progress').textContent).toBe('1/2');
+  });
+
+  // Issue #6 Phase 4.2 — priority left-border accent + progress ring.
+  it('sets the priority data attribute and renders a progress ring in the head', async () => {
+    const card = await build(phase, 0);
+    expect(card.dataset.priority).toBe('P1');
+    expect(card.querySelector('.phase-head .progress-ring')).not.toBeNull();
   });
 
   it('marks the card open when its index is in openPhases', async () => {

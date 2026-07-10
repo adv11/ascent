@@ -13,6 +13,8 @@ import { MAX_TITLE_LENGTH } from '../../core/roadmap/limits.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
 import { openAddToDailyTodoModal } from '../components/addToDailyTodoModal.js';
 import { MAX_ACTIVE_TODOS } from '../../core/dailyTodo/limits.js';
+import { createProgressRing } from '../components/progressRing.js';
+import { animateCountUp } from '../../utils/countUp.js';
 
 // `templatePhases` is the current user's chosen template's phase/section skeleton
 // (store.getSnapshot().phases) rather than a hardcoded import, so a template with
@@ -71,20 +73,51 @@ function priorityCounts(items, priority) {
   return { total: list.length, done: list.filter(i => i.done).length };
 }
 
+// Module-scope, pure (issue #6 Phase 4.4) — turns a "when did we last
+// successfully save" timestamp into the roadmap-header meta row's freshness
+// text. No store change needed: dashboard.js's own updateSaveBadge() already
+// observes every saveState transition, so it just remembers the last time
+// state was 'synced'/'saved'/'local' in a local variable and feeds it here
+// on each render — the same "derive it from what's already visible" approach
+// remainingBand/formatRemaining (src/ui/utils/dailyTodo.js) use for countdown
+// text, just counting up from the past instead of down to the future.
+export function formatLastSynced(ms) {
+  if (ms == null) return 'Not synced yet';
+  if (ms < 60_000) return 'Last synced just now';
+  if (ms < 3_600_000) return `Last synced ${Math.floor(ms / 60_000)}m ago`;
+  if (ms < 86_400_000) return `Last synced ${Math.floor(ms / 3_600_000)}h ago`;
+  return `Last synced ${new Date(Date.now() - ms).toLocaleDateString()}`;
+}
+
 // Module-scope (issue #53) — was previously inlined inside render(). Returns
 // the priority filter-chip buttons; onFilterChange receives the clicked
 // priority id and the caller owns re-rendering/persisting the new filter.
+// Issue #6 Phase 4.3 — the active non-ALL chip gets an inline ✕ to clear
+// just that filter, a lower-friction alternative to re-clicking the chip.
 export function renderFilterChips(items, activeFilter, onFilterChange) {
   return ['ALL', 'P0', 'P1', 'P2', 'P3'].map(p => {
     const { total, done } = priorityCounts(items, p);
     const label = p === 'ALL' ? 'All' : p;
+    const isActive = activeFilter === p;
     return el('button', {
       type: 'button',
-      className: `filter-chip ${activeFilter === p ? 'active' : ''}`,
+      className: `filter-chip ${isActive ? 'active' : ''}`,
       dataset: { p },
-      'aria-pressed': String(activeFilter === p),
+      'aria-pressed': String(isActive),
       onClick: () => onFilterChange(p)
-    }, [`${label} `, el('span', { className: 'chip-count', text: `${done}/${total}` })]);
+    }, [
+      `${label} `,
+      el('span', { className: 'chip-count', text: `${done}/${total}` }),
+      isActive && p !== 'ALL' ? el('span', {
+        className: 'filter-chip-clear',
+        'aria-label': `Clear ${label} filter`,
+        text: '✕',
+        onClick: e => {
+          e.stopPropagation();
+          onFilterChange('ALL');
+        }
+      }) : null
+    ].filter(Boolean));
   });
 }
 
@@ -120,8 +153,9 @@ export function renderPhaseCard(phase, pi, {
   const sectionDone = visibleSections.reduce((acc, s) => acc + s.items.filter(i => i.done).length, 0);
   const sectionTotal = visibleSections.reduce((acc, s) => acc + s.items.length, 0);
   const isOpen = openPhases.has(pi);
+  const pct = sectionTotal ? Math.round((sectionDone / sectionTotal) * 100) : 0;
 
-  return el('section', { className: `phase-card ${isOpen ? 'open' : ''}`, dataset: { phase: String(pi) } }, [
+  return el('section', { className: `phase-card ${isOpen ? 'open' : ''}`, dataset: { phase: String(pi), priority: phase.priority } }, [
     el('button', {
       type: 'button',
       className: 'phase-head',
@@ -130,7 +164,12 @@ export function renderPhaseCard(phase, pi, {
       el('span', { className: 'phase-index', text: String(pi + 1).padStart(2, '0') }),
       el('span', { className: 'phase-name', text: phase.title }),
       el('span', { className: `badge ${phase.priority}`, text: phase.priority }),
-      el('span', { className: 'phase-progress', text: `${sectionDone}/${sectionTotal}` }),
+      // Issue #6 Phase 4.2 — the ring is the visible progress affordance now;
+      // .phase-progress stays in the DOM as an sr-only label so assistive
+      // tech (and tests/unit/dashboard.test.js, which asserts on it) keep
+      // working unchanged.
+      createProgressRing(pct, { size: 28, strokeWidth: 3 }),
+      el('span', { className: 'phase-progress sr-only', text: `${sectionDone}/${sectionTotal}` }),
       el('span', { className: 'chevron', text: '›' })
     ]),
     el('div', { className: 'phase-body' }, [
@@ -240,18 +279,47 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   let openPhases = new Set(Array.isArray(ui.openPhases) ? ui.openPhases : [0]);
   let saveBadgeTimer;
   let lastStructuralVersion = null;
+  // Issue #6 Phase 4.4 — set inside updateSaveBadge() whenever a save
+  // actually completes; feeds formatLastSynced() in the roadmap-header meta
+  // row. Purely a UI-layer freshness read, not persisted anywhere.
+  let lastSyncedAt = null;
+  // Issue #6 Phase 4.1 — the stat strip's CountUp only plays once, on the
+  // dashboard's first render; every later render (including the
+  // patchDoneStates fast-path) sets the numbers directly with no animation.
+  let hasAnimatedStats = false;
+  // Issue #6 Phase 4.2 — id-diff based "just added" tracking for the new
+  // item stagger-entry animation. Populated at the end of every render();
+  // any item id present now that wasn't in the previous set gets the
+  // `entering` class on its next render. No roadmapStore.js change needed —
+  // addItem() only returns a boolean, so this is a pure before/after
+  // comparison entirely in the UI layer.
+  let knownItemIds = new Set();
 
   const offlineBanner = el('div', { className: 'offline-banner', id: 'offlineBanner' }, [
     el('span', { className: 'sync-dot error' }),
     ' Offline — changes stay on this device until you reconnect.'
   ]);
 
-  const doneStat = el('span', { className: 'stat-number', text: '0' });
-  const totalStat = el('span', { text: '0' });
-  const percentStat = el('span', { text: '0' });
-  const progressFill = el('div', { className: 'progress-fill', style: 'width:0%' });
+  const doneStat = el('span', { className: 'stat-tile-number', text: '0' });
+  const doneStatTotal = el('span', { className: 'stat-tile-total', text: '/ 0' });
+  const percentStat = el('span', { className: 'stat-tile-number', text: '0' });
+  const percentRing = createProgressRing(0, { size: 64, strokeWidth: 6 });
+  const roadmapMetaRow = el('p', { className: 'roadmap-meta-row', text: '' });
   const filterContainer = el('div', { className: 'filter-row' });
   const searchInput = el('input', { className: 'search-input', placeholder: 'Search topics…', value: searchQuery });
+  const clearFiltersBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-ghost btn-sm clear-filters-btn',
+    text: 'Clear all filters',
+    hidden: true,
+    onClick: () => {
+      activeFilter = 'ALL';
+      searchQuery = '';
+      searchInput.value = '';
+      persistUi();
+      render(store.getSnapshot());
+    }
+  });
   const content = el('main', { className: 'dashboard-content' });
   const saveBadge = el('div', { className: 'save-badge', id: 'saveBadge' });
   const syncPill = el('span', { className: 'sync-pill', text: 'Syncing' });
@@ -288,10 +356,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       saveBadge.textContent = user.isAnonymous ? 'Saved locally' : 'Saved to cloud';
       saveBadge.classList.add('show');
       saveBadgeTimer = setTimeout(() => saveBadge.classList.remove('show'), 1800);
+      lastSyncedAt = Date.now();
     } else if (state === 'local') {
       saveBadge.textContent = 'Saved on this device';
       saveBadge.classList.add('show');
       saveBadgeTimer = setTimeout(() => saveBadge.classList.remove('show'), 1800);
+      lastSyncedAt = Date.now();
     } else if (state === 'error') {
       saveBadge.textContent = 'Save failed — retrying…';
       saveBadge.classList.add('show', 'error');
@@ -342,9 +412,21 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     showToast(`Added "${result.title}" to Today's Todos`, 'success');
   }
 
-  function renderItemRow(item) {
+  // Issue #6 Phase 4.2 — `sectionIdx` (this item's position within its own
+  // section) feeds the stagger delay for newly-added rows only; existing
+  // rows re-rendered on a structural change (e.g. toggling a different
+  // phase open) never carry `entering` since their id is already in
+  // knownItemIds from a prior render.
+  function renderItemRow(item, sectionIdx = 0) {
+    const isNew = !knownItemIds.has(item.id);
+    // No inline `style` attribute — index.html's CSP has no 'unsafe-inline'
+    // in style-src (see .claude/rules/auth-security.md), so an inline
+    // animation-delay would be silently dropped by the browser. A capped
+    // set of discrete delay classes (CSS below) gets the same staggered
+    // fan-in effect without violating it.
+    const enteringClass = isNew ? `entering entering-delay-${Math.min(sectionIdx, 6)}` : '';
     return el('div', {
-      className: `check-item ${item.done ? 'done' : ''}`,
+      className: `check-item ${item.done ? 'done' : ''} ${enteringClass}`,
       role: 'checkbox',
       tabindex: '0',
       'aria-checked': String(item.done),
@@ -566,11 +648,21 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     const allItems = snapshot.items;
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });
     const stats = countStats(allItems);
-    doneStat.textContent = String(stats.done);
-    totalStat.textContent = String(stats.total);
-    percentStat.textContent = String(stats.pct);
-    progressFill.style.width = `${stats.pct}%`;
+    doneStatTotal.textContent = `/ ${stats.total}`;
+    roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
     updateSaveBadge(snapshot.saveState);
+    if (hasAnimatedStats) {
+      doneStat.textContent = String(stats.done);
+      percentStat.textContent = String(stats.pct);
+      percentRing._setPct(stats.pct);
+    } else {
+      animateCountUp(doneStat, stats.done);
+      animateCountUp(percentStat, stats.pct);
+      percentRing._setPct(stats.pct);
+      hasAnimatedStats = true;
+    }
+
+    clearFiltersBtn.hidden = activeFilter === 'ALL' && !searchQuery;
 
     filterContainer.replaceChildren(...renderFilterChips(allItems, activeFilter, p => {
       activeFilter = activeFilter === p && p !== 'ALL' ? 'ALL' : p;
@@ -627,6 +719,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       const allOpen = phases.length > 0 && phases.every((_, i) => openPhases.has(i));
       toggleAllBtn.textContent = allOpen ? 'Collapse all' : 'Expand all';
     }
+
+    // Issue #6 Phase 4.2 — must run last: renderItemRow() (called above, via
+    // renderPhaseCard) reads knownItemIds to decide which rows are "new"
+    // this render, so it can't be updated until after that pass completes.
+    knownItemIds = new Set(allItems.map(i => i.id));
   }
 
   // A "done" toggle only flips one item's checked state — it never changes which
@@ -638,8 +735,9 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     const stats = countStats(allItems);
     doneStat.textContent = String(stats.done);
     percentStat.textContent = String(stats.pct);
-    progressFill.style.width = `${stats.pct}%`;
+    percentRing._setPct(stats.pct);
     updateSaveBadge(snapshot.saveState);
+    roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
 
     filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
       const { total, done } = priorityCounts(allItems, chip.dataset.p);
@@ -662,7 +760,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       const progressEl = phaseCard.querySelector('.phase-progress');
       if (!progressEl) return;
       const visible = phase.sections.flatMap(s => s.items.filter(i => filteredIds.has(i.id)));
-      progressEl.textContent = `${visible.filter(i => i.done).length}/${visible.length}`;
+      const visibleDone = visible.filter(i => i.done).length;
+      progressEl.textContent = `${visibleDone}/${visible.length}`;
+      const ring = phaseCard.querySelector('.progress-ring');
+      if (ring) ring._setPct(visible.length ? Math.round((visibleDone / visible.length) * 100) : 0);
     });
   }
 
@@ -763,24 +864,29 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
         verificationBanner,
         offlineBanner,
         el('header', { className: 'dashboard-header' }, [
-          el('div', { className: 'hero-panel' }, [
-            el('div', { className: 'hero-copy' }, [
-              el('div', { className: 'current-roadmap-badge' }, [
-                el('span', { 'aria-hidden': 'true', text: currentTemplate.icon }),
-                el('span', { text: `${currentTemplate.name} roadmap` })
-              ]),
-              el('h1', { className: 'hero-title', text: 'Learn it. Revise it. Track it.' }),
-              el('p', { className: 'hero-text', text: 'Every topic, resource, and priority — all in one editable checklist that syncs across your devices.' })
+          // Issue #6 Phase 4.4 — the "Official/read-only" lock-badge concept
+          // from the original spec is stale post-#4/#58 (every roadmap is
+          // equally "yours" now); this extends the existing identity badge
+          // with a meta row instead of a separate header section.
+          el('div', { className: 'roadmap-header' }, [
+            el('div', { className: 'current-roadmap-badge' }, [
+              el('span', { 'aria-hidden': 'true', text: currentTemplate.icon }),
+              el('span', { text: `${currentTemplate.name} roadmap` })
             ]),
-            el('div', { className: 'progress-card' }, [
-              el('div', { className: 'progress-stat' }, [
-                doneStat,
-                el('span', { className: 'stat-label', text: ' of ' }),
-                totalStat,
-                el('span', { className: 'stat-label', text: ' done' })
+            roadmapMetaRow
+          ]),
+          el('div', { className: 'stat-strip' }, [
+            el('div', { className: 'stat-tile' }, [
+              el('span', { className: 'stat-tile-icon', 'aria-hidden': 'true', text: '✓' }),
+              el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
+              el('span', { className: 'stat-tile-label', text: 'Items done' })
+            ]),
+            el('div', { className: 'stat-tile stat-tile-ring' }, [
+              el('div', { className: 'stat-tile-ring-wrap' }, [
+                percentRing,
+                el('div', { className: 'stat-tile-ring-value' }, [percentStat, el('span', { text: '%' })])
               ]),
-              el('div', { className: 'progress-track' }, [progressFill]),
-              el('div', { className: 'progress-percent' }, [percentStat, el('span', { text: '%' })])
+              el('span', { className: 'stat-tile-label', text: 'Complete' })
             ])
           ]),
           el('div', { className: 'toolbar' }, [
@@ -789,6 +895,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
               filterContainer
             ]),
             el('div', { className: 'toolbar-block toolbar-right' }, [
+              clearFiltersBtn,
               searchInput,
               toggleAllBtn
             ])

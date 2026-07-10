@@ -1928,3 +1928,50 @@ Verified visually via a throwaway local HTML harness (not committed — deleted 
 this PR's diff) mounting all eight components in both themes; caught zero real bugs in
 the components themselves (one cosmetic mojibake in the harness's own missing
 `<meta charset>`, unrelated to any component logic).
+
+### 2026-07-10 — PR #94 — Dashboard redesign, Phase 4 of enterprise UI/UX revamp (issue #6)
+
+Rewired `src/ui/pages/dashboard.js`'s header markup and phase-card rendering onto the
+Phase 1–3 token/component system, replacing `.hero-panel` (marketing tagline + linear
+progress bar) entirely. New module: `src/utils/countUp.js` (`animateCountUp`,
+requestAnimationFrame-driven, `prefers-reduced-motion`-aware) — used once per stat tile
+on the dashboard's first `render()` only; the existing `patchDoneStates()` fast path
+(a plain checkbox toggle) updates the same DOM nodes directly with no animation. The
+`% Complete` stat tile and every phase-head now reuse `createProgressRing`
+(`src/ui/components/progressRing.js`, built in Phase 3, unused until now) instead of
+two different progress affordances. `.phase-progress`'s text node stays in the DOM as
+an `.sr-only` label so `tests/unit/dashboard.test.js`'s existing assertion on it (and
+assistive tech) keep working — the ring is the new visible affordance.
+
+Two scope cuts from the original issue #6 Phase 4 spec, both because the data or
+concept they depend on doesn't exist: the stat strip ships 2 tiles (items done, %
+complete) not the spec's 4 — streak/est.-time-left need persisted tracking data that
+belongs to issue #8 (Progress analytics), explicitly gated on this issue. The roadmap
+header extends the existing `.current-roadmap-badge` with a new `.roadmap-meta-row`
+("180 items · 38% complete · Last synced 2m ago" — the last-synced timestamp is a
+local, UI-layer-only variable set inside `updateSaveBadge()`, no store change) instead
+of the spec's separate "Official/read-only" lock-badge section, which is stale
+post-#4/#58 (every roadmap, built-in or custom, is equally "yours" and non-destructively
+switchable now).
+
+A new-item stagger-entry animation uses a pure before/after id-diff
+(`knownItemIds`, updated at the end of every `render()`) entirely in the UI layer — no
+`roadmapStore.js` change, since `addItem()` only returns a boolean. Caught and fixed a
+real bug during live verification: the first implementation set the stagger delay via
+an inline `style="animation-delay:…"` attribute, which `index.html`'s CSP
+(`style-src` with no `unsafe-inline`) silently drops app-wide — confirmed via a CSP
+console violation and zero visible stagger in a live Playwright-driven guest session.
+Replaced with a capped set of discrete `entering-delay-0`..`entering-delay-6` CSS
+classes; any future per-row animation delay in this codebase must follow the same
+discrete-class pattern, never an inline style. Added `--topbar-h` (`src/styles/app.css`
+`:root`), a single shared token keeping `.app-topbar`'s own height and
+`.section-label`'s new `position: sticky` offset in lockstep, so a stuck section header
+can never sit half-hidden under the topbar.
+
+Verified live: `npm test` (475 passed, 12 new) and `npm run lint` (0 errors) green; a
+throwaway Playwright driver (not committed) drove a real guest session through sign-in
+→ onboarding → dashboard across all 11 `verify-changes` matrix widths in both themes
+(zero horizontal overflow at any width), confirmed `.check-actions` touch-vs-hover
+`opacity` behavior and 44px touch targets on an emulated touch device, and confirmed
+the CountUp/ring/stagger/sticky-header/search-focus-expand/clear-filters behaviors
+render and update correctly before and after a checkbox toggle.

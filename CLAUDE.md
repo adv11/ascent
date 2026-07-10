@@ -109,7 +109,7 @@ src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + th
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/sidebar.js, topbar.js, avatar.js, dropdown.js  app shell (issue #6 Phase 2) — see .claude/rules/ui-styling.md
-src/ui/components/skeleton.js, emptyState.js, tooltip.js, modal.js, tabs.js, progressRing.js, notificationBadge.js, commandPalette.js  component library (issue #6 Phase 3), not yet wired into any page
+src/ui/components/skeleton.js, emptyState.js, tooltip.js, modal.js, tabs.js, notificationBadge.js, commandPalette.js  component library (issue #6 Phase 3), not yet wired into any page; progressRing.js wired into dashboard.js (Phase 4)
 src/ui/components/dailyTodoPanel.js, dailyTodoGuide.js, addToDailyTodoModal.js  Daily Todos UI — see .claude/rules/roadmap-store.md
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications
@@ -117,7 +117,7 @@ src/ui/components/confirmDialog.js  styled confirm/cancel modal — see "Never u
 src/ui/components/buildYourOwnGuide.js, newRoadmapModal.js, importRoadmapModal.js  manual/AI-import roadmap creation — see .claude/rules/roadmap-store.md
 src/data/importPrompt.js, src/core/roadmap/importValidator.js, schemaAdapter.js, limits.js  AI-import prompt + pure validator/adapter/caps — see .claude/rules/roadmap-store.md
 src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/duration caps — see .claude/rules/roadmap-store.md
-src/ui/utils/dailyTodo.js, customRoadmapIcon.js  pure helpers, no DOM/Firebase dependency
+src/ui/utils/dailyTodo.js, customRoadmapIcon.js  pure helpers, no DOM/Firebase dependency; src/utils/countUp.js  pure requestAnimationFrame count-up helper
 src/styles/app.css            the entire design system (tokens, components, both themes) — see .claude/rules/ui-styling.md
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)
 docs/adr/                     one-time architecture decision records
