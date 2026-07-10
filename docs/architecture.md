@@ -2359,3 +2359,20 @@ showing the full per-type breakdown, e.g. `▶ 2 videos · ⭐ 1 repo · 🔗 1 
 No `roadmapStore.js`/Firebase schema change — `resource.label`/`resource.url` are
 unchanged; the link type is always derived at render time from the existing `url`
 field, never persisted.
+
+**Follow-up, reported live: the first checklist row's resource-count tooltip rendered
+with its top sliced off.** Not a z-index/paint-order bug, despite looking like one —
+confirmed by cranking `tooltip-bubble`'s z-index to `99999` live with zero effect.
+`.section-label` is `position: sticky`, and its containing block is `.phase-card`
+(`overflow: hidden` for its rounded corners/priority-accent border, and also
+transformed on `:hover`) — a sticky element gets its own layer promoted relative to
+that containing block, and Chromium paints that layer ahead of ordinary content inside
+the same block *regardless of declared z-index*. Proven by temporarily forcing
+`.section-label` to `position: static`: the tooltip then rendered correctly, isolating
+the cause to the label's stickiness rather than the tooltip's own stacking. `tooltip.js`
+now computes the bubble's candidate "above" rect and checks it against every currently
+visible `.section-label`'s bounding rect, flipping to `.tooltip-below` on overlap — in
+addition to (not instead of) the existing viewport-room check. `.section-label` is the
+only sticky element that can share a positioning context with a tooltip trigger
+anywhere in this app today; a future tooltip caller that needs to coexist with a
+different sticky element should extend that selector, not redesign the approach.
