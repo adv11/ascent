@@ -118,6 +118,40 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
         const signoutBox = await page.locator('.app-sidebar-signout').boundingBox();
         expect(boxesOverlap(identityBox, signoutBox)).toBe(false);
       });
+
+      test('the account dropdown ("Delete account") is fully visible, not clipped by the sidebar', async ({ page }) => {
+        test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+        // The delete-account dropdown only renders for a real (non-anonymous)
+        // account (sidebar.js), so this needs an actual sign-up rather than guest.
+        await page.goto('/#/signup');
+        await page.fill('input[type="email"]', `test-${Date.now()}@example.com`);
+        await page.fill('input[placeholder="Minimum 6 characters"]', 'Password123!');
+        await page.fill('input[placeholder="Repeat your password"]', 'Password123!');
+        await page.click('button:has-text("Create account")');
+        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 15_000 });
+        await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+        await expect(page.locator('.app-sidebar')).toBeVisible({ timeout: 10_000 });
+
+        await page.locator('.app-sidebar-collapse-btn').click();
+        await expect(page.locator('.app-sidebar')).toHaveClass(/collapsed/);
+        await page.locator('.app-sidebar-identity').click();
+
+        const menu = page.locator('.dropdown-menu.open, .dropdown.open .dropdown-menu');
+        await expect(menu).toBeVisible();
+        await expect(menu).toContainText('Delete account');
+        const menuBox = await menu.boundingBox();
+        const viewport = page.viewportSize();
+        // Issue #102 follow-up — the menu used to be clipped to the sidebar's
+        // own ~64px-wide scroll box (an ancestor `overflow-y: auto` silently
+        // clips overflow-x too) and separately could render thousands of
+        // pixels off-screen if any ancestor had a lingering non-`none`
+        // `transform` (a stray fixed-position containing block). Assert the
+        // whole menu box is on-screen, not just that the element exists.
+        expect(menuBox.x).toBeGreaterThanOrEqual(0);
+        expect(menuBox.y).toBeGreaterThanOrEqual(0);
+        expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(viewport.width);
+        expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(viewport.height);
+      });
     });
   });
 });

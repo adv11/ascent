@@ -239,7 +239,29 @@ body {
 }
 
 /* Animations */
-.fade-in { animation: fade-in 420ms var(--ease-spring) both; }
+/* Issue #102 follow-up — this used to be `... both`, which per the
+   `animation-fill-mode: forwards` half of `both` keeps the `to` keyframe's
+   declared properties applied forever after the animation completes, not
+   just during it. `transform: translateY(0)` is a visual no-op at rest, but
+   a *declared* `transform` (any value, even an identity one) still
+   establishes a new containing block for every `position: fixed` descendant
+   — which silently broke any fixed-position element anywhere inside
+   `.app-shell-2.dashboard.fade-in` (e.g. a `position: fixed` dropdown menu,
+   reported live: it rendered positioned relative to this div's full
+   scrollable content height instead of the viewport, landing thousands of
+   pixels off-screen). `.fade-in` is only ever applied once on initial mount
+   of a fresh page-level container (`authShell.js`, `onboarding.js`,
+   `dashboard.js` — never toggled on/off an existing node), so there is
+   nothing to "snap back" to once the animation ends; dropping the
+   fill-mode lets the element fall back to its normal cascade (`transform:
+   none`) the instant the animation finishes, which is visually identical to
+   `translateY(0)` and removes the phantom containing block. Never add
+   `forwards`/`both` back to this rule without confirming nothing depends on
+   the `to` keyframe's values persisting — if you need that, apply the
+   equivalent resting styles as a normal (non-animation) rule instead, so a
+   plain `transform: none` there can never be confused with a "some
+   transform is set" state. */
+.fade-in { animation: fade-in 420ms var(--ease-spring); }
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -962,9 +984,30 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .avatar-md { width: 36px; height: 36px; font-size: var(--text-sm); }
 .avatar-lg { width: 56px; height: 56px; font-size: var(--text-lg); }
 
+/* Issue #102 follow-up — `.dropdown-menu` used to be `position: absolute`
+   relative to `.dropdown` (this wrapper), with its left/right/top/bottom set
+   by the static `.dropdown-start`/`.dropdown-end` rules below. That broke the
+   moment the wrapper's containing block was `.app-sidebar`: the sidebar's
+   `overflow-y: auto` computes `overflow-x` to `auto` too per the CSS overflow
+   spec (an unspecified axis next to a non-`visible` one is never left
+   `visible`), so the sidebar silently clips anything absolutely-positioned
+   inside it to its own narrow content box — invisible in the normal 240px
+   sidebar (the 180px menu mostly fit inside it by coincidence) but a hard
+   clip in the 56-64px icon-only rail, cutting the "Delete account" menu down
+   to a sliver (reported live). `position: fixed` escapes that ancestor clip
+   entirely (fixed elements are clipped by the viewport, not by a scrolling
+   ancestor, as long as nothing between here and the viewport sets a
+   transform/filter/perspective — `.app-sidebar` never does outside its own
+   mobile-drawer transform, which isn't active in the collapsed/rail states
+   this bug hit) — but a fixed element ignores `.dropdown`'s
+   `position: relative` entirely, so `dropdown.js` now computes the menu's
+   `left`/`right`/`top`/`bottom` from the trigger's `getBoundingClientRect()`
+   at open time instead of leaning on static CSS offsets. z-index raised to
+   sit above the mobile sidebar drawer (200) and its backdrop (199), since a
+   fixed-position menu can now be triggered from inside that drawer too. */
 .dropdown { position: relative; display: inline-flex; min-width: 0; }
 .dropdown-menu {
-  position: absolute;
+  position: fixed;
   min-width: 180px;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -973,11 +1016,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   padding: var(--space-1);
   display: none;
   flex-direction: column;
-  z-index: 50;
+  z-index: 210;
 }
 .dropdown.open .dropdown-menu { display: flex; }
-.dropdown-end { right: 0; top: calc(100% + 6px); }
-.dropdown-start { left: 0; bottom: calc(100% + 6px); }
 .dropdown-item {
   display: block;
   width: 100%;

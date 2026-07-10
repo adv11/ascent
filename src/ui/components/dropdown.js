@@ -32,8 +32,29 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   const wrap = el('div', { className: 'dropdown' }, [trigger, menu]);
   let open = false;
 
+  // `.dropdown-menu` is `position: fixed` (see app.css comment) so it can
+  // escape a clipping ancestor like `.app-sidebar` — but fixed positioning
+  // ignores `.dropdown`'s own offset entirely, so the menu's screen position
+  // has to be computed from the trigger's real geometry every time it opens,
+  // not left to a static CSS rule.
+  function positionMenu() {
+    const rect = trigger.getBoundingClientRect();
+    if (align === 'start') {
+      menu.style.left = `${rect.left}px`;
+      menu.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+      menu.style.top = '';
+      menu.style.right = '';
+    } else {
+      menu.style.right = `${window.innerWidth - rect.right}px`;
+      menu.style.top = `${rect.bottom + 6}px`;
+      menu.style.left = '';
+      menu.style.bottom = '';
+    }
+  }
+
   function setOpen(next) {
     open = next;
+    if (open) positionMenu();
     wrap.classList.toggle('open', open);
     trigger.setAttribute('aria-expanded', String(open));
     if (open) itemEls[0]?.focus();
