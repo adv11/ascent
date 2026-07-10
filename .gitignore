@@ -10,6 +10,10 @@ Thumbs.db
 .idea/
 *.swp
 
+# Local Claude Code settings (enabled plugins, etc.) — machine-specific, not a repo convention
+.claude/settings.json
+.claude/settings.local.json
+
 # Dependencies (none currently, but this is a no-build project so keep it that way)
 node_modules/
 
