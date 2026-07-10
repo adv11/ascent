@@ -1651,6 +1651,139 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   background: var(--panel-2);
 }
 .empty-icon { font-size: 42px; margin-bottom: 12px; opacity: 0.5; }
+.empty-title { font-weight: 800; color: var(--ink); margin-top: var(--space-2); }
+.empty-message { margin-top: var(--space-1); }
+.empty-state .btn { margin-top: var(--space-4); }
+
+/* Component library (issue #6 Phase 3) */
+
+/* 3.1 Skeleton loaders */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius);
+}
+.skeleton-text { height: 14px; border-radius: 4px; }
+.skeleton-card { height: 72px; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* 3.4 Tooltip */
+.tooltip-trigger { position: relative; }
+.tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--neutral-900);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 60;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.tooltip-trigger:hover .tooltip-bubble,
+.tooltip-trigger:focus-within .tooltip-bubble { opacity: 1; }
+.tooltip-bubble.tooltip-below { bottom: auto; top: calc(100% + 6px); }
+
+/* 3.5 Modal — spring entry on top of the existing .modal-overlay/.modal-card */
+@keyframes modal-card-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-card-enter { animation: modal-card-enter var(--duration-enter) var(--ease-spring) both; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-card-enter { animation: none; }
+}
+
+/* 3.6 Tabs */
+.tabs { display: flex; border-bottom: 1px solid var(--line); gap: 0; }
+.tab {
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+}
+.tab[aria-selected='true'] { color: var(--brand-dark); border-bottom-color: var(--brand); }
+.tab:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fade-in var(--duration-base) var(--ease-out); }
+
+/* 3.7 Progress ring */
+.progress-ring-track { stroke: var(--track-bg); }
+.progress-ring-fill {
+  stroke: var(--brand);
+  transition: stroke-dashoffset var(--duration-enter) var(--ease-spring);
+}
+
+/* 3.8 Notification badge */
+.notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.notification-badge-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
+
+/* 3.3 Command palette */
+.command-palette-card { max-width: 560px; width: 100%; padding: 0; display: grid; grid-template-rows: auto 1fr auto; max-height: 70vh; }
+.command-palette-input {
+  font: inherit;
+  font-size: var(--text-md);
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: var(--space-4) var(--space-5);
+  background: transparent;
+  color: var(--ink);
+}
+.command-palette-input:focus { outline: none; }
+.command-palette-list { overflow-y: auto; padding: var(--space-2); display: grid; gap: 2px; }
+.command-palette-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  border: none;
+  background: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.command-palette-item.active { background: var(--surface-2); }
+.command-palette-item-title { font-size: var(--text-sm); font-weight: 700; color: var(--ink); }
+.command-palette-item-subtitle { font-size: var(--text-xs); color: var(--muted); }
+.command-palette-footer {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--line);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
 
 /* Save badge */
 .save-badge {

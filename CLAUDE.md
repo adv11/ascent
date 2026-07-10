@@ -109,6 +109,7 @@ src/ui/components/authShell.js   shared chrome for signIn/signUp (brand row + th
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/sidebar.js, topbar.js, avatar.js, dropdown.js  app shell (issue #6 Phase 2) — see .claude/rules/ui-styling.md
+src/ui/components/skeleton.js, emptyState.js, tooltip.js, modal.js, tabs.js, progressRing.js, notificationBadge.js, commandPalette.js  component library (issue #6 Phase 3), not yet wired into any page
 src/ui/components/dailyTodoPanel.js, dailyTodoGuide.js, addToDailyTodoModal.js  Daily Todos UI — see .claude/rules/roadmap-store.md
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications
