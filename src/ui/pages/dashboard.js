@@ -121,6 +121,78 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
   });
 }
 
+// Reads a duration/easing straight off the live CSS custom property instead
+// of hardcoding a second copy of the value here, so Phase 1's token stays the
+// single source of truth for both the CSS-driven animations and this
+// JS-driven one.
+function cssToken(name, fallback) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return raw || fallback;
+}
+
+// Issue #6 Phase 7 — FLIP height animation for phase-card expand/collapse,
+// replacing the previous plain `display: none/block` + CSS fade (native
+// `display` toggles can't be transitioned at all). Element.animate() runs on
+// its own compositor-driven effect stack, never touching the `style`
+// attribute — unaffected by index.html's no-`unsafe-inline` style-src CSP,
+// unlike the imperative `.style.height`/`.style.overflow`/`.style.display`
+// assignments below (direct DOM property mutation, not the `style` HTML
+// attribute — same safe pattern `importRoadmapModal.js` already uses).
+// Respects `prefers-reduced-motion` itself since a JS-driven WAAPI call
+// doesn't pick up the global CSS `animation-duration: 0.01ms !important`
+// override the way CSS transitions do.
+//
+// Takes the `.phase-card`, not the `.phase-body`, and toggles the 'open'
+// class itself — the CSS rule `.phase-card.open .phase-body { display: block }`
+// means removing 'open' before measuring the closing height would already
+// have collapsed the body to `display: none` (0 layout height) before this
+// function ever got to read it. Measuring must happen while the card is
+// still visually open, before the class change takes effect.
+export function animatePhaseBody(phaseCardEl, opening) {
+  const phaseBodyEl = phaseCardEl.querySelector('.phase-body');
+  if (!phaseBodyEl) {
+    phaseCardEl.classList.toggle('open', opening);
+    return;
+  }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = parseFloat(cssToken('--duration-base', '240ms')) || 240;
+  const easing = cssToken('--ease-spring', 'cubic-bezier(0.2, 0.9, 0.3, 1)');
+
+  if (!opening) {
+    const current = phaseBodyEl.getBoundingClientRect().height;
+    phaseCardEl.classList.remove('open');
+    if (reduceMotion) {
+      phaseBodyEl.style.display = 'none';
+      return;
+    }
+    phaseBodyEl.style.display = 'block';
+    phaseBodyEl.style.overflow = 'hidden';
+    phaseBodyEl.style.height = `${current}px`;
+    const anim = phaseBodyEl.animate([{ height: `${current}px` }, { height: '0px' }], { duration, easing });
+    anim.onfinish = () => {
+      phaseBodyEl.style.display = 'none';
+      phaseBodyEl.style.height = '';
+      phaseBodyEl.style.overflow = '';
+    };
+    return;
+  }
+
+  phaseCardEl.classList.add('open');
+  if (reduceMotion) {
+    phaseBodyEl.style.display = 'block';
+    return;
+  }
+  phaseBodyEl.style.display = 'block';
+  phaseBodyEl.style.overflow = 'hidden';
+  phaseBodyEl.style.height = '0px';
+  const target = phaseBodyEl.scrollHeight;
+  const anim = phaseBodyEl.animate([{ height: '0px' }, { height: `${target}px` }], { duration, easing });
+  anim.onfinish = () => {
+    phaseBodyEl.style.height = '';
+    phaseBodyEl.style.overflow = '';
+  };
+}
+
 // Module-scope (issue #53) — was previously a ~50-line anonymous forEach body
 // inline inside render(). Returns null when every section under this phase is
 // hidden by the current filter/search, so the caller can skip rendering (and
@@ -689,11 +761,27 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
         openPhases,
         filteredIds,
         isCustomRoadmap,
+        // Issue #6 Phase 7 — a plain expand/collapse never changes which items
+        // are visible or how they're grouped (same reasoning as
+        // patchDoneStates() below for a done-toggle), so this patches the one
+        // affected phase-card in place instead of calling the full render()
+        // that used to tear down and rebuild every phase-card on the page —
+        // which also replayed every card's entrance animation on every click.
         onToggle: targetPi => {
-          if (openPhases.has(targetPi)) openPhases.delete(targetPi);
-          else openPhases.add(targetPi);
+          const opening = !openPhases.has(targetPi);
+          if (opening) openPhases.add(targetPi); else openPhases.delete(targetPi);
           persistUi();
-          render(store.getSnapshot());
+
+          const phaseCard = content.querySelector(`.phase-card[data-phase="${targetPi}"]`);
+          if (phaseCard) animatePhaseBody(phaseCard, opening);
+
+          const toggleAllBtn = app.querySelector('[data-toggle-all]');
+          if (toggleAllBtn) {
+            const snapshot = store.getSnapshot();
+            const currentPhases = groupItems(snapshot.items, snapshot.phases);
+            const allOpen = currentPhases.length > 0 && currentPhases.every((_, i) => openPhases.has(i));
+            toggleAllBtn.textContent = allOpen ? 'Collapse all' : 'Expand all';
+          }
         },
         onAddSection: (phaseId, title) => store.addSection(phaseId, title),
         renderItemRow,

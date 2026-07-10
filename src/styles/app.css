@@ -204,11 +204,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes body-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes slide-panel {
@@ -1626,7 +1621,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .phase-card.open .chevron { transform: rotate(90deg); }
 
 .phase-body { display: none; border-top: 1px solid var(--line); }
-.phase-card.open .phase-body { display: block; animation: body-in 200ms ease; }
+/* issue #6 Phase 7 — the "body-in" fade used to run here on every open, via
+   `display: none -> block`, which can't itself be transitioned. A full
+   re-render (rebuilding every phase-card, not just the toggled one) used to
+   trigger it unintentionally on structural changes too. Expand/collapse now
+   plays a true FLIP height animation instead, driven by animatePhaseBody()
+   (dashboard.js) via Element.animate() — this rule only sets the resting
+   `display: block` state for an already-open card on a full re-render (no
+   animation replay), the same way it always has. */
+.phase-card.open .phase-body { display: block; }
 
 /* issue #6 Phase 4.2 — sticky while scrolling through a long open phase.
    --topbar-h keeps the offset in lockstep with .app-topbar's own height
@@ -1734,10 +1737,25 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   box-shadow: 0 8px 20px rgba(15, 118, 110, 0.2);
 }
 .check-item.done .check-mark { transform: scale(1); opacity: 1; }
-.check-item.done .check-title { color: var(--faint); text-decoration: line-through; }
+.check-item.done .check-title { color: var(--faint); }
 
 .check-body { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
-.check-title { font-size: var(--text-base); font-weight: 600; }
+/* issue #6 Phase 7 — strike-through animates in via `::after` width 0% -> 100%
+   instead of an instant `text-decoration: line-through`, per the animation
+   inventory. `position: relative` + `display: inline-block` so the pseudo-element
+   sizes itself to the title's own rendered width, not the flex row's. */
+.check-title { position: relative; display: inline-block; font-size: var(--text-base); font-weight: 600; }
+.check-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 1px;
+  width: 0%;
+  background: currentColor;
+  transition: width var(--duration-base) var(--ease-out);
+}
+.check-item.done .check-title::after { width: 100%; }
 
 .priority-tag {
   font-family: var(--mono);

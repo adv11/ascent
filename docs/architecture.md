@@ -2131,3 +2131,69 @@ to a single column with the mock preview reordered above the copy at the existin
 `≤1024px` breakpoint tier (reused, not a new number), CTA buttons stack full-width at
 `≤480px`, dark theme resolves correctly with no hardcoded colors. Confirmed no console
 errors beyond the pre-existing, unrelated `frame-ancestors` CSP-in-meta-tag warning.
+
+### 2026-07-10 — PR TBD — Phase-card FLIP animation + strike-through animation, Phase 7 of enterprise UI/UX revamp (issue #6)
+
+Closes the two remaining gaps in Phase 7's animation inventory found while auditing
+issue #6's phases 6-10 against what's already shipped — the rest of Phase 7 (motion
+tokens, `prefers-reduced-motion` overrides, stagger-entry, checkbox spring bounce,
+sidebar drawer, toast slide-up) had already landed piggybacked into Phase 2's and
+Phase 4's PRs. No new files; changes confined to `dashboard.js`, `app.css`, and test
+setup.
+
+**`animatePhaseBody(phaseCardEl, opening)`** (new, `src/ui/pages/dashboard.js`)
+replaces the phase-body's `display: none/block` + a plain CSS fade with a true FLIP
+height animation via `Element.animate()`. `display` toggles can't be transitioned at
+all, which is why the fade only ever played on the *fade*, not the height — the box
+still snapped open/closed instantly underneath it. Reads `--duration-base`/
+`--ease-spring` straight off `getComputedStyle(document.documentElement)` rather than
+hardcoding a second copy of Phase 1's tokens, and checks
+`window.matchMedia('(prefers-reduced-motion: reduce)')` itself, since a JS-driven WAAPI
+call doesn't inherit the global CSS `animation-duration: 0.01ms !important` override the
+way a CSS transition/animation does.
+
+**Real bug caught during live verification, not just a design choice:** the function
+takes the `.phase-card`, not the `.phase-body`, specifically so it can toggle the `open`
+class itself, in the right order. The CSS rule `.phase-card.open .phase-body { display:
+block }` means removing the `open` class *before* measuring the body's current height
+(for the closing animation) reads a `display: none` box — 0 height — instead of the real
+one, so the very first version of this code silently skipped the entire collapse
+animation: click, and the card was just already gone by the time the next frame
+rendered. Fixed by having `animatePhaseBody` measure the height first, *then* remove the
+class (forcing `display: block` back via inline style for the animation's duration,
+cleared on `animate().onfinish`) — `tests/unit/dashboardAnimations.test.js` has a
+dedicated regression test for this exact ordering.
+
+**A second, related fix.** Before this PR, clicking a single phase-head called the same
+full `render()` a filter/search change triggers — tearing down and rebuilding *every*
+phase-card on the page just to open the one that was clicked, replaying every other
+card's entrance state in the process. Same "flickering the whole list" problem
+`patchDoneStates()` already exists to avoid for done-toggles — a UI-layer concern, not a
+store one (see the code comment at the `onToggle` callback in `dashboard.js`). Fixed the
+same way: the click handler now patches just the affected `.phase-card` in place (flip
+`openPhases`, animate its body, update the "Expand/Collapse all" button's label
+directly) instead of calling `render()` at all for a plain toggle. The bulk "Expand
+all"/"Collapse all" button intentionally keeps its existing full-`render()` behavior,
+un-animated — animating many cards open/closed simultaneously was judged not worth the
+complexity for a bulk action, versus the single-card case the issue's animation
+inventory specifically calls out ("Click phase head").
+
+**Check row strike-through** (`.check-title`, `app.css`) replaced an instant
+`text-decoration: line-through` with a `::after` pseudo-element animating
+`width: 0% -> 100%` on toggle-done, matching the issue's animation inventory entry
+exactly. `.check-title` gained `position: relative; display: inline-block` so the
+pseudo-element sizes to the title's own rendered width instead of the flex row's.
+
+**Test infrastructure:** jsdom doesn't implement `Element.animate` (the Web Animations
+API) at all — calling it in a unit test throws. `tests/setup.js` gained a minimal stub
+(resolves `onfinish` on the next microtask) so any component using WAAPI can be tested
+without a 240ms real wait; this is intentionally generic, not scoped to
+`animatePhaseBody`, so future components using `.animate()` get it for free.
+
+Verified live via a throwaway Playwright driver (not committed): read real mid-animation
+`getBoundingClientRect().height` values during both expand and collapse (confirming an
+actual animated transition, not an instant jump), confirmed the reduced-motion path
+resolves straight to the final `display`/class state with zero animation frames, and
+confirmed the fix for the "measure after the class already changed" bug above by
+watching the collapse actually animate instead of vanishing on click.
+`npm test` (503 passed, 4 new) and `npm run lint` (0 errors) green.
