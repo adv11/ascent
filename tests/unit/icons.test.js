@@ -3,7 +3,8 @@ import { createIcon } from '../../src/ui/components/icons.js';
 
 const ICON_NAMES = [
   'dashboard', 'roadmaps', 'settings', 'signOut', 'menu', 'collapse', 'chevron',
-  'check', 'search', 'timer', 'note', 'info', 'trash', 'close', 'plus', 'edit', 'sparkle'
+  'check', 'search', 'timer', 'note', 'info', 'trash', 'close', 'plus', 'edit', 'sparkle',
+  'flame', 'trendingUp'
 ];
 
 describe('icons.js', () => {

@@ -83,6 +83,25 @@ const ICON_SHAPES = {
   sparkle: () => [
     { d: 'M12 3.5l1.7 4.8 4.8 1.7-4.8 1.7L12 16.5l-1.7-4.8-4.8-1.7 4.8-1.7z', 'stroke-linejoin': 'round' },
     { d: 'M19 15l.85 2.15L22 18l-2.15.85L19 21l-.85-2.15L16 18l2.15-.85z', 'stroke-linejoin': 'round' }
+  ],
+  // Streak stat card (issue #8) — a simple flame outline, same minimalist
+  // line-art treatment as every other icon here (no fill, currentColor
+  // stroke, round joins).
+  flame: () => [
+    {
+      d: 'M12 21c-4 0-6.5-2.5-6.5-6 0-3 2-5 3-7.5C9.5 5 10 3 12 2c0 2 .5 3.5 2 5 1.5 1.5 2.5 3.5 2.5 6 0 3.5-2.5 6-6 6z',
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+    },
+    {
+      d: 'M12 21a3 3 0 0 0 3-3c0-1.5-1-2.5-1.5-3.5.2 1-.3 2-1.5 2-1 0-1.5-.7-1.3-1.7-1 1-1.7 2-1.7 3.2a3 3 0 0 0 3 3z',
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+    }
+  ],
+  // Velocity stat card (issue #8) — adapted from Feather's "trending-up"
+  // icon (MIT licensed), same precedent as the settings gear above.
+  trendingUp: () => [
+    { d: 'M4 16l6-6 4 4 6-7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+    { d: 'M15 7h5v5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
   ]
 };
 

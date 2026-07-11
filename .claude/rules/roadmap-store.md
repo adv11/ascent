@@ -504,6 +504,24 @@ shape* of items (add/remove/reorder/edit fields other than `done`), bump
 `structuralVersion` for it. If you add a mutation that's purely cosmetic on an existing
 row, don't — and prefer extending `patchDoneStates()` over adding more full re-renders.
 
+**Cross-page "open and scroll to this phase" signal — `KEYS.SCROLL_TO_PHASE` (issue #8).**
+The Progress page's phase-breakdown row (`src/ui/pages/progress.js`) needs to send a user
+to a specific phase on the dashboard when clicked — there's no query-string support in
+`router.js` (exact-string route matching only) and no stable non-index phase identifier
+to target from outside `dashboard.js` before this. The fix is a one-shot `sessionStorage`
+signal, same "read once, then clear" precedent `verificationBanner.js`'s dismiss key
+already established: `progress.js` writes the target phase's title to
+`sessionStorage[KEYS.SCROLL_TO_PHASE]` and calls `navigate('/app')`;
+`dashboard.js`'s `applyScrollToPhaseSignal()` reads and immediately clears it once on
+mount, looks up the already-rendered `.phase-card[data-phase-title="…"]` (a new dataset
+attribute added to `renderPhaseCard`'s output alongside the existing index-based
+`data-phase`, specifically so a phase can be targeted by its stable title rather than
+re-deriving `groupItems()`'s index ordering from outside the file), opens it if not
+already open (`openPhases.add(pi)` + a plain `render()`, not the animated toggle path —
+same precedent as the "Clear all filters" button's own direct `persistUi()` + `render()`),
+and scrolls it into view. If you ever need another cross-page "arrive here already primed
+to X" signal, follow this same pattern rather than adding query-string routing.
+
 **Personal notes per topic — `item.notes` (issue #15).** Every item may carry a plain-text
 `notes` field, capped at 5,000 characters; a missing field and `''` both mean "no notes"
 (backward compat — seed items are never retrofitted with `notes: ''`, the same precedent

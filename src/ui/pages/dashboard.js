@@ -20,6 +20,7 @@ import { animateCountUp } from '../../utils/countUp.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { attachTooltip } from '../components/tooltip.js';
 import { createIcon } from '../components/icons.js';
+import { KEYS } from '../../services/localStorageKeys.js';
 
 // Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
 // "most valuable" type (a video worth watching over a plain article, etc.)
@@ -341,7 +342,7 @@ export function renderPhaseCard(phase, pi, {
   const isOpen = openPhases.has(pi);
   const pct = sectionTotal ? Math.round((sectionDone / sectionTotal) * 100) : 0;
 
-  return el('section', { className: `phase-card ${isOpen ? 'open' : ''}`, dataset: { phase: String(pi), priority: phase.priority } }, [
+  return el('section', { className: `phase-card ${isOpen ? 'open' : ''}`, dataset: { phase: String(pi), phaseTitle: phase.title, priority: phase.priority } }, [
     el('button', {
       type: 'button',
       className: 'phase-head',
@@ -462,6 +463,31 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       filter: activeFilter,
       search: searchQuery,
       openPhases: [...openPhases]
+    });
+  }
+
+  // One-shot cross-page signal (issue #8) — progress.js's phase-breakdown
+  // row click writes the target phase's title to KEYS.SCROLL_TO_PHASE right
+  // before navigating here. Read once, on this mount only, then cleared
+  // immediately so a later reload/re-visit never re-triggers it. Looks the
+  // target phase up by its already-rendered `data-phase-title` (not by
+  // re-deriving groupItems' index ordering here) since the DOM is already
+  // the source of truth for which index a given phase title landed at.
+  function applyScrollToPhaseSignal() {
+    const targetTitle = sessionStorage.getItem(KEYS.SCROLL_TO_PHASE);
+    if (!targetTitle) return;
+    sessionStorage.removeItem(KEYS.SCROLL_TO_PHASE);
+    const card = content.querySelector(`.phase-card[data-phase-title="${CSS.escape(targetTitle)}"]`);
+    if (!card) return;
+    const pi = Number(card.dataset.phase);
+    if (!openPhases.has(pi)) {
+      openPhases.add(pi);
+      persistUi();
+      render(store.getSnapshot());
+    }
+    requestAnimationFrame(() => {
+      content.querySelector(`.phase-card[data-phase-title="${CSS.escape(targetTitle)}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 
@@ -1061,6 +1087,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const unsubStore = store.subscribe(handleSnapshot);
   lastStructuralVersion = store.getSnapshot().structuralVersion;
   render(store.getSnapshot());
+  applyScrollToPhaseSignal();
 
   // 30s resolution matches dailyTodoPanel.js's own countdown tick — enough
   // for hour/minute-granularity text without a busier interval.

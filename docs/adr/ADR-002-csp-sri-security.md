@@ -129,6 +129,31 @@ testing surface. The external file approach is strictly better.
 **No CSP at all (rejected)**: Unacceptable for a product moving toward public launch.
 Closes a class of XSS attacks at zero runtime cost.
 
+## CDN loading exceptions (added 2026-07-11, issue #8)
+
+Chart.js (`src/ui/components/chartWrapper.js`) is the first CDN script this app loads
+that **cannot** follow the Firebase SDK's `modulepreload` + SRI pattern above, because
+the two requirements are in direct tension for this specific case:
+
+- The issue explicitly wants Chart.js **lazy-loaded, only on a user's first visit to
+  `#/progress`** — not fetched on every app load the way `modulepreload` (which is
+  unconditional, regardless of whether the current route ever uses it) would force.
+- A dynamic `import()` call (the only mechanism that achieves that lazy load) **cannot
+  carry an `integrity` attribute** — SRI on a dynamically-imported ES module is not
+  something any browser supports today; only `<script>`/`<link>` tags can.
+
+Given that tradeoff, `cdn.jsdelivr.net` was added to `script-src` (still an allowlisted,
+specific host — not `unsafe-inline`/a wildcard), and `chartWrapper.js` pins an *exact*
+released version (`chart.js@4.4.4`, not `@latest`) in its dynamic `import()` URL — a
+versioned jsdelivr path is immutable (the bytes at that URL cannot change without
+publishing a new Chart.js release), which is a weaker guarantee than a cryptographic
+hash but still rules out the "attacker mutates the file at the same URL" class of
+supply-chain attack SRI exists to close. This is a **deliberate, documented gap**, not an
+oversight: if a stronger guarantee becomes necessary (e.g. Chart.js is used somewhere
+CSP-critical, not just an authenticated user's own analytics view), the fallback is to
+drop lazy-loading and go back to an eager `modulepreload` + SRI tag, accepting the
+extra unconditional network request on every page load.
+
 ## Consequences
 
 - **Positive**: Closes CDN supply-chain, XSS-via-script-injection, and clickjacking

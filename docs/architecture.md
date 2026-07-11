@@ -2681,3 +2681,64 @@ mirrors `tests/integration/dailyTodoStore.test.js`'s structure), `tests/unit/ana
 Chart.js-via-pinned-CDN line/bar charts, phase/priority breakdowns, projection card) and
 PR3 (canvas share card, sidebar nav entry) follow as separate PRs against this one's
 base, per the issue's own suggested phasing.
+
+### 2026-07-11 — PR TBD — Progress page UI: heatmap, charts, phase/priority breakdowns, projection card (issue #8, part 2 of 3)
+
+Second of three PRs for issue #8, stacked on part 1's data layer. Adds the `#/progress`
+route (`src/ui/pages/progress.js`) rendering everything `analyticsEngine.js` computes:
+four stat tiles, an activity heatmap, a cumulative-progress line chart, a daily-velocity
+bar chart, a phase-breakdown list, a priority×phase table, and a projected-completion
+card. No sidebar nav entry yet and the "Share progress" button is a disabled
+placeholder — both are part 3.
+
+Two new components: `src/ui/components/heatmap.js` (plain HTML/CSS Grid, not the issue's
+literal "pure SVG" sketch — `attachTooltip()` can't append into an SVG shape element, and
+this app's CSP forbids inline `style` entirely, which rules out per-cell arbitrary
+positioning either way; CSS Grid's `grid-auto-flow: column` auto-placement handles the
+52-53 variable column count with only 7 discrete row classes, no per-column classes
+needed) and `src/ui/components/chartWrapper.js` (lazily dynamic-`import()`s Chart.js from
+a pinned-version jsdelivr URL, only on first chart creation — `index.html`'s CSP
+`script-src` gained `cdn.jsdelivr.net`; a dynamic `import()` can't carry Subresource
+Integrity the way the Firebase SDK's `modulepreload` tags can, so this is the first CDN
+script in the app with a documented, deliberate SRI gap — see the "CDN loading
+exceptions" section appended to `docs/adr/ADR-002-csp-sri-security.md`).
+
+The phase-breakdown row's "click to open that phase on the dashboard" behavior needed a
+small cross-page mechanism that didn't exist: a new `KEYS.SCROLL_TO_PHASE` sessionStorage
+signal (`progress.js` writes the phase title + navigates to `#/app`; `dashboard.js`'s new
+`applyScrollToPhaseSignal()` reads, clears, opens, and scrolls to it on mount), and a new
+`data-phase-title` dataset attribute on `.phase-card` (alongside the existing index-based
+`data-phase`) so a phase can be targeted by its stable title from outside the file. See
+`.claude/rules/roadmap-store.md`'s new section for the full mechanism.
+
+Two real bugs found live during manual verification (a guest sign-in walkthrough against
+this app's actual configured Firebase project, not just unit tests — jsdom has no real
+`<canvas>` or layout engine to catch either of these):
+1. **Chart.js "Canvas is already in use."** Mounting the page fires both
+   `roadmapStore`/`activityLogStore` subscriptions' first callback synchronously
+   (`subscribe()`'s documented contract), which raced two concurrent
+   `createLineChart()`/`createBarChart()` calls onto the same `<canvas>` before either
+   had finished. Fixed by serializing every chart render through one promise chain
+   (`chartQueue`) and destroying the previous chart instance *before* creating the next
+   one, not after — creating first and destroying after is exactly backwards; Chart.js
+   refuses to attach a second instance to an already-occupied canvas.
+2. **The whole page rendered wider than the viewport on a phone-width screen**, with the
+   heatmap/charts' ~800px of intentionally-scrollable content dragging the entire layout
+   along with it instead of scrolling within their own containers. Root cause: `.app-shell-2`'s
+   grid columns (and their `≤1023px`/`≤639px` overrides) were a bare `1fr`, and
+   `.progress-content` had no explicit `grid-template-columns` at all — both default to a
+   content-based automatic minimum size, so genuinely wide content overrides the
+   container's real width regardless of `min-width: 0` on the grid *item* alone (already
+   present on `.app-shell-main`, and added to `.progress-card`, neither sufficient by
+   itself). `dashboard.js`/`settings.js` never had content wide enough to expose this
+   pre-existing gap in shared shell CSS. Fixed with `minmax(0, 1fr)` everywhere a bare
+   `1fr` track appeared in these rules — see the new rule appended to
+   `.claude/rules/ui-styling.md` for the general "any `1fr` track meant to contain
+   wide content needs an explicit minimum" principle, verified via real
+   `getBoundingClientRect()`/`getComputedStyle().gridTemplateColumns` checks in a
+   phone-width Playwright run (`docs/screenshots/issue-8/progress-mobile.png`), not just
+   a visual screenshot.
+
+New tests: `tests/unit/progress.test.js`, `tests/unit/heatmap.test.js`,
+`tests/unit/chartWrapper.test.js`; `tests/unit/icons.test.js` updated for the two new
+icon shapes (`flame`, `trendingUp`). PR3 (share card, sidebar nav entry) follows next.
