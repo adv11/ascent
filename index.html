@@ -22,6 +22,12 @@
   <link rel="alternate icon" type="image/png" href="/public/favicon-32.png">
   <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
   <link rel="manifest" href="/public/manifest.json">
+  <!-- iOS has no beforeinstallprompt/manifest install flow of its own — these
+       three meta tags are the only way to get a standalone (no Safari chrome)
+       launch experience and a themed status bar when added to the home screen. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ascent">
   <!-- Theme must be applied synchronously before CSS loads to prevent flash of wrong theme.
        Extracted to an external file so the CSP can use 'self' without 'unsafe-inline'. -->
   <script src="./src/services/themeBootstrap.js"></script>

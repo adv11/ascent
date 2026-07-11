@@ -60,7 +60,11 @@ export const KEYS = {
   // limiter. Both device-level (not synced to Firebase, not cleared on
   // sign-out) since a report is a one-shot action, not account state.
   FEEDBACK_DRAFT: 'ascent-feedback-draft',
-  FEEDBACK_RATE: 'ascent-feedback-rate'
+  FEEDBACK_RATE: 'ascent-feedback-rate',
+  // PWA install prompt (issue #19) — set once the app is installed, or the
+  // user dismisses the banner, so it never reappears. Device-level (each
+  // device installs independently), not synced to Firebase.
+  PWA_INSTALL_DISMISSED: 'ascent-pwa-install-dismissed'
 };
 
 export function verifyDismissedKey(uid) {

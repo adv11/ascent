@@ -13,6 +13,7 @@ import { setButtonLoading } from '../utils/buttonLoading.js';
 import { getTheme, setTheme, onThemeChange } from '../../services/theme.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
+import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPrompt } from '../../services/pwaInstall.js';
 
 const FILTER_OPTIONS = [
   { value: 'ALL', label: 'All' },
@@ -228,6 +229,35 @@ function buildPreferencesSection() {
     showToast('Default filter saved.', 'success');
   });
 
+  const installBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-secondary btn-sm',
+    text: 'Install app',
+    onClick: async () => {
+      const outcome = await promptInstall();
+      if (outcome === 'accepted') showToast('Ascent installed.', 'success');
+      installRow.hidden = !isInstallable();
+    }
+  });
+  const dismissInstallBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-ghost btn-sm',
+    text: 'Dismiss',
+    onClick: () => {
+      dismissInstallPrompt();
+      installRow.hidden = true;
+    }
+  });
+  const installRow = el('div', { className: 'settings-row', hidden: !isInstallable() }, [
+    el('div', { className: 'settings-row-main' }, [
+      el('span', { className: 'settings-row-label', text: 'Install Ascent' }),
+      el('span', { className: 'settings-row-value', text: 'Add Ascent to your device for offline access.' }),
+      installBtn,
+      dismissInstallBtn
+    ])
+  ]);
+  const unsubInstall = onInstallabilityChange(installable => { installRow.hidden = !installable; });
+
   const section = el('section', { className: 'settings-section' }, [
     el('h2', { className: 'settings-section-title', text: 'Preferences' }),
     el('div', { className: 'settings-row' }, [
@@ -241,10 +271,11 @@ function buildPreferencesSection() {
         el('span', { className: 'settings-row-label', text: 'Default filter' }),
         filterSelect
       ])
-    ])
+    ]),
+    installRow
   ]);
 
-  section._cleanup = unsubTheme;
+  section._cleanup = () => { unsubTheme(); unsubInstall(); };
   return section;
 }
 

@@ -13,9 +13,18 @@ import { renderSettings } from './ui/pages/settings.js';
 import { renderProgress } from './ui/pages/progress.js';
 import { renderLanding } from './ui/pages/landing.js';
 import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
+import { registerServiceWorker } from './services/serviceWorkerRegistration.js';
+import { showToast } from './ui/components/toast.js';
 
 migrateLocalStorageKeys();
 initTheme();
+registerServiceWorker();
+
+// Issue #19 — sw.js's network-first strategy already falls back to stale
+// cached data on its own; this toast is just the user-visible signal that
+// happened, since silently serving stale data would look like the sync
+// pill simply stopped updating with no explanation.
+window.addEventListener('offline', () => showToast("You're offline — showing last synced data.", 'info'));
 
 const app = document.getElementById('app');
 const activityLogStore = createActivityLogStore();

@@ -2882,3 +2882,38 @@ Two enforcement mechanisms, so the next gap doesn't ship silently again:
 
 New convention documented in `.claude/rules/ui-styling.md` ("Every custom interactive
 element must explicitly set `color`") with the re-scoped axe exception list alongside it.
+
+### 2026-07-12 — PR TBD — PWA: manifest, service worker, offline caching, install prompt (issue #19)
+
+A new root `sw.js` — a plain ES module service worker, no build step or Workbox, matching
+this app's no-bundler constraint — is registered from `src/services/serviceWorkerRegistration.js`
+after `window.load`. Its two cache strategies live in `src/services/sw/cacheStrategies.js` as
+dependency-free pure functions (`cacheFirst(request, cache, fetcher)`,
+`networkFirst(request, cache, fetcher)`, `isFirebaseApiRequest(url)`) rather than inline in
+`sw.js` directly — jsdom has no real `caches`/service-worker environment, so this is the only
+way to unit-test the actual cache logic (`tests/unit/cacheStrategies.test.js`, mocking the
+`fetch`/`Cache` surface). Same-origin static assets go through `cacheFirst`; Firebase Realtime
+Database and Auth REST hosts (`firebaseio.com`, `googleapis.com` — matched by hostname, never
+the Firebase SDK's own CDN URLs, which have their own caching) go through `networkFirst`, so an
+offline user sees their last-synced data instead of a hard failure. A navigation request that
+fails with no cache falls back to a new styled `public/offline.html` instead of a blank page.
+`sw.js`'s own `CACHE_VERSION` constant must be bumped on any deploy that changes static assets
+— the same "bump to invalidate" convention `ROADMAP_VERSION` already established
+(`src/data/templates/java-backend.js`), not a new pattern.
+
+`public/manifest.json`'s `start_url` gained a `?source=pwa` query param for install-attribution
+analytics; `index.html` gained the three `apple-mobile-web-app-*` meta tags iOS needs for a
+standalone (chrome-free) home-screen launch — Android/desktop installability already worked off
+the pre-existing manifest + icons from an earlier pass, so most of Phase A of the issue was
+already in place before this PR. Install-prompt capture (`src/services/pwaInstall.js`) stashes
+the one-shot `beforeinstallprompt` event (it doesn't refire on demand) and exposes
+`isInstallable()`/`onInstallabilityChange()`/`promptInstall()`/`dismissInstallPrompt()`; a new
+"Install Ascent" row in Settings → Preferences (`src/ui/pages/settings.js`) shows only while
+installable and writes `KEYS.PWA_INSTALL_DISMISSED` on both dismiss and successful install so it
+never reappears — same one-shot-dismiss pattern as the backup-reminder banner.
+
+**Deliberately deferred, not shipped in this PR**: `manifest.json` maskable icons and install-
+dialog `screenshots`. The existing 192×192/512×512 PNGs have no safe-zone padding, so tagging
+them `purpose: "maskable"` as-is would let OS icon masks crop the logo incorrectly — worse than
+not declaring maskable support at all; screenshots need an actual capture pass, not a config
+change. See `docs/adr/ADR-011-pwa-offline-strategy.md` for the full strategy rationale.
