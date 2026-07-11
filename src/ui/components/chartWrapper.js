@@ -31,20 +31,39 @@ function loadChartModule() {
   return chartModulePromise;
 }
 
-const BRAND_LINE_COLOR = '#14b8a6';
+// Reads the live theme token instead of a hardcoded literal, the same
+// pattern shareCard.js already uses — so these charts can never silently
+// drift from the real theme (or go low-contrast on the dark --panel
+// background) if those tokens change (issue #116).
+function cssVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 const BRAND_FILL_TOP = 'rgba(20, 184, 166, 0.3)';
 const BRAND_FILL_BOTTOM = 'rgba(20, 184, 166, 0)';
 const AVERAGE_LINE_COLOR = '#f97316';
+
+function axisOptions() {
+  const tickColor = cssVar('--muted', '#5f6e84');
+  const gridColor = cssVar('--line', '#dbe3ee');
+  return {
+    x: { ticks: { color: tickColor }, grid: { color: gridColor } },
+    y: { ticks: { color: tickColor }, grid: { color: gridColor } }
+  };
+}
 
 // createLineChart(canvas, { labels, totals }) — B4's cumulative progress
 // line. `totals[i]` is the running total as of `labels[i]`.
 export async function createLineChart(canvas, { labels, totals }) {
   const Chart = await loadChartModule();
   const ctx = canvas.getContext('2d');
+  const brandColor = cssVar('--brand', '#0f766e');
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height || 260);
   gradient.addColorStop(0, BRAND_FILL_TOP);
   gradient.addColorStop(1, BRAND_FILL_BOTTOM);
 
+  const { x, y } = axisOptions();
   return new Chart(ctx, {
     type: 'line',
     data: {
@@ -52,7 +71,7 @@ export async function createLineChart(canvas, { labels, totals }) {
       datasets: [{
         label: 'Total completed',
         data: totals,
-        borderColor: BRAND_LINE_COLOR,
+        borderColor: brandColor,
         backgroundColor: gradient,
         fill: true,
         tension: 0.35,
@@ -63,7 +82,7 @@ export async function createLineChart(canvas, { labels, totals }) {
     options: {
       maintainAspectRatio: false,
       responsive: true,
-      scales: { y: { beginAtZero: true } },
+      scales: { x, y: { ...y, beginAtZero: true } },
       plugins: { legend: { display: false } }
     }
   });
@@ -73,6 +92,8 @@ export async function createLineChart(canvas, { labels, totals }) {
 // velocity bars plus a 7-day rolling-average overlay line.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
+  const brandColor = cssVar('--brand', '#0f766e');
+  const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
     data: {
       labels,
@@ -81,7 +102,7 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
           type: 'bar',
           label: 'Items completed',
           data: counts,
-          backgroundColor: BRAND_LINE_COLOR,
+          backgroundColor: brandColor,
           borderRadius: 3
         },
         {
@@ -99,7 +120,7 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
     options: {
       maintainAspectRatio: false,
       responsive: true,
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      scales: { x, y: { ...y, beginAtZero: true, ticks: { ...y.ticks, precision: 0 } } },
       plugins: { legend: { display: false } }
     }
   });

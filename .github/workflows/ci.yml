@@ -17,6 +17,8 @@ jobs:
         with: { node-version: '20', cache: 'npm' }
       - run: npm ci
       - run: npm run lint
+      - name: Theme correctness lint (issue #116)
+        run: node scripts/lint-theme.mjs
 
   # ── Job 2: Security scan ───────────────────────────────────────────────────
   security:

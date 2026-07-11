@@ -313,6 +313,7 @@ body {
 a.brand:hover { opacity: 0.85; }
 a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; border-radius: var(--radius); }
 
+/* intentional: fixed brand gradient + white text/glow, same in both themes (issue #116) */
 .brand-mark {
   width: 40px;
   height: 40px;
@@ -373,6 +374,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    standalone class so any button can use it, not just the save badge. */
 .btn-spinner {
   width: 12px; height: 12px; border-radius: 50%;
+  /* intentional: neutral gray track works against any --panel value in either theme; the spinning edge is currentColor (issue #116) */
   border: 2px solid rgba(127, 127, 127, 0.3);
   border-top-color: currentColor;
   animation: spin 1s linear infinite;
@@ -465,6 +467,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .forgot-link:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .reset-success-msg { display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-base); color: var(--ink); line-height: 1.5; }
+/* intentional: fixed white checkmark on a --brand-colored badge, same in both themes (issue #116) */
 .reset-success-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 13px; font-weight: 900; }
 
 /* Auth pages — issue #6 Phase 5.1: .auth-page is a two-column split
@@ -516,8 +519,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   position: relative;
   overflow: hidden;
 }
-/* Subtle repeating diagonal-line texture — fills the panel's empty space
-   with an intentional, low-opacity design element instead of a flat void.
+/* intentional: subtle repeating diagonal-line texture — fills the panel's empty space
+   with a low-opacity design element instead of a flat void, fixed white regardless of
+   site theme since .auth-marketing itself is always-dark (issue #116).
    A single CSS gradient, no image asset. */
 .auth-marketing-bg-pattern {
   position: absolute;
@@ -533,8 +537,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   flex-direction: column;
   max-width: 480px;
 }
-/* Scoped override — .brand-name/.brand-tagline normally inherit --ink (dark
-   text), unreadable on this always-dark panel regardless of site theme. */
+/* intentional: scoped override — .brand-name/.brand-tagline normally inherit --ink (dark
+   text), unreadable on this always-dark panel regardless of site theme (issue #116). */
 .auth-marketing .brand-name, .auth-marketing .brand-tagline { color: #fff; }
 .auth-marketing .brand-tagline { opacity: 0.75; }
 .auth-marketing-brand { margin-bottom: 56px; }
@@ -546,6 +550,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    viewports, not a smaller panel. */
 .auth-marketing-content { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
 
+/* intentional: every color below is a fixed white/white-alpha value against .auth-marketing's
+   always-dark panel, not a theme token — the panel itself never changes with site theme
+   (issue #116). */
 .auth-marketing-headline {
   margin: 0;
   color: #fff;
@@ -565,6 +572,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 .auth-marketing-values { display: grid; gap: 22px; list-style: none; padding: 0; margin: 8px 0 0; }
 .auth-marketing-value { display: flex; gap: 16px; align-items: flex-start; }
+/* intentional: fixed white-on-white-alpha, same always-dark panel as above (issue #116) */
 .auth-marketing-value-icon {
   display: grid;
   place-items: center;
@@ -578,6 +586,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .auth-marketing-value-title { display: block; color: #fff; font-weight: 800; font-size: var(--text-md); margin-bottom: 2px; }
 .auth-marketing-value-text { display: block; color: rgba(255, 255, 255, 0.72); font-size: var(--text-sm); line-height: var(--leading-normal); }
 
+/* intentional: fixed white-alpha divider/text, same always-dark panel as above (issue #116) */
 .auth-marketing-stat {
   position: relative;
   z-index: 1;
@@ -817,6 +826,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   line-height: 1;
   cursor: pointer;
 }
+/* intentional: fixed white text on a solid --danger background on hover, same in both themes (issue #116) */
 .template-card-delete:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
 /* Corner info button on "Create your own roadmap" (issue #4 follow-up) —
@@ -957,6 +967,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   min-width: 0;
   border: none;
   background: none;
+  /* No text node of its own — the avatar and .app-sidebar-user-email child
+     each set their own color — but a button never inherits color from its
+     ancestors by default, so this stays explicit for defensiveness (issue #116). */
+  color: inherit;
   cursor: pointer;
   padding: var(--space-1);
   border-radius: var(--radius);
@@ -1013,6 +1027,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    too heavy/flat — reverted back to this value, which was already good; the
    real remaining problem turned out to be the layout-shift bug fixed below,
    not this backdrop.) */
+/* intentional: theme-agnostic dark scrim, see comment above (issue #116) */
 .app-sidebar-backdrop {
   display: none;
   position: fixed;
@@ -1023,6 +1038,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .app-sidebar-backdrop.show { display: block; }
 
+/* intentional: fixed white initial on a --brand-colored circle, same in both themes (issue #116) */
 .avatar {
   display: grid;
   place-items: center;
@@ -1278,6 +1294,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .backup-reminder-icon { font-size: var(--text-base); }
 .backup-reminder-msg { flex: 1; min-width: 220px; font-weight: 500; }
 
+/* intentional: theme-agnostic dark scrim behind an opaque, bright .modal-card (issue #116) */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1404,6 +1421,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .sync-pill.guest { background: var(--status-warn-bg); color: var(--status-warn-text); border-color: var(--status-warn-border); }
 .sync-pill.error { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); }
 
+/* intentional: fixed "synced OK" green status dot, same in both themes (issue #116) */
 .sync-dot {
   width: 8px; height: 8px; border-radius: 50%; background: #65a30d; display: inline-block;
 }
@@ -1581,6 +1599,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .filter-chip:hover { transform: translateY(-1px); border-color: var(--line-strong); }
 .filter-chip:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 .filter-chip.active { background: var(--emphasis-bg); border-color: var(--emphasis-bg); color: var(--emphasis-text); }
+/* intentional: fixed white text on a solid --p0../--p3 priority-color background, same in both themes (issue #116) */
 .filter-chip[data-p="P0"].active { background: var(--p0); border-color: var(--p0); color: #fff; }
 .filter-chip[data-p="P1"].active { background: var(--p1); border-color: var(--p1); color: #fff; }
 .filter-chip[data-p="P2"].active { background: var(--p2); border-color: var(--p2); color: #fff; }
@@ -1976,6 +1995,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .phase-manage-row .field-input, .section-manage-row .field-input { flex: 1; }
 
+/* intentional: fixed white text — every .badge modifier sets a solid priority-color background, same in both themes (issue #116) */
 .badge {
   font-family: var(--mono);
   font-size: 9px;
@@ -2038,6 +2058,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   background: var(--panel);
   transition: all 180ms ease;
 }
+/* intentional: fixed white checkmark on the --brand-colored .check-box.done background, same in both themes (issue #116) */
 .check-mark {
   color: #fff;
   font-size: 12px;
@@ -2047,6 +2068,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   /* issue #6 Phase 4.2 — spring bounce on toggle, replacing the plain ease. */
   transition: transform var(--duration-base) var(--ease-bounce), opacity 120ms ease;
 }
+/* intentional: brand-tinted glow, tuned to read against either theme's background (issue #116) */
 .check-item.done .check-box {
   background: var(--brand);
   border-color: transparent;
@@ -2102,6 +2124,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .notes-indicator {
   display: inline-flex;
   align-items: center;
+  color: var(--muted);
   font: inherit;
   border: none;
   background: none;
@@ -2160,6 +2183,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 
 /* Item panel */
+/* intentional: theme-agnostic dark scrim, same pattern as .modal-overlay above (issue #116) */
 .panel-overlay {
   position: fixed;
   inset: 0;
@@ -2262,6 +2286,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border: 1px solid var(--line);
   color: var(--muted);
 }
+/* intentional: per-link-type colors, light-mode half of the pair described above (issue #116) */
 .link-badge-youtube { color: #dc2626; border-color: #fecaca; }
 .link-badge-github { color: var(--ink); background: var(--line); border-color: var(--line); }
 .link-badge-google-doc,
@@ -2271,6 +2296,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .link-badge-notion,
 .link-badge-article { color: var(--muted); }
 
+/* intentional: dark-mode half of the per-link-type pair described above (issue #116) */
 :root[data-theme='dark'] .link-badge-youtube { color: #f87171; border-color: #5b2330; }
 :root[data-theme='dark'] .link-badge-google-doc,
 :root[data-theme='dark'] .link-badge-google-drive { color: #60a5fa; border-color: #1e3a5f; }
@@ -2328,6 +2354,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 /* 3.4 Tooltip */
 .tooltip-trigger { position: relative; }
+/* intentional: fixed white text on a fixed dark --neutral-900 tooltip background, same in both themes (issue #116) */
 .tooltip-bubble {
   position: absolute;
   bottom: calc(100% + 6px);
@@ -2384,6 +2411,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 
 /* 3.8 Notification badge */
+/* intentional: fixed white text on a solid --danger background, same in both themes (issue #116) */
 .notification-badge {
   display: inline-flex;
   align-items: center;
@@ -2421,6 +2449,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   width: 100%;
   text-align: left;
   font: inherit;
+  /* No text node of its own — .command-palette-item-title/-subtitle each set
+     their own color — kept explicit for defensiveness (issue #116). */
+  color: inherit;
   border: none;
   background: none;
   padding: var(--space-2) var(--space-3);
@@ -2461,6 +2492,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .save-badge.show { opacity: 1; transform: translateY(0); }
 .save-badge.error { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); }
+/* intentional: neutral gray track works against any --panel value in either theme, same as .btn-spinner above (issue #116) */
 .save-badge .spin {
   width: 12px; height: 12px; border-radius: 50%;
   border: 2px solid rgba(127,127,127,0.2);
@@ -2492,6 +2524,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   transition: opacity 220ms ease, transform 220ms ease;
 }
 .toast.show { opacity: 1; transform: translateY(0); }
+/* intentional: fixed white text on a solid --brand-dark/--danger background, same in both themes (issue #116) */
 .toast-success { background: var(--brand-dark); color: #fff; }
 .toast-info { background: var(--emphasis-bg); color: var(--emphasis-text); }
 .toast-error { background: var(--danger); color: #fff; }
