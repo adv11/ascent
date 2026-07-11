@@ -71,15 +71,22 @@
             ".validate": "newData.isNumber() && newData.val() >= 0"
           }
         },
+        "reports": {
+          "$reportId": {
+            ".validate": "newData.hasChildren(['type','title','submittedAt'])",
+            "screenshotB64": { ".validate": "false" }
+          }
+        },
         "$other": {
           ".validate": "false"
         }
       }
     },
     "reports": {
-      "$uid": {
-        ".write": "auth != null && auth.uid == $uid",
-        ".read": "false"
+      "$reportId": {
+        ".read": "false",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['type','title','submittedAt']) && newData.child('type').val().matches(/^(bug|feature|feedback)$/) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 120 && newData.child('userId').val() == auth.uid"
       }
     }
   }

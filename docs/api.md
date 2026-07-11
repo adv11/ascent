@@ -300,13 +300,31 @@ direct unit testing:
 | `generateShareCard` | `shareCard.js` | `async (analytics, activityLog, now?) => HTMLCanvasElement` | `analytics` is `computeAnalytics()`'s output; `activityLog` is the same effective (backfilled) log the Progress page's own heatmap renders from — pass `buildEffectiveActivityLog()`'s result, not the raw store snapshot. Pure with respect to app state (reads live CSS custom properties for its gradient, but never touches the DOM outside the canvas it returns). 1200×630px. |
 | `openShareModal` | `shareModal.js` | `async (analytics, activityLog) => { close: () => void }` | Generates the card once, then opens a real `openModal()` dialog with an editable pre-filled caption and Download PNG / Copy image / Share… actions (the latter two feature-detected and hidden, not shown-and-failing, when unsupported). |
 
+## In-app feedback — `src/services/feedbackStore.js`, `feedbackRateLimit.js`, `src/core/feedback/` (issue #9)
+
+Not a `create*Store()` — a report is a fire-and-forget write, not synced account state.
+See `.claude/rules/roadmap-store.md`'s "In-app feedback & bug reporting" section and
+`docs/adr/ADR-010-feedback-storage.md` for the full design rationale.
+
+| Export | Module | Signature | Notes |
+|---|---|---|---|
+| `submitReport` | `feedbackStore.js` | `async ({ type, form, metadata, userId, isAnonymous, screenshotB64, screenshotOmitted }) => reportId: string` | Writes `reports/{reportId}` (full payload) and, if `userId` is set, `users/{userId}/reports/{reportId}` (summary, no screenshot) in one multi-path `update()`. 15s timeout via `withTimeout()`. |
+| `listenMyReports` | `feedbackStore.js` | `(uid, callback: (reports) => void, onError?) => unsubscribe` | Live subscription to a signed-in user's own report history, newest-first. |
+| `validateBugReport` / `validateFeatureRequest` / `validateGeneralFeedback` / `validateReport` | `core/feedback/reportSchema.js` | `(report) => string[]` | Pure. Empty array means valid; `validateReport(type, report)` dispatches by type. |
+| `buildReportPayload` | `core/feedback/reportSchema.js` | `({ type, form, metadata, userId, isAnonymous, screenshotB64, screenshotOmitted, now }) => Report` | Pure. Nulls out every field that doesn't apply to `type`; always sets `status: 'new'`. |
+| `buildReportSummary` | `core/feedback/reportSchema.js` | `(fullPayload) => Report` | Pure. Strips `screenshotB64`. |
+| `collectMetadata` / `collectCurrentMetadata` | `core/feedback/metadataCollector.js` | `(deps) => { browser, os, viewport, devicePixelRatio, currentRoute, appVersion, theme, userId, isAnonymous }` | `collectMetadata` is pure/dependency-injected (unit-testable with a fake `userAgent`); `collectCurrentMetadata({ route, theme, user })` is the real-globals wrapper components call. Never includes an email address. |
+| `canSubmit` / `recordSubmit` / `msUntilNextSubmit` | `feedbackRateLimit.js` | `(now?) => boolean` / `(now?) => void` / `(now?) => number` | Client-side, good-faith only (`localStorage`, `KEYS.FEEDBACK_RATE`) — max 3/24h, max 1/60s burst. Not a security boundary. |
+| `captureScreenshot` | `src/ui/components/screenshotCapture.js` | `async ({ excludeSelector? }) => { dataUrl: string \| null, omitted: boolean }` | Lazy-loads html2canvas from a pinned jsdelivr version, blurs sensitive regions, resizes until under 500KB (`MAX_SCREENSHOT_BYTES`). |
+| `readUploadedImage` | `src/ui/components/screenshotCapture.js` | `async (file) => { dataUrl: string } \| { error: string }` | Rejects non-images and anything over 2MB (`MAX_UPLOAD_BYTES`) with a friendly error, never a thrown exception. |
+
 ## `src/services/firebase.js`
 
 | Export | Signature | Notes |
 |---|---|---|
 | `authApi` | `signIn, signUp, guest, signOut, linkGuest, sendResetEmail, sendVerificationEmail, setPersistence, deleteAccount, updateEmail, updatePassword, onChange` | Thin wrappers around Firebase Auth. `signOut()` (issue #24) delegates to `signOutWithCleanup()` (`src/services/authCleanup.js`), which deletes `users/{uid}` and the Auth record instead of a plain sign-out when the user is anonymous and unlinked — see `docs/adr/ADR-005-anonymous-user-lifecycle.md`. `updateEmail(newEmail, currentPassword)`/`updatePassword(newPassword, currentPassword)` (issue #16) reauthenticate first, same pattern as `deleteAccount(password)`; `updateEmail` calls Firebase's `verifyBeforeUpdateEmail`, so the address only changes once the new email's verification link is clicked. All three reject via `assertHasPasswordCredential`/`assertAccountDeletable` (`src/services/accountGuards.js`) for an anonymous guest, who has no password credential to reauthenticate with. |
 | `authErrorMessage` | `(error) => string` | Maps Firebase Auth error codes to user-facing copy. |
-| `database` | Firebase `Database` instance | Consumed only by `FirebaseAdapter` (below) — no other module should read/write the Realtime Database directly. |
+| `database` | Firebase `Database` instance | Consumed by `FirebaseAdapter` (below) for every roadmap/todo/activity-log path, and by `feedbackStore.js` (issue #9) for the `reports/`/`users/{uid}/reports/` paths — no other module should read/write the Realtime Database directly. |
 | `firebaseClock` | `() => ServerValue` | Firebase's `serverTimestamp()` sentinel. Consumed only by `FirebaseAdapter.now()`. |
 
 ## Storage adapters — `src/services/storage/` (issue #5)

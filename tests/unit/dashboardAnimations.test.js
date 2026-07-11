@@ -3,6 +3,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('../../src/services/firebase.js', () => ({
   authApi: { deleteAccount: vi.fn() },
   authErrorMessage: e => e?.message || 'error',
+  database: {},
+  firebaseClock: vi.fn(),
+}));
+// dashboard.js pulls in sidebar.js -> myReports.js (issue #9) -> feedbackStore.js,
+// which imports the Firebase Realtime Database SDK directly — same CDN-URL
+// stub tests/unit/storage/adapterFactory.test.js established.
+vi.mock('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js', () => ({
+  ref: vi.fn(), push: vi.fn(), update: vi.fn(), onValue: vi.fn(), off: vi.fn(),
 }));
 vi.mock('../../src/ui/router.js', () => ({ navigate: vi.fn() }));
 
