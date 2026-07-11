@@ -3053,6 +3053,13 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--panel-2);
+  /* A <button> does not inherit `color`/`font` from the page by default (the
+     UA stylesheet gives it its own `color: buttontext`, effectively black) —
+     every custom button-like class in this app must set both explicitly, the
+     same way the shared .btn base class does. Omitting this rendered black
+     text on a dark-theme card, reported live (issue #9 follow-up). */
+  color: var(--ink);
+  font: inherit;
   font-weight: 700;
   font-size: var(--text-sm);
   cursor: pointer;
@@ -3088,7 +3095,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 
 .my-reports-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
 .my-report-row { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-.my-report-summary { width: 100%; text-align: left; padding: 12px 14px; background: var(--panel-2); border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.my-report-summary { width: 100%; text-align: left; padding: 12px 14px; background: var(--panel-2); color: var(--ink); font: inherit; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
 .my-report-title-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .my-report-title { flex: 1; }
 .my-report-meta { font-size: var(--text-xs); color: var(--muted); }
