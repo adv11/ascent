@@ -1,21 +1,14 @@
 import { el } from '../dom.js';
 import { createBrandMark } from '../components/brand.js';
+import { svgIcon } from '../utils/svg.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 
-// Local svgEl/iconSvg helper — same "one small helper per file that needs it"
-// pattern authMarketingPanel.js/brand.js/progressRing.js already use.
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-function svgEl(tag, attrs = {}) {
-  const node = document.createElementNS(SVG_NS, tag);
-  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
-  return node;
-}
-
+// De-duplicated onto the shared svgIcon() helper (issue #107) — was a local
+// copy-pasted svgEl/iconSvg pair, same pattern authMarketingPanel.js/
+// progressRing.js used to have independently. No visual change: same 26px
+// size, same shape data.
 function iconSvg(shapes) {
-  const svg = svgEl('svg', { viewBox: '0 0 24 24', width: '26', height: '26', 'aria-hidden': 'true', focusable: 'false' });
-  shapes.forEach(({ tag = 'path', ...attrs }) => svg.append(svgEl(tag, attrs)));
-  return svg;
+  return svgIcon(shapes, { size: 26 });
 }
 
 const ICONS = {

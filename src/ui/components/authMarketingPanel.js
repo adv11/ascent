@@ -1,22 +1,14 @@
 import { el } from '../dom.js';
 import { createBrandMark } from './brand.js';
+import { svgIcon } from '../utils/svg.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-// Local svgEl helper — same "one small helper per file that needs it" pattern
-// brand.js and progressRing.js already use, rather than a shared module for
-// three call sites total.
-function svgEl(tag, attrs = {}) {
-  const node = document.createElementNS(SVG_NS, tag);
-  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
-  return node;
-}
-
+// De-duplicated onto the shared svgIcon() helper (issue #107) — was a local
+// copy-pasted svgEl/iconSvg pair, same pattern brand.js/landing.js/
+// progressRing.js used to have independently. No visual change: same 22px
+// size, same shape data.
 function iconSvg(shapes) {
-  const svg = svgEl('svg', { viewBox: '0 0 24 24', width: '22', height: '22', 'aria-hidden': 'true', focusable: 'false' });
-  shapes.forEach(({ tag = 'path', ...attrs }) => svg.append(svgEl(tag, attrs)));
-  return svg;
+  return svgIcon(shapes, { size: 22 });
 }
 
 // Issue #6 Phase 5 follow-up — minimal line icons (Feather/Lucide-style,

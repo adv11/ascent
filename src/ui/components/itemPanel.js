@@ -1,5 +1,6 @@
 import { el, isValidUrl } from '../dom.js';
 import { confirmDialog } from './confirmDialog.js';
+import { createIcon } from './icons.js';
 import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../core/roadmap/limits.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 
@@ -174,7 +175,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
         el('p', { className: 'panel-kicker', text: `${item.phase} · ${item.section}` }),
         el('h2', { className: 'panel-title', text: 'Edit topic' })
       ]),
-      el('button', { type: 'button', className: 'btn btn-ghost btn-icon', 'aria-label': 'Close', text: '×', onClick: close })
+      el('button', { type: 'button', className: 'btn btn-ghost btn-icon', 'aria-label': 'Close', onClick: close }, [createIcon('close', { size: 'sm' })])
     ]),
     el('div', { className: 'panel-body' }, [
       el('label', { className: 'field' }, [

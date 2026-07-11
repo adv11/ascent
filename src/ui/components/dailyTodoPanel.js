@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { createIcon } from './icons.js';
 import { showToast } from './toast.js';
 import { confirmDialog } from './confirmDialog.js';
 import { openDailyTodoGuide } from './dailyTodoGuide.js';
@@ -230,9 +231,8 @@ export function createDailyTodoPanel(store, roadmapStore) {
         'data-action': 'delete',
         'aria-label': `Delete "${todo.title}"`,
         title: 'Delete',
-        text: '×',
         onClick: () => handleDelete(todo)
-      })
+      }, [createIcon('close', { size: 'xs' })])
     ].filter(Boolean));
   }
 
@@ -254,7 +254,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
       localStorage.setItem(KEYS.DAILY_TODOS_COLLAPSED, String(collapsed));
       applyCollapsedState();
     }
-  }, [el('span', { className: 'chevron', 'aria-hidden': 'true', text: '›' })]);
+  }, [el('span', { className: 'chevron' }, [createIcon('chevron', { size: 'sm' })])]);
 
   function applyCollapsedState() {
     node.classList.toggle('collapsed', collapsed);
@@ -292,7 +292,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
 
   const node = el('section', { className: 'daily-todo-panel' }, [
     el('div', { className: 'daily-todo-heading-row' }, [
-      el('span', { className: 'daily-todo-icon', 'aria-hidden': 'true', text: '⏱' }),
+      el('span', { className: 'daily-todo-icon' }, [createIcon('timer', { size: 'sm' })]),
       el('h2', { className: 'daily-todo-heading', text: "Today's Todos" }),
       countBadge,
       el('button', {
@@ -300,9 +300,8 @@ export function createDailyTodoPanel(store, roadmapStore) {
         className: 'daily-todo-info-btn',
         'aria-label': "About Today's Todos",
         title: "About Today's Todos",
-        text: 'ℹ',
         onClick: () => openDailyTodoGuide()
-      }),
+      }, [createIcon('info', { size: 'xs' })]),
       collapseBtn
     ]),
     addForm,

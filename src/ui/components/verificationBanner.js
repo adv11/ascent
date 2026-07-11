@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { createIcon } from './icons.js';
 import { authApi } from '../../services/firebase.js';
 import { showToast } from './toast.js';
 import { verifyDismissedKey } from '../../services/localStorageKeys.js';
@@ -34,12 +35,11 @@ export function createVerificationBanner(user) {
       type: 'button',
       className: 'btn btn-ghost btn-sm verification-dismiss',
       'aria-label': 'Dismiss verification notice',
-      text: '×',
       onClick: () => {
         sessionStorage.setItem(DISMISS_KEY, '1');
         banner.remove();
       }
-    })
+    }, [createIcon('close', { size: 'xs' })])
   ]);
 
   return banner;

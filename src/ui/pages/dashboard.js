@@ -19,6 +19,7 @@ import { createProgressRing } from '../components/progressRing.js';
 import { animateCountUp } from '../../utils/countUp.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { attachTooltip } from '../components/tooltip.js';
+import { createIcon } from '../components/icons.js';
 
 // Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
 // "most valuable" type (a video worth watching over a plain article, etc.)
@@ -164,7 +165,6 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
         role: 'button',
         tabindex: '0',
         'aria-label': `Clear ${label} filter`,
-        text: '✕',
         onClick: e => {
           e.stopPropagation();
           onFilterChange('ALL');
@@ -175,7 +175,7 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
           e.stopPropagation();
           onFilterChange('ALL');
         }
-      }) : null
+      }, [createIcon('close', { size: 'xs' })]) : null
     ].filter(Boolean));
   });
 }
@@ -357,7 +357,7 @@ export function renderPhaseCard(phase, pi, {
       // working unchanged.
       createProgressRing(pct, { size: 28, strokeWidth: 3 }),
       el('span', { className: 'phase-progress sr-only', text: `${sectionDone}/${sectionTotal}` }),
-      el('span', { className: 'chevron', 'aria-hidden': 'true', text: '›' })
+      el('span', { className: 'chevron' }, [createIcon('chevron', { size: 'sm' })])
     ]),
     el('div', { className: 'phase-body' }, [
       (isCustomRoadmap && phase.id) ? renderPhaseManageRow(phase) : null,
@@ -453,7 +453,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const currentTemplate = isCustomRoadmap
     ? (() => {
       const custom = store.getSnapshot().customRoadmaps.find(r => r.id === activeTemplateId);
-      return { icon: '✎', name: custom ? custom.title : 'Custom roadmap' };
+      return { icon: createIcon('edit', { size: 'sm' }), name: custom ? custom.title : 'Custom roadmap' };
     })()
     : getTemplate(activeTemplateId);
 
@@ -595,7 +595,6 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           'data-action': 'notes',
           'aria-label': 'Has notes',
           title: 'Has notes',
-          text: '📝',
           onClick: e => {
             e.stopPropagation();
             openItemPanel({
@@ -605,14 +604,13 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
               onDelete: () => store.removeItem(item.id)
             });
           }
-        }) : null,
+        }, [createIcon('note', { size: 'xs' })]) : null,
         item.completedViaTodoAt ? el('span', {
           className: 'completed-via-todo-indicator',
           'data-action': 'completed-via-todo',
           title: `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`,
-          'aria-label': `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`,
-          text: '⏱✓'
-        }) : null
+          'aria-label': `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`
+        }, [createIcon('timer', { size: 'xs' }), createIcon('check', { size: 'xs' })]) : null
       ].filter(Boolean)),
       el('div', { className: 'check-actions' }, [
         dailyTodoStore ? el('button', {
@@ -621,12 +619,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           'data-action': 'add-todo',
           'aria-label': `Add "${item.title}" to Today's Todos`,
           title: "Add to Today's Todos",
-          text: '⏱',
           onClick: e => {
             e.stopPropagation();
             handleAddToDailyTodo(item);
           }
-        }) : null,
+        }, [createIcon('timer', { size: 'xs' })]) : null,
         el('button', {
           type: 'button',
           className: 'btn btn-ghost btn-sm',
@@ -853,7 +850,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
 
     if (!visibleCount) {
       content.append(el('div', { className: 'empty-state' }, [
-        el('div', { className: 'empty-icon', text: '⌕' }),
+        el('div', { className: 'empty-icon' }, [createIcon('search', { size: 'lg' })]),
         el('p', { text: 'No matching topics. Try another filter or search term.' })
       ]));
     }
@@ -956,7 +953,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     title: "Today's Todos",
     hidden: true
   }, [
-    el('span', { className: 'daily-todo-nav-icon', 'aria-hidden': 'true', text: '⏱' }),
+    el('span', { className: 'daily-todo-nav-icon' }, [createIcon('timer', { size: 'xs' })]),
     dailyTodoNavText
   ]) : null;
 
@@ -1016,14 +1013,20 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           // with a meta row instead of a separate header section.
           el('div', { className: 'roadmap-header' }, [
             el('div', { className: 'current-roadmap-badge' }, [
-              el('span', { 'aria-hidden': 'true', text: currentTemplate.icon }),
+              // currentTemplate.icon is a decorative per-template emoji
+              // string for a built-in template (getTemplate(), out of scope
+              // for issue #107's SVG migration), or the shared createIcon()
+              // "edit" node for a custom roadmap's fallback icon (in scope).
+              typeof currentTemplate.icon === 'string'
+                ? el('span', { 'aria-hidden': 'true', text: currentTemplate.icon })
+                : el('span', { 'aria-hidden': 'true' }, [currentTemplate.icon]),
               el('span', { text: `${currentTemplate.name} roadmap` })
             ]),
             roadmapMetaRow
           ]),
           el('div', { className: 'stat-strip' }, [
             el('div', { className: 'stat-tile' }, [
-              el('span', { className: 'stat-tile-icon', 'aria-hidden': 'true', text: '✓' }),
+              el('span', { className: 'stat-tile-icon' }, [createIcon('check', { size: 'sm' })]),
               el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
               el('span', { className: 'stat-tile-label', text: 'Items done' })
             ]),

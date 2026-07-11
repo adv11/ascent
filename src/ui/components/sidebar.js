@@ -3,6 +3,7 @@ import { navigate } from '../router.js';
 import { createBrandMark } from './brand.js';
 import { createAvatar } from './avatar.js';
 import { createDropdown } from './dropdown.js';
+import { createIcon } from './icons.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../utils/backupActions.js';
@@ -12,11 +13,14 @@ import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../util
 // yet at the time. Settings shipped in issue #16; Resources still doesn't
 // exist and stays out until it's real. The storage-backend indicator from the
 // original spec was struck too (#5 closed as not planned — Firebase is the
-// only backend).
+// only backend). Icons moved off plain Unicode glyphs onto the shared
+// createIcon() set in issue #107 — this specifically fixes the Settings gear
+// (⚙) rendering undersized, since .nav-item-icon never set an explicit
+// font-size and the glyph silently inherited .nav-item's body-text size.
 const NAV_ITEMS = [
-  { route: '/app', label: 'Dashboard', icon: '⌂' },
-  { route: '/onboarding', label: 'My Roadmaps', icon: '📋' },
-  { route: '/settings', label: 'Settings', icon: '⚙' }
+  { route: '/app', label: 'Dashboard', icon: 'dashboard' },
+  { route: '/onboarding', label: 'My Roadmaps', icon: 'roadmaps' },
+  { route: '/settings', label: 'Settings', icon: 'settings' }
 ];
 
 function readCollapsed() {
@@ -66,7 +70,7 @@ export function createSidebar({ activeRoute, user, store, onDeleteAccount }) {
       className: `nav-item${activeRoute === item.route ? ' active' : ''}`,
       'aria-current': activeRoute === item.route ? 'page' : null
     }, [
-      el('span', { className: 'nav-item-icon', 'aria-hidden': 'true', text: item.icon }),
+      el('span', { className: 'nav-item-icon' }, [createIcon(item.icon, { size: 'sm' })]),
       el('span', { className: 'nav-item-label', text: item.label })
     ]))
   );
@@ -74,9 +78,8 @@ export function createSidebar({ activeRoute, user, store, onDeleteAccount }) {
   const collapseBtn = el('button', {
     type: 'button',
     className: 'app-sidebar-collapse-btn',
-    'aria-label': 'Collapse sidebar',
-    text: '«'
-  });
+    'aria-label': 'Collapse sidebar'
+  }, [createIcon('collapse', { size: 'sm' })]);
 
   const userLabel = user.isAnonymous ? 'Guest session' : (user.email || 'Signed in');
   const identityTrigger = el('button', {
@@ -97,9 +100,8 @@ export function createSidebar({ activeRoute, user, store, onDeleteAccount }) {
       type: 'button',
       className: 'btn btn-ghost btn-icon app-sidebar-signout',
       'aria-label': 'Sign out',
-      text: '⏻',
       onClick: () => confirmAndSignOut(user, store)
-    })
+    }, [createIcon('signOut', { size: 'sm' })])
   ]);
 
   const backdrop = el('div', { className: 'app-sidebar-backdrop' });

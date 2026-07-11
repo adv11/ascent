@@ -11,6 +11,7 @@ import { confirmAndSignOut } from '../utils/signOut.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 import { pickCustomRoadmapIcon } from '../utils/customRoadmapIcon.js';
+import { createIcon } from '../components/icons.js';
 
 // Picking a roadmap (built-in template or custom) awaits a real
 // `store.switchRoadmap()` — a Firebase round-trip for anything not already
@@ -131,7 +132,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       className: 'template-card-pick',
       onClick: handleCreate
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '+' }),
+      el('span', { className: 'template-card-icon' }, [createIcon('plus', { size: 'lg' })]),
       el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
       el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' })
     ]);
@@ -143,9 +144,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'data-action': 'info',
         'aria-label': 'How do I build my own roadmap?',
         title: 'How do I build my own roadmap?',
-        text: 'ℹ',
         onClick: () => openBuildYourOwnGuide({ onOpenImport: handleImport })
-      })
+      }, [createIcon('info', { size: 'xs' })])
     ]);
     cardEls.push(cardEl);
     return el('div', { role: 'listitem' }, [cardEl]);
@@ -189,7 +189,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         }
       }
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: '✨' }),
+      el('span', { className: 'template-card-icon' }, [createIcon('sparkle', { size: 'lg' })]),
       el('span', { className: 'template-card-name', text: 'Import roadmap' }),
       el('span', { className: 'template-card-desc', text: 'Generate a roadmap with an AI assistant, then paste it in.' })
     ]);
@@ -267,9 +267,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'data-action': 'delete',
         'aria-label': `Delete ${roadmap.title}`,
         title: `Delete ${roadmap.title}`,
-        text: '🗑',
         onClick: () => deleteCustomCard(roadmap, cardEl)
-      }),
+      }, [createIcon('trash', { size: 'xs' })]),
       buildPickingOverlay()
     ]);
 
@@ -313,9 +312,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'data-action': 'hide',
         'aria-label': `Hide ${template.name}`,
         title: `Hide ${template.name}`,
-        text: '×',
         onClick: () => hideTemplate(template, cardEl)
-      }),
+      }, [createIcon('close', { size: 'xs' })]),
       buildPickingOverlay()
     ]);
 
@@ -409,9 +407,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     type: 'button',
     className: 'btn btn-ghost btn-icon',
     'aria-label': 'Sign out',
-    text: '⏻',
     onClick: () => confirmAndSignOut(user, store)
-  });
+  }, [createIcon('signOut', { size: 'sm' })]);
   // Rendered on this page (not the roadmap dashboard) precisely because it's
   // independent of any single roadmap — this is the "all roadmaps" screen,
   // so Daily Todos lives here instead of looking like it belongs to whichever

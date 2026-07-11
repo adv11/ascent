@@ -99,6 +99,15 @@
      half-hidden under the topbar. */
   --topbar-h: 56px;
 
+  /* Icon size scale (issue #107) — the single source of truth every icon
+     wrapper class below reads from, so the *box* size and the *glyph* size
+     are always the same deliberate value. See the "Icon system" section in
+     .claude/rules/ui-styling.md. */
+  --icon-size-xs: 16px;
+  --icon-size-sm: 20px;
+  --icon-size-md: 24px;
+  --icon-size-lg: 32px;
+
   /* Surface hierarchy — surface-0/1/2 alias the existing theme-flipping
      tokens so they resolve correctly per theme without a dark-block
      redefinition; surface-3 (deepest inset) is a new literal per theme. */
@@ -716,7 +725,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .template-card-pick:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--focus); border-radius: var(--radius-lg); }
 .template-card-current { border-color: var(--brand); }
-.template-card-icon { font-size: 32px; line-height: 1; }
+.template-card-icon { display: inline-flex; font-size: var(--icon-size-lg); line-height: 1; }
 .template-card-name { font-size: var(--text-lg); font-weight: 800; }
 .template-card-desc { font-size: var(--text-sm); color: var(--muted); line-height: 1.5; }
 .template-card-footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; }
@@ -833,7 +842,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border-style: dashed;
   gap: 6px;
 }
-.template-card-create .template-card-icon, .template-card-import .template-card-icon { font-size: 36px; color: var(--brand); }
+.template-card-create .template-card-icon, .template-card-import .template-card-icon { color: var(--brand); }
 .template-card-create .template-card-name, .template-card-import .template-card-name { color: var(--brand-dark); }
 
 /* Dashboard */
@@ -889,7 +898,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .nav-item:hover { background: var(--surface-2); color: var(--ink); }
 .nav-item.active { background: var(--brand-light); color: var(--brand-dark); }
-.nav-item-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.nav-item-icon { display: inline-flex; flex-shrink: 0; }
 
 .app-sidebar-spacer { flex: 1; }
 
@@ -1380,7 +1389,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .daily-todo-nav-badge:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 .daily-todo-nav-badge.warn { background: var(--status-warn-bg); color: var(--status-warn-text); border-color: var(--status-warn-border); }
 .daily-todo-nav-badge.danger { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); }
-.daily-todo-nav-icon { font-size: 13px; line-height: 1; }
+.daily-todo-nav-icon { display: inline-flex; flex-shrink: 0; }
 
 /* Roadmap header (issue #6 Phase 4.4) — identity badge + freshness meta row.
    Replaces the old hero-panel's marketing tagline entirely: a returning
@@ -1452,8 +1461,6 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border-radius: 999px;
   background: var(--brand-light);
   color: var(--brand-dark);
-  font-size: 18px;
-  font-weight: 800;
   flex-shrink: 0;
 }
 
@@ -1610,7 +1617,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   gap: 8px;
   margin: 0 0 10px;
 }
-.daily-todo-icon { font-size: 20px; line-height: 1; color: var(--accent); }
+.daily-todo-icon { display: inline-flex; flex-shrink: 0; color: var(--accent); }
 .daily-todo-heading {
   margin: 0 auto 0 0;
   font-size: var(--text-md);
@@ -1626,9 +1633,6 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border: 1px solid var(--line-strong);
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
   cursor: pointer;
   padding: 0;
 }
@@ -1657,7 +1661,6 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .daily-todo-collapse-btn:hover { color: var(--accent); border-color: var(--accent); }
 .daily-todo-collapse-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
-.daily-todo-collapse-btn .chevron { font-size: 15px; }
 .daily-todo-panel:not(.collapsed) .daily-todo-collapse-btn .chevron { transform: rotate(90deg); }
 
 /* Only shown while collapsed (below) — a small "N active" reminder so
@@ -1786,8 +1789,6 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border: none;
   background: transparent;
   color: var(--muted);
-  font-size: 18px;
-  line-height: 1;
   cursor: pointer;
   padding: 0;
 }
@@ -2050,13 +2051,13 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .resource-count:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 
 .notes-indicator {
+  display: inline-flex;
+  align-items: center;
   font: inherit;
   border: none;
   background: none;
   padding: 0;
   cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
   opacity: 0.65;
   transition: opacity 140ms ease, transform 140ms ease;
 }
@@ -2069,8 +2070,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    interactive (no onClick) — the title/aria-label attribute alone carries
    the date, same as a native tooltip. */
 .completed-via-todo-indicator {
-  font-size: 12px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
   color: var(--accent);
   cursor: default;
 }
@@ -2238,10 +2240,23 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border-radius: var(--radius);
   background: var(--panel-2);
 }
-.empty-icon { font-size: 42px; margin-bottom: 12px; opacity: 0.5; }
+.empty-icon { display: inline-flex; justify-content: center; margin-bottom: 12px; opacity: 0.5; }
 .empty-title { font-weight: 800; color: var(--ink); margin-top: var(--space-2); }
 .empty-message { margin-top: var(--space-1); }
 .empty-state .btn { margin-top: var(--space-4); }
+
+/* Icon system (issue #107) — base class for every createIcon()-produced
+   <svg>; size comes from one of the four modifier classes below, which read
+   the --icon-size-* tokens defined in :root. Every icon-wrapper class in
+   this file (.nav-item-icon, .btn-icon, .stat-tile-icon, etc.) sets an
+   explicit size this way — never let an icon glyph inherit surrounding
+   body-text font-size (that's exactly what undersized the sidebar's
+   Settings gear before this issue). */
+.icon { flex-shrink: 0; }
+.icon-xs { width: var(--icon-size-xs); height: var(--icon-size-xs); }
+.icon-sm { width: var(--icon-size-sm); height: var(--icon-size-sm); }
+.icon-md { width: var(--icon-size-md); height: var(--icon-size-md); }
+.icon-lg { width: var(--icon-size-lg); height: var(--icon-size-lg); }
 
 /* Component library (issue #6 Phase 3) */
 

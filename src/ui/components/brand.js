@@ -1,13 +1,7 @@
 import { el } from '../dom.js';
+import { svgEl } from '../utils/svg.js';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
 const BRAND_NAME = 'Ascent';
-
-function svgEl(tag, attrs = {}) {
-  const node = document.createElementNS(SVG_NS, tag);
-  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
-  return node;
-}
 
 // Filled with currentColor so `.brand-mark`'s CSS color (white) still controls
 // it, rather than hardcoding a color here.

@@ -3,8 +3,8 @@ import { createEmptyState } from '../../src/ui/components/emptyState.js';
 
 describe('createEmptyState', () => {
   it('renders icon, title, and message', () => {
-    const node = createEmptyState({ icon: '🔍', title: 'No results', message: 'Try a different search.' });
-    expect(node.querySelector('.empty-icon').textContent).toBe('🔍');
+    const node = createEmptyState({ icon: 'search', title: 'No results', message: 'Try a different search.' });
+    expect(node.querySelector('.empty-icon svg')).not.toBeNull();
     expect(node.querySelector('.empty-title').textContent).toBe('No results');
     expect(node.querySelector('.empty-message').textContent).toBe('Try a different search.');
   });
@@ -26,8 +26,8 @@ describe('createEmptyState', () => {
     expect(withoutAction.querySelector('button')).toBeNull();
   });
 
-  it('defaults to a 🔍 icon', () => {
+  it('defaults to the search icon', () => {
     const node = createEmptyState({ title: 'Nothing found' });
-    expect(node.querySelector('.empty-icon').textContent).toBe('🔍');
+    expect(node.querySelector('.empty-icon svg')).not.toBeNull();
   });
 });

@@ -1,10 +1,4 @@
-const SVG_NS = 'http://www.w3.org/2000/svg';
-
-function svgEl(tag, attrs = {}) {
-  const node = document.createElementNS(SVG_NS, tag);
-  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
-  return node;
-}
+import { svgEl } from '../utils/svg.js';
 
 // Issue #6 Phase 3.7 — small animated SVG circular progress ring. `size` in
 // px, `strokeWidth` in px; the track (background circle) uses `--track-bg`,

@@ -2570,3 +2570,59 @@ inside the `≤639px` media block — the only explicit column that exists there
 via a width sweep (300–900px) checking `.app-shell-main`'s real `getBoundingClientRect()`,
 not just the computed grid-template-columns string. `npm test` (622 passed) and
 `npm run lint` (0 errors, same 24 pre-existing warnings) still green after the fix.
+
+### 2026-07-11 — PR TBD — Centralized icon system: fix Settings gear sizing bug + standardize icon sizes/technology app-wide (issue #107)
+
+Two new modules, both under directories the `pr-checklist` CI job watches:
+`src/ui/utils/svg.js` (`svgEl`/`svgIcon`, a shared low-level SVG builder) and
+`src/ui/components/icons.js` (a curated named icon set behind one
+`createIcon(name, { size })` factory, throwing on an unknown name or size rather than
+silently rendering nothing). Together they replace two separate sources of drift: four
+independently copy-pasted `svgEl` helpers (`brand.js`, `landing.js`,
+`authMarketingPanel.js`, `progressRing.js` — de-duplicated onto the shared helper with no
+visual change) and ~10 one-off CSS wrapper classes each hardcoding their own icon pixel
+size with no shared scale, the direct cause of the reported bug: `.nav-item-icon` (the
+sidebar's Dashboard/My Roadmaps/Settings icons) was the one wrapper class that never set
+an explicit `font-size`, so the Settings gear glyph silently inherited `.nav-item`'s 13px
+body-text size instead of a deliberate icon size.
+
+New `--icon-size-xs/sm/md/lg` tokens (`app.css` `:root`, 16/20/24/32px) plus a base
+`.icon`/`.icon-xs`/`.icon-sm`/`.icon-md`/`.icon-lg` class pair are the single source of
+truth every icon-wrapper class in `app.css` now reads from (`.nav-item-icon`,
+`.btn-icon`, `.stat-tile-icon`, `.daily-todo-nav-icon`, `.daily-todo-icon`,
+`.empty-icon`, `.template-card-icon`, plus a few more found during the migration:
+`.notes-indicator`, `.completed-via-todo-indicator`, `.daily-todo-info-btn`,
+`.daily-todo-delete`) — a wrapper class holding a `createIcon()` result needs no
+`font-size`/`width`/`height` of its own (the svg's own `.icon-{size}` class handles
+sizing), so most of these lost their independent pixel value entirely rather than being
+reworked to reference a token. `createIcon()` sizes via a discrete modifier class, not an
+inline style — index.html's CSP has no `unsafe-inline` for `style-src` (see
+`.claude/rules/auth-security.md`), so a `.style.setProperty('--icon-size', …)` approach
+(tried first) would have been silently dropped by the browser exactly like the
+`animation-delay` inline-style bug from issue #6 Phase 4.2.
+
+Every functional/navigational glyph previously a plain Unicode/emoji character now goes
+through `createIcon()`: `sidebar.js` (nav items — this is the fix for the reported bug —
+sign-out, collapse), `topbar.js` (hamburger), `emptyState.js` and `dashboard.js`'s own
+hand-rolled empty state (search icon, replacing the default 🔍 prop and the dashboard's
+`⌕` override), `dailyTodoPanel.js` (heading timer, delete, chevron, info),
+`dashboard.js` (notes indicator, add-todo timer, completed-via-todo timer+check,
+phase-card chevron, stat-tile check, custom-roadmap fallback — this last one is the one
+call site with genuinely mixed content: `currentTemplate.icon` is a decorative emoji
+*string* for a built-in template but a `createIcon('edit')` *node* for a custom
+roadmap's fallback, so the render call branches on `typeof icon === 'string'` rather
+than forcing one representation on both), `onboarding.js` (create, AI-import, info,
+delete, hide, sign-out), `itemPanel.js`'s close button, and
+`verificationBanner.js`'s dismiss button. Decorative, data-driven glyphs — per-template
+icons (`src/data/templates/index.js`) and resource-type badges (`linkDetector.js`) —
+are explicitly unchanged and still emoji, per scope; their *sizing* was still folded
+into the same token pass via `.template-card-icon { font-size: var(--icon-size-lg); }`.
+
+New unit tests: `tests/unit/svg.test.js`, `tests/unit/icons.test.js` (every icon name
+resolves to a valid 24x24 `<svg>` with the expected attrs; an unknown name or size
+throws). `tests/unit/emptyState.test.js` updated for the new icon-name prop (was a raw
+emoji string prop before). No E2E spec asserted on the old glyph text content — every
+existing locator that touches an affected element already targets a CSS class, not text,
+so none needed updating. New "Icon system" section added to
+`.claude/rules/ui-styling.md` documenting the three pieces above and when to reach for
+`createIcon()` vs. emoji for any future icon.
