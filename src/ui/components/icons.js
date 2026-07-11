@@ -16,11 +16,18 @@ const ICON_SHAPES = {
     { d: 'M9 3.5v3h6v-3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
     { d: 'M8.5 12h7M8.5 15.5h7', 'stroke-linecap': 'round' }
   ],
+  // A gear/cog, not the sun-with-rays glyph a plain circle + 8 straight
+  // spokes reads as (reported live — indistinguishable from a light-theme
+  // toggle at 20px). Toothed-ring path adapted from Feather's "settings"
+  // icon (MIT licensed) for a shape that's unambiguously a gear at small
+  // sizes, with the same currentColor/1.8-stroke/round-cap treatment every
+  // other icon here uses.
   settings: () => [
-    { tag: 'circle', cx: '12', cy: '12', r: '3.2' },
+    { tag: 'circle', cx: '12', cy: '12', r: '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
     {
-      d: 'M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M17.6 6.4l-1.55 1.55M7.95 16.05 6.4 17.6M17.6 17.6l-1.55-1.55M7.95 7.95 6.4 6.4',
-      'stroke-linecap': 'round'
+      d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round'
     }
   ],
   signOut: () => [
