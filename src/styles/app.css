@@ -3004,6 +3004,118 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .filter-chip { flex-shrink: 0; }
 }
 
+/* In-app feedback widget (issue #9) — floating trigger + modal + form
+   primitives. z-index 150 sits above ordinary page content but below the
+   sidebar mobile backdrop (199)/item panel (210)/modal-overlay (1000)/toast
+   (300), per the issue's "above content but below modals and item panels"
+   spec. Fixed to the viewport corner, so it needs the same safe-area-inset
+   treatment every other fixed edge element in this app gets
+   (.claude/rules/ui-styling.md). */
+.feedback-widget-trigger {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  right: max(24px, env(safe-area-inset-right));
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: transform 220ms var(--ease-spring, ease), opacity 220ms ease, box-shadow 160ms ease;
+}
+.feedback-widget-trigger.feedback-widget-visible { opacity: 1; transform: scale(1); }
+.feedback-widget-trigger:hover { box-shadow: var(--shadow-xl); border-color: var(--line-strong); }
+.feedback-widget-trigger:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.feedback-widget-emoji { font-size: var(--text-lg); line-height: 1; }
+
+.feedback-modal-card { max-width: 480px; width: 100%; position: relative; }
+.feedback-modal-close { position: absolute; top: 16px; right: 16px; }
+.feedback-modal-body { display: flex; flex-direction: column; gap: 16px; }
+.feedback-type-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-right: 36px; }
+.feedback-privacy-note { font-size: var(--text-xs); color: var(--muted); margin: 0; }
+
+.feedback-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.feedback-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  /* A <button> does not inherit `color`/`font` from the page by default (the
+     UA stylesheet gives it its own `color: buttontext`, effectively black) —
+     every custom button-like class in this app must set both explicitly, the
+     same way the shared .btn base class does. Omitting this rendered black
+     text on a dark-theme card, reported live (issue #9 follow-up). */
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+.feedback-type-card:hover { border-color: var(--brand); transform: translateY(-1px); }
+.feedback-type-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.feedback-type-emoji { font-size: var(--text-2xl); }
+
+.feedback-form { display: flex; flex-direction: column; gap: 16px; }
+.feedback-field { display: flex; flex-direction: column; gap: 6px; }
+.feedback-field-input { min-height: 42px; }
+textarea.feedback-field-input { min-height: 88px; resize: vertical; }
+.feedback-char-counter { align-self: flex-end; font-size: var(--text-xs); color: var(--muted); }
+.feedback-field-input.field-input-invalid { border-color: var(--danger); }
+
+.feedback-radio-group { display: flex; flex-direction: column; gap: 8px; }
+.feedback-radio-option { display: flex; align-items: center; gap: 8px; font-size: var(--text-sm); cursor: pointer; }
+
+.feedback-screenshot { gap: 8px; }
+.feedback-screenshot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.feedback-screenshot-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius); border: 1px solid var(--line); object-fit: contain; }
+/* .btn sets display: inline-flex, which (author CSS always beats the UA
+   stylesheet's [hidden]{display:none}, regardless of specificity) otherwise
+   leaves this button visibly rendered even while .hidden is true — same
+   fix as .daily-todo-nav-badge[hidden]/.clear-filters-btn[hidden] above. */
+.feedback-screenshot-remove[hidden] { display: none; }
+
+.feedback-system-info-checkbox { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-sm); color: var(--ink); cursor: pointer; }
+.feedback-system-info-summary { color: var(--muted); font-size: var(--text-xs); }
+
+.feedback-form-actions { display: flex; gap: 12px; justify-content: flex-end; }
+.feedback-cooldown-message { text-align: right; }
+
+.feedback-success { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 12px 0; }
+.feedback-success-icon { font-size: var(--text-4xl); }
+.feedback-reference { font-family: var(--mono); font-weight: 700; color: var(--brand-dark); }
+
+.my-reports-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.my-report-row { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.my-report-summary { width: 100%; text-align: left; padding: 12px 14px; background: var(--panel-2); color: var(--ink); font: inherit; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.my-report-title-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.my-report-title { flex: 1; }
+.my-report-meta { font-size: var(--text-xs); color: var(--muted); }
+.my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--status-error-bg); color: var(--status-error-text); }
+.my-report-severity-low, .my-report-severity-medium { background: var(--status-warn-bg); color: var(--status-warn-text); }
+.my-report-details { padding: 0 14px 14px; font-size: var(--text-sm); color: var(--ink); display: flex; flex-direction: column; gap: 6px; }
+
+/* Collapse the feedback trigger to icon-only below 480px (issue #9 §2.1) —
+   the full "💬 Feedback" pill is wide enough to crowd a phone-width corner
+   otherwise. */
+@media (max-width: 480px) {
+  .feedback-widget-label { display: none; }
+  .feedback-widget-trigger { padding: 12px; border-radius: 50%; }
+}
+
 @media (max-width: 375px) {
   .dashboard-content { padding: 14px 10px 88px; }
   .modal-card { padding: 26px 20px 22px; }
@@ -3018,7 +3130,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .field-input,
   .field-input.compact,
   .search-input,
-  .import-paste-area {
+  .import-paste-area,
+  .feedback-field-input {
     font-size: 16px;
   }
 }
@@ -3032,6 +3145,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .filter-chip { min-height: 44px; }
   .check-item { min-height: 44px; }
   .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn { width: 44px; height: 44px; }
+  .feedback-widget-trigger { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

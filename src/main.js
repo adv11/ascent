@@ -12,6 +12,7 @@ import { renderOnboarding } from './ui/pages/onboarding.js';
 import { renderSettings } from './ui/pages/settings.js';
 import { renderProgress } from './ui/pages/progress.js';
 import { renderLanding } from './ui/pages/landing.js';
+import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
 
 migrateLocalStorageKeys();
 initTheme();
@@ -30,6 +31,11 @@ const dailyTodoStore = createDailyTodoStore();
 let currentUser = null;
 let routeCleanup = null;
 
+// Mounted once, directly on document.body, outside the router (issue #9) —
+// must never be unmounted/re-mounted on route change, see CLAUDE.md.
+const feedbackWidget = createFeedbackWidget({ user: null });
+document.body.appendChild(feedbackWidget);
+
 function guardApp(renderFn) {
   return ctx => {
     if (routeCleanup) {
@@ -44,6 +50,7 @@ function guardApp(renderFn) {
 // sign-in's resolved state (Issue #51) — never a stale value from the previous user.
 authApi.onChange(async user => {
   currentUser = user;
+  feedbackWidget._setUser(user);
   await Promise.all([store.setUser(user), dailyTodoStore.setUser(user), activityLogStore.setUser(user)]);
 
   const route = getRoute();

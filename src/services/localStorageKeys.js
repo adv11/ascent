@@ -54,7 +54,13 @@ export const KEYS = {
   // `#/app`; dashboard.js reads and immediately clears it on its next mount
   // to open + scroll to that phase. sessionStorage, not localStorage — same
   // "read once, then clear" precedent as verificationBanner.js's dismiss key.
-  SCROLL_TO_PHASE: 'ascent-scroll-to-phase'
+  SCROLL_TO_PHASE: 'ascent-scroll-to-phase',
+  // In-app feedback widget (issue #9) — a half-written report so a modal
+  // closed mid-fill is never lost, and a client-side submission-log rate
+  // limiter. Both device-level (not synced to Firebase, not cleared on
+  // sign-out) since a report is a one-shot action, not account state.
+  FEEDBACK_DRAFT: 'ascent-feedback-draft',
+  FEEDBACK_RATE: 'ascent-feedback-rate'
 };
 
 export function verifyDismissedKey(uid) {

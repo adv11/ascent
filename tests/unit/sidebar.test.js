@@ -3,6 +3,16 @@ import { KEYS } from '../../src/services/localStorageKeys.js';
 
 vi.mock('../../src/services/firebase.js', () => ({
   authApi: { signOut: vi.fn() },
+  database: {},
+  firebaseClock: vi.fn(),
+}));
+// sidebar.js pulls in myReports.js (issue #9's "My reports" menu item),
+// which imports feedbackStore.js, which imports the Firebase Realtime
+// Database SDK directly (not just through firebase.js) — same CDN-URL stub
+// every other test touching a firebase.js-adjacent module needs, per
+// tests/unit/storage/adapterFactory.test.js's precedent.
+vi.mock('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js', () => ({
+  ref: vi.fn(), push: vi.fn(), update: vi.fn(), onValue: vi.fn(), off: vi.fn(),
 }));
 vi.mock('../../src/ui/router.js', () => ({ navigate: vi.fn() }));
 
@@ -108,7 +118,7 @@ describe('createSidebar — account identity', () => {
     expect(node.querySelector('.dropdown')).not.toBeNull();
     expect(node.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(node.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Settings', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
+    expect(itemText).toEqual(['Settings', 'My reports', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
   });
 
   it('wraps the identity in a dropdown with a "Delete account" item for a signed-in user', async () => {

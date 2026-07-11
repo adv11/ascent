@@ -2780,3 +2780,58 @@ with the right arguments), plus new `sidebar.test.js`/`icons.test.js` cases. Ver
 against the real dev Firebase project (guest sign-in → pick a template → Progress nav
 link → Share progress button) — screenshot in `docs/screenshots/issue-8/share-modal.png`.
 Issue #8 is fully shipped across this PR and its two predecessors.
+
+### 2026-07-11 — PR TBD — In-app feedback & bug reporting widget (issue #9)
+
+A persistent floating feedback widget, reachable from every page. New component map
+additions: `src/ui/components/feedbackWidget.js` (the floating trigger, mounted once in
+`main.js` directly on `document.body`, outside the router — the one exception to the
+"wire cleanup into the route's cleanup return" convention, since this node must survive
+every route change untouched), `feedbackModal.js` (the multi-step type-select → form →
+success flow, one long-lived `.modal-overlay`/`.modal-card` pair reused across steps so
+`attachFocusTrap()` keeps working across transitions), `feedbackForm.js` (shared field/
+radio-group/screenshot/system-info primitives), `screenshotCapture.js` (lazy html2canvas
+loader — same pinned-jsdelivr-version pattern `chartWrapper.js` established for Chart.js
+in issue #8, see `docs/adr/ADR-002-csp-sri-security.md`), and `myReports.js` (report
+history, both a tab inside the feedback modal and a standalone entry from the sidebar
+account menu).
+
+`src/services/feedbackStore.js` is deliberately **not** a fifth `create*Store()` next to
+`roadmapStore.js`/`dailyTodoStore.js`/`activityLogStore.js` — a report is a fire-and-forget
+write with nothing to keep in sync afterward, so it's a thin wrapper around two Firebase
+calls (`submitReport`, `listenMyReports`) instead of a subscribe/notify/debounced-sync
+store. Every report writes to two paths in one multi-path `update()`: `reports/{reportId}`
+(full payload including any screenshot, `.read: false` — write-only for every client;
+the developer's only access is the Firebase console, which bypasses security rules
+entirely) and `users/{uid}/reports/{reportId}` (a summary without the screenshot, to save
+quota, powering "My reports"). `firebase/database.rules.json` gained both the new
+top-level `reports/{reportId}` block and a `users/{uid}/reports/{reportId}` block under
+the existing per-user rules — see `docs/adr/ADR-010-feedback-storage.md` for why Firebase
+over an external form service, and `.claude/rules/roadmap-store.md`'s new "In-app
+feedback & bug reporting" section for the full write-only data-flow writeup.
+
+Rate limiting (`src/services/feedbackRateLimit.js`, max 3/24h + 1/60s burst) and draft
+autosave (`KEYS.FEEDBACK_DRAFT`) are both plain `localStorage`, client-side only — rate
+limiting is explicitly a good-faith UX guard, not a security boundary, since Realtime
+Database rules can't express a time-windowed write count.
+
+New tests across all three layers: `tests/unit/reportSchema.test.js`,
+`tests/unit/metadataCollector.test.js`, `tests/unit/feedbackRateLimit.test.js`,
+`tests/unit/screenshotCapture.test.js` (a fake injectable canvas factory, since jsdom has
+no real `<canvas>` 2D backend — same constraint `shareCard.test.js` hit in issue #8),
+`tests/unit/feedbackWidget.test.js`, `tests/unit/feedbackModal.test.js`,
+`tests/unit/myReports.test.js`, `tests/integration/feedbackStore.test.js` (mocks the
+Firebase Realtime Database SDK directly, same CDN-stub pattern
+`tests/unit/storage/adapterFactory.test.js` established), and `tests/e2e/feedback.test.js`.
+The full submit flow, "My reports" history read-back, and the `reports/` `.read: false`
+rule were all verified live against a real Firebase emulator (`firebase emulators:start
+--only auth,database --project demo-ascent-test`) — `GET /reports` with no `ns` query
+param silently hits a default fake namespace with no rules loaded and returns `200 null`
+regardless of the real rules (a genuine emulator REST-API gotcha, not a rules bug); with
+the correct `?ns=<project>-default-rtdb` it correctly returns `401 Permission denied`.
+`sidebar.js`, `dashboard.js`, `progress.js`, `settings.js`, and `dashboardAnimations.js`'s
+existing unit tests all needed a new CDN-URL mock added alongside their existing
+`firebase.js` mock, since they transitively import `sidebar.js` → `myReports.js` →
+`feedbackStore.js`, which imports the Firebase Realtime Database SDK directly (not just
+through `firebase.js`) — the default ESM loader can't resolve a bare `https://` import
+in Node, so every test file touching that import chain needs the stub.
