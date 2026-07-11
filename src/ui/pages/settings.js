@@ -164,7 +164,7 @@ function buildChangePasswordForm(onDone) {
     setButtonLoading(saveBtn, true, 'Saving…');
     try {
       await authApi.updatePassword(newPassword.value, currentPassword.value);
-      showToast('Password updated', 'success');
+      showToast('Password updated.', 'success');
       onDone();
     } catch (error) {
       message.textContent = authErrorMessage(error);

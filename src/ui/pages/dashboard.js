@@ -525,10 +525,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       linkedItemTitle: item.title
     });
     if (!added) {
-      showToast(`You can have at most ${MAX_ACTIVE_TODOS} active todos at once`, 'error');
+      showToast(`You can have at most ${MAX_ACTIVE_TODOS} active todos at once.`, 'error');
       return;
     }
-    showToast(`Added "${result.title}" to Today's Todos`, 'success');
+    showToast(`Added "${result.title}" to Today's Todos.`, 'success');
   }
 
   // Issue #6 Phase 4.2 — `sectionIdx` (this item's position within its own
@@ -658,16 +658,16 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           const title = input.value.trim();
           if (!title) return;
           if (title.length > MAX_TITLE_LENGTH) {
-            showToast(`Topic title must be ${MAX_TITLE_LENGTH} characters or fewer`, 'error');
+            showToast(`Topic title must be ${MAX_TITLE_LENGTH} characters or fewer.`, 'error');
             return;
           }
           const added = store.addItem({ title, phase: phase.title, section: section.title, priority: phase.priority });
           if (!added) {
-            showToast('This roadmap has reached its 800-topic limit', 'error');
+            showToast('This roadmap has reached its 800-topic limit.', 'error');
             return;
           }
           input.value = '';
-          showToast(`Added "${title}"`, 'success');
+          showToast(`Added "${title}".`, 'success');
         }
       })
     ]);
@@ -729,7 +729,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
             danger: true
           })) return;
           store.removePhase(phase.id);
-          showToast(`Deleted phase "${phase.title}"`, 'success');
+          showToast(`Deleted phase "${phase.title}".`, 'success');
         }
       })
     ]);
@@ -766,7 +766,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
             danger: true
           })) return;
           store.removeSection(phase.id, section.id);
-          showToast('Section deleted', 'success');
+          showToast('Section deleted.', 'success');
         }
       })
     ]);

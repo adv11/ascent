@@ -1,53 +1,25 @@
 # Ascent
 
-Ascent ("Engineer your next move.") is a personal roadmap tracker for anyone learning,
-revising, or tracking progress toward a goal — students, professionals, or career
-switchers. New sign-ups pick a starter template (Issue #51): Java Backend Engineer
-(the original roadmap — Java, Spring Boot, microservices, GenAI/agentic AI, system
-design), Frontend Developer, Data Scientist, or a blank slate. It's moving from a
-personal tool toward a sellable product, so treat correctness and polish here as
-customer-facing, not a side project.
+Ascent ("Engineer your next move.") is a personal roadmap tracker for anyone learning, revising, or tracking progress toward a goal — students, professionals, or career switchers. New sign-ups pick a starter template (Issue #51): Java Backend Engineer (the original roadmap — Java, Spring Boot, microservices, GenAI/agentic AI, system design), Frontend Developer, Data Scientist, or a blank slate. It's moving from a personal tool toward a sellable product, so treat correctness and polish here as customer-facing, not a side project.
 
 ## Stack
 
-- Vanilla JavaScript, native ES modules, **no build step, no framework, no bundler**.
-  `npm run dev` / `npm start` just serves the static files with `python3 -m http.server 4173`.
-- Firebase Authentication (email/password + anonymous "guest" sessions) and Firebase
-  Realtime Database for per-user roadmap sync; security rules in `firebase/database.rules.json`.
-  Project credentials live in `src/services/firebase.config.js`, which is **gitignored**
-  — copy `src/services/firebase.config.example.js` to that path and fill in your own
-  Firebase project's values before running locally. Never put real credentials back into
-  a tracked file.
+- Vanilla JavaScript, native ES modules, **no build step, no framework, no bundler**. `npm run dev` / `npm start` just serves the static files with `python3 -m http.server 4173`.
+- Firebase Authentication (email/password + anonymous "guest" sessions) and Firebase Realtime Database for per-user roadmap sync; security rules in `firebase/database.rules.json`. Project credentials live in `src/services/firebase.config.js`, which is **gitignored** — copy `src/services/firebase.config.example.js` to that path and fill in your own Firebase project's values before running locally. Never put real credentials back into a tracked file.
 - **Vitest** for unit/integration tests (`tests/unit/`, `tests/integration/`); **Playwright** for E2E (`tests/e2e/`). Run `npm test` before pushing — all checks must be green. Run `npm run lint` to enforce security and quality rules. Never merge a PR with failing checks.
 
 ## Agent memory map — read this before assuming a convention doesn't exist
 
-This file only holds conventions that are short and apply almost everywhere. Everything
-else — long, feature-specific "why we built it this way" reference material — lives in
-files that load only when you're actually touching the relevant code, so every session
-doesn't pay for content unrelated to the task at hand (issue #86; see
-`docs/adr/ADR-007-agent-memory-architecture.md` for the full rationale and measurements).
+This file only holds conventions that are short and apply almost everywhere. Everything else — long, feature-specific "why we built it this way" reference material — lives in files that load only when you're actually touching the relevant code, so every session doesn't pay for content unrelated to the task at hand (issue #86; see `docs/adr/ADR-007-agent-memory-architecture.md` for the full rationale and measurements).
 
-- **`.claude/rules/roadmap-store.md`** — loads when touching `roadmapStore.js`,
-  `dailyTodoStore.js`, `core/roadmap/**`, `core/dailyTodo/**`, `data/templates/**`,
-  `dashboard.js`, `onboarding.js`, or the daily-todo/import/newRoadmap components. Store
-  contracts, `structuralVersion`, echo/dirty/stale-listener guards, multi-roadmap,
-  custom-roadmap CRUD, AI import, Daily Todos + roadmap-topic linking.
-- **`.claude/rules/ui-styling.md`** — loads when touching `app.css`, `theme.js`,
-  `themeBootstrap.js`, `index.html`, or any page/component. Theming, card/grid layout,
-  responsive breakpoints, touch/hover detection, safe-area insets, modal overflow.
-- **`.claude/rules/auth-security.md`** — loads when touching `firebase.js`,
-  `authCleanup.js`, `accountGuards.js`, `signIn.js`/`signUp.js`, `password.js`,
-  `index.html`, or `database.rules.json`. SRI/CSP lockstep updates, password reset,
-  account deletion ordering, anonymous-user cleanup.
-- **`.claude/skills/`** — multi-step procedures needed only at specific moments, not on
-  every read: `raise-issue`, `start-issue`, `open-pr`, `after-merge`, `parallel-work`,
-  `verify-changes` (the full responsive/touch verification matrix).
-- **`docs/architecture.md`** and **`docs/adr/`** — deep history and one-time design
-  decisions, read on demand, never auto-loaded.
+- **`.claude/rules/roadmap-store.md`** — loads when touching `roadmapStore.js`, `dailyTodoStore.js`, `core/roadmap/**`, `core/dailyTodo/**`, `data/templates/**`, `dashboard.js`, `onboarding.js`, or the daily-todo/import/newRoadmap components. Store contracts, `structuralVersion`, echo/dirty/stale-listener guards, multi-roadmap, custom-roadmap CRUD, AI import, Daily Todos + roadmap-topic linking.
+- **`.claude/rules/ui-styling.md`** — loads when touching `app.css`, `theme.js`, `themeBootstrap.js`, `index.html`, or any page/component. Theming, card/grid layout, responsive breakpoints, touch/hover detection, safe-area insets, modal overflow.
+- **`.claude/rules/auth-security.md`** — loads when touching `firebase.js`, `authCleanup.js`, `accountGuards.js`, `signIn.js`/`signUp.js`, `password.js`, `index.html`, or `database.rules.json`. SRI/CSP lockstep updates, password reset, account deletion ordering, anonymous-user cleanup.
+- **`.claude/rules/content-style.md`** — loads when touching any page/component with user-facing text. Plain-language/grammar convention, button labels, error messages.
+- **`.claude/skills/`** — multi-step procedures needed only at specific moments, not on every read: `raise-issue`, `start-issue`, `open-pr`, `after-merge`, `parallel-work`, `verify-changes` (the full responsive/touch verification matrix).
+- **`docs/architecture.md`** and **`docs/adr/`** — deep history and one-time design decisions, read on demand, never auto-loaded.
 
-If you're about to explain a "why" that isn't in this file, check the relevant rules
-file above before assuming it was never documented.
+If you're about to explain a "why" that isn't in this file, check the relevant rules file above before assuming it was never documented.
 
 ## MANDATORY WORKFLOW
 
@@ -56,9 +28,7 @@ These rules apply to every issue and every PR. They are not optional — every s
 ### Label taxonomy (every GitHub issue must have all three)
 
 **Type** (≥ 1): `type:feat` `type:fix` `type:refactor` `type:test` `type:docs` `type:chore` `type:design` `type:security` `type:perf`
-
 **Priority** (exactly 1): `priority:critical` `priority:high` `priority:medium` `priority:low`
-
 **Domain** (≥ 1): `domain:auth` `domain:storage` `domain:roadmap` `domain:ui` `domain:import` `domain:a11y` `domain:brand` `domain:infra` `domain:security`
 
 ### Workflow steps → skills
@@ -130,42 +100,17 @@ scripts/generate-brand-assets.mjs  dev-only Playwright script that rasterizes fa
 
 ## Conventions to follow
 
-Universal, short, apply regardless of what you're touching. Everything longer or
-feature-specific lives in `.claude/rules/` — see "Agent memory map" above.
+Universal, short, apply regardless of what you're touching. Everything longer or feature-specific lives in `.claude/rules/` — see "Agent memory map" above.
 
-**`el(tag, attrs, children)`** (`src/ui/dom.js`) is the only DOM-construction helper —
-there's no JSX/templating. `attrs.className`/`dataset`/`text` are special-cased;
-any `onX` key becomes an `addEventListener`. Build UI by composing `el()` calls, not by
-writing HTML strings.
+**`el(tag, attrs, children)`** (`src/ui/dom.js`) is the only DOM-construction helper — there's no JSX/templating. `attrs.className`/`dataset`/`text` are special-cased; any `onX` key becomes an `addEventListener`. Build UI by composing `el()` calls, not by writing HTML strings.
 
-**Never use `innerHTML` — not directly, not via any helper.** All text must flow through
-`textContent` (via `el()`'s `text:` key or `node.textContent = …`). The `html` key was
-removed from `el()` (Issue #22) — it was an undocumented escape hatch that routed
-directly to `node.innerHTML`. If a future genuine need for trusted HTML arises (e.g.
-rendering sanitised Markdown), introduce a separate named helper with an explicit
-doc comment so the danger is visible at every call site. Never silently re-add `html:`
-to `el()`.
+**Never use `innerHTML` — not directly, not via any helper.** All text must flow through `textContent` (via `el()`'s `text:` key or `node.textContent = …`). The `html` key was removed from `el()` (Issue #22) — it was an undocumented escape hatch that routed directly to `node.innerHTML`. If a future genuine need for trusted HTML arises (e.g. rendering sanitised Markdown), introduce a separate named helper with an explicit doc comment so the danger is visible at every call site. Never silently re-add `html:` to `el()`.
 
-**Resource URLs must be validated before use as `href`.** Any URL coming from the store
-(Firebase, localStorage) must pass `isValidUrl()` before being set as an anchor `href`.
-`isValidUrl()` accepts only `http:` and `https:` protocols — this blocks `javascript:`
-and `data:` URI injection. Apply this at both render time and save time.
+**Resource URLs must be validated before use as `href`.** Any URL coming from the store (Firebase, localStorage) must pass `isValidUrl()` before being set as an anchor `href`. `isValidUrl()` accepts only `http:` and `https:` protocols — this blocks `javascript:` and `data:` URI injection. Apply this at both render time and save time.
 
-**`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist
-row toggles `done` on click, but child controls that need their own click behavior
-(Edit button, the resource-count badge) are marked `data-action="…"` and call
-`e.stopPropagation()` in their own handler. Any new interactive element nested inside a
-row must follow this pattern or it will silently toggle the row's checkbox.
+**`data-action` click-guard convention** (`dashboard.js` `renderItemRow`): a checklist row toggles `done` on click, but child controls that need their own click behavior (Edit button, the resource-count badge) are marked `data-action="…"` and call `e.stopPropagation()` in their own handler. Any new interactive element nested inside a row must follow this pattern or it will silently toggle the row's checkbox.
 
-**Brand rules.** Never hard-code the product name as a string in any `.js` file —
-import `createBrandMark()` / `createBrandWordmark()` / `createBrandIcon()` from
-`src/ui/components/brand.js` instead. The only permitted occurrences of the literal
-string `'Ascent'` in source are inside `brand.js` itself and inside `index.html`'s meta
-tags/title. All `localStorage`/`sessionStorage` keys must come from
-`src/services/localStorageKeys.js`'s `KEYS` object (or `verifyDismissedKey()`) — never
-write a raw `ascent-*` string in any other file. This is what makes a future rename (or
-a white-labeled variant) a one-file change instead of a repo-wide grep; see Issue #7
-and `docs/adr/ADR-004-product-rename.md`.
+**Brand rules.** Never hard-code the product name as a string in any `.js` file — import `createBrandMark()` / `createBrandWordmark()` / `createBrandIcon()` from `src/ui/components/brand.js` instead. The only permitted occurrences of the literal string `'Ascent'` in source are inside `brand.js` itself and inside `index.html`'s meta tags/title. All `localStorage`/`sessionStorage` keys must come from `src/services/localStorageKeys.js`'s `KEYS` object (or `verifyDismissedKey()`) — never write a raw `ascent-*` string in any other file. This is what makes a future rename (or a white-labeled variant) a one-file change instead of a repo-wide grep; see Issue #7 and `docs/adr/ADR-004-product-rename.md`.
 
 **Never use the native `window.confirm()` — use `confirmDialog()` (`src/ui/components/confirmDialog.js`).** The browser's built-in confirm dialog can't be styled, breaks the app's own dark/light theming, and reads as unpolished in a customer-facing product. `confirmDialog({ title, message, confirmText, cancelText, danger })` returns a `Promise<boolean>`. Pass `danger: true` for anything destructive/irreversible; leave it `false` for reversible actions. Every call site does `if (!await confirmDialog({...})) return;`. Tests reach the dialog via `document.querySelector('.modal-overlay [data-action="confirm"|"cancel"]')` (Vitest/jsdom) or `page.locator('.modal-overlay[aria-label*="..."] [data-action="confirm"]')` (Playwright) — never via `page.on('dialog', ...)`.
 
@@ -174,18 +119,15 @@ and `docs/adr/ADR-004-product-rename.md`.
 **ESLint code-cleanliness gates (`eslint.config.js`, issue #53).** `complexity: 10`, `max-depth: 4`, `max-lines-per-function: { max: 80 }`, and `max-params: 4` run as `warn` on every PR via the existing `lint` CI job — intentionally `warn`, not `error`, since zero violations was never reached repo-wide. When you touch a flagged function, prefer extracting a **named, module-scope function** (grep-able, independently unit-testable) over just shortening lines. Don't flip these to `error` without first re-auditing the whole repo's violation count.
 
 **Living architecture doc (`docs/architecture.md`) — keep the Build Log current.** Every PR that adds, removes, or significantly restructures a module must append a dated entry to the `## Build Log` section:
-
 ```
 ### YYYY-MM-DD — PR #N — <short title>
 What changed architecturally and why.
 ```
-
-Distinct from `CHANGELOG.md` (user-facing). The CI `pr-checklist` job (`.github/workflows/ci.yml`) enforces this: a new file under `src/services/`, `src/ui/components/`, or `src/ui/pages/` with no `docs/architecture.md` diff fails the PR. The same job also fails if root `CLAUDE.md` exceeds ~220 lines — new content belongs in `.claude/rules/` or `.claude/skills/`, not appended here (issue #86). Issue templates: `.github/ISSUE_TEMPLATE/` (`feature.yml`, `bug.yml`, `chore-refactor.yml`, `docs.yml`) — blank issues disabled.
+Distinct from `CHANGELOG.md` (user-facing). The CI `pr-checklist` job (`.github/workflows/ci.yml`) enforces this: a new file under `src/services/`, `src/ui/components/`, or `src/ui/pages/` with no `docs/architecture.md` diff fails the PR. The same job also fails if root `CLAUDE.md` exceeds ~220 lines — new content belongs in `.claude/rules/` or `.claude/skills/`, not appended here (issue #86). When adding a new "Conventions to follow" or "Agent memory map" entry, prefer folding it into an existing paragraph as one continuous line (Markdown treats a soft-wrapped paragraph and a single long line identically when rendered) over adding new hard line breaks — the CI check counts newlines, not characters, so this is the cheapest way to buy headroom before something has to move out to `.claude/rules/`. Issue templates: `.github/ISSUE_TEMPLATE/` (`feature.yml`, `bug.yml`, `chore-refactor.yml`, `docs.yml`) — blank issues disabled.
 
 ## Deploying
 
-Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`.
-Every PR gets a temporary 7-day preview URL posted as a PR comment.
+Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`. Every PR gets a temporary 7-day preview URL posted as a PR comment.
 
 **For a manual deploy:**
 ```bash
@@ -194,11 +136,7 @@ firebase deploy --only hosting
 firebase deploy --only database
 ```
 
-**`firebase.config.js` is gitignored on purpose.** It holds client-side Firebase
-identifiers (`apiKey`, `authDomain`, etc.) that are visible to any user who opens
-DevTools — they are not secrets in the traditional sense, but keeping the file out of
-git prevents accidental commitment of production credentials during local development.
-CI injects the production config from the `FIREBASE_CONFIG` GitHub Secret at deploy time.
+**`firebase.config.js` is gitignored on purpose.** It holds client-side Firebase identifiers (`apiKey`, `authDomain`, etc.) that are visible to any user who opens DevTools — they are not secrets in the traditional sense, but keeping the file out of git prevents accidental commitment of production credentials during local development. CI injects the production config from the `FIREBASE_CONFIG` GitHub Secret at deploy time.
 
 **Required GitHub secrets/variables** (set in repo → Settings → Secrets and variables → Actions):
 - `FIREBASE_SERVICE_ACCOUNT` (secret) — Firebase service account JSON for deploy auth

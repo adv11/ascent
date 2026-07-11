@@ -49,7 +49,7 @@ export function openBuildYourOwnGuide({ onOpenImport } = {}) {
     el('h3', { className: 'build-guide-heading', text: '2. Generate one with an AI assistant' }),
     el('p', { className: 'build-guide-body' }, [
       el('strong', { text: '"Import roadmap"' }),
-      ' (next to "Create your own roadmap") gives you a ready-to-copy prompt for describing your goal to an AI assistant like Claude or ChatGPT. Paste its reply back in and it\'s validated and imported automatically — no copying topics in one at a time.'
+      ' (next to "Create your own roadmap") gives you a ready-to-copy prompt for describing your goal to an AI assistant like Claude or ChatGPT. Paste its reply back in and it\'s validated and imported automatically — no need to add topics one at a time.'
     ]),
     el('div', { className: 'panel-footer-right' }, footerButtons)
   ]);

@@ -166,7 +166,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     try {
       await store.createCustomRoadmap(result);
       navigate('/app', true);
-      showToast('Roadmap imported', 'success');
+      showToast('Roadmap imported.', 'success');
     } catch (error) {
       console.error('Failed to import roadmap', error);
       picking = false;
@@ -230,7 +230,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     const index = cardEls.indexOf(cardEl);
     if (index !== -1) cardEls.splice(index, 1);
     cardEl.closest('[role="listitem"]')?.remove();
-    showToast(`Deleted "${roadmap.title}"`, 'success');
+    showToast(`Deleted "${roadmap.title}".`, 'success');
   }
 
   function buildCustomCard(roadmap) {
@@ -443,7 +443,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
           className: 'auth-subtitle',
           text: isSwitchingTemplate
             ? "Switch between your roadmaps anytime — each one keeps its own progress, and starting or switching never overwrites another."
-            : 'Choose a template to get started. You can add, edit, or remove topics anytime after, and start more templates later without losing progress.'
+            : 'Choose a template to get started. You can add, edit, or remove topics anytime, and start more templates later without losing progress.'
         })
       ]),
       dailyTodoPanel,

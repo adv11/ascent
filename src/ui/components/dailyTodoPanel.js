@@ -81,24 +81,24 @@ export function createDailyTodoPanel(store, roadmapStore) {
     const title = titleInput.value.trim();
     if (!title) return;
     if (title.length > MAX_TODO_TITLE_LENGTH) {
-      showToast(`Todo title must be ${MAX_TODO_TITLE_LENGTH} characters or fewer`, 'error');
+      showToast(`Todo title must be ${MAX_TODO_TITLE_LENGTH} characters or fewer.`, 'error');
       return;
     }
     const durationMs = selectedDurationMs();
     if (durationMs === null) {
-      showToast('Enter a valid number of hours', 'error');
+      showToast('Enter a valid number of hours.', 'error');
       return;
     }
     const added = store.addTodo({ title, durationMs });
     if (!added) {
-      showToast(`You can have at most ${MAX_ACTIVE_TODOS} active todos at once`, 'error');
+      showToast(`You can have at most ${MAX_ACTIVE_TODOS} active todos at once.`, 'error');
       return;
     }
     titleInput.value = '';
     durationSelect.value = String(DEFAULT_PRESET_MS);
     customHoursInput.hidden = true;
     customHoursInput.value = '';
-    showToast(`Added "${title}"`, 'success');
+    showToast(`Added "${title}".`, 'success');
   }
 
   titleInput.addEventListener('keydown', e => {
@@ -186,7 +186,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
       const result = await roadmapStore.setItemDoneInTemplate(todo.linkedTemplateId, todo.linkedItemId, nextDone);
       if (result.ok) {
         showToast(
-          nextDone ? `Marked "${result.title}" done in ${roadmapName}` : `Reverted "${result.title}" in ${roadmapName}`,
+          nextDone ? `Marked "${result.title}" done in ${roadmapName}.` : `Reverted "${result.title}" in ${roadmapName}.`,
           'success'
         );
       } else {

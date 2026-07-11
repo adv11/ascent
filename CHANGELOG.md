@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Docs
+- **Content-style convention + copy audit (issue #106)**: new `.claude/rules/content-style.md` documents the plain-language/grammar/button-label/error-message conventions this app's user-facing text should follow, with a worked before/after pulled from real fixes made in this pass — pointer added to `CLAUDE.md`'s Agent memory map. The audit itself (guides, toasts, modals, forms, onboarding, landing page) found the existing copy was already close to this standard; the fixes were small consistency gaps rather than rewrites — missing terminal punctuation on several toast messages (`showToast('Password updated', ...)` → `'Password updated.'`, and similarly across `dashboard.js`/`onboarding.js`/`settings.js`/`dailyTodoPanel.js`) and two grammar fixes in `onboarding.js`'s subtitle copy and `buildYourOwnGuide.js`'s guide text. Root `CLAUDE.md` was also reflowed (soft-wrapped paragraphs collapsed to single physical lines, no wording changed) to buy headroom under the CI 220-line budget — see the new note at the end of its "Living architecture doc" convention.
+
 ### Infra
 - `.gitignore` now excludes `.claude/settings.json` and `.claude/settings.local.json` — machine-specific Claude Code plugin config, not a repo convention, was showing up as untracked noise in `git status`.
 
