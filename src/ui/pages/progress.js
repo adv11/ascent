@@ -6,6 +6,8 @@ import { createTopbar } from '../components/topbar.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
 import { createHeatmap } from '../components/heatmap.js';
 import { createLineChart, createBarChart } from '../components/chartWrapper.js';
+import { openShareModal } from '../components/shareModal.js';
+import { showToast } from '../components/toast.js';
 import { createIcon } from '../components/icons.js';
 import { attachTooltip } from '../components/tooltip.js';
 import { svgEl } from '../utils/svg.js';
@@ -311,15 +313,22 @@ export function renderProgress(app, { user, store, activityLogStore }) {
   const lineCanvas = el('canvas', {});
   const barCanvas = el('canvas', {});
 
-  // Real share-card generation lands in a follow-up PR (issue #8, part 3) —
-  // this button is a placeholder so the header layout is already final.
+  let latestAnalytics = null;
+  let latestEffectiveLog = null;
+
   const shareBtn = el('button', {
     type: 'button',
     className: 'btn btn-secondary btn-sm',
-    text: 'Share progress',
-    disabled: true,
-    title: 'Coming soon'
-  });
+    onClick: async () => {
+      if (!latestAnalytics) return;
+      try {
+        await openShareModal(latestAnalytics, latestEffectiveLog);
+      } catch (error) {
+        console.error('Failed to generate share card', error);
+        showToast('Could not generate the share card. Try again.', 'error');
+      }
+    }
+  }, [createIcon('share', { size: 'xs' }), ' Share progress']);
 
   const content = el('div', { className: 'app-content progress-content', id: 'main-content', tabindex: '-1' }, [
     el('header', { className: 'progress-header' }, [
@@ -396,6 +405,8 @@ export function renderProgress(app, { user, store, activityLogStore }) {
     const items = store.getSnapshot().items;
     const entries = activityLogStore.getSnapshot().entries;
     const analytics = computeAnalytics(items, entries);
+    latestAnalytics = analytics;
+    latestEffectiveLog = buildEffectiveActivityLog(items, entries);
 
     statStripSlot.replaceChildren(renderStatCards(analytics, !hasAnimatedStats));
     hasAnimatedStats = true;
@@ -408,7 +419,7 @@ export function renderProgress(app, { user, store, activityLogStore }) {
       renderAll();
     }));
 
-    renderCharts(buildEffectiveActivityLog(items, entries));
+    renderCharts(latestEffectiveLog);
   }
 
   const unsubStore = store.subscribe(renderAll);

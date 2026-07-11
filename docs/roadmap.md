@@ -25,7 +25,6 @@ See the master tracker (issue #11) for current status of every item.
 - **#12B** — Resource panel revamp (smart link detection + UI)
 - **#21** — Accessibility audit (keyboard nav, screen reader, WCAG 2.1 AA)
 - **#18** — Data export / backup (JSON + CSV) + `completedAt` timestamp
-- **#8** — Progress analytics (heatmap, streaks, social share card)
 - **#9** — In-app feedback and bug reporting widget
 - **#19** — PWA (offline, installable)
 - **#20** — "What's New" changelog with bell notification
