@@ -106,6 +106,7 @@ src/ui/pages/signUp.js        sign-up screen — see .claude/rules/auth-security
 src/ui/pages/onboarding.js    starter template picker (route: /onboarding) — see .claude/rules/roadmap-store.md
 src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really) — see .claude/rules/roadmap-store.md and ui-styling.md
 src/ui/pages/landing.js       marketing page at route: / for signed-out visitors (issue #6 Phase 6); an already-signed-in visitor is routed straight to /app instead
+src/ui/pages/settings.js      account settings (route: /settings, issue #16) — change email/password, preferences, delete account; guest sees a CTA-only view
 src/ui/components/authShell.js   shared chrome for signIn/signUp — split layout (issue #6 Phase 5) + authMarketingPanel.js left panel
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
@@ -114,7 +115,7 @@ src/ui/components/skeleton.js, emptyState.js, tooltip.js, modal.js, tabs.js, not
 src/ui/components/dailyTodoPanel.js, dailyTodoGuide.js, addToDailyTodoModal.js  Daily Todos UI — see .claude/rules/roadmap-store.md
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications
-src/ui/components/confirmDialog.js  styled confirm/cancel modal — see "Never use window.confirm()" below
+src/ui/components/confirmDialog.js  styled confirm/cancel modal — see "Never use window.confirm()" below; deleteAccountModal.js  shared "type password to confirm" delete-account modal used by sidebar.js/settings.js
 src/ui/components/buildYourOwnGuide.js, newRoadmapModal.js, importRoadmapModal.js  manual/AI-import roadmap creation — see .claude/rules/roadmap-store.md
 src/data/importPrompt.js, src/core/roadmap/importValidator.js, schemaAdapter.js, limits.js  AI-import prompt + pure validator/adapter/caps — see .claude/rules/roadmap-store.md
 src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/duration caps — see .claude/rules/roadmap-store.md

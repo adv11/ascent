@@ -31,6 +31,15 @@ describe('createSidebar — nav', () => {
     expect(roadmapsLink.classList.contains('active')).toBe(false);
     expect(roadmapsLink.getAttribute('aria-current')).toBeNull();
   });
+
+  // Issue #16 — Settings nav item.
+  it('includes a Settings link and marks it active on /settings', async () => {
+    const node = await freshSidebar({ activeRoute: '/settings', user: { isAnonymous: true }, store: fakeStore() });
+    const settingsLink = node.querySelector('.app-sidebar-nav a[href="#/settings"]');
+    expect(settingsLink).not.toBeNull();
+    expect(settingsLink.classList.contains('active')).toBe(true);
+    expect(settingsLink.getAttribute('aria-current')).toBe('page');
+  });
 });
 
 describe('createSidebar — manual collapse', () => {
@@ -81,13 +90,13 @@ describe('createSidebar — account identity', () => {
   // Issue #18 — an anonymous/guest session's local-only progress is exactly
   // the data most at risk of being lost, so backup export/import is offered
   // here too, unlike "Delete account" which stays signed-in-only below.
-  it('gives an anonymous user a backup-only dropdown with no "Delete account" item', async () => {
+  it('gives an anonymous user a Settings + backup dropdown with no "Delete account" item', async () => {
     const node = await freshSidebar({ activeRoute: '/app', user: { isAnonymous: true }, store: fakeStore() });
     expect(node.querySelector('.app-sidebar-identity').textContent).toContain('Guest session');
     expect(node.querySelector('.dropdown')).not.toBeNull();
     expect(node.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(node.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Download backup (JSON)', 'Export CSV', 'Import backup…']);
+    expect(itemText).toEqual(['Settings', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
   });
 
   it('wraps the identity in a dropdown with a "Delete account" item for a signed-in user', async () => {

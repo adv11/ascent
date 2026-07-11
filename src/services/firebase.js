@@ -15,6 +15,8 @@ import {
   EmailAuthProvider,
   linkWithCredential,
   reauthenticateWithCredential,
+  verifyBeforeUpdateEmail,
+  updatePassword,
   connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import {
@@ -26,7 +28,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 import { firebaseConfig } from './firebase.config.js';
 import { signOutWithCleanup } from './authCleanup.js';
-import { assertAccountDeletable } from './accountGuards.js';
+import { assertAccountDeletable, assertHasPasswordCredential } from './accountGuards.js';
 
 const app = initializeApp(firebaseConfig);
 
@@ -92,6 +94,28 @@ export const authApi = {
     // Delete DB data before Auth record to avoid orphaned data
     await remove(ref(database, `users/${user.uid}`));
     await deleteUser(user);
+  },
+  // Issue #16 — same reauth-first pattern as deleteAccount() above: Firebase
+  // requires a freshly reauthenticated session for both of these "sensitive"
+  // operations, and throws auth/requires-recent-login otherwise.
+  // verifyBeforeUpdateEmail (not the deprecated updateEmail) sends a
+  // verification link to the *new* address and only swaps auth.currentUser's
+  // email over once that link is clicked — matches issue #16's spec ("Your
+  // email won't change until verified") and is required by newer Firebase
+  // projects, which reject a direct updateEmail() call outright.
+  async updateEmail(newEmail, currentPassword) {
+    const user = auth.currentUser;
+    assertHasPasswordCredential(user);
+    const cred = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, cred);
+    await verifyBeforeUpdateEmail(user, newEmail);
+  },
+  async updatePassword(newPassword, currentPassword) {
+    const user = auth.currentUser;
+    assertHasPasswordCredential(user);
+    const cred = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, cred);
+    await updatePassword(user, newPassword);
   }
 };
 
@@ -99,6 +123,7 @@ export function authErrorMessage(error) {
   const messages = {
     'auth/email-already-in-use': 'That email already has an account. Use sign in instead.',
     'auth/invalid-email': 'Enter a valid email address.',
+    'auth/invalid-new-email': 'Enter a valid email address.',
     'auth/invalid-credential': 'Email or password is incorrect.',
     'auth/invalid-login-credentials': 'Email or password is incorrect.',
     'auth/missing-password': 'Enter your password.',

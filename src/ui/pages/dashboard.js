@@ -1,4 +1,3 @@
-import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { el, debounce } from '../dom.js';
 import { navigate } from '../router.js';
 import { openItemPanel } from '../components/itemPanel.js';
@@ -7,7 +6,8 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
 import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
 import { confirmDialog } from '../components/confirmDialog.js';
-import { attachFocusTrap } from '../components/modal.js';
+import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
+import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
 import { getTemplate } from '../../data/templates/index.js';
@@ -373,91 +373,6 @@ export function renderPhaseCard(phase, pi, {
   ]);
 }
 
-// Module-scope (issue #53) — previously an ~75-line closure embedded inside
-// renderDashboard, bloating it despite being logically independent of the
-// dashboard's reactive state (it only touches authApi/navigation/toast, all
-// already module-level imports). Moving it out makes renderDashboard shorter
-// and this modal independently testable/navigable.
-export function showDeleteModal() {
-  const message = el('p', { className: 'form-message', text: '' });
-  const passwordInput = el('input', {
-    className: 'field-input',
-    type: 'password',
-    placeholder: 'Your current password',
-    autocomplete: 'current-password'
-  });
-  const confirmBtn = el('button', {
-    type: 'submit',
-    className: 'btn btn-danger btn-block',
-    text: 'Delete my account'
-  });
-  const cancelBtn = el('button', {
-    type: 'button',
-    className: 'btn btn-secondary btn-block',
-    text: 'Cancel'
-  });
-
-  function setBusy(busy) {
-    confirmBtn.disabled = busy;
-    cancelBtn.disabled = busy;
-  }
-
-  async function handleDelete(e) {
-    e.preventDefault();
-    message.textContent = '';
-    message.className = 'form-message';
-    const pass = passwordInput.value;
-    if (!pass) {
-      message.textContent = 'Enter your password to confirm.';
-      message.className = 'form-message error';
-      return;
-    }
-    setBusy(true);
-    try {
-      await authApi.deleteAccount(pass);
-      closeModal();
-      showToast('Account deleted.', 'success');
-      navigate('/signin', true);
-    } catch (err) {
-      message.textContent = authErrorMessage(err);
-      message.className = 'form-message error';
-      setBusy(false);
-    }
-  }
-
-  const form = el('form', { className: 'auth-form', onSubmit: handleDelete }, [
-    el('p', { className: 'delete-modal-body', text: 'This permanently deletes your account and all roadmap data. Enter your password to confirm.' }),
-    el('label', { className: 'field' }, [
-      el('span', { className: 'field-label', text: 'Password' }),
-      passwordInput
-    ]),
-    message,
-    confirmBtn,
-    cancelBtn
-  ]);
-
-  const card = el('div', { className: 'modal-card' }, [
-    el('h2', { className: 'modal-title', text: 'Delete account' }),
-    form
-  ]);
-
-  const overlay = el('div', { className: 'modal-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Delete account' }, [card]);
-
-  // Issue #6 Phase 9 — this modal had neither Escape-to-close nor a focus
-  // trap before (every other ad hoc modal in the app already had at least
-  // Escape); attachFocusTrap() gives it both in one call, same as everywhere
-  // else.
-  function closeModal() {
-    detachTrap();
-    overlay.remove();
-  }
-  const detachTrap = attachFocusTrap(card, { onEscape: closeModal });
-  cancelBtn.addEventListener('click', closeModal);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-
-  document.body.appendChild(overlay);
-  passwordInput.focus();
-}
 
 export function renderDashboard(app, { user, store, dailyTodoStore }) {
   if (!user) {
@@ -470,7 +385,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   }
 
   let ui = store.getUiState();
-  let activeFilter = ui.filter || 'ALL';
+  // ui.filter is this roadmap's own sticky session filter (set the moment the
+  // user ever changes it); readDefaultFilterPreference() (settings.js, issue
+  // #16) only ever applies before that — the very first time a roadmap is
+  // opened, before ui.filter has been set at all.
+  let activeFilter = ui.filter || readDefaultFilterPreference();
   let searchQuery = ui.search || '';
   let openPhases = new Set(Array.isArray(ui.openPhases) ? ui.openPhases : [0]);
   let saveBadgeTimer;
@@ -1070,7 +989,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     activeRoute: '/app',
     user,
     store,
-    onDeleteAccount: user.isAnonymous ? null : () => showDeleteModal()
+    onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
   });
   const topbar = createTopbar({
     breadcrumb: `Roadmaps / ${currentTemplate.name}`,

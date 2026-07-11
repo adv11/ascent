@@ -14,10 +14,11 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
-// renderFilterChips/renderPhaseCard/showDeleteModal were extracted to
-// module scope out of renderDashboard's closures (issue #53) specifically so
-// they're independently testable — see the extraction comments in
-// src/ui/pages/dashboard.js.
+// renderFilterChips/renderPhaseCard were extracted to module scope out of
+// renderDashboard's closures (issue #53) specifically so they're
+// independently testable — see the extraction comments in
+// src/ui/pages/dashboard.js. showDeleteModal was extracted the same way, but
+// has since moved out to its own component — see deleteAccountModal.test.js.
 describe('renderFilterChips (issue #53)', () => {
   async function build(items, activeFilter, onFilterChange) {
     const { renderFilterChips } = await import('../../src/ui/pages/dashboard.js');
@@ -160,41 +161,5 @@ describe('renderPhaseCard (issue #53)', () => {
     const emptyPhase = { title: 'New Phase', priority: 'P2', sections: [] };
     const card = await build(emptyPhase, 0, { filteredIds: new Set() });
     expect(card).not.toBeNull();
-  });
-});
-
-describe('showDeleteModal (issue #53)', () => {
-  it('renders a delete-account modal overlay attached to document.body', async () => {
-    const { showDeleteModal } = await import('../../src/ui/pages/dashboard.js');
-    showDeleteModal();
-    const overlay = document.querySelector('.modal-overlay[aria-label="Delete account"]');
-    expect(overlay).not.toBeNull();
-    expect(overlay.querySelector('input[type="password"]')).not.toBeNull();
-  });
-
-  it('shows a validation message when submitting without a password', async () => {
-    const { showDeleteModal } = await import('../../src/ui/pages/dashboard.js');
-    showDeleteModal();
-    document.querySelector('.modal-overlay form').requestSubmit();
-    const msg = document.querySelector('.form-message');
-    expect(msg.textContent).toBe('Enter your password to confirm.');
-  });
-
-  it('calls authApi.deleteAccount with the entered password on submit', async () => {
-    const { authApi } = await import('../../src/services/firebase.js');
-    authApi.deleteAccount.mockResolvedValue();
-    const { showDeleteModal } = await import('../../src/ui/pages/dashboard.js');
-    showDeleteModal();
-    document.querySelector('.modal-overlay input[type="password"]').value = 'secret123';
-    document.querySelector('.modal-overlay form').requestSubmit();
-    await vi.waitFor(() => expect(authApi.deleteAccount).toHaveBeenCalledWith('secret123'));
-  });
-
-  it('cancel button removes the overlay', async () => {
-    const { showDeleteModal } = await import('../../src/ui/pages/dashboard.js');
-    showDeleteModal();
-    const cancelBtn = [...document.querySelectorAll('.modal-overlay button')].find(b => b.textContent === 'Cancel');
-    cancelBtn.click();
-    expect(document.querySelector('.modal-overlay')).toBeNull();
   });
 });

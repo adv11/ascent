@@ -1164,6 +1164,19 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 /* Mobile (<640px) — sidebar hidden by default, opens as a drawer on hamburger tap. */
 @media (max-width: 639px) {
+  /* `.app-shell-main { grid-column: 2; }` (unconditional, above) is only
+     correct while the explicit grid actually has 2 columns. At this
+     breakpoint `.app-sidebar` is `position: fixed` (out of flow) and the
+     grid collapses to a single explicit column — but `.app-shell-main`
+     staying pinned to "column 2" forces the browser to synthesize an
+     implicit second column to satisfy that placement, splitting the
+     viewport width between a phantom empty column and the real content
+     instead of giving it the full 1fr. This happened to resolve to 0px on
+     `dashboard.js`'s specific content shape (invisible) but produced a real,
+     visible blank gutter on `settings.js` (reported live, issue #16 follow-
+     up, screenshotted at multiple narrow desktop-browser widths). Pin it
+     back to column 1 — the only explicit column that exists here. */
+  .app-shell-main { grid-column: 1; }
   .app-shell-2 { grid-template-columns: 1fr; }
   .app-sidebar {
     position: fixed;
@@ -2418,6 +2431,72 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .toast-success { background: var(--brand-dark); color: #fff; }
 .toast-info { background: var(--emphasis-bg); color: var(--emphasis-text); }
 .toast-error { background: var(--danger); color: #fff; }
+
+/* ==========================================================================
+   Settings page (issue #16) — reuses the app-shell-2/sidebar/topbar chrome
+   dashboard.js already established (same `.app-shell-2` outer class); only
+   the content region below the topbar is new here.
+   ========================================================================== */
+
+.settings-content { padding: var(--space-6); display: grid; gap: var(--space-6); max-width: 720px; }
+.settings-header h1 { margin: 0; font-size: var(--text-xl); }
+
+.settings-sections { display: grid; gap: var(--space-6); }
+
+.settings-section {
+  background: var(--surface-glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+.settings-section-title { margin: 0; font-size: var(--text-lg); }
+
+/* A single row's label + control sit on one line on wide viewports and stack
+   on narrow ones — the same "don't rely on equal source lengths" caution as
+   .card-grid layouts elsewhere (ui-styling.md), just for a horizontal row
+   instead of a vertical stack. */
+.settings-row { display: grid; gap: var(--space-2); }
+.settings-row-main { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.settings-row-label { font-weight: 700; color: var(--ink); }
+.settings-row-value { color: var(--muted); font-size: var(--text-sm); margin-right: auto; }
+.settings-row-hint { color: var(--muted); font-size: 12px; margin: 0; }
+.settings-verified { color: var(--brand-dark); font-weight: 700; }
+.settings-unverified { color: var(--p1); font-weight: 700; }
+
+.settings-select { max-width: 200px; }
+
+.settings-inline-form {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-4);
+}
+.settings-inline-form-body { display: grid; gap: var(--space-3); max-width: 380px; }
+
+.danger-zone { border-color: var(--danger-border); }
+.danger-zone .settings-section-title { color: var(--danger); }
+
+.settings-guest-card {
+  background: var(--surface-glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-8);
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  max-width: 480px;
+}
+.settings-guest-card h2 { margin: 0; }
+.settings-guest-card p { margin: 0; color: var(--muted); }
+
+@media (max-width: 480px) {
+  .settings-row-main { flex-direction: column; align-items: flex-start; }
+  .settings-select { max-width: 100%; width: 100%; }
+}
 
 /* ==========================================================================
    Landing page (issue #6 Phase 6) — marketing page for signed-out visitors

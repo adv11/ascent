@@ -8,6 +8,7 @@ import { renderSignIn } from './ui/pages/signIn.js';
 import { renderSignUp } from './ui/pages/signUp.js';
 import { renderDashboard } from './ui/pages/dashboard.js';
 import { renderOnboarding } from './ui/pages/onboarding.js';
+import { renderSettings } from './ui/pages/settings.js';
 import { renderLanding } from './ui/pages/landing.js';
 
 migrateLocalStorageKeys();
@@ -57,6 +58,7 @@ registerRoute('/signin', guardApp(renderSignIn));
 registerRoute('/signup', guardApp(renderSignUp));
 registerRoute('/onboarding', guardApp(renderOnboarding));
 registerRoute('/app', guardApp(renderDashboard));
+registerRoute('/settings', guardApp(renderSettings));
 // Marketing landing page for signed-out visitors (issue #6 Phase 6); an
 // already-signed-in user is bounced to '/app' here instead of ever rendering
 // it — the authApi.onChange listener above additionally treats '/' as a

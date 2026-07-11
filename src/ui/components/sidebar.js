@@ -1,4 +1,5 @@
 import { el } from '../dom.js';
+import { navigate } from '../router.js';
 import { createBrandMark } from './brand.js';
 import { createAvatar } from './avatar.js';
 import { createDropdown } from './dropdown.js';
@@ -6,15 +7,16 @@ import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../utils/backupActions.js';
 
-// Issue #6 Phase 2.1. Nav list is deliberately just Dashboard + My Roadmaps —
-// the original spec also listed Resources/Settings, but neither page exists
-// yet (confirmed against main.js's route table) and no issue currently scopes
-// building them, so they're left out until they're real. The storage-backend
-// indicator from the original spec was struck too (#5 closed as not planned —
-// Firebase is the only backend).
+// Issue #6 Phase 2.1. Nav list was originally just Dashboard + My Roadmaps —
+// the original spec also listed Resources/Settings, but neither page existed
+// yet at the time. Settings shipped in issue #16; Resources still doesn't
+// exist and stays out until it's real. The storage-backend indicator from the
+// original spec was struck too (#5 closed as not planned — Firebase is the
+// only backend).
 const NAV_ITEMS = [
   { route: '/app', label: 'Dashboard', icon: '⌂' },
-  { route: '/onboarding', label: 'My Roadmaps', icon: '📋' }
+  { route: '/onboarding', label: 'My Roadmaps', icon: '📋' },
+  { route: '/settings', label: 'Settings', icon: '⚙' }
 ];
 
 function readCollapsed() {
@@ -40,6 +42,7 @@ function buildAccountMenu({ user, store, identityTrigger, onDeleteAccount }) {
   });
 
   const dropdownItems = [
+    { text: 'Settings', onClick: () => navigate('/settings') },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
     { text: 'Import backup…', onClick: () => importInput.click() }

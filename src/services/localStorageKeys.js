@@ -35,7 +35,14 @@ export const KEYS = {
   // above (not per-account, never cleared on sign-out). Independent of the
   // automatic tablet-width icon-rail breakpoint, which is CSS-only and not
   // persisted.
-  SIDEBAR_COLLAPSED: 'ascent-sidebar-collapsed'
+  SIDEBAR_COLLAPSED: 'ascent-sidebar-collapsed',
+  // Settings page preference (issue #16) — which priority filter chip
+  // dashboard.js's renderDashboard starts on, read as a fallback *before*
+  // the roadmap's own sticky `ui.filter` (KEYS.UI_STATE) so it only actually
+  // takes effect the first time a roadmap is opened, before the user has
+  // ever changed the filter themselves. Device-level, same pattern as THEME
+  // (not cleared on sign-out, not synced to Firebase).
+  DEFAULT_FILTER: 'ascent-default-filter'
 };
 
 export function verifyDismissedKey(uid) {

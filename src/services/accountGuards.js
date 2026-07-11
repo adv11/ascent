@@ -10,3 +10,14 @@ export function assertAccountDeletable(user) {
     throw new Error('Guest sessions cannot be deleted this way. Sign out to end a guest session.');
   }
 }
+
+// Same reasoning as assertAccountDeletable above, reused by firebase.js's
+// updateEmail()/updatePassword() (issue #16) — an anonymous guest has no
+// email/password credential to reauthenticate with before a sensitive
+// account change, so the API layer rejects it directly instead of relying
+// solely on settings.js never rendering the profile section for a guest.
+export function assertHasPasswordCredential(user) {
+  if (user?.isAnonymous) {
+    throw new Error('Guest sessions have no email or password to change. Create an account first.');
+  }
+}
