@@ -293,6 +293,13 @@ direct unit testing:
 | `buildVelocitySeries` | `(effectiveLog, days, now?) => { labels, counts, rollingAverage }` | `rollingAverage[i]` is the trailing-7-day average ending on day `i`. |
 | `priorityBand` | `(done, total) => 'empty' \| 'low' \| 'mid' \| 'high'` | B7's cell-shading thresholds: empty (no items), <34% low, <67% mid, else high. |
 
+## `src/ui/components/shareCard.js` and `shareModal.js` — social share card (issue #8, Part C)
+
+| Export | Module | Signature | Notes |
+|---|---|---|---|
+| `generateShareCard` | `shareCard.js` | `async (analytics, activityLog, now?) => HTMLCanvasElement` | `analytics` is `computeAnalytics()`'s output; `activityLog` is the same effective (backfilled) log the Progress page's own heatmap renders from — pass `buildEffectiveActivityLog()`'s result, not the raw store snapshot. Pure with respect to app state (reads live CSS custom properties for its gradient, but never touches the DOM outside the canvas it returns). 1200×630px. |
+| `openShareModal` | `shareModal.js` | `async (analytics, activityLog) => { close: () => void }` | Generates the card once, then opens a real `openModal()` dialog with an editable pre-filled caption and Download PNG / Copy image / Share… actions (the latter two feature-detected and hidden, not shown-and-failing, when unsupported). |
+
 ## `src/services/firebase.js`
 
 | Export | Signature | Notes |

@@ -40,6 +40,18 @@ describe('createSidebar — nav', () => {
     expect(settingsLink.classList.contains('active')).toBe(true);
     expect(settingsLink.getAttribute('aria-current')).toBe('page');
   });
+
+  // Issue #8 — Progress nav item, between Dashboard and My Roadmaps.
+  it('includes a Progress link and marks it active on /progress', async () => {
+    const node = await freshSidebar({ activeRoute: '/progress', user: { isAnonymous: true }, store: fakeStore() });
+    const progressLink = node.querySelector('.app-sidebar-nav a[href="#/progress"]');
+    expect(progressLink).not.toBeNull();
+    expect(progressLink.classList.contains('active')).toBe(true);
+    expect(progressLink.getAttribute('aria-current')).toBe('page');
+
+    const labels = Array.from(node.querySelectorAll('.app-sidebar-nav .nav-item-label')).map(el => el.textContent);
+    expect(labels).toEqual(['Dashboard', 'Progress', 'My Roadmaps', 'Settings']);
+  });
 });
 
 describe('createSidebar — manual collapse', () => {

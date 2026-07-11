@@ -102,6 +102,21 @@ const ICON_SHAPES = {
   trendingUp: () => [
     { d: 'M4 16l6-6 4 4 6-7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
     { d: 'M15 7h5v5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+  ],
+  // Progress sidebar nav item (issue #8) — three ascending bars, distinct
+  // from `trendingUp`'s line-chart shape so the nav icon and a stat-tile
+  // icon never look interchangeable at a glance.
+  progress: () => [
+    { d: 'M5 20v-8', 'stroke-linecap': 'round' },
+    { d: 'M12 20V6', 'stroke-linecap': 'round' },
+    { d: 'M19 20v-5', 'stroke-linecap': 'round' }
+  ],
+  // Share button (issue #8) — adapted from Feather's "share" icon (box +
+  // up-arrow), same precedent as the settings gear above.
+  share: () => [
+    { d: 'M12 15V3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+    { d: 'M8 7l4-4 4 4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+    { d: 'M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
   ]
 };
 

@@ -2742,3 +2742,41 @@ this app's actual configured Firebase project, not just unit tests — jsdom has
 New tests: `tests/unit/progress.test.js`, `tests/unit/heatmap.test.js`,
 `tests/unit/chartWrapper.test.js`; `tests/unit/icons.test.js` updated for the two new
 icon shapes (`flame`, `trendingUp`). PR3 (share card, sidebar nav entry) follows next.
+
+### 2026-07-11 — PR TBD — Social share card + sidebar nav entry (issue #8, part 3 of 3)
+
+Final PR for issue #8, stacked on part 2. Two new components: `src/ui/components/shareCard.js`
+(`generateShareCard(analytics, activityLog)`, a pure Canvas 2D drawing function — no DOM
+mutation beyond the canvas it returns) and `src/ui/components/shareModal.js`
+(`openShareModal(analytics, activityLog)`, the preview/caption/action-buttons UI wrapping
+it in a real `openModal()` dialog). The card reads its gradient stops from the app's own
+`--brand-700`/`--brand-600`/`--brand-500` CSS custom properties via `getComputedStyle()`
+at draw time rather than duplicating hex values, so it can never silently drift from the
+real theme if those tokens change. `brand.js` gained an exported `BRAND_NAME` constant
+(previously module-local) specifically so `shareCard.js`'s `ctx.fillText()` calls — which
+need the raw string, not a DOM node — don't introduce a second hardcoded `'Ascent'`
+literal outside the one file root `CLAUDE.md` permits it in.
+
+Download PNG (`Blob` + `URL.createObjectURL` + `<a download>`, the same pattern
+`backupTransfer.js`'s `downloadTextFile()` already established for JSON/CSV export) is
+always available; Copy image (`navigator.clipboard.write`) and Share… (`navigator.share`)
+are both feature-detected and hidden entirely when unsupported, rather than shown and
+failing — an unsupported browser's fallback is simply the always-visible inline preview
+image, satisfying the issue's own "fallback" requirement with no extra code path.
+
+Sidebar nav gained a "Progress" item (`sidebar.js`'s `NAV_ITEMS`, between Dashboard and
+My Roadmaps — the issue's own "between Dashboard and Resources" no longer applies, since
+no Resources nav item exists) with a new bar-chart `progress` icon; a `share` icon was
+also added for the modal's own visual polish. Both follow the exact `ICON_SHAPES`
+pattern issue #107 established.
+
+New tests: `tests/unit/shareCard.test.js` (stubs `HTMLCanvasElement.prototype.getContext`
+and `document.fonts` locally within the test file — jsdom implements neither without the
+optional `canvas` npm package, which this repo intentionally doesn't depend on, so a real
+rasterizer was never an option here), `tests/unit/shareModal.test.js` (mocks
+`generateShareCard` itself, testing the modal's own wiring — caption pre-fill, each
+button's feature-detected visibility, and that each action calls the right browser API
+with the right arguments), plus new `sidebar.test.js`/`icons.test.js` cases. Verified live
+against the real dev Firebase project (guest sign-in → pick a template → Progress nav
+link → Share progress button) — screenshot in `docs/screenshots/issue-8/share-modal.png`.
+Issue #8 is fully shipped across this PR and its two predecessors.

@@ -19,6 +19,7 @@ import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../util
 // font-size and the glyph silently inherited .nav-item's body-text size.
 const NAV_ITEMS = [
   { route: '/app', label: 'Dashboard', icon: 'dashboard' },
+  { route: '/progress', label: 'Progress', icon: 'progress' },
   { route: '/onboarding', label: 'My Roadmaps', icon: 'roadmaps' },
   { route: '/settings', label: 'Settings', icon: 'settings' }
 ];

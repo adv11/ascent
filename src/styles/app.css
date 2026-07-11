@@ -1326,6 +1326,28 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .confirm-dialog-body { font-size: var(--text-base); color: var(--muted); line-height: 1.6; }
 .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 
+/* Share card preview modal (issue #8, Part C) */
+.share-modal-card { max-width: 600px; display: grid; gap: 14px; position: relative; max-height: 90vh; overflow-y: auto; }
+.share-modal-card .modal-close { position: absolute; top: 8px; right: 8px; }
+.share-card-preview { width: 100%; height: auto; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.share-caption-label { display: grid; gap: 6px; font-size: var(--text-sm); font-weight: 600; color: var(--ink); }
+.share-caption-input {
+  font: inherit;
+  font-size: var(--text-base);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--ink);
+  resize: vertical;
+}
+.share-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 480px) {
+  .share-modal-actions { flex-direction: column; }
+  .share-modal-actions .btn { width: 100%; }
+}
+
 /* Import roadmap modal (issue #4; collapsed to a single flow in issue #64) */
 .import-modal-card { max-width: 560px; display: grid; gap: 4px; max-height: 88vh; overflow-y: auto; }
 .import-tab-panel { display: grid; gap: 12px; }
