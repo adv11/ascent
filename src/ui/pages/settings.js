@@ -15,6 +15,7 @@ import { getTheme, setTheme, onThemeChange } from '../../services/theme.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPrompt } from '../../services/pwaInstall.js';
+import { createFeatureBadge, dismissFeatureBadge } from '../components/featureBadge.js';
 
 const FILTER_OPTIONS = [
   { value: 'ALL', label: 'All' },
@@ -235,6 +236,7 @@ function buildPreferencesSection() {
     className: 'btn btn-secondary btn-sm',
     text: 'Install app',
     onClick: async () => {
+      dismissFeatureBadge('pwa-install');
       const outcome = await promptInstall();
       if (outcome === 'accepted') showToast('Ascent installed.', 'success');
       installRow.hidden = !isInstallable();
@@ -245,13 +247,17 @@ function buildPreferencesSection() {
     className: 'btn btn-ghost btn-sm',
     text: 'Dismiss',
     onClick: () => {
+      dismissFeatureBadge('pwa-install');
       dismissInstallPrompt();
       installRow.hidden = true;
     }
   });
   const installRow = el('div', { className: 'settings-row', hidden: !isInstallable() }, [
     el('div', { className: 'settings-row-main' }, [
-      el('span', { className: 'settings-row-label', text: 'Install Ascent' }),
+      el('span', { className: 'settings-row-label-group' }, [
+        el('span', { className: 'settings-row-label', text: 'Install Ascent' }),
+        createFeatureBadge('pwa-install')
+      ].filter(Boolean)),
       el('span', { className: 'settings-row-value', text: 'Add Ascent to your device for offline access.' }),
       installBtn,
       dismissInstallBtn

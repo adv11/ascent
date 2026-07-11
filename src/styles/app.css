@@ -2299,6 +2299,23 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .changelog-type-dot.changelog-type-improvement { background: var(--muted); }
 .changelog-type-label { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
 
+/* "New" feature badge (issue #20 Phase C) — a small pill next to a feature
+   introduced by a changelog entry the user has already opened the drawer
+   for; same rounded-pill treatment as .sync-pill, brand-colored since this
+   is always positive/informational, never a warning/error state. */
+/* intentional: fixed white text on a solid --brand background, same in both themes (issue #116 precedent) */
+.feature-new-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+}
+
 .notes-textarea {
   resize: vertical;
   min-height: 88px;
@@ -2622,6 +2639,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .settings-row { display: grid; gap: var(--space-2); }
 .settings-row-main { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
 .settings-row-label { font-weight: 700; color: var(--ink); }
+.settings-row-label-group { display: inline-flex; align-items: center; gap: var(--space-2); }
 .settings-row-value { color: var(--muted); font-size: var(--text-sm); margin-right: auto; }
 .settings-row-hint { color: var(--muted); font-size: 12px; margin: 0; }
 .settings-verified { color: var(--brand-dark); font-weight: 700; }

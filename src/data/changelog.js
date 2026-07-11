@@ -17,3 +17,15 @@ export function getUnseenChangelogEntries(lastSeen) {
 export function hasUnseenChangelog(lastSeen) {
   return hasUnseenEntries(CHANGELOG, lastSeen);
 }
+
+// Phase C (issue #20) "New" feature badges — finds the version of the
+// changelog entry whose item carries this featureKey, or null if no shipped
+// item references it. Not every changelog item has a UI element worth
+// badging, so this is deliberately opt-in per item (see changelog.json's
+// optional `featureKey` field), not derived from every entry automatically.
+export function getFeatureIntroducedVersion(featureKey) {
+  for (const entry of CHANGELOG) {
+    if (entry.items.some(item => item.featureKey === featureKey)) return entry.version;
+  }
+  return null;
+}

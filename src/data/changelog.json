@@ -11,7 +11,8 @@
       {
         "type": "feat",
         "title": "Install Ascent as an app",
-        "description": "Ascent can now be installed on your phone or desktop and works offline once installed."
+        "description": "Ascent can now be installed on your phone or desktop and works offline once installed.",
+        "featureKey": "pwa-install"
       },
       {
         "type": "improvement",

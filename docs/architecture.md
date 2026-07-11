@@ -2952,3 +2952,34 @@ pinned `2022` to `'latest'` in `eslint.config.js` — the older parser didn't un
 attribute syntax at all and failed with a hard parse error, not a lint warning. **Any future
 static-data-as-a-JSON-module import must be verified with a real browser load, not just
 `npm test`/`npm run lint`** — this class of bug is invisible to both.
+
+### 2026-07-12 — PR TBD — Phase C: "New" feature badges (issue #20 follow-up)
+
+Closes out issue #20's explicitly-deferrable Phase C. `changelog.json` items may now carry an
+optional `featureKey` string (e.g. `"pwa-install"` on the PWA-install entry) identifying a
+specific UI element to badge — `src/data/changelog.js`'s `getFeatureIntroducedVersion(featureKey)`
+looks up which changelog `version` introduced it. `src/core/changelog/featureBadge.js`'s
+`isFeatureBadgeActive()` is the pure eligibility function (no DOM/localStorage): a badge is only
+ever eligible **after** the user has opened the What's New drawer for the introducing entry —
+never before — then stays visible for `FEATURE_BADGE_DURATION_MS` (7 days) from the moment it's
+first actually shown, or until explicitly dismissed, whichever comes first. Kept separate from
+`version.js` since this reasons about a different "seen" axis (per-feature badge state, not
+per-device changelog-read state).
+
+`src/services/featureBadgeSeen.js` is the localStorage-backed wrapper (`KEYS.FEATURE_BADGE_STATE`,
+a `{ [featureKey]: { firstShownAt, dismissed } }` map, same device-level/never-synced precedent as
+`changelogSeen.js`) — `shouldShowFeatureBadge(featureKey)` records `firstShownAt` the first time a
+badge becomes eligible so the 7-day window starts from the real first render, not from whatever
+timestamp a later call happens to see. `src/ui/components/featureBadge.js`'s `createFeatureBadge()`
+returns `null` when ineligible (fits the existing `.filter(Boolean)` children-array convention
+used throughout the app) or a `<span class="feature-new-badge">New</span>` pill otherwise;
+`dismissFeatureBadge()` is called from the feature's own interaction handler.
+
+Wired into the one existing concrete example the issue names — the Settings → Preferences
+"Install Ascent" row (`src/ui/pages/settings.js`) — `changelog.json`'s `"pwa-install"` featureKey
+badges that row's label once its introducing entry has been seen, and both the row's "Install
+app" and "Dismiss" buttons call `dismissFeatureBadge('pwa-install')` before their existing
+behavior. Any future feature announced in `changelog.json` with a real UI element to point at can
+opt in the same way: add `featureKey` to its changelog item, drop `createFeatureBadge(key)` into
+that element's `el()` children (filtered for `null`), and call `dismissFeatureBadge(key)` from
+its interaction handler.

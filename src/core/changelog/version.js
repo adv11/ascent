@@ -39,6 +39,11 @@ export function validateChangelog(changelog) {
       if (!VALID_ENTRY_TYPES.has(item.type)) errors.push(`entries[${i}].items[${j}].type must be one of feat|fix|improvement`);
       if (typeof item.title !== 'string' || !item.title) errors.push(`entries[${i}].items[${j}].title is required`);
       if (typeof item.description !== 'string' || !item.description) errors.push(`entries[${i}].items[${j}].description is required`);
+      // Optional — Phase C (issue #20) "New" feature badges. Only checked
+      // when present; most items have no linked UI element to badge.
+      if ('featureKey' in item && (typeof item.featureKey !== 'string' || !item.featureKey)) {
+        errors.push(`entries[${i}].items[${j}].featureKey must be a non-empty string when present`);
+      }
     });
   });
   return errors;

@@ -62,4 +62,18 @@ describe('validateChangelog', () => {
     ]);
     expect(errors).toContain('entries[0].items[0].type must be one of feat|fix|improvement');
   });
+
+  it('accepts an item with a valid optional featureKey', () => {
+    const errors = validateChangelog([
+      { version: 1, date: '2026-01-01', items: [{ type: 'feat', title: 'x', description: 'y', featureKey: 'thing' }] }
+    ]);
+    expect(errors).toEqual([]);
+  });
+
+  it('flags an empty-string featureKey', () => {
+    const errors = validateChangelog([
+      { version: 1, date: '2026-01-01', items: [{ type: 'feat', title: 'x', description: 'y', featureKey: '' }] }
+    ]);
+    expect(errors).toContain('entries[0].items[0].featureKey must be a non-empty string when present');
+  });
 });

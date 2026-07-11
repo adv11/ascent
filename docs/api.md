@@ -428,3 +428,38 @@ No DOM, no store, no Firebase — same "pure core" precedent as `importValidator
 | `createNotificationBell` | `({ hasUnread: boolean, onClick: () => void }) => HTMLButtonElement` | Low-level bell button; returns a node with an attached `setUnread(unread: boolean)` method for clearing the dot without a full topbar re-render. |
 | `createChangelogBell` | `() => HTMLButtonElement` | The composed factory every page actually uses — wires `changelog.js` + `changelogSeen.js` + `changelogDrawer.js` together with no per-page bookkeeping. No subscription/timer of its own, so no cleanup is needed in the route's teardown. |
 | `openChangelogDrawer` | `({ entries: ChangelogEntry[], onClose?: () => void }) => () => void` | Right-side slide-in drawer modeled on `itemPanel.js`'s `openItemPanel` — `role="dialog"`, `aria-labelledby` the "What's New" heading, `attachFocusTrap()` (Tab-cycling + Escape). Returns a `close()` function. `entries` is always the full changelog (newest first) — only the bell's badge is unread-scoped, the drawer itself always shows the full history. |
+
+## `src/core/changelog/featureBadge.js` — "New" feature badge eligibility (issue #20 Phase C)
+
+Pure — no DOM, no store, no localStorage. `changelog.json` items may carry an optional
+`featureKey` string identifying a specific UI element to badge (e.g. `"pwa-install"` on the
+"Install Ascent as an app" entry) — most items have no linked element and omit it.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `FEATURE_BADGE_DURATION_MS` | `number` (7 days in ms) | How long a badge stays visible after it's first actually shown, absent an explicit dismissal. |
+| `isFeatureBadgeActive` | `({ introducedVersion: number \| null, lastSeenChangelogVersion: number \| null, state: { firstShownAt: number \| null, dismissed: boolean } \| null, now?: number }) => boolean` | `false` if `introducedVersion` is `null` (feature has no changelog entry), if `state.dismissed`, or if the introducing entry hasn't been seen yet (`lastSeenChangelogVersion < introducedVersion`). `true` the first time it's eligible (`state.firstShownAt == null`); after that, `true` only while `now - firstShownAt < FEATURE_BADGE_DURATION_MS`. A badge only ever becomes eligible **after** the user has opened the What's New drawer for the entry that introduces it — never before, per the issue's "one session after the user first sees the changelog entry" wording. |
+
+## `src/data/changelog.js`'s `getFeatureIntroducedVersion` (issue #20 Phase C)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `getFeatureIntroducedVersion` | `(featureKey: string) => number \| null` | Scans `CHANGELOG` for the first item whose `featureKey` matches; returns that entry's `version`, or `null` if no shipped item references it. |
+
+## `src/services/featureBadgeSeen.js` — feature-badge state persistence (issue #20 Phase C)
+
+Device-level localStorage, same precedent as `changelogSeen.js` — a plain object keyed by
+`featureKey` under `KEYS.FEATURE_BADGE_STATE`, never synced to Firebase, never cleared on
+sign-out.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `shouldShowFeatureBadge` | `(featureKey: string) => boolean` | Combines `getFeatureIntroducedVersion`, `getLastSeenChangelogVersion`, and the stored per-featureKey state through `isFeatureBadgeActive`. Records `firstShownAt` the first time it becomes eligible — safe to call on every render, a no-op write once already recorded. |
+| `dismissFeatureBadge` | `(featureKey: string) => void` | Permanently marks a featureKey's badge dismissed. Call from the feature's own interaction handler (e.g. a button's `onClick`), per the issue's "auto-dismisses after the user interacts with the feature" rule. |
+
+## `src/ui/components/featureBadge.js` — "New" pill component (issue #20 Phase C)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `createFeatureBadge` | `(featureKey: string) => HTMLSpanElement \| null` | Returns `null` when not eligible, so call sites can drop it straight into an `el()` children array with the existing `.filter(Boolean)` convention. Renders `<span class="feature-new-badge">New</span>` when eligible. |
+| `dismissFeatureBadge` | re-exported from `featureBadgeSeen.js` | Convenience re-export so a UI call site only needs one import. |

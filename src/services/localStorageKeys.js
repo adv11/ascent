@@ -71,7 +71,10 @@ export const KEYS = {
   // install), so every entry is unread. Device-level, same pattern as THEME
   // (not per-account, never cleared on sign-out) since "have I clicked the
   // bell on this browser" is a device fact, not an account one.
-  LAST_SEEN_CHANGELOG_VERSION: 'ascent-last-seen-version'
+  LAST_SEEN_CHANGELOG_VERSION: 'ascent-last-seen-version',
+  // "New" feature badges (issue #20 Phase C) — `{ [featureKey]: { firstShownAt: number, dismissed: boolean } }`.
+  // Device-level, same reasoning as LAST_SEEN_CHANGELOG_VERSION above.
+  FEATURE_BADGE_STATE: 'ascent-feature-badge-state'
 };
 
 export function verifyDismissedKey(uid) {
