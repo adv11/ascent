@@ -129,6 +129,16 @@
   --accent-400: #fb923c;
   --accent-500: #f97316;
 
+  /* Activity heatmap intensity scale (issue #8) — 5 levels (0 / 1-2 / 3-4 /
+     5-6 / 7+ items completed that day), redefined per theme below since a
+     flat scale reads correctly against a light background but needs
+     different stops to stay legible/on-brand against a dark one. */
+  --heat-0: var(--surface-2);
+  --heat-1: #ccfbf1;
+  --heat-2: #5eead4;
+  --heat-3: #14b8a6;
+  --heat-4: #0f766e;
+
   --neutral-50: #f8fafc;
   --neutral-100: #f1f5f9;
   --neutral-200: #e2e8f0;
@@ -199,6 +209,14 @@
   --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(0, 0, 0, 0.36);
   --shadow-brand: 0 8px 24px rgba(45, 212, 191, 0.28);
   --surface-3: #1f2b42;
+
+  /* Activity heatmap intensity scale (issue #8), dark-theme stops — see the
+     light-theme definition above for what each level means. */
+  --heat-0: var(--surface-2);
+  --heat-1: #123832;
+  --heat-2: #1f5148;
+  --heat-3: #2dd4bf;
+  --heat-4: #5eead4;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -854,7 +872,16 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    replacing it. First grid column is `auto`, sized to `.app-sidebar`'s own
    `width` — collapsing the sidebar is then just changing that one width,
    no `:has()` or duplicated column tracks needed. */
-.app-shell-2 { display: grid; grid-template-columns: auto 1fr; align-items: start; min-height: 100vh; min-height: 100dvh; }
+/* minmax(0, 1fr), not a bare 1fr (issue #8 follow-up) — a bare `1fr` track's
+   automatic minimum size is its content's min-content width, so any page
+   with wide-enough content (the Progress page's ~800px heatmap/charts) could
+   force this whole grid column, and therefore the page, wider than the
+   viewport instead of letting that content scroll within its own container.
+   dashboard.js/settings.js never had content wide enough to expose this —
+   `.app-shell-main`'s own `min-width: 0` alone wasn't sufficient; the track
+   itself needs the explicit minimum too. Same fix applied to both
+   `@media`-overridden column definitions below. */
+.app-shell-2 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; min-height: 100vh; min-height: 100dvh; }
 
 /* `position: sticky; top: 0` + a viewport-height cap, not the grid row's
    (`align-items: start` above already stops the row-stretch half of this) —
@@ -1119,7 +1146,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   /* Locks the grid's first column to the closed rail's own width (56px),
      independent of `.app-sidebar`'s own `width` — see the fix below for why
      that decoupling matters. */
-  .app-shell-2 { grid-template-columns: 56px 1fr; }
+  .app-shell-2 { grid-template-columns: 56px minmax(0, 1fr); }
   .app-sidebar { width: 56px; padding: var(--space-3) var(--space-2); }
   .app-sidebar .nav-item-label,
   .app-sidebar .app-sidebar-user-email,
@@ -1186,7 +1213,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
      up, screenshotted at multiple narrow desktop-browser widths). Pin it
      back to column 1 — the only explicit column that exists here. */
   .app-shell-main { grid-column: 1; }
-  .app-shell-2 { grid-template-columns: 1fr; }
+  .app-shell-2 { grid-template-columns: minmax(0, 1fr); }
   .app-sidebar {
     position: fixed;
     top: 0;
@@ -1298,6 +1325,28 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .confirm-dialog-card { max-width: 440px; }
 .confirm-dialog-body { font-size: var(--text-base); color: var(--muted); line-height: 1.6; }
 .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+/* Share card preview modal (issue #8, Part C) */
+.share-modal-card { max-width: 600px; display: grid; gap: 14px; position: relative; max-height: 90vh; overflow-y: auto; }
+.share-modal-card .modal-close { position: absolute; top: 8px; right: 8px; }
+.share-card-preview { width: 100%; height: auto; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.share-caption-label { display: grid; gap: 6px; font-size: var(--text-sm); font-weight: 600; color: var(--ink); }
+.share-caption-input {
+  font: inherit;
+  font-size: var(--text-base);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--ink);
+  resize: vertical;
+}
+.share-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 480px) {
+  .share-modal-actions { flex-direction: column; }
+  .share-modal-actions .btn { width: 100%; }
+}
 
 /* Import roadmap modal (issue #4; collapsed to a single flow in issue #64) */
 .import-modal-card { max-width: 560px; display: grid; gap: 4px; max-height: 88vh; overflow-y: auto; }
@@ -2511,6 +2560,163 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 @media (max-width: 480px) {
   .settings-row-main { flex-direction: column; align-items: flex-start; }
   .settings-select { max-width: 100%; width: 100%; }
+}
+
+/* ==========================================================================
+   Progress page (issue #8) — reuses the app-shell-2/sidebar/topbar chrome
+   dashboard.js/settings.js already established; only the content region
+   below the topbar is new here.
+   ========================================================================== */
+
+/* grid-template-columns: minmax(0, 1fr) explicitly, not left implicit
+   (issue #8 follow-up) — an implicit single-column grid track's automatic
+   size is content-based (max-content), so this card list was rendering at
+   its widest child's content width (~840px, the heatmap) regardless of the
+   container's own real width, forcing the whole page wider than the
+   viewport on a narrow screen. Found live via a phone-width screenshot;
+   .progress-card's own `min-width: 0` alone wasn't enough — the track
+   itself needs the explicit minimum. */
+.progress-content { padding: var(--space-6); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); max-width: 1160px; margin: 0 auto; width: 100%; align-content: start; }
+
+.progress-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.progress-header h1 { margin: 0; font-size: var(--text-xl); }
+.progress-header-subtitle { margin: 4px 0 0; color: var(--muted); font-size: var(--text-sm); }
+.progress-header-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.progress-range-toggle { display: flex; gap: var(--space-2); }
+
+.progress-card {
+  background: var(--surface-glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  /* .progress-content has no explicit grid-template-columns, so its single
+     implicit column defaults to `auto` sizing — a grid item's own default
+     min-width is its content's min-content size, so the ~800px-wide
+     heatmap/charts inside this card would otherwise force the whole grid
+     track (and the page) wider than the viewport instead of letting the
+     heatmap's own .heatmap-scroll (and the chart/table wrap containers)
+     scroll internally. Same fix as .app-shell-main's own min-width: 0. */
+  min-width: 0;
+}
+.progress-card-title { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
+
+/* Activity heatmap (B3) — see src/ui/components/heatmap.js for why this is
+   plain HTML/CSS Grid, not literal SVG. Cell size/gap match the issue's own
+   spec (12x12px, 3px gap). */
+.heatmap { display: flex; flex-direction: column; gap: var(--space-3); }
+.heatmap-body { display: flex; gap: 6px; }
+/* Right padding so the final month label (e.g. "Jul") has room to render
+   past its 12px column instead of being clipped by the scroll container's
+   own edge — found live, the label reads fine everywhere except the very
+   last column. `min-width: 0` overrides a flex item's default `auto` min
+   width (its own content size) — without it, this ~800px-wide grid forced
+   `.heatmap-body` (and the whole page) wider than the viewport instead of
+   scrolling within its own box, found live on a phone-width screenshot. */
+.heatmap-scroll { overflow-x: auto; padding-bottom: 2px; padding-right: 28px; min-width: 0; }
+.heatmap-months { display: grid; grid-auto-flow: column; grid-auto-columns: 12px; gap: 3px; margin-bottom: 4px; }
+.heatmap-month-label { font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
+.heatmap-day-labels { display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; width: 26px; flex-shrink: 0; margin-top: 18px; }
+.heatmap-day-label { font-size: var(--text-xs); color: var(--muted); line-height: 12px; }
+.heatmap-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); grid-auto-columns: 12px; gap: 3px; }
+.heatmap-cell { width: 12px; height: 12px; border-radius: 2px; background: var(--heat-0); padding: 0; border: none; cursor: default; }
+.heatmap-cell[data-level="1"] { background: var(--heat-1); }
+.heatmap-cell[data-level="2"] { background: var(--heat-2); }
+.heatmap-cell[data-level="3"] { background: var(--heat-3); }
+.heatmap-cell[data-level="4"] { background: var(--heat-4); }
+.heatmap-cell[data-today="true"] { outline: 1.5px solid var(--ink); outline-offset: -1.5px; }
+.heatmap-legend { display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--muted); }
+.heatmap-legend-swatch { width: 10px; height: 10px; border-radius: 2px; background: var(--heat-0); }
+.heatmap-legend-swatch[data-level="1"] { background: var(--heat-1); }
+.heatmap-legend-swatch[data-level="2"] { background: var(--heat-2); }
+.heatmap-legend-swatch[data-level="3"] { background: var(--heat-3); }
+.heatmap-legend-swatch[data-level="4"] { background: var(--heat-4); }
+/* Row-only grid placement (see heatmap.js) — column is left to
+   `grid-auto-flow: column`'s own auto-placement in document order. */
+.gr-1 { grid-row: 1; }
+.gr-2 { grid-row: 2; }
+.gr-3 { grid-row: 3; }
+.gr-4 { grid-row: 4; }
+.gr-5 { grid-row: 5; }
+.gr-6 { grid-row: 6; }
+.gr-7 { grid-row: 7; }
+
+/* Chart containers (B4/B5) — Chart.js is given a fixed-height box with
+   `maintainAspectRatio: false` (see chartWrapper.js) since a canvas has no
+   intrinsic height of its own to size a CSS Grid/flex row from. */
+.chart-container { position: relative; height: 260px; }
+.chart-container canvas { width: 100% !important; height: 100% !important; }
+
+/* Phase breakdown (B6) — a flat list of horizontal bars, deliberately not
+   .phase-card (that class carries expand/collapse chrome this list doesn't
+   need). The bar itself is an inline SVG rect with a `width` *attribute*
+   (not inline `style`, per the CSP rule) driven by setAttribute, same
+   pattern progressRing.js already uses for its own dynamic stroke-dashoffset. */
+.phase-breakdown-list { display: grid; gap: var(--space-3); align-content: start; }
+.phase-breakdown-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: var(--space-2) 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.phase-breakdown-row:hover, .phase-breakdown-row:focus-visible { background: var(--surface-2); outline: none; }
+.phase-breakdown-dot { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
+.phase-breakdown-dot[data-priority="P0"] { background: var(--p0); }
+.phase-breakdown-dot[data-priority="P1"] { background: var(--p1); }
+.phase-breakdown-dot[data-priority="P2"] { background: var(--p2); }
+.phase-breakdown-dot[data-priority="P3"] { background: var(--p3); }
+.phase-breakdown-main { display: grid; gap: 4px; min-width: 0; }
+.phase-breakdown-name { font-weight: 600; font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phase-breakdown-count { font-size: var(--text-sm); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Generic linear progress bar (issue #8) — reused by the phase-breakdown
+   rows above and the "Items complete" stat tile below. An inline SVG rect
+   with its `width` set via `setAttribute` (never inline `style`), same
+   pattern progressRing.js already uses for its own dynamic stroke-dashoffset. */
+.mini-bar { width: 100%; height: 8px; display: block; }
+.mini-bar-track { fill: var(--track-bg); }
+.mini-bar-fill { fill: var(--brand); }
+.stat-tile-bar { margin-top: 6px; }
+
+/* Priority x phase table (B7) */
+.priority-table-wrap { overflow-x: auto; }
+.priority-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.priority-table th, .priority-table td { padding: 8px 10px; text-align: center; white-space: nowrap; }
+.priority-table th:first-child, .priority-table td:first-child { text-align: left; }
+.priority-table thead th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+.priority-table td { border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.priority-table tbody tr:last-child td { border-bottom: none; }
+.priority-cell[data-band="empty"] { color: var(--faint); }
+.priority-cell[data-band="low"] { background: var(--status-error-bg); color: var(--status-error-text); }
+.priority-cell[data-band="mid"] { background: var(--status-warn-bg); color: var(--status-warn-text); }
+.priority-cell[data-band="high"] { background: var(--status-ok-bg); color: var(--status-ok-text); }
+
+/* Projected completion (B8) */
+.projection-card-body { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.projection-pace { color: var(--muted); font-size: var(--text-sm); }
+.projection-headline { font-size: var(--text-2xl); font-weight: 800; color: var(--brand-dark); }
+.projection-boost { color: var(--muted); font-size: var(--text-sm); }
+.projection-empty { color: var(--muted); text-align: center; }
+
+@media (max-width: 768px) {
+  .progress-content { padding: var(--space-4); }
+  .progress-header { flex-direction: column; align-items: stretch; }
+  .chart-container { height: 220px; }
+}
+
+@media (max-width: 480px) {
+  .progress-card { padding: var(--space-4); }
+  .priority-table { font-size: var(--text-xs); }
 }
 
 /* ==========================================================================

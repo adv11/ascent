@@ -79,6 +79,8 @@ src/ui/pages/onboarding.js    starter template picker (route: /onboarding) — s
 src/ui/pages/dashboard.js     the roadmap dashboard (the whole app, really) — see .claude/rules/roadmap-store.md and ui-styling.md
 src/ui/pages/landing.js       marketing page at route: / for signed-out visitors (issue #6 Phase 6); an already-signed-in visitor is routed straight to /app instead
 src/ui/pages/settings.js      account settings (route: /settings, issue #16) — change email/password, preferences, delete account; guest sees a CTA-only view
+src/ui/pages/progress.js      analytics dashboard (route: /progress, issue #8) — stat cards, heatmap, charts, phase/priority breakdowns, projection — see .claude/rules/roadmap-store.md and ui-styling.md
+src/ui/components/heatmap.js, chartWrapper.js  activity heatmap + lazy Chart.js loader (issue #8) — see .claude/rules/ui-styling.md; shareCard.js, shareModal.js  canvas social share card + preview modal (issue #8)
 src/ui/components/authShell.js   shared chrome for signIn/signUp — split layout (issue #6 Phase 5) + authMarketingPanel.js left panel
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button

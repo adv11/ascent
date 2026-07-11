@@ -11,7 +11,7 @@
   <meta property="og:image" content="/public/og-image.png">
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self';
-             script-src 'self' https://www.gstatic.com;
+             script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net;
              style-src 'self' https://fonts.googleapis.com;
              font-src https://fonts.gstatic.com;
              connect-src https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com http://127.0.0.1:9099 http://127.0.0.1:9000 ws://127.0.0.1:9000;
@@ -36,6 +36,13 @@
   <link rel="modulepreload" crossorigin="anonymous"
     href="https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"
     integrity="sha384-QTGc3vdsjQWaJFRX+uOJCkVRby8Q010Dat5Ve3tIKMHISniPOS3XaDLHVRlxmLE+">
+  <!-- Chart.js (issue #8) is dynamically imported from a pinned-version
+       jsdelivr URL by src/ui/components/chartWrapper.js, only when the
+       Progress page's charts are first rendered — deliberately not a
+       modulepreload tag here, since that would defeat the "lazy, on first
+       visit only" load and there is no way to SRI-pin a dynamic import()
+       today; see docs/adr/ADR-002-csp-sri-security.md's "CDN loading
+       exceptions" section for the full tradeoff. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">

@@ -21,3 +21,17 @@ export function previousDateKey(key) {
   d.setDate(d.getDate() - 1);
   return dateKey(d.getTime());
 }
+
+// Parses a `dateKey()` string back into a local-time `Date` — never
+// `new Date(dateKeyStr)` directly, which the spec parses as UTC midnight for
+// a bare YYYY-MM-DD string and can shift the apparent weekday/month for any
+// reader west of UTC.
+export function parseDateKey(key) {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// Shared short month names — used anywhere a dateKey needs a human label
+// (the heatmap's month row, chart axis labels), so the abbreviation never
+// drifts between call sites.
+export const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

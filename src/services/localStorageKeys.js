@@ -48,7 +48,13 @@ export const KEYS = {
   // takes effect the first time a roadmap is opened, before the user has
   // ever changed the filter themselves. Device-level, same pattern as THEME
   // (not cleared on sign-out, not synced to Firebase).
-  DEFAULT_FILTER: 'ascent-default-filter'
+  DEFAULT_FILTER: 'ascent-default-filter',
+  // One-shot cross-page signal (issue #8): progress.js's phase-breakdown row
+  // click writes the target phase title here just before navigating to
+  // `#/app`; dashboard.js reads and immediately clears it on its next mount
+  // to open + scroll to that phase. sessionStorage, not localStorage — same
+  // "read once, then clear" precedent as verificationBanner.js's dismiss key.
+  SCROLL_TO_PHASE: 'ascent-scroll-to-phase'
 };
 
 export function verifyDismissedKey(uid) {

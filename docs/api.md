@@ -265,6 +265,41 @@ plain data. `items` throughout is a roadmap snapshot's non-deleted item list
 | `computeProjection` | `projection.js` | `(items, activityLog, now?) => { remainingItems, velocity, daysToComplete?, projectedDate?, boostedDaysToComplete?, boostedProjectedDate?, complete?, noRecentActivity? }` | `complete: true` if nothing remains; `noRecentActivity: true` if 7-day velocity is 0 and work remains; otherwise both a current-pace and a "+2 items/day" boosted projection. |
 | `dateKey` / `previousDateKey` | `dateKey.js` | `(timestamp?) => 'YYYY-MM-DD'` / `(key) => 'YYYY-MM-DD'` | Local calendar-day key — the single source of truth every module above and `activityLogStore.js` share for "which day did this happen on." |
 
+## `src/ui/components/heatmap.js` — activity heatmap (issue #8)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `createHeatmap` | `(heatmapData: HeatmapCell[]) => HTMLElement` | `heatmapData` is `computeHeatmap()`'s output (see above). Returns a `role="img"` container with a computed `aria-label` summarizing total completions. Plain HTML/CSS Grid, not SVG — see the file's own doc comment for why. |
+
+## `src/ui/components/chartWrapper.js` — lazy Chart.js loader (issue #8)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `createLineChart` | `async (canvas: HTMLCanvasElement, { labels, totals }) => Chart` | B4's cumulative progress line. Dynamically imports Chart.js from a pinned-version CDN URL on first call — see `docs/adr/ADR-002-csp-sri-security.md`'s "CDN loading exceptions". |
+| `createBarChart` | `async (canvas: HTMLCanvasElement, { labels, counts, rollingAverage }) => Chart` | B5's daily velocity bars + 7-day rolling average overlay line. |
+
+Both return a real Chart.js instance — callers must call `.destroy()` on it before creating
+a new chart on the same canvas (Chart.js throws otherwise) and on component teardown.
+
+## `src/ui/pages/progress.js` — Progress page pure helpers (issue #8)
+
+Exported alongside `renderProgress(app, { user, store, activityLogStore })` (the page's
+route entry point, same `(app, ctx) => cleanupFn` contract every other page follows) for
+direct unit testing:
+
+| Export | Signature | Notes |
+|---|---|---|
+| `buildCumulativeSeries` | `(effectiveLog, days, now?) => { labels, totals }` | One point per day in the window; `totals[i]` includes everything before the window too, so the line doesn't restart at 0 when the range toggle changes. |
+| `buildVelocitySeries` | `(effectiveLog, days, now?) => { labels, counts, rollingAverage }` | `rollingAverage[i]` is the trailing-7-day average ending on day `i`. |
+| `priorityBand` | `(done, total) => 'empty' \| 'low' \| 'mid' \| 'high'` | B7's cell-shading thresholds: empty (no items), <34% low, <67% mid, else high. |
+
+## `src/ui/components/shareCard.js` and `shareModal.js` — social share card (issue #8, Part C)
+
+| Export | Module | Signature | Notes |
+|---|---|---|---|
+| `generateShareCard` | `shareCard.js` | `async (analytics, activityLog, now?) => HTMLCanvasElement` | `analytics` is `computeAnalytics()`'s output; `activityLog` is the same effective (backfilled) log the Progress page's own heatmap renders from — pass `buildEffectiveActivityLog()`'s result, not the raw store snapshot. Pure with respect to app state (reads live CSS custom properties for its gradient, but never touches the DOM outside the canvas it returns). 1200×630px. |
+| `openShareModal` | `shareModal.js` | `async (analytics, activityLog) => { close: () => void }` | Generates the card once, then opens a real `openModal()` dialog with an editable pre-filled caption and Download PNG / Copy image / Share… actions (the latter two feature-detected and hidden, not shown-and-failing, when unsupported). |
+
 ## `src/services/firebase.js`
 
 | Export | Signature | Notes |

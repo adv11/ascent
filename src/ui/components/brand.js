@@ -1,7 +1,11 @@
 import { el } from '../dom.js';
 import { svgEl } from '../utils/svg.js';
 
-const BRAND_NAME = 'Ascent';
+// Exported (not just module-local) so a canvas-drawing call site — which
+// needs the raw string for `ctx.fillText()`, not a DOM node — can still get
+// the product name without introducing a second hardcoded 'Ascent' literal
+// (issue #8's share card, src/ui/components/shareCard.js).
+export const BRAND_NAME = 'Ascent';
 
 // Filled with currentColor so `.brand-mark`'s CSS color (white) still controls
 // it, rather than hardcoding a color here.
