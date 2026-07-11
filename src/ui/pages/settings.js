@@ -3,6 +3,7 @@ import { navigate } from '../router.js';
 import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
+import { createChangelogBell } from '../components/notificationBell.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
@@ -341,6 +342,7 @@ export function renderSettings(app, { user, store }) {
     syncPill: null,
     themeToggleBtn,
     dailyTodoNavBadge: null,
+    notificationBell: createChangelogBell(),
     onToggleMobileSidebar: () => sidebar._toggleMobile()
   });
 

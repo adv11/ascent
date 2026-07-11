@@ -1135,6 +1135,26 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   text-overflow: ellipsis;
 }
 .app-topbar-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+/* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
+   bare unstyled-until-hover button (matches .app-topbar-hamburger's
+   treatment) since it sits among icon-only topbar actions, not a filled
+   .btn. The unread dot is absolutely positioned over the bell glyph's
+   top-right corner. */
+.app-topbar-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.app-topbar-bell:hover { background: var(--surface-2); }
+.app-topbar-bell .notification-badge-dot { position: absolute; top: 6px; right: 6px; }
 .app-topbar-hamburger {
   display: none;
   border: none;
@@ -2260,6 +2280,24 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   flex-wrap: wrap;
 }
 .panel-footer-right { display: flex; gap: 8px; margin-left: auto; }
+
+/* What's New changelog drawer (issue #20) — reuses .item-panel/.panel-* for
+   the slide-in shell; everything below is specific to its content. */
+.changelog-drawer-body { gap: 28px; }
+.changelog-group + .changelog-group { padding-top: 20px; border-top: 1px solid var(--line); }
+.changelog-group-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.changelog-group-version { font-size: var(--text-md); font-weight: 800; }
+.changelog-group-date { font-size: 12px; color: var(--muted); }
+.changelog-item-list { display: grid; gap: 14px; }
+.changelog-item { display: flex; gap: 10px; align-items: flex-start; }
+.changelog-item-body { min-width: 0; }
+.changelog-item-title { font-weight: 700; font-size: var(--text-sm); }
+.changelog-item-desc { color: var(--muted); font-size: var(--text-sm); margin-top: 2px; }
+.changelog-type-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 999px; margin-top: 6px; }
+.changelog-type-dot.changelog-type-feat { background: var(--brand); }
+.changelog-type-dot.changelog-type-fix { background: var(--accent); }
+.changelog-type-dot.changelog-type-improvement { background: var(--muted); }
+.changelog-type-label { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
 
 .notes-textarea {
   resize: vertical;

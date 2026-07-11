@@ -117,6 +117,13 @@ const ICON_SHAPES = {
     { d: 'M12 15V3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
     { d: 'M8 7l4-4 4 4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
     { d: 'M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+  ],
+  // Notification bell — the topbar "What's New" changelog trigger (issue
+  // #20), adapted from Feather's "bell" icon (MIT licensed), same precedent
+  // as the settings gear above.
+  bell: () => [
+    { d: 'M6 10.5a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14.5 6 10.5z', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+    { d: 'M10.3 19.5a1.9 1.9 0 0 0 3.4 0', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
   ]
 };
 

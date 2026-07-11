@@ -1,6 +1,7 @@
 import { el } from '../dom.js';
 import { navigate } from '../router.js';
 import { createThemeToggle } from '../components/themeToggle.js';
+import { createChangelogBell } from '../components/notificationBell.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
@@ -301,6 +302,7 @@ export function renderProgress(app, { user, store, activityLogStore }) {
     syncPill: null,
     themeToggleBtn,
     dailyTodoNavBadge: null,
+    notificationBell: createChangelogBell(),
     onToggleMobileSidebar: () => sidebar._toggleMobile()
   });
 

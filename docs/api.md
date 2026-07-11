@@ -373,3 +373,58 @@ overridden; optional ones have safe defaults.
 | Export | Signature | Notes |
 |---|---|---|
 | `getStorageAdapter` | `(user?: { providerData?: { providerId: string }[] } \| null) => StorageAdapter` | Always returns `firebaseAdapter` today — the `user` argument is accepted but unused, kept as the seam a future second backend would branch on. `roadmapStore.js`'s `setUser(nextUser)` calls this on every sign-in (not just once at store creation), so a future branch would apply across sign-out/sign-in-as-a-different-user within the same store instance without any call-site change. |
+
+## `src/data/changelog.json` — What's New changelog data (issue #20)
+
+A static, machine-readable file — imported directly as an ES module (`with { type: 'json' }`,
+requires `connect-src 'self'` in `index.html`'s CSP since a JSON module import is fetched
+same-origin), never read over the network at runtime. Schema, an array of version entries,
+newest entries do **not** need to be appended last — `APP_VERSION`/sort calls always take the
+max/newest explicitly:
+
+```
+[{
+  "version": number,       // integer, unique, no gaps required
+  "date": "YYYY-MM-DD",
+  "items": [{
+    "type": "feat" | "fix" | "improvement",
+    "title": string,
+    "description": string
+  }]
+}]
+```
+
+## `src/data/changelog.js` — changelog data + unread helpers (issue #20)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `APP_VERSION` | `number` | `Math.max()` over every `changelog.json` entry's `version` — parallel to `ROADMAP_VERSION` (`src/data/templates/java-backend.js`). Bump by appending a new, higher-`version` entry to `changelog.json`; never edit an already-shipped entry's `version` in place. |
+| `CHANGELOG` | `ChangelogEntry[]` | The raw parsed `changelog.json` array, re-exported. |
+| `getUnseenChangelogEntries` | `(lastSeen: number \| null) => ChangelogEntry[]` | Entries newer than `lastSeen`, newest first. `null` (never seen) returns every entry. |
+| `hasUnseenChangelog` | `(lastSeen: number \| null) => boolean` | Drives the bell's unread dot. |
+
+## `src/core/changelog/version.js` — pure version-compare/schema logic (issue #20)
+
+No DOM, no store, no Firebase — same "pure core" precedent as `importValidator.js`/`backupValidator.js`.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `isNewerVersion` | `(version: number, lastSeen: number \| null) => boolean` | `null`/`undefined` lastSeen is treated as older than every real version. |
+| `getUnseenEntries` | `(changelog: ChangelogEntry[], lastSeen: number \| null) => ChangelogEntry[]` | What `getUnseenChangelogEntries` above delegates to, generalized to take any changelog array (used directly by tests against fixture data). |
+| `hasUnseenEntries` | `(changelog: ChangelogEntry[], lastSeen: number \| null) => boolean` | Same generalization for `hasUnseenChangelog`. |
+| `validateChangelog` | `(changelog: unknown) => string[]` | Empty array means valid. Checks every entry has `version`/`date`/a non-empty `items` array, and every item's `type` is one of `feat`\|`fix`\|`improvement` with a non-empty `title`/`description`. Same "array of error strings" convention as `importValidator.js`. |
+
+## `src/services/changelogSeen.js` — last-seen-version persistence (issue #20)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `getLastSeenChangelogVersion` | `() => number \| null` | Reads `KEYS.LAST_SEEN_CHANGELOG_VERSION`; `null` for a missing or non-numeric stored value. |
+| `setLastSeenChangelogVersion` | `(version: number) => void` | Called once, from `createChangelogBell()`'s click handler, the moment the drawer opens ("mark all as read on open" per the issue). |
+
+## `src/ui/components/notificationBell.js` / `changelogDrawer.js` — bell + drawer UI (issue #20)
+
+| Export | Signature | Notes |
+|---|---|---|
+| `createNotificationBell` | `({ hasUnread: boolean, onClick: () => void }) => HTMLButtonElement` | Low-level bell button; returns a node with an attached `setUnread(unread: boolean)` method for clearing the dot without a full topbar re-render. |
+| `createChangelogBell` | `() => HTMLButtonElement` | The composed factory every page actually uses — wires `changelog.js` + `changelogSeen.js` + `changelogDrawer.js` together with no per-page bookkeeping. No subscription/timer of its own, so no cleanup is needed in the route's teardown. |
+| `openChangelogDrawer` | `({ entries: ChangelogEntry[], onClose?: () => void }) => () => void` | Right-side slide-in drawer modeled on `itemPanel.js`'s `openItemPanel` — `role="dialog"`, `aria-labelledby` the "What's New" heading, `attachFocusTrap()` (Tab-cycling + Escape). Returns a `close()` function. `entries` is always the full changelog (newest first) — only the bell's badge is unread-scoped, the drawer itself always shows the full history. |

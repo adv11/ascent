@@ -64,7 +64,14 @@ export const KEYS = {
   // PWA install prompt (issue #19) — set once the app is installed, or the
   // user dismisses the banner, so it never reappears. Device-level (each
   // device installs independently), not synced to Firebase.
-  PWA_INSTALL_DISMISSED: 'ascent-pwa-install-dismissed'
+  PWA_INSTALL_DISMISSED: 'ascent-pwa-install-dismissed',
+  // What's New changelog (issue #20) — the highest changelog.json `version`
+  // the notification bell has already been opened for on this device. A
+  // missing key means "never seen any version" (pre-#20 device, or fresh
+  // install), so every entry is unread. Device-level, same pattern as THEME
+  // (not per-account, never cleared on sign-out) since "have I clicked the
+  // bell on this browser" is a device fact, not an account one.
+  LAST_SEEN_CHANGELOG_VERSION: 'ascent-last-seen-version'
 };
 
 export function verifyDismissedKey(uid) {

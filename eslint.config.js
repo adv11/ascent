@@ -6,7 +6,10 @@ export default [
   {
     files: ['src/**/*.js'],
     languageOptions: {
-      ecmaVersion: 2022,
+      // 'latest' (not a pinned year) so newer syntax — e.g. JSON import
+      // attributes (`with { type: 'json' }`, issue #20) — parses without
+      // bumping this again each time; ecmaVersion 2022 didn't understand it.
+      ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
         ...globals.browser,

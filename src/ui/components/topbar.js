@@ -6,7 +6,7 @@ import { createIcon } from './icons.js';
 // an avatar or dropdown. The hamburger button is CSS-hidden above the mobile
 // breakpoint (app.css); `onToggleMobileSidebar` wires it to the sidebar's own
 // `_toggleMobile()`.
-export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, dailyTodoNavBadge, onToggleMobileSidebar }) {
+export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, dailyTodoNavBadge, notificationBell, onToggleMobileSidebar }) {
   const hamburger = el('button', {
     type: 'button',
     className: 'app-topbar-hamburger',
@@ -20,6 +20,7 @@ export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, daily
     dailyTodoNavBadge,
     syncPill,
     user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
+    notificationBell,
     themeToggleBtn
   ].filter(Boolean));
 

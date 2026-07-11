@@ -1,0 +1,23 @@
+[
+  {
+    "version": 1,
+    "date": "2026-07-12",
+    "items": [
+      {
+        "type": "feat",
+        "title": "What's New notifications",
+        "description": "A bell icon in the header now shows a badge when there's something new — click it to see what's changed."
+      },
+      {
+        "type": "feat",
+        "title": "Install Ascent as an app",
+        "description": "Ascent can now be installed on your phone or desktop and works offline once installed."
+      },
+      {
+        "type": "improvement",
+        "title": "Better contrast in dark theme",
+        "description": "Priority badges and filter chips are easier to read in dark theme."
+      }
+    ]
+  }
+]

@@ -3,6 +3,7 @@ import { navigate } from '../router.js';
 import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
 import { createThemeToggle } from '../components/themeToggle.js';
+import { createChangelogBell } from '../components/notificationBell.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
 import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
 import { confirmDialog } from '../components/confirmDialog.js';
@@ -1020,6 +1021,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     syncPill,
     themeToggleBtn,
     dailyTodoNavBadge,
+    notificationBell: createChangelogBell(),
     onToggleMobileSidebar: () => sidebar._toggleMobile()
   });
 
