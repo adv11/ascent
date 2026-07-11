@@ -72,6 +72,34 @@ test.describe('feedback widget — type selector and forms (no Firebase needed)'
     await page.keyboard.press('Enter');
     await expect(page.locator('.modal-overlay[aria-label="Send feedback"]')).toBeVisible();
   });
+
+  // Regression coverage for a real, live-reported bug (issue #9 follow-up):
+  // SENSITIVE_SELECTORS used to include the invalid CSS `.auth-*`, which
+  // made every capture attempt throw a SyntaxError, silently surfaced as
+  // "Could not capture the screen." A second bug shipped alongside the fix
+  // attempt: the Remove button used only `.btn`-family classes, and since
+  // author CSS beats the browser's default `[hidden]{display:none}` UA rule
+  // regardless of specificity, it stayed visibly rendered even while hidden.
+  // Both need a real browser (real CSS cascade, real html2canvas over the
+  // network) to catch — jsdom unit tests can't reproduce either.
+  test('capture current screen button produces a preview with a working Remove button, no error', async ({ page }) => {
+    await page.goto('/#/signin');
+    await page.locator('.feedback-widget-trigger').click({ force: true });
+    await page.locator('.feedback-type-card', { hasText: 'General feedback' }).click();
+
+    const removeBtn = page.locator('.feedback-screenshot-remove');
+    await expect(removeBtn).toBeHidden();
+
+    await page.locator('button', { hasText: 'Capture current screen' }).click();
+
+    await expect(page.locator('.feedback-screenshot-preview')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.feedback-screenshot .field-error')).toBeHidden();
+    await expect(removeBtn).toBeVisible();
+
+    await removeBtn.click();
+    await expect(page.locator('.feedback-screenshot-preview')).toBeHidden();
+    await expect(removeBtn).toBeHidden();
+  });
 });
 
 test.describe('feedback widget — full submit flow (requires Firebase emulator)', () => {

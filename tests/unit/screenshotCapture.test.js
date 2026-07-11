@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { resizeUntilUnderLimit, readUploadedImage, MAX_UPLOAD_BYTES } from '../../src/ui/components/screenshotCapture.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resizeUntilUnderLimit, readUploadedImage, MAX_UPLOAD_BYTES, SENSITIVE_SELECTORS, blurSensitiveRegions } from '../../src/ui/components/screenshotCapture.js';
 
 // A fake canvas whose toDataURL() shrinks in half each time it's asked,
 // simulating a real canvas's output shrinking as width/height halve —
@@ -53,6 +53,44 @@ describe('resizeUntilUnderLimit', () => {
     });
     const result = resizeUntilUnderLimit(neverShrinksEnough, 1, createCanvas);
     expect(result.length).toBe(10_000_000);
+  });
+});
+
+// Regression coverage for a real bug (issue #9 follow-up): an earlier
+// version of SENSITIVE_SELECTORS included the literal `.auth-*`, which is
+// not valid CSS class selector syntax — `querySelectorAll()` throws a
+// SyntaxError on an invalid selector, which made every single screenshot
+// capture attempt fail. `document.querySelectorAll` is the same call
+// blurSensitiveRegions() makes against the real DOM; asserting it doesn't
+// throw here would have caught that regression before it shipped.
+describe('SENSITIVE_SELECTORS', () => {
+  it('is valid CSS — querySelectorAll does not throw', () => {
+    expect(() => document.body.querySelectorAll(SENSITIVE_SELECTORS)).not.toThrow();
+  });
+});
+
+describe('blurSensitiveRegions', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('does not throw when scanning a real DOM tree', () => {
+    document.body.innerHTML = '<div class="auth-page"><span class="app-sidebar-user-email">jane@example.com</span></div>';
+    const canvas = { width: 100, height: 100, getContext: () => ({ save: vi.fn(), restore: vi.fn(), drawImage: vi.fn(), fillRect: vi.fn(), set filter(_v) {}, set fillStyle(_v) {} }) };
+    document.body.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 100 });
+    Element.prototype.getBoundingClientRect = function () {
+      return this.classList.contains('app-sidebar-user-email')
+        ? { left: 10, top: 10, width: 30, height: 10 }
+        : { left: 0, top: 0, width: 100, height: 100 };
+    };
+    expect(() => blurSensitiveRegions(canvas, document.body)).not.toThrow();
+  });
+
+  it('never matches a broad auth-* layout container — only real PII-bearing elements', () => {
+    document.body.innerHTML = '<div class="auth-page auth-marketing auth-card-body"><span class="app-sidebar-user-email">jane@example.com</span></div>';
+    const matched = [...document.body.querySelectorAll(SENSITIVE_SELECTORS)];
+    expect(matched).toHaveLength(1);
+    expect(matched[0].className).toBe('app-sidebar-user-email');
   });
 });
 

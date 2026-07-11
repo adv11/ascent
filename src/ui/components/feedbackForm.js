@@ -120,7 +120,15 @@ export function createScreenshotControl({ onChange }) {
 
   const removeBtn = el('button', {
     type: 'button',
-    className: 'btn btn-ghost btn-sm',
+    // `.feedback-screenshot-remove` (not just `.btn .btn-ghost .btn-sm`) so
+    // app.css can add a `[hidden]` override — `.btn` sets `display:
+    // inline-flex`, and author CSS declarations always beat the browser's
+    // default `[hidden] { display: none }` UA rule regardless of
+    // selector specificity, so `removeBtn.hidden = true` alone left the
+    // button visibly rendered the whole time (same pre-existing pattern as
+    // `.daily-todo-nav-badge[hidden]`/`.clear-filters-btn[hidden]` in
+    // app.css) — reported live (issue #9 follow-up).
+    className: 'btn btn-ghost btn-sm feedback-screenshot-remove',
     text: 'Remove',
     onClick: () => setScreenshot(null)
   });

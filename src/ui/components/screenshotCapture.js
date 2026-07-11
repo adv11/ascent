@@ -16,7 +16,20 @@ export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 // issue's own example selector, which doesn't exist in this codebase) —
 // `.app-sidebar-user-email`/`.app-sidebar-identity` are the real elements
 // that render a signed-in user's email today.
-const SENSITIVE_SELECTORS = '.user-chip, .auth-*, .app-sidebar-user-email, .app-sidebar-identity, [data-sensitive]';
+//
+// Deliberately NOT a broad `auth-*` prefix match: an earlier version used
+// the literal (invalid CSS) `.auth-*`, which made `querySelectorAll()`
+// throw a SyntaxError on every single capture attempt — silently swallowed
+// by the generic catch in feedbackForm.js's capture handler as "Could not
+// capture the screen" (reported live, issue #9 follow-up). The tempting
+// "fix" of `[class*="auth-"]` is valid CSS but far too broad: every class in
+// `authShell.js`/`authMarketingPanel.js` is prefixed `auth-` for layout/
+// branding (`.auth-page`, `.auth-marketing`, `.auth-card-body`, ...), none
+// of which render an email — matching that prefix blurred+grayed out
+// essentially the entire sign-in/sign-up page, not just PII. If a real
+// email-in-an-auth-page-context element is ever added, give it its own
+// specific class and add that class here — don't reach for a prefix match.
+export const SENSITIVE_SELECTORS = '.user-chip, .app-sidebar-user-email, .app-sidebar-identity, [data-sensitive]';
 
 let html2canvasPromise = null;
 
@@ -27,7 +40,7 @@ function loadHtml2Canvas() {
   return html2canvasPromise;
 }
 
-function blurSensitiveRegions(canvas, sourceEl) {
+export function blurSensitiveRegions(canvas, sourceEl) {
   const ctx = canvas.getContext('2d');
   const sourceRect = sourceEl.getBoundingClientRect();
   const scaleX = canvas.width / sourceRect.width;
