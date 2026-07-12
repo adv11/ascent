@@ -32,6 +32,24 @@ describe('parseImportJson', () => {
     expect(result.data).toBeNull();
     expect(result.error).toBe('Invalid JSON — check for missing commas or brackets');
   });
+
+  it('strips a ```json fenced code block before parsing', () => {
+    const result = parseImportJson('```json\n{"a": 1}\n```');
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual({ a: 1 });
+  });
+
+  it('strips a bare ``` fenced code block (no language tag) before parsing', () => {
+    const result = parseImportJson('```\n{"a": 1}\n```');
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual({ a: 1 });
+  });
+
+  it('still returns the friendly error for a genuinely invalid payload after stripping fences', () => {
+    const result = parseImportJson('```json\n{not valid json\n```');
+    expect(result.data).toBeNull();
+    expect(result.error).toBe('Invalid JSON — check for missing commas or brackets');
+  });
 });
 
 describe('validateImportPayload — happy path', () => {

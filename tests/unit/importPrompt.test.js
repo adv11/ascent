@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildImportPrompt, IMPORT_PROMPT_VERSION } from '../../src/data/importPrompt.js';
+import { buildImportPrompt, buildImportFixPrompt, IMPORT_PROMPT_VERSION } from '../../src/data/importPrompt.js';
 
 describe('buildImportPrompt', () => {
   it('renders the schema contract and a placeholder topic line when nothing is provided', () => {
@@ -67,5 +67,35 @@ describe('buildImportPrompt', () => {
     const prompt = buildImportPrompt('Rust', { experienceLevel: 'Beginner' });
     expect(prompt).toContain('"schemaVersion": 1');
     expect(prompt).toContain('Do not add any fields beyond those listed above.');
+  });
+});
+
+describe('buildImportFixPrompt', () => {
+  it('handles an empty errors array without throwing, and still restates the contract', () => {
+    const prompt = buildImportFixPrompt([]);
+    expect(prompt).toContain(`schema version ${IMPORT_PROMPT_VERSION}`);
+    expect(prompt).toContain('resend the complete corrected JSON');
+  });
+
+  it('lists a single error verbatim', () => {
+    const prompt = buildImportFixPrompt(['title is required']);
+    expect(prompt).toContain('- title is required');
+  });
+
+  it('lists multiple errors verbatim, one per line', () => {
+    const errors = ['title is required', 'phases[0].title is required', 'item at phases[0].sections[0].items[0] is invalid'];
+    const prompt = buildImportFixPrompt(errors);
+    errors.forEach(message => expect(prompt).toContain(`- ${message}`));
+  });
+
+  it('always instructs the AI to resend the complete JSON, not a diff/patch', () => {
+    const prompt = buildImportFixPrompt(['title is required']);
+    expect(prompt.toLowerCase()).toContain('complete corrected json');
+    expect(prompt).toContain('no markdown fences');
+  });
+
+  it('always includes the schema-version reminder regardless of error count', () => {
+    expect(buildImportFixPrompt(['a'])).toContain(`schema version ${IMPORT_PROMPT_VERSION}`);
+    expect(buildImportFixPrompt(['a', 'b', 'c'])).toContain(`schema version ${IMPORT_PROMPT_VERSION}`);
   });
 });

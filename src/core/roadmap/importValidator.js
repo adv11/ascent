@@ -7,9 +7,19 @@ const VALID_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
 const MAX_ITEMS = 500;
 export const SUPPORTED_SCHEMA_VERSION = 1;
 
+// Many AI assistants wrap JSON output in a fenced code block (```json ... ```)
+// even when explicitly told not to — this is the single most common reason a
+// pasted payload fails to parse. Strip one leading/trailing fence (with or
+// without a `json` language tag) before attempting JSON.parse, and only fall
+// through to the "Invalid JSON" error if that still fails.
+function stripFencedCodeBlock(rawText) {
+  const match = rawText.trim().match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i);
+  return match ? match[1] : rawText;
+}
+
 export function parseImportJson(rawText) {
   try {
-    return { data: JSON.parse(rawText), error: null };
+    return { data: JSON.parse(stripFencedCodeBlock(rawText)), error: null };
   } catch {
     return { data: null, error: 'Invalid JSON — check for missing commas or brackets' };
   }

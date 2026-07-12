@@ -2983,3 +2983,40 @@ behavior. Any future feature announced in `changelog.json` with a real UI elemen
 opt in the same way: add `featureKey` to its changelog item, drop `createFeatureBadge(key)` into
 that element's `el()` children (filtered for `null`), and call `dismissFeatureBadge(key)` from
 its interaction handler.
+
+### 2026-07-12 — PR TBD — Retire manual roadmap creation; merge onboarding cards; two-column AI-creation modal (issue #100)
+
+`src/ui/components/newRoadmapModal.js` (and its test) is deleted — the standalone "start
+truly blank" entry point on `/onboarding` is retired, since it handed a first-time user a
+zero-phase roadmap with no guidance, a strictly worse experience than the already-existing
+AI-assisted path. `onboarding.js`'s two separate cards ("Create your own roadmap" /
+"Import roadmap") collapse into one "Create your own roadmap" card, which now opens
+`importRoadmapModal.js`'s `openCreateRoadmapModal()` (renamed from
+`openImportRoadmapModal()`) directly. Dashboard-level manual phase/section/item CRUD is
+completely untouched — this issue only removes the *standalone* empty-seed entry point,
+not the editing tools every custom roadmap (AI-created or not) already used to fine-tune
+itself afterward.
+
+The creation modal itself is redesigned from a single stacked-scroll flow (issue #64) into
+a two-column "Build your prompt" / "Paste the AI's answer" grid (`.import-modal-grid`,
+`app.css`) at a new `min-width: 1025px` tier, collapsing back to the original single-column
+flow below it — each column scrolls independently, and Import/Cancel now live in a
+`.modal-card`-level footer outside the grid so they're always reachable. Two real
+correctness fixes rode along: (1) "Copy prompt" is now disabled until the topic field is
+non-empty — previously a user could copy the prompt with its literal placeholder text and
+no warning; (2) `parseImportJson()` (`src/core/roadmap/importValidator.js`) now strips a
+single leading/trailing fenced code block before parsing, recovering from the most common
+real-world AI-output failure mode (assistants wrapping JSON in ` ```json ` fences despite
+being told not to). A new `buildImportFixPrompt(errors)` (`src/data/importPrompt.js`, same
+module/versioning discipline as `buildImportPrompt`) composes a ready-to-copy message a
+user can hand back to their AI assistant when validation fails, restating the schema
+contract and listing the specific errors — surfaced via a new "Copy fix-it message for
+your AI" button next to a plain-language error summary, with the original technical error
+list kept behind a "Show technical details" disclosure. `buildYourOwnGuide.js` is rewritten
+from "two alternative starting methods" (add manually / generate with AI) to a single flow
+(generate with AI, then fine-tune manually afterward), matching the onboarding change.
+
+See `.claude/rules/roadmap-store.md`'s "Manual 'start truly blank' roadmap creation was
+retired" and "AI-assisted roadmap creation" sections, and `.claude/rules/ui-styling.md`'s
+"A two-column modal with a shared header/footer outside the grid" section, for the full
+writeup.

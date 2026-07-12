@@ -320,11 +320,24 @@ read-only safety net; `setUser` migrates a legacy account (one lacking
 `users/{uid}/roadmaps/{templateId}` and writing the new meta shape, the first time such
 an account signs in after this shipped.
 
-**Manual roadmap creation — `croadmap-...` ids (`roadmapStore.js`, issue #4).** A
-user can build their own roadmap from scratch via "Create your own roadmap" (the first
-card in `/onboarding`'s grid, opening `src/ui/components/newRoadmapModal.js`) instead of
-picking a built-in template. `createCustomRoadmap({ title, description })` generates an
-id in the shape `croadmap-<timestamp>-<random>` — `isCustomRoadmapId(id)` (exported from
+**Manual "start truly blank" roadmap creation was retired in issue #100 —
+`src/ui/components/newRoadmapModal.js` no longer exists.** The standalone entry point
+that seeded a zero-phase roadmap for the user to build entirely by hand is gone; every
+custom roadmap is now created via the AI-assisted flow below, with `phases`/`items`
+already populated at creation time. **Everything else in this section is unchanged**:
+the underlying `createCustomRoadmap({ title, description?, phases?, items? })` contract,
+`croadmap-...` id generation, and every dashboard-level manual phase/section/item CRUD
+control (`+ Add phase`, `+ Add section`, `Add a custom topic…`, rename/delete, `itemPanel.js`
+edit) it described are exactly as they were — those remain how *any* custom roadmap
+(AI-created or not) gets fine-tuned afterward, never removed. The "seeds empty" code
+path inside `createCustomRoadmap` (omitting `phases`/`items`) is now dead — nothing calls
+it that way anymore — and can be trimmed as a follow-up cleanup; it was left in place by
+issue #100 as a non-blocking cleanup, not an oversight.
+
+**Custom roadmap ids (`roadmapStore.js`, issue #4).** A custom roadmap —
+whether created via the AI-assisted flow (below) or, historically, via the now-retired
+manual flow above — gets an id in the shape `croadmap-<timestamp>-<random>` —
+`isCustomRoadmapId(id)` (exported from
 the store) is the *only* thing anywhere in the codebase that distinguishes a custom
 roadmap from a built-in template id, and it's deliberately a different prefix than
 `addItem()`'s `custom-` item ids (a different id namespace entirely — item.id, not
@@ -375,44 +388,58 @@ icon, across sessions and devices, with no new UI and no `customRoadmaps` schema
 change. If a real icon-picker UI is ever built, this hash-based default is what an
 unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
-**AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
-#4).** A second entry point next to "Create your own roadmap" — "Import roadmap"
-(`src/ui/components/importRoadmapModal.js`) opens a modal instead of an empty roadmap.
-Issue #64 collapsed the original two-tab "Generate with AI" / "Paste & Import" layout
-into **one continuous, top-to-bottom flow** — every real use of this feature does both
-halves in the same sitting, so a second tab just hid the paste box behind an extra
-click. From top to bottom: a topic field, a read-only versioned prompt block
+**AI-assisted roadmap creation (`src/data/importPrompt.js`, `src/core/roadmap/`, issues
+#4/#64, redesigned in #100).** Since issue #100 retired manual "start truly blank"
+creation and merged onboarding's two cards into one, this is the *only* way to start a
+custom roadmap — the single "Create your own roadmap" card (`onboarding.js`) opens
+`openCreateRoadmapModal()` (`src/ui/components/importRoadmapModal.js`, renamed from
+`openImportRoadmapModal()`). **Layout**: a two-column "Build your prompt" / "Paste the
+AI's answer" grid at the ≥1025px breakpoint tier (`.import-modal-grid`,
+`.claude/rules/ui-styling.md`'s breakpoint scale), collapsing to the original
+single-column top-to-bottom flow issue #64 established below that tier — each column
+scrolls independently, with a shared header/footer outside the grid so Import/Cancel
+stay reachable without scrolling either column. **Left column**: a topic field, the four
+optional customization inputs (below), a read-only versioned prompt block
 (`buildImportPrompt(topic, options)`, `IMPORT_PROMPT_VERSION`) with an editable topic
-line that live-updates the prompt, a "Copy prompt" button
+line that live-updates the prompt, and a "Copy prompt" button
 (`navigator.clipboard.writeText`, falling back to a hidden-textarea +
-`execCommand('copy')` for older/non-secure contexts), then the paste textarea itself,
-validated 300ms after each keystroke via `validateImportText()`
-(`src/core/roadmap/importValidator.js`) — a **pure** function
-(no DOM, no store, no Firebase) that parses the JSON and checks it against schema
-version 1 (`SUPPORTED_SCHEMA_VERSION`): `schemaVersion === 1`, non-empty `title`,
-non-empty `phases` array where every phase has a `title`/`priority ∈ {P0-P3}`/non-empty
-`sections` array, every section has a `title`/non-empty `items` array, every item is
-either a plain string (inherits the phase's priority) or a `["title","priority"]` tuple,
-and the total item count is ≤ 500 — returning an array of per-field error strings
-(`phases[i].sections[j].items[k] is invalid`, etc.), empty meaning valid. Only once
-valid does `adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`) — equally
-pure — convert the validated data into the exact `{ phases, items }` shape a custom
-roadmap needs (generating `phase-...`/`section-...`/`custom-...` ids the same way
-`addPhase`/`addSection`/`addItem` do), and the "Import roadmap" button enables. The
-validator and adapter are deliberately two separate pure modules: bumping the import
-wire format to a future schema version means adding a new adapter function, never
-touching the validator's rules or the other way around. The modal resolves
-`{ title, phases, items } | null` — the caller (`onboarding.js`'s `handleImport()`)
-passes it straight to `store.createCustomRoadmap({ title, phases, items })`, the exact
-same function the manual "Create your own roadmap" flow calls (just with the `phases`/
-`items` arguments populated instead of omitted). `roadmapStore.js` makes this work via a
-one-shot `pendingCustomSeeds` map: `createCustomRoadmap` stashes the seed keyed by the
-freshly generated id right before calling `switchRoadmap(id)`, and `fetchTemplateData`
-consumes (and deletes) it instead of returning the usual empty seed for a custom id — a
-manually-created roadmap simply has no entry there and falls through to the empty seed
-unchanged. From that point on an imported roadmap is indistinguishable from a manually
-built one — same Firebase path, same phase/section rename/delete controls, same
-`deleteCustomRoadmap` cleanup.
+`execCommand('copy')` for older/non-secure contexts) — **disabled until the topic field
+is non-empty** (issue #100 fix: previously a user could copy the prompt with the literal
+placeholder text `[describe what this roadmap should cover]` and no warning). **Right
+column**: the paste textarea, validated 300ms after each keystroke via
+`validateImportText()` (`src/core/roadmap/importValidator.js`) — a **pure** function (no
+DOM, no store, no Firebase) that parses the JSON (`parseImportJson()` first strips a
+single leading/trailing fenced code block, ```` ```json ... ``` ````, with or without the
+language tag, since many AI assistants wrap their output that way despite being told not
+to — issue #100) and checks it against schema version 1 (`SUPPORTED_SCHEMA_VERSION`):
+`schemaVersion === 1`, non-empty `title`, non-empty `phases` array where every phase has
+a `title`/`priority ∈ {P0-P3}`/non-empty `sections` array, every section has a
+`title`/non-empty `items` array, every item is either a plain string (inherits the
+phase's priority) or a `["title","priority"]` tuple, and the total item count is ≤ 500 —
+returning an array of per-field error strings (`phases[i].sections[j].items[k] is
+invalid`, etc.), empty meaning valid. On error, the UI shows a plain-language summary
+("N things need fixing before this can be imported") plus a **"Copy fix-it message for
+your AI"** button — `buildImportFixPrompt(errors)` (`src/data/importPrompt.js`, same
+module/versioning discipline as `buildImportPrompt`, pure, no `IMPORT_PROMPT_VERSION`
+bump since it doesn't touch the schema contract) composes a ready-to-copy message
+restating the schema-version-1 contract, listing the errors verbatim, and asking for the
+complete corrected JSON (not a diff/patch). The original technical error list is kept,
+collapsed by default behind a "Show technical details" toggle. Only once valid does
+`adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`) — equally pure — convert
+the validated data into the exact `{ phases, items }` shape a custom roadmap needs
+(generating `phase-...`/`section-...`/`custom-...` ids the same way
+`addPhase`/`addSection`/`addItem` do), and the "Import roadmap" button (in the shared
+footer) enables. The validator and adapter are deliberately two separate pure modules:
+bumping the import wire format to a future schema version means adding a new adapter
+function, never touching the validator's rules or the other way around. The modal
+resolves `{ title, phases, items } | null` — the caller (`onboarding.js`'s
+`handleCreate()`) passes it straight to `store.createCustomRoadmap({ title, phases,
+items })`. `roadmapStore.js` makes this work via a one-shot `pendingCustomSeeds` map:
+`createCustomRoadmap` stashes the seed keyed by the freshly generated id right before
+calling `switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes) it instead of
+returning the usual empty seed for a custom id. From that point on a created roadmap is
+indistinguishable from any other custom roadmap — same Firebase path, same phase/section
+rename/delete controls, same `deleteCustomRoadmap` cleanup.
 
 **Prompt customization inputs (issue #64 Part 2).** Below the topic field, the generate
 section renders four optional inputs — Experience level (Beginner/Intermediate/Advanced,

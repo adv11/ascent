@@ -60,3 +60,18 @@ Rules:
 
 Generate a roadmap for: ${topicLine}${optionsBlock}`;
 }
+
+// Ready-to-copy message a user can hand straight back to their AI assistant
+// once validateImportText() finds errors in the pasted output — restates the
+// schema-version-1 contract, lists the specific errors verbatim, and asks for
+// the complete corrected JSON (not a diff/patch), so the round trip reliably
+// produces something importable without the user having to translate the
+// technical error strings themselves. Pure — no DOM/store/Firebase.
+export function buildImportFixPrompt(errors) {
+  const errorLines = (errors || []).map(message => `- ${message}`).join('\n');
+  return `The roadmap JSON you generated (schema version ${IMPORT_PROMPT_VERSION}) has the following problem${errors && errors.length === 1 ? '' : 's'}:
+
+${errorLines}
+
+Please resend the complete corrected JSON — the full roadmap, not just the changed part — output ONLY valid JSON with no markdown fences and no commentary.`;
+}

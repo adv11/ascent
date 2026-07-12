@@ -5,17 +5,17 @@ import { test, expect } from './fixtures.js';
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 test.describe('onboarding — starter template picker (issue #51)', () => {
-  test('new guest sign-up lands on /onboarding, title stays Ascent, one card per template plus "Create your own roadmap" and "Import roadmap"', async ({ page }) => {
+  test('new guest sign-up lands on /onboarding, title stays Ascent, one card per template plus "Create your own roadmap"', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await expect(page).toHaveTitle('Ascent');
-    // 7 built-in templates ("blank" retired — issue #4 follow-up) + "Create
-    // your own roadmap" + "Import roadmap" (issue #4).
-    await expect(page.locator('.template-card')).toHaveCount(9);
+    // 7 built-in templates ("blank" retired — issue #4 follow-up) + the
+    // single "Create your own roadmap" card (issue #100 merged the separate
+    // manual-create/import cards into one AI-assisted flow).
+    await expect(page.locator('.template-card')).toHaveCount(8);
     await expect(page.locator('.template-card-create')).toContainText('Create your own roadmap');
-    await expect(page.locator('.template-card-import')).toContainText('Import roadmap');
     await expect(page.locator('.template-card-name')).toContainText([
       'Java Backend Engineer', 'GenAI / Agentic AI Engineer', 'Frontend Developer', 'Data Scientist',
       '12th Grade Mathematics', 'Learning Piano', 'Marketing'
@@ -232,8 +232,8 @@ test.describe('onboarding — hiding and restoring templates', () => {
   });
 });
 
-test.describe('onboarding — "build your own roadmap" guide (issue #4 follow-up)', () => {
-  test('the corner info button on "Create your own roadmap" opens a guide explaining manual and AI-assisted roadmap building', async ({ page }) => {
+test.describe('onboarding — "build your own roadmap" guide (issue #100)', () => {
+  test('the corner info button on "Create your own roadmap" opens a guide explaining the generate-then-fine-tune flow', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
@@ -244,8 +244,8 @@ test.describe('onboarding — "build your own roadmap" guide (issue #4 follow-up
     const modal = page.locator('.build-guide-card');
     await expect(modal).toBeVisible();
     await expect(modal).toContainText('Build your own roadmap');
-    await expect(modal).toContainText('Add topics manually');
-    await expect(modal).toContainText('Import roadmap');
+    await expect(modal).toContainText('Generate your roadmap with an AI assistant');
+    await expect(modal).toContainText('Fine-tune it afterward');
 
     await modal.locator('button', { hasText: 'Got it' }).click();
     await expect(modal).toHaveCount(0);
@@ -253,16 +253,16 @@ test.describe('onboarding — "build your own roadmap" guide (issue #4 follow-up
     await expect(page).toHaveURL(/#\/onboarding/);
   });
 
-  test('the guide\'s "Open Import roadmap" button closes the guide and opens the import modal directly', async ({ page }) => {
+  test('the guide\'s "Open the roadmap builder" button closes the guide and opens the create modal directly', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     await page.locator('.template-card-create .template-card-info-corner').click();
-    await page.locator('.build-guide-card button', { hasText: 'Open Import roadmap' }).click();
+    await page.locator('.build-guide-card button', { hasText: 'Open the roadmap builder' }).click();
 
     await expect(page.locator('.build-guide-card')).toHaveCount(0);
-    await expect(page.locator('.modal-overlay[aria-label="Import roadmap"]')).toBeVisible();
+    await expect(page.locator('.modal-overlay[aria-label="Create your own roadmap"]')).toBeVisible();
   });
 });

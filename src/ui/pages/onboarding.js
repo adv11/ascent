@@ -3,8 +3,7 @@ import { navigate } from '../router.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createBrandMark } from '../components/brand.js';
 import { openBuildYourOwnGuide } from '../components/buildYourOwnGuide.js';
-import { openNewRoadmapModal } from '../components/newRoadmapModal.js';
-import { openImportRoadmapModal } from '../components/importRoadmapModal.js';
+import { openCreateRoadmapModal } from '../components/importRoadmapModal.js';
 import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
@@ -98,19 +97,22 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   const visibleGrid = el('div', { className: 'template-grid', role: 'list' });
   const hiddenSection = el('div', { className: 'hidden-templates-section' });
 
-  // "Create your own roadmap" (issue #4) — always the first card, since it's
-  // an action rather than a roadmap to pick. Opens newRoadmapModal, then
-  // activates the freshly created (empty) roadmap through the same
-  // switchRoadmap() path a built-in template pick uses.
+  // "Create your own roadmap" (issue #100 — supersedes the separate manual
+  // "Create"/"Import" cards issues #4/#64 shipped) — always the first card,
+  // since it's an action rather than a roadmap to pick. Opens the two-column
+  // AI-creation modal; openCreateRoadmapModal() resolves already-validated,
+  // already-adapted { title, phases, items }, handed straight to
+  // createCustomRoadmap the same way every custom roadmap gets created.
   async function handleCreate() {
     if (picking) return;
-    const result = await openNewRoadmapModal();
+    const result = await openCreateRoadmapModal();
     if (!result) return;
     picking = true;
     setBusy(true);
     try {
       await store.createCustomRoadmap(result);
       navigate('/app', true);
+      showToast('Roadmap imported.', 'success');
     } catch (error) {
       console.error('Failed to create custom roadmap', error);
       picking = false;
@@ -134,7 +136,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     }, [
       el('span', { className: 'template-card-icon' }, [createIcon('plus', { size: 'lg' })]),
       el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
-      el('span', { className: 'template-card-desc', text: 'Start from scratch — add your own phases, sections, and topics.' })
+      el('span', { className: 'template-card-desc', text: 'Answer a few questions, generate it with an AI assistant, and paste the result back in.' })
     ]);
     const cardEl = el('div', { className: 'template-card template-card-create' }, [
       pickBtn,
@@ -144,54 +146,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'data-action': 'info',
         'aria-label': 'How do I build my own roadmap?',
         title: 'How do I build my own roadmap?',
-        onClick: () => openBuildYourOwnGuide({ onOpenImport: handleImport })
+        onClick: () => openBuildYourOwnGuide({ onOpenImport: handleCreate })
       }, [createIcon('info', { size: 'xs' })])
-    ]);
-    cardEls.push(cardEl);
-    return el('div', { role: 'listitem' }, [cardEl]);
-  }
-
-  // "Import roadmap" (issue #4) — AI-assisted alternative to building one by
-  // hand. openImportRoadmapModal() resolves already-validated, already-
-  // adapted { title, phases, items }, so this just hands it straight to
-  // createCustomRoadmap the same way handleCreate() does for a manual one —
-  // the only difference is the roadmap activates already populated instead
-  // of empty.
-  async function handleImport() {
-    if (picking) return;
-    const result = await openImportRoadmapModal();
-    if (!result) return;
-    picking = true;
-    setBusy(true);
-    try {
-      await store.createCustomRoadmap(result);
-      navigate('/app', true);
-      showToast('Roadmap imported.', 'success');
-    } catch (error) {
-      console.error('Failed to import roadmap', error);
-      picking = false;
-      setBusy(false);
-      showToast('Could not import that roadmap. Try again.', 'error');
-    }
-  }
-
-  function buildImportCard() {
-    const cardEl = el('div', {
-      className: 'template-card template-card-import',
-      role: 'button',
-      tabindex: '0',
-      onClick: handleImport,
-      onKeydown: e => {
-        if (e.target !== cardEl) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleImport();
-        }
-      }
-    }, [
-      el('span', { className: 'template-card-icon' }, [createIcon('sparkle', { size: 'lg' })]),
-      el('span', { className: 'template-card-name', text: 'Import roadmap' }),
-      el('span', { className: 'template-card-desc', text: 'Generate a roadmap with an AI assistant, then paste it in.' })
     ]);
     cardEls.push(cardEl);
     return el('div', { role: 'listitem' }, [cardEl]);
@@ -389,7 +345,6 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   }
 
   visibleGrid.appendChild(buildCreateCard());
-  visibleGrid.appendChild(buildImportCard());
   customRoadmaps.forEach(roadmap => visibleGrid.appendChild(buildCustomCard(roadmap)));
   TEMPLATES
     .filter(t => !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
