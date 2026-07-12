@@ -19,6 +19,8 @@ jobs:
       - run: npm run lint
       - name: Theme correctness lint (issue #116)
         run: node scripts/lint-theme.mjs
+      - name: Icon-system lint — no raw emoji outside the icon system (issue #136)
+        run: node scripts/lint-icons.mjs
 
   # ── Job 2: Security scan ───────────────────────────────────────────────────
   security:

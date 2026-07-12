@@ -1,14 +1,17 @@
 import { el } from '../dom.js';
 import { attachFocusTrap } from './modal.js';
 import { listenMyReports } from '../../services/feedbackStore.js';
+import { createIcon } from './icons.js';
+import { createDecorativeIcon } from './decorativeIcon.js';
 
-const TYPE_EMOJI = { bug: '🐛', feature: '💡', feedback: '💬' };
+// issue #136 Phase 2 follow-up — was raw '🐛'/'💡'/'💬' glyphs; decorativeIcon.js names now
+const TYPE_ICON = { bug: 'bug', feature: 'lightbulb', feedback: 'chat-circle' };
 
 const STATUS_LABEL = {
   new: 'New',
   under_review: 'Under review',
   in_progress: 'In progress',
-  resolved: 'Resolved ✓',
+  resolved: 'Resolved',
   wont_fix: "Won't fix"
 };
 
@@ -44,7 +47,7 @@ function buildReportRow(report) {
     }
   }, [
     el('span', { className: 'my-report-title-row' }, [
-      el('span', { 'aria-hidden': 'true', text: TYPE_EMOJI[report.type] || '💬' }),
+      el('span', { 'aria-hidden': 'true' }, [createDecorativeIcon(TYPE_ICON[report.type] || 'chat-circle', { size: 'sm' })]),
       el('span', { className: 'my-report-title', text: report.title }),
       report.severity ? el('span', { className: `my-report-severity my-report-severity-${report.severity}`, text: report.severity.toUpperCase() }) : null
     ].filter(Boolean)),
@@ -93,7 +96,7 @@ export function openMyReports({ user }) {
 
   const view = buildMyReportsView({ user });
   const card = el('div', { className: 'modal-card feedback-modal-card' }, [
-    el('button', { type: 'button', className: 'btn btn-ghost btn-icon feedback-modal-close', 'aria-label': 'Close', onClick: close }, ['✕']),
+    el('button', { type: 'button', className: 'btn btn-ghost btn-icon feedback-modal-close', 'aria-label': 'Close', onClick: close }, [createIcon('close', { size: 'sm' })]),
     el('h2', { className: 'modal-title', text: 'My reports' }),
     view
   ]);

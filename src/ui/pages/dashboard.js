@@ -657,7 +657,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
             toggleDone(item);
           }
         }
-      }, [el('span', { className: 'check-mark', 'aria-hidden': 'true', text: '✓' })]),
+      }, [el('span', { className: 'check-mark', 'aria-hidden': 'true' }, [createIcon('check', { size: 'xs' })])]),
       el('div', { className: 'check-body' }, [
         el('span', { className: 'check-title', text: item.title }),
         el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),

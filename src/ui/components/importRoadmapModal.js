@@ -311,7 +311,7 @@ export function openCreateRoadmapModal() {
       if (result.valid) {
         lastValidData = result.data;
         const count = countItems(result.data);
-        summaryMsg.textContent = `✓ Looks good — ${count} topic${count === 1 ? '' : 's'} found.`;
+        summaryMsg.textContent = `Looks good — ${count} topic${count === 1 ? '' : 's'} found.`;
         summaryMsg.className = 'form-message success';
         importBtn.disabled = false;
       } else {

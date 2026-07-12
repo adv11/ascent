@@ -10,11 +10,14 @@ import { getTheme } from '../../services/theme.js';
 import { getRoute } from '../router.js';
 import { createField, createRadioGroup, createScreenshotControl, createSystemInfoCheckbox, debounce } from './feedbackForm.js';
 import { buildMyReportsView } from './myReports.js';
+import { createIcon } from './icons.js';
+import { createDecorativeIcon } from './decorativeIcon.js';
 
+// issue #136 Phase 2 follow-up — was raw '🐛'/'💡'/'💬' glyphs; decorativeIcon.js names now
 const REPORT_TYPE_META = {
-  bug: { emoji: '🐛', label: 'Bug report', ariaLabel: 'Bug report' },
-  feature: { emoji: '💡', label: 'Feature request', ariaLabel: 'Feature request' },
-  feedback: { emoji: '💬', label: 'General feedback', ariaLabel: 'General feedback' }
+  bug: { icon: 'bug', label: 'Bug report', ariaLabel: 'Bug report' },
+  feature: { icon: 'lightbulb', label: 'Feature request', ariaLabel: 'Feature request' },
+  feedback: { icon: 'chat-circle', label: 'General feedback', ariaLabel: 'General feedback' }
 };
 
 const SEVERITY_OPTIONS = [
@@ -102,7 +105,7 @@ export function openFeedbackModal({ user }) {
           className: 'feedback-type-card',
           onClick: () => renderForm(type, draft?.type === type ? draft.form : {})
         }, [
-          el('span', { className: 'feedback-type-emoji', 'aria-hidden': 'true', text: meta.emoji }),
+          el('span', { className: 'feedback-type-emoji', 'aria-hidden': 'true' }, [createDecorativeIcon(meta.icon, { size: 'lg' })]),
           el('span', { text: meta.label })
         ])
       )),
@@ -267,7 +270,7 @@ export function openFeedbackModal({ user }) {
         console.error('Feedback submission failed', error);
         errorMessage.hidden = false;
         errorMessage.className = 'form-message error';
-        errorMessage.textContent = '⚠ Could not submit your report. Your draft has been saved — try again in a moment.';
+        errorMessage.textContent = 'Could not submit your report. Your draft has been saved — try again in a moment.';
       } finally {
         setButtonLoading(submitBtn, false);
       }
@@ -289,7 +292,10 @@ export function openFeedbackModal({ user }) {
 
     setBody([
       el('div', { className: 'feedback-type-header' }, [
-        el('h2', { className: 'modal-title', text: `${meta.emoji} ${meta.label}` }),
+        el('h2', { className: 'modal-title' }, [
+          createDecorativeIcon(meta.icon, { size: 'sm' }),
+          ` ${meta.label}`
+        ]),
       ]),
       formEl,
       el('p', { className: 'feedback-privacy-note', text: "Your report is sent to the Ascent team only. We never share it. Uncheck 'Include system info' to submit without metadata." })
@@ -304,7 +310,7 @@ export function openFeedbackModal({ user }) {
     const reference = (reportId || '').slice(0, 5).toUpperCase();
     setBody([
       el('div', { className: 'feedback-success' }, [
-        el('div', { className: 'feedback-success-icon', 'aria-hidden': 'true', text: '✅' }),
+        el('div', { className: 'feedback-success-icon', 'aria-hidden': 'true' }, [createIcon('check', { size: 'lg' })]),
         el('h2', { className: 'modal-title', text: 'Report received' }),
         el('p', { className: 'form-message', text: "Thanks for helping improve Ascent! We'll review your report and may follow up if we need more details." }),
         el('p', { className: 'feedback-reference', text: `Reference: #${reference}` }),
@@ -318,7 +324,7 @@ export function openFeedbackModal({ user }) {
 
   const body = el('div', { className: 'feedback-modal-body' });
   const card = el('div', { className: 'modal-card feedback-modal-card' }, [
-    el('button', { type: 'button', className: 'btn btn-ghost btn-icon feedback-modal-close', 'aria-label': 'Close', onClick: close }, ['✕']),
+    el('button', { type: 'button', className: 'btn btn-ghost btn-icon feedback-modal-close', 'aria-label': 'Close', onClick: close }, [createIcon('close', { size: 'sm' })]),
     body
   ]);
 

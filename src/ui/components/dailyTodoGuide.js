@@ -42,13 +42,13 @@ export function openDailyTodoGuide() {
     ]),
     el('h3', { className: 'build-guide-heading', text: 'Linking to a roadmap topic' }),
     el('p', { className: 'build-guide-body' }, [
-      'Click ⏱ on any roadmap row to turn that topic into a todo (tagged ',
+      'Click the timer icon on any roadmap row to turn that topic into a todo (tagged ',
       el('strong', { text: 'via <Roadmap>' }),
       '). ',
       el('strong', { text: 'Checking' }),
       ' it off asks you to confirm, since it also completes the topic; ',
       el('strong', { text: 'unchecking' }),
-      ' always syncs back silently. Deleting a linked todo before it\'s checked never touches the roadmap — only completing one does. A completed link shows a small ⏱✓ mark, cleared if either side is unchecked again.'
+      ' always syncs back silently. Deleting a linked todo before it\'s checked never touches the roadmap — only completing one does. A completed link shows a small timer-and-checkmark icon, cleared if either side is unchecked again.'
     ]),
     el('div', { className: 'panel-footer-right' }, [
       el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close })

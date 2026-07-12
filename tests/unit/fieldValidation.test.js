@@ -34,10 +34,12 @@ describe('attachFieldValidationIcon', () => {
     return wrap;
   }
 
-  it('renders no text before setState is ever called with a value', () => {
+  // issue #136 Phase 2 follow-up — the icon is now a createIcon() svg, not
+  // text, so these assert on child-node presence rather than glyph text.
+  it('renders no icon before setState is ever called with a value', () => {
     const wrap = makeWrap();
     attachFieldValidationIcon(wrap);
-    expect(wrap.querySelector('.field-validation-icon').textContent).toBe('');
+    expect(wrap.querySelector('.field-validation-icon').children.length).toBe(0);
   });
 
   it('setState(true) shows a green checkmark', () => {
@@ -45,16 +47,16 @@ describe('attachFieldValidationIcon', () => {
     const { setState } = attachFieldValidationIcon(wrap);
     setState(true);
     const icon = wrap.querySelector('.field-validation-icon');
-    expect(icon.textContent).toBe('✓');
+    expect(icon.querySelector('svg')).not.toBeNull();
     expect(icon.classList.contains('valid')).toBe(true);
   });
 
-  it('setState(false) shows a red ✕', () => {
+  it('setState(false) shows a red close mark', () => {
     const wrap = makeWrap();
     const { setState } = attachFieldValidationIcon(wrap);
     setState(false);
     const icon = wrap.querySelector('.field-validation-icon');
-    expect(icon.textContent).toBe('✕');
+    expect(icon.querySelector('svg')).not.toBeNull();
     expect(icon.classList.contains('invalid')).toBe(true);
   });
 
@@ -64,7 +66,7 @@ describe('attachFieldValidationIcon', () => {
     setState(true);
     setState(null);
     const icon = wrap.querySelector('.field-validation-icon');
-    expect(icon.textContent).toBe('');
+    expect(icon.children.length).toBe(0);
     expect(icon.classList.contains('valid')).toBe(false);
     expect(icon.classList.contains('invalid')).toBe(false);
   });

@@ -46,7 +46,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   }
 
   function showNotesSaved() {
-    notesStatus.textContent = 'Autosaved ✓';
+    notesStatus.replaceChildren(createIcon('check', { size: 'xs' }), ' Autosaved');
     notesStatus.className = 'notes-status show';
     setTimeout(() => notesStatus.classList.remove('show'), NOTES_SAVED_INDICATOR_MS);
   }

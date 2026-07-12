@@ -45,11 +45,14 @@ describe('createThemeToggle — subscriber cleanup', () => {
     const btn = await freshToggle();
     const { setTheme } = await freshTheme();
 
-    const textBefore = btn.textContent;
+    // issue #136 Phase 2 follow-up — createIcon() returns an <svg> with no
+    // text nodes, so textContent can no longer stand in for "did the icon
+    // change"; compare the rendered SVG markup instead.
+    const iconBefore = btn.querySelector('svg').outerHTML;
     btn._cleanup();
 
     setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
-    expect(btn.textContent).toBe(textBefore);
+    expect(btn.querySelector('svg').outerHTML).toBe(iconBefore);
   });
 
   it('only 1 active subscriber remains after creating and cleaning up multiple toggles', async () => {
@@ -60,10 +63,10 @@ describe('createThemeToggle — subscriber cleanup', () => {
 
     buttons.slice(0, -1).forEach(b => b._cleanup());
 
-    const initialTexts = buttons.map(b => b.textContent);
+    const initialIcons = buttons.map(b => b.querySelector('svg').outerHTML);
     setTheme('dark');
 
-    const updatedCount = buttons.filter((b, i) => b.textContent !== initialTexts[i]).length;
+    const updatedCount = buttons.filter((b, i) => b.querySelector('svg').outerHTML !== initialIcons[i]).length;
     expect(updatedCount).toBe(1);
   });
 
@@ -73,11 +76,11 @@ describe('createThemeToggle — subscriber cleanup', () => {
 
     document.documentElement.dataset.theme = 'light';
     const btn = await freshToggle();
-    const snapshot = btn.textContent;
+    const snapshot = btn.querySelector('svg').outerHTML;
 
     btn._cleanup();
     toggleTheme();
 
-    expect(btn.textContent).toBe(snapshot);
+    expect(btn.querySelector('svg').outerHTML).toBe(snapshot);
   });
 });

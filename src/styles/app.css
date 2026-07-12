@@ -485,14 +485,17 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    .field-input-wrap with the password-toggle button above but must not
    overlap it — .has-toggle shifts the icon left and gives the input extra
    right padding to clear both. */
+/* issue #136 Phase 2 follow-up — was text-based ('✓'/'✕' glyphs, sized via
+   font-size); now holds a createIcon() svg, so it needs inline-flex
+   centering instead of relying on line-height/font-size for alignment. */
 .field-validation-icon {
   position: absolute;
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
-  font-weight: 900;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 .field-validation-icon.valid { color: var(--brand); }
@@ -1867,18 +1870,24 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   font-size: var(--text-md);
   font-weight: 800;
 }
+/* issue #136 Phase 2 follow-up — was 20x20 with an 'xs' (16px) icon, sitting
+   directly next to .daily-todo-collapse-btn's 24x24 box with an 'sm' (20px)
+   icon; two different button diameters and two different icon sizes side by
+   side read as visibly inconsistent/misaligned (reported live, screenshot).
+   Matches .daily-todo-collapse-btn's box + icon size exactly now. */
 .daily-todo-info-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: transparent;
   color: var(--muted);
   cursor: pointer;
   padding: 0;
+  flex-shrink: 0;
 }
 .daily-todo-info-btn:hover { color: var(--accent); border-color: var(--accent); }
 .daily-todo-info-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
@@ -2263,9 +2272,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 /* intentional: fixed white checkmark on the --brand-colored .check-box.done background, same in both themes (issue #116) */
 .check-mark {
+  display: inline-flex;
   color: #fff;
-  font-size: 12px;
-  font-weight: 900;
   transform: scale(0);
   opacity: 0;
   /* issue #6 Phase 4.2 — spring bounce on toggle, replacing the plain ease. */

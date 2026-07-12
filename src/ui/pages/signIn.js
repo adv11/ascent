@@ -6,6 +6,7 @@ import { authShell } from '../components/authShell.js';
 import { makePasswordToggle } from '../utils/password.js';
 import { isValidEmailFormat, attachFieldValidationIcon } from '../utils/fieldValidation.js';
 import { setButtonLoading } from '../utils/buttonLoading.js';
+import { createIcon } from '../components/icons.js';
 
 // Split out of buildSignInForm below purely to keep that function under the
 // max-lines-per-function threshold (issue #53) — same behavior as before.
@@ -231,7 +232,7 @@ export function renderSignIn(app, { user }) {
 
     bodySlot.replaceChildren(
       el('p', { className: 'reset-success-msg' }, [
-        el('span', { className: 'reset-success-icon', text: '✓' }),
+        el('span', { className: 'reset-success-icon' }, [createIcon('check', { size: 'xs' })]),
         el('span', { text: `We sent a reset link to ${sentEmail}. The link expires in 1 hour.` })
       ]),
       backBtn

@@ -69,7 +69,7 @@ describe('itemPanel — notes field (issue #15)', () => {
     vi.useRealTimers();
   });
 
-  it('shows "Autosaved ✓" after the debounced save, then fades it out after 1.5s', () => {
+  it('shows "Autosaved" (with a checkmark icon) after the debounced save, then fades it out after 1.5s', () => {
     vi.useFakeTimers();
     openItemPanel({ item: baseItem, onSave: vi.fn() });
     const textarea = getPanel().querySelector('.notes-textarea');
@@ -79,7 +79,10 @@ describe('itemPanel — notes field (issue #15)', () => {
     textarea.dispatchEvent(new Event('input'));
     vi.advanceTimersByTime(800);
 
-    expect(status.textContent).toBe('Autosaved ✓');
+    // issue #136 Phase 2 follow-up — the checkmark is now a createIcon() svg
+    // sibling, not part of the text string.
+    expect(status.textContent.trim()).toBe('Autosaved');
+    expect(status.querySelector('svg')).not.toBeNull();
     expect(status.classList.contains('show')).toBe(true);
 
     vi.advanceTimersByTime(1500);
