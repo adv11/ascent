@@ -320,11 +320,24 @@ read-only safety net; `setUser` migrates a legacy account (one lacking
 `users/{uid}/roadmaps/{templateId}` and writing the new meta shape, the first time such
 an account signs in after this shipped.
 
-**Manual roadmap creation — `croadmap-...` ids (`roadmapStore.js`, issue #4).** A
-user can build their own roadmap from scratch via "Create your own roadmap" (the first
-card in `/onboarding`'s grid, opening `src/ui/components/newRoadmapModal.js`) instead of
-picking a built-in template. `createCustomRoadmap({ title, description })` generates an
-id in the shape `croadmap-<timestamp>-<random>` — `isCustomRoadmapId(id)` (exported from
+**Manual "start truly blank" roadmap creation was retired in issue #100 —
+`src/ui/components/newRoadmapModal.js` no longer exists.** The standalone entry point
+that seeded a zero-phase roadmap for the user to build entirely by hand is gone; every
+custom roadmap is now created via the AI-assisted flow below, with `phases`/`items`
+already populated at creation time. **Everything else in this section is unchanged**:
+the underlying `createCustomRoadmap({ title, description?, phases?, items? })` contract,
+`croadmap-...` id generation, and every dashboard-level manual phase/section/item CRUD
+control (`+ Add phase`, `+ Add section`, `Add a custom topic…`, rename/delete, `itemPanel.js`
+edit) it described are exactly as they were — those remain how *any* custom roadmap
+(AI-created or not) gets fine-tuned afterward, never removed. The "seeds empty" code
+path inside `createCustomRoadmap` (omitting `phases`/`items`) is now dead — nothing calls
+it that way anymore — and can be trimmed as a follow-up cleanup; it was left in place by
+issue #100 as a non-blocking cleanup, not an oversight.
+
+**Custom roadmap ids (`roadmapStore.js`, issue #4).** A custom roadmap —
+whether created via the AI-assisted flow (below) or, historically, via the now-retired
+manual flow above — gets an id in the shape `croadmap-<timestamp>-<random>` —
+`isCustomRoadmapId(id)` (exported from
 the store) is the *only* thing anywhere in the codebase that distinguishes a custom
 roadmap from a built-in template id, and it's deliberately a different prefix than
 `addItem()`'s `custom-` item ids (a different id namespace entirely — item.id, not
@@ -375,60 +388,162 @@ icon, across sessions and devices, with no new UI and no `customRoadmaps` schema
 change. If a real icon-picker UI is ever built, this hash-based default is what an
 unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
-**AI-assisted roadmap import (`src/data/importPrompt.js`, `src/core/roadmap/`, issue
-#4).** A second entry point next to "Create your own roadmap" — "Import roadmap"
-(`src/ui/components/importRoadmapModal.js`) opens a modal instead of an empty roadmap.
-Issue #64 collapsed the original two-tab "Generate with AI" / "Paste & Import" layout
-into **one continuous, top-to-bottom flow** — every real use of this feature does both
-halves in the same sitting, so a second tab just hid the paste box behind an extra
-click. From top to bottom: a topic field, a read-only versioned prompt block
+**AI-assisted roadmap creation (`src/data/importPrompt.js`, `src/core/roadmap/`, issues
+#4/#64, redesigned in #100).** Since issue #100 retired manual "start truly blank"
+creation and merged onboarding's two cards into one, this is the *only* way to start a
+custom roadmap — the single "Create your own roadmap" card (`onboarding.js`) opens
+`openCreateRoadmapModal()` (`src/ui/components/importRoadmapModal.js`, renamed from
+`openImportRoadmapModal()`). **Layout**: a two-column "Build your prompt" / "Paste the
+AI's answer" grid at the ≥1025px breakpoint tier (`.import-modal-grid`,
+`.claude/rules/ui-styling.md`'s breakpoint scale), collapsing to the original
+single-column top-to-bottom flow issue #64 established below that tier — each column
+scrolls independently, with a shared header/footer outside the grid so Import/Cancel
+stay reachable without scrolling either column. **Left column**: a topic field, the four
+optional customization inputs (below), a read-only versioned prompt block
 (`buildImportPrompt(topic, options)`, `IMPORT_PROMPT_VERSION`) with an editable topic
-line that live-updates the prompt, a "Copy prompt" button
+line that live-updates the prompt, and a "Copy prompt" button
 (`navigator.clipboard.writeText`, falling back to a hidden-textarea +
-`execCommand('copy')` for older/non-secure contexts), then the paste textarea itself,
-validated 300ms after each keystroke via `validateImportText()`
-(`src/core/roadmap/importValidator.js`) — a **pure** function
-(no DOM, no store, no Firebase) that parses the JSON and checks it against schema
-version 1 (`SUPPORTED_SCHEMA_VERSION`): `schemaVersion === 1`, non-empty `title`,
-non-empty `phases` array where every phase has a `title`/`priority ∈ {P0-P3}`/non-empty
-`sections` array, every section has a `title`/non-empty `items` array, every item is
-either a plain string (inherits the phase's priority) or a `["title","priority"]` tuple,
-and the total item count is ≤ 500 — returning an array of per-field error strings
-(`phases[i].sections[j].items[k] is invalid`, etc.), empty meaning valid. Only once
-valid does `adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`) — equally
-pure — convert the validated data into the exact `{ phases, items }` shape a custom
-roadmap needs (generating `phase-...`/`section-...`/`custom-...` ids the same way
-`addPhase`/`addSection`/`addItem` do), and the "Import roadmap" button enables. The
-validator and adapter are deliberately two separate pure modules: bumping the import
-wire format to a future schema version means adding a new adapter function, never
-touching the validator's rules or the other way around. The modal resolves
-`{ title, phases, items } | null` — the caller (`onboarding.js`'s `handleImport()`)
-passes it straight to `store.createCustomRoadmap({ title, phases, items })`, the exact
-same function the manual "Create your own roadmap" flow calls (just with the `phases`/
-`items` arguments populated instead of omitted). `roadmapStore.js` makes this work via a
-one-shot `pendingCustomSeeds` map: `createCustomRoadmap` stashes the seed keyed by the
-freshly generated id right before calling `switchRoadmap(id)`, and `fetchTemplateData`
-consumes (and deletes) it instead of returning the usual empty seed for a custom id — a
-manually-created roadmap simply has no entry there and falls through to the empty seed
-unchanged. From that point on an imported roadmap is indistinguishable from a manually
-built one — same Firebase path, same phase/section rename/delete controls, same
-`deleteCustomRoadmap` cleanup.
+`execCommand('copy')` for older/non-secure contexts) — **disabled until the topic field
+is non-empty** (issue #100 fix: previously a user could copy the prompt with the literal
+placeholder text `[describe what this roadmap should cover]` and no warning). **Right
+column**: the paste textarea, validated 300ms after each keystroke via
+`validateImportText()` (`src/core/roadmap/importValidator.js`) — a **pure** function (no
+DOM, no store, no Firebase) that parses the JSON (`parseImportJson()` first strips a
+single leading/trailing fenced code block, ```` ```json ... ``` ````, with or without the
+language tag, since many AI assistants wrap their output that way despite being told not
+to — issue #100) and checks it against schema version 1 (`SUPPORTED_SCHEMA_VERSION`):
+`schemaVersion === 1`, non-empty `title`, non-empty `phases` array where every phase has
+a `title`/`priority ∈ {P0-P3}`/non-empty `sections` array, every section has a
+`title`/non-empty `items` array, every item is a plain string (inherits the phase's
+priority), a `["title","priority"]` tuple, or — since issue #100's resources support — an
+object `{ title, priority?, resources? }` (`priority` optional, inherits the phase's like
+the plain-string form; `resources` optional, up to 5 `{ label, url }` pairs, each checked
+structurally — non-empty, length-capped label/url — but **not** for URL protocol
+correctness). Every priority value (phase, tuple item, object item) is normalized
+(`normalizePriority()`: trim + uppercase) before the `∈ {P0-P3}` check, so `"p0"`/`" P0 "`
+from an AI response are accepted rather than rejected outright. **Resource URL protocol
+safety is deliberately not checked at this validation layer** — see the "a good roadmap
+could fail validation entirely over one malformed resource URL" fix below for why; it
+moved to conversion time (`adaptImportToRoadmap()`). The total item count is ≤ 500 across
+all shapes — returning an array of per-field error strings
+(`phases[i].sections[j].items[k] is invalid`, etc.), empty meaning valid. On error, the UI
+shows a plain-language summary
+("N things need fixing before this can be imported") plus a **"Copy fix-it message for
+your AI"** button — `buildImportFixPrompt(errors)` (`src/data/importPrompt.js`, same
+module/versioning discipline as `buildImportPrompt`, pure, no `IMPORT_PROMPT_VERSION`
+bump since it doesn't touch the schema contract) composes a ready-to-copy message
+restating the schema-version-1 contract, listing the errors verbatim, and asking for the
+complete corrected JSON (not a diff/patch). The original technical error list is kept,
+collapsed by default behind a "Show technical details" toggle. Only once valid does
+`adaptImportToRoadmap()` (`src/core/roadmap/schemaAdapter.js`) — equally pure — convert
+the validated data into the exact `{ phases, items }` shape a custom roadmap needs
+(generating `phase-...`/`section-...`/`custom-...` ids the same way
+`addPhase`/`addSection`/`addItem` do; the object item form's `resources` array is
+**sanitized**, not just mapped, onto `item.resources` — `sanitizeResources()` auto-
+prepends `https://` to a bare-domain URL (`docs.docker.com` → `https://docs.docker.com`,
+a very common AI-output pattern) and drops any resource whose URL still isn't a valid
+http(s) link after that, rather than failing the whole item. Once sanitized, an imported
+topic with resources renders identically to one whose links were added by hand through
+`itemPanel.js`, no separate rendering path), and the "Import roadmap" button (in the
+shared footer) enables. The validator and adapter are deliberately two separate pure modules:
+bumping the import wire format to a future schema version means adding a new adapter
+function, never touching the validator's rules or the other way around. The modal
+resolves `{ title, phases, items } | null` — the caller (`onboarding.js`'s
+`handleCreate()`) passes it straight to `store.createCustomRoadmap({ title, phases,
+items })`. `roadmapStore.js` makes this work via a one-shot `pendingCustomSeeds` map:
+`createCustomRoadmap` stashes the seed keyed by the freshly generated id right before
+calling `switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes) it instead of
+returning the usual empty seed for a custom id. From that point on a created roadmap is
+indistinguishable from any other custom roadmap — same Firebase path, same phase/section
+rename/delete controls, same `deleteCustomRoadmap` cleanup.
 
-**Prompt customization inputs (issue #64 Part 2).** Below the topic field, the generate
-section renders four optional inputs — Experience level (Beginner/Intermediate/Advanced,
-a chip group reusing `.filter-chip` styling), Target timeframe (No deadline/1 month/
-3 months/6 months/1 year, the same chip pattern), Goal/context (a `<select>`: Interview
-prep/On-the-job upskilling/Academic or exam prep/Personal project or hobby), and a
-freeform "Already know" text input — each feeding `buildImportPrompt(topic, options)`'s
-`options` param. Every field is optional (topic remains the only required input) and
-each appends exactly one line to the prompt's free-text instructions block when set
-(`Experience level: …`, etc.), omitted entirely when unset/blank — never an empty or
-placeholder line, matching how the topic line's own placeholder already worked. This is
-deliberately additive to the *instructions*, never the JSON schema contract above them
-in `importPrompt.js` — `importValidator.js`/`schemaAdapter.js` needed zero changes, and
-this required no `IMPORT_PROMPT_VERSION` bump, so a prompt copied before this existed
-still parses identically today. If you add a fifth customization field, follow the same
-pattern: one optional input, one omitted-when-unset line in `buildOptionLines()`
+**A single malformed resource URL or oddly-cased priority must never fail the whole
+roadmap (issue #100 follow-up, found via real-world testing).** Early real-world use of
+the resources feature above found roadmaps failing "item is invalid" across many
+unrelated topics, sometimes on the first *and* second generation attempt, tracing back to
+two harmless AI-output quirks that used to be treated as hard validation failures: a
+resource URL missing its `https://` scheme (`docs.docker.com` instead of
+`https://docs.docker.com` — very common, since a URL "looks complete" to a model without
+the scheme), and a priority value with different casing/whitespace (`p0`, ` P0 `). Both
+are now handled defensively instead of rejected: priorities are normalized
+(`normalizePriority()`, `importValidator.js`) before every `∈ {P0-P3}` check anywhere in
+the validator, and resource URL protocol correctness moved entirely out of validation —
+`adaptImportToRoadmap()`'s `sanitizeResources()` auto-corrects a bare-domain URL and
+silently drops (rather than fails the topic over) one that's still invalid after that.
+**One consequence worth knowing**: because URL protocol is no longer checked at
+validation time, `validateImportPayload()` alone can no longer be used as a security
+gate against a malicious resource URL — that check now only happens in
+`adaptImportToRoadmap()`, which is why `validateImportText()`'s `data` must never be
+treated as safe-to-render without going through the adapter first (already true today —
+the modal only ever calls `adaptImportToRoadmap()` on the resolved value, never renders
+`validateImportText()`'s raw `data`). A secondary, previously-unexplained symptom this
+also fixes: after several "fix it and resend" round-trips (issue #100's fix-it-message
+flow), some AI assistants gave up and stopped including resources at all in their retry —
+with roadmaps now succeeding on the first real attempt far more often, resources come
+through as originally generated instead of being silently dropped by a frustrated model.
+
+**Corrupted-text detection — a real, reported data-corruption bug (issue #100 follow-up).**
+Some AI chat UIs auto-linkify raw URLs found inside a code block when a user selects and
+copies *rendered* text instead of using the tool's own "copy raw"/"copy code" button —
+this splices markdown-link syntax and URL-encoded JSON fragments into neighboring text
+(a title ends up looking like `Learn](https://example.com%22]},{%22title%22:%22Learn) the
+command line`). The result is still syntactically valid JSON (quotes stay balanced), so
+it sailed straight past every check above and rendered as garbled topic titles on the
+dashboard — a genuine data-corruption bug, not a display bug (confirmed by running the
+exact reported payload through `validateImportPayload()`/`adaptImportToRoadmap()`
+directly and observing clean output, i.e. the corruption was already present in what got
+pasted, not introduced by our code). `importValidator.js`'s `looksCorrupted(text)` checks
+a title/section-name/phase-name/resource-label/resource-url against a short list of
+markers (`%22`, a stray `"title":`, `"url":`, `"resources":`, etc.) that are essentially
+never legitimate in real roadmap content; `findItemCorruption()` runs this check on every
+item *before* `isValidItem()`'s normal shape validation, so a corrupted item gets a
+specific, actionable error (`...title looks corrupted (contains encoded/JSON-like text) —
+... try the AI's "copy code"/"copy raw" button, or ask it to resend the JSON`) instead of
+either silently importing garbage or the previous generic "item is invalid". Phase titles
+and section titles get the identical check. This is a heuristic, not a formal grammar —
+if you ever need a sixth marker, add it to `CORRUPTION_MARKERS` rather than writing a new
+detection path.
+
+**"Resources" filter chip — see all resource links "in one go" (issue #100 follow-up).**
+Real feedback: once AI-generated roadmaps commonly carry resource links, there was no way
+to see every one without opening each topic's edit panel individually. `dashboard.js`'s
+`renderFilterChips()` gained a fifth chip, `'RESOURCES'`, alongside `ALL`/`P0`-`P3` —
+`matchesActiveFilter()` (shared by `filterItems()`/`priorityCounts()`) treats it as "has
+at least one resource" rather than a priority comparison. When it's the active filter,
+`renderItemRow()` also renders `renderInlineResources(item)` — every resource as a
+clickable, type-colored `<a>` (reusing `linkDetector.js`'s `detectLinkType()`/
+`LINK_TYPE_META`, the same per-type icon/color the edit panel and count-badge tooltip
+already use) directly under the title, via `flex-basis: 100%` inside `.check-body`'s
+existing `flex-wrap: wrap` row — no structural change to the row needed. This is strictly
+additive: the collapsed count badge (opens the full edit panel) and every other filter
+chip are unaffected. Every inline link's `href` is `isValidUrl()`-guarded exactly like
+`itemPanel.js`'s own resource links (roadmap-store.md's "Resource URLs must be validated
+before use" rule) — an invalid URL renders as `href="#"` with its default-navigation
+click suppressed, never a raw unvalidated value.
+
+**Prompt customization inputs (issue #64 Part 2, extended in #100).** Below the topic
+field, the generate section renders six optional inputs — Experience level
+(Beginner/Intermediate/Advanced, a chip group reusing `.filter-chip` styling), Target
+timeframe (No deadline/1 month/3 months/6 months/1 year, the same chip pattern), Weekly
+time commitment (issue #100: `< 2 hrs/week` … `10+ hrs/week`, same single-select chip
+pattern), Goal/context (a `<select>`: Interview prep/On-the-job upskilling/Academic or
+exam prep/Personal project or hobby), Preferred resource types (issue #100: YouTube
+videos/Articles & blogs/Official docs/Online courses — the one **multi**-select field
+among these six, `buildMultiChipGroup()` in `importRoadmapModal.js` rather than
+`buildChipGroup()`, since a user may want more than one kind of link), and a freeform
+"Already know" text input — each feeding `buildImportPrompt(topic, options)`'s `options`
+param. Every field is optional (topic remains the only required input) and each appends
+exactly one line to the prompt's free-text instructions block when set (`Experience
+level: …`, `Preferred resource types: …` as a comma-joined list, etc.), omitted entirely
+when unset/blank/empty-array — never an empty or placeholder line, matching how the
+topic line's own placeholder already worked. This is deliberately additive to the
+*instructions*, never the JSON schema contract above them in `importPrompt.js` (the
+schema block's own resources-support addition, above, is a separate, structural change to
+the contract, not a `buildOptionLines()` instruction line) — `importValidator.js`
+/`schemaAdapter.js` needed zero changes for these six option fields, and none of them
+required an `IMPORT_PROMPT_VERSION` bump, so a prompt copied before any of them existed
+still parses identically today. If you add a seventh customization field, follow the
+same pattern: one optional input, one omitted-when-unset line in `buildOptionLines()`
 (`src/data/importPrompt.js`), never a change to the schema block itself.
 
 **Flush-before-switch — an edit made just before switching must never be silently

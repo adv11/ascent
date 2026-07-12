@@ -118,3 +118,151 @@ describe('adaptImportToRoadmap', () => {
     Object.keys(items).forEach(id => expect(id).toMatch(/^custom-/));
   });
 });
+
+describe('adaptImportToRoadmap — object-form items with resources (issue #100)', () => {
+  it('converts an object item with no priority, inheriting the phase priority', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker' }];
+    const { items } = adaptImportToRoadmap(data);
+    const item = Object.values(items)[0];
+    expect(item).toMatchObject({ title: 'Learn Docker', priority: 'P1', resources: [] });
+  });
+
+  it('converts an object item with its own priority, not the phase\'s', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', priority: 'P0' }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].priority).toBe('P0');
+  });
+
+  it('maps resources onto item.resources, trimming labels', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [
+        { label: '  Docker docs  ', url: 'https://docs.docker.com/' },
+        { label: 'Crash course', url: 'https://www.youtube.com/watch?v=abc123' }
+      ]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    const item = Object.values(items)[0];
+    expect(item.resources).toEqual([
+      { label: 'Docker docs', url: 'https://docs.docker.com/' },
+      { label: 'Crash course', url: 'https://www.youtube.com/watch?v=abc123' }
+    ]);
+  });
+
+  it('defaults resources to an empty array when the object item omits it', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker' }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([]);
+  });
+
+  it('trims the object item\'s title', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{ title: '  Padded  ' }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].title).toBe('Padded');
+  });
+});
+
+// Issue #100 follow-up: the validator accepts a resource's URL structurally
+// (see importValidator.test.js's "priority normalization" and
+// "javascript: URL" tests) but doesn't check its protocol or auto-correct a
+// missing scheme — that happens here, at conversion time, so a live-tested
+// real-world AI response (missing "https://" on some links) imports cleanly
+// instead of failing the whole topic.
+describe('adaptImportToRoadmap — resource URL sanitization (issue #100 follow-up)', () => {
+  it('auto-prepends https:// to a bare-domain resource URL', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docker docs', url: 'docs.docker.com' }]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([{ label: 'Docker docs', url: 'https://docs.docker.com' }]);
+  });
+
+  it('auto-prepends https:// to a bare domain+path resource URL', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'YouTube', url: 'www.youtube.com/watch?v=abc123' }]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([{ label: 'YouTube', url: 'https://www.youtube.com/watch?v=abc123' }]);
+  });
+
+  it('leaves an already-valid https:// URL untouched', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docs', url: 'https://docs.docker.com/get-started/' }]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([{ label: 'Docs', url: 'https://docs.docker.com/get-started/' }]);
+  });
+
+  it('drops (does not auto-correct) a javascript: resource URL', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [
+        { label: 'Bad link', url: 'javascript:alert(1)' },
+        { label: 'Good link', url: 'https://docs.docker.com/' }
+      ]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([{ label: 'Good link', url: 'https://docs.docker.com/' }]);
+  });
+
+  it('drops a data: resource URL', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Bad link', url: 'data:text/html,<script>alert(1)</script>' }]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([]);
+  });
+
+  it('drops an empty-string resource URL', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Empty', url: '   ' }]
+    }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].resources).toEqual([]);
+  });
+});
+
+// Issue #100 follow-up: normalize priority casing/whitespace consistently
+// with importValidator.js's normalizePriority(), so an item that passed
+// validation with "p0"/" P0 " still ends up with the canonical "P0" in the
+// store, not a value the rest of the app's priority-based filtering
+// wouldn't recognize.
+describe('adaptImportToRoadmap — priority normalization (issue #100 follow-up)', () => {
+  it('normalizes a lowercase phase priority', () => {
+    const data = payload();
+    data.phases[0].priority = 'p1';
+    const { phases, items } = adaptImportToRoadmap(data);
+    expect(phases[0].priority).toBe('P1');
+    expect(Object.values(items).find(i => i.title === 'Plain item').priority).toBe('P1');
+  });
+
+  it('normalizes a lowercase tuple-item priority', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [['Tuple item', 'p0']];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].priority).toBe('P0');
+  });
+
+  it('normalizes a whitespace-padded object-item priority', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', priority: ' p2 ' }];
+    const { items } = adaptImportToRoadmap(data);
+    expect(Object.values(items)[0].priority).toBe('P2');
+  });
+});

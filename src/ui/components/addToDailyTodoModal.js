@@ -8,7 +8,7 @@ const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms
 // "Add this topic to Today's Todos" (issue #56 follow-up) — reachable from a
 // button on every roadmap checklist row (see dashboard.js's renderItemRow).
 // Same `.modal-overlay`/`.modal-card` chrome and promise-based contract as
-// openNewRoadmapModal()/confirmDialog() — collects only the one thing not
+// openCreateRoadmapModal()/confirmDialog() — collects only the one thing not
 // already known (how long you have), with the topic's own title editable in
 // case you want the todo phrased differently. Resolves
 // `{ title, durationMs } | null` (null on cancel/Escape/outside-click).

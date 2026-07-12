@@ -32,6 +32,24 @@ describe('parseImportJson', () => {
     expect(result.data).toBeNull();
     expect(result.error).toBe('Invalid JSON — check for missing commas or brackets');
   });
+
+  it('strips a ```json fenced code block before parsing', () => {
+    const result = parseImportJson('```json\n{"a": 1}\n```');
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual({ a: 1 });
+  });
+
+  it('strips a bare ``` fenced code block (no language tag) before parsing', () => {
+    const result = parseImportJson('```\n{"a": 1}\n```');
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual({ a: 1 });
+  });
+
+  it('still returns the friendly error for a genuinely invalid payload after stripping fences', () => {
+    const result = parseImportJson('```json\n{not valid json\n```');
+    expect(result.data).toBeNull();
+    expect(result.error).toBe('Invalid JSON — check for missing commas or brackets');
+  });
 });
 
 describe('validateImportPayload — happy path', () => {
@@ -200,6 +218,42 @@ describe('validateImportPayload — item-level', () => {
   });
 });
 
+// LLM output commonly varies priority casing/whitespace ("p0", " P0 ") in a
+// way that's harmless to normalize rather than reject — issue #100
+// follow-up, found live: an otherwise-valid roadmap was rejected wholesale
+// over exactly this.
+describe('validateImportPayload — priority normalization (issue #100 follow-up)', () => {
+  it('accepts a lowercase priority on a phase', () => {
+    const data = validPayload();
+    data.phases[0].priority = 'p1';
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('accepts a lowercase priority on a tuple item', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [['Tuple item', 'p0']];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('accepts a lowercase priority on an object item', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', priority: 'p2' }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('accepts a priority with surrounding whitespace', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [['Tuple item', ' P0 ']];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('still rejects a genuinely invalid priority after normalization', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', priority: 'urgent' }];
+    expect(validateImportPayload(data)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+});
+
 describe('validateImportPayload — item count cap', () => {
   it('accepts exactly 500 items (boundary)', () => {
     const data = {
@@ -241,6 +295,127 @@ describe('validateImportPayload — item count cap', () => {
   });
 });
 
+describe('validateImportPayload — object-form items with resources (issue #100)', () => {
+  it('accepts an object item with title only (inherits phase priority)', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker' }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('accepts an object item with its own priority', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', priority: 'P0' }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('rejects an object item with an invalid priority', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', priority: 'URGENT' }];
+    expect(validateImportPayload(data)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+
+  it('rejects an object item with an empty title', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: '   ' }];
+    expect(validateImportPayload(data)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+
+  it('accepts an object item with valid http(s) resources', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [
+        { label: 'Docker official docs', url: 'https://docs.docker.com/' },
+        { label: 'Docker crash course', url: 'https://www.youtube.com/watch?v=abc123' }
+      ]
+    }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('accepts an object item with no resources field at all (optional)', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker' }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  // URL *protocol* safety (javascript:/data: rejection) is deliberately not
+  // checked at this schema-validation layer — see importValidator.js's
+  // isValidResourceEntry() doc comment. Rejecting the whole topic here
+  // because one resource's URL was missing "https://" (a common, harmless
+  // LLM quirk) used to cascade into "item is invalid" errors across
+  // otherwise-good roadmaps (issue #100 follow-up). Protocol
+  // safety/auto-correction now happens in adaptImportToRoadmap() —
+  // schemaAdapter.test.js's "sanitizes resources" describe block covers a
+  // javascript:/data: URL actually being dropped before it ever reaches the
+  // store.
+  it('accepts a resource with a javascript: URL at the schema level (dropped later, at conversion time — see schemaAdapter.test.js)', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Bad link', url: 'javascript:alert(1)' }]
+    }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('accepts a resource with a bare-domain URL (missing https://) at the schema level — auto-corrected at conversion time', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docker docs', url: 'docs.docker.com' }]
+    }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('rejects a resource with an empty label', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: '  ', url: 'https://docs.docker.com/' }]
+    }];
+    expect(validateImportPayload(data)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+
+  it('rejects a resource with an oversized label or url', () => {
+    const dataLabel = validPayload();
+    dataLabel.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'x'.repeat(121), url: 'https://docs.docker.com/' }]
+    }];
+    expect(validateImportPayload(dataLabel)).toContain('item at phases[0].sections[0].items[0] is invalid');
+
+    const dataUrl = validPayload();
+    dataUrl.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docs', url: `https://docs.docker.com/${'x'.repeat(2048)}` }]
+    }];
+    expect(validateImportPayload(dataUrl)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+
+  it('rejects more than 5 resources on a single item', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: Array.from({ length: 6 }, (_, i) => ({ label: `Link ${i}`, url: `https://example.com/${i}` }))
+    }];
+    expect(validateImportPayload(data)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+
+  it('accepts exactly 5 resources on a single item (boundary)', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: Array.from({ length: 5 }, (_, i) => ({ label: `Link ${i}`, url: `https://example.com/${i}` }))
+    }];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('rejects a non-array resources field', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'Learn Docker', resources: 'not an array' }];
+    expect(validateImportPayload(data)).toContain('item at phases[0].sections[0].items[0] is invalid');
+  });
+});
+
 describe('validateImportText', () => {
   it('returns valid: true with parsed data for a valid JSON string', () => {
     const result = validateImportText(JSON.stringify(validPayload()));
@@ -261,5 +436,86 @@ describe('validateImportText', () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('title is required');
     expect(result.data).toBeNull();
+  });
+});
+
+// Issue #100 follow-up — a real report: some AI chat UIs auto-linkify raw
+// URLs found inside a code block when a user selects/copies rendered text
+// instead of using the tool's own "copy raw" button, splicing markdown-link
+// syntax and URL-encoded JSON fragments into neighboring text. The result
+// still parses as valid JSON (quotes stay balanced) but every field
+// involved is nonsense — these tests use a corrupted title/label/url
+// matching the exact pattern from that report.
+describe('validateImportPayload — corrupted-text detection (issue #100 follow-up)', () => {
+  const CORRUPTED_TITLE = 'Learn](https://www.khanacademy.org/computing%22]},{%22title%22:%22Learn) the command line';
+
+  it('flags a plain-string item title containing a corruption marker', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [CORRUPTED_TITLE];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].items[0].title looks corrupted'))).toBe(true);
+  });
+
+  it('flags a tuple item title containing a corruption marker', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [[CORRUPTED_TITLE, 'P0']];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('.title looks corrupted'))).toBe(true);
+  });
+
+  it('flags an object item title containing a corruption marker', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: CORRUPTED_TITLE }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('.title looks corrupted'))).toBe(true);
+  });
+
+  it('flags a corrupted resource label or url without flagging the (clean) title', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docker docs%22]},{%22title%22', url: 'https://docs.docker.com/' }]
+    }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].items[0].resources[0] looks corrupted'))).toBe(true);
+    expect(errors.some(e => e.includes('.title looks corrupted'))).toBe(false);
+  });
+
+  it('flags a corrupted resource url', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docker docs', url: 'https://docs.docker.com/%22]},{%22title%22:%22' }]
+    }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].items[0].resources[0] looks corrupted'))).toBe(true);
+  });
+
+  it('flags a corrupted phase title', () => {
+    const data = validPayload();
+    data.phases[0].title = CORRUPTED_TITLE;
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].title looks corrupted'))).toBe(true);
+  });
+
+  it('flags a corrupted section title', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].title = CORRUPTED_TITLE;
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].title looks corrupted'))).toBe(true);
+  });
+
+  it('does not flag ordinary titles that happen to contain brackets or parentheses', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['Understand how computers work (CPU, RAM, storage)', ['Arrays [and] lists', 'P0']];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('the corruption error message gives actionable guidance, not just "is invalid"', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [CORRUPTED_TITLE];
+    const errors = validateImportPayload(data);
+    const corruptionError = errors.find(e => e.includes('looks corrupted'));
+    expect(corruptionError).toMatch(/copy/i);
   });
 });

@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../../src/ui/router.js', () => ({ navigate: vi.fn() }));
-vi.mock('../../src/ui/components/newRoadmapModal.js', () => ({ openNewRoadmapModal: vi.fn() }));
-vi.mock('../../src/ui/components/importRoadmapModal.js', () => ({ openImportRoadmapModal: vi.fn() }));
+vi.mock('../../src/ui/components/importRoadmapModal.js', () => ({ openCreateRoadmapModal: vi.fn() }));
 // onboarding.js now imports confirmAndSignOut (src/ui/utils/signOut.js) for
 // its new sign-out button, which transitively imports the real firebase.js —
 // mock it the same way dashboard.test.js/signIn.test.js already do.
@@ -87,19 +86,22 @@ describe('onboarding page — sign-out button', () => {
 });
 
 describe('onboarding page — first-time picker (onboardingDone === false)', () => {
-  it('renders exactly one card per registered template, plus the "Create your own roadmap" and "Import roadmap" cards', async () => {
+  it('renders exactly one card per registered template, plus the single "Create your own roadmap" card', async () => {
     const { TEMPLATES } = await import('../../src/data/templates/index.js');
     const { app } = await setup();
     const cards = app.querySelectorAll('.template-card');
-    expect(cards.length).toBe(TEMPLATES.length + 2);
+    expect(cards.length).toBe(TEMPLATES.length + 1);
     expect(app.querySelectorAll('.template-card-create').length).toBe(1);
-    expect(app.querySelectorAll('.template-card-import').length).toBe(1);
   });
 
   it('has no back/cancel control — nothing to go back to yet', async () => {
     const { app } = await setup();
     const buttons = [...app.querySelectorAll('button')].filter(b => !b.classList.contains('theme-toggle'));
-    expect(buttons.every(b => !/\bback\b|\bcancel\b/i.test(b.textContent))).toBe(true);
+    // "back" is also legitimately used mid-sentence in the create card's own
+    // description ("...paste the result back in.") — the check for a
+    // navigational back/cancel control looks for that word standing alone at
+    // the start of the button's own text, not anywhere in a longer sentence.
+    expect(buttons.every(b => !/^(back|cancel)\b/i.test(b.textContent.trim()))).toBe(true);
   });
 
   it('clicking a card picks that template without confirmation and navigates to /app', async () => {
@@ -118,8 +120,8 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
   // outside this component's scope) and (2) this catch block silently
   // resetting the UI with zero user-facing message on a genuine failure —
   // indistinguishable from success without noticing the cards quietly
-  // re-enabling. Matches the existing "shows an error toast ... for an
-  // imported roadmap" test's pattern above for the import path.
+  // re-enabling. Matches the existing "shows an error toast ... for a
+  // created roadmap" test's pattern below for the create-your-own path.
   it('shows an error toast and re-enables cards when switchRoadmap fails', async () => {
     const switchRoadmap = vi.fn().mockRejectedValue(new Error('Timed out loading roadmap from Firebase'));
     const { app, navigate } = await setup({ switchRoadmap });
@@ -137,16 +139,14 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     let resolvePick;
     const switchRoadmap = vi.fn(() => new Promise(resolve => { resolvePick = resolve; }));
     const { app } = await setup({ switchRoadmap });
-    // cards[0]/[1] are "Create your own roadmap"/"Import roadmap" — click the
-    // first actual template card instead so switchRoadmap (not
-    // createCustomRoadmap) fires.
+    // cards[0] is "Create your own roadmap" — click the first actual
+    // template card instead so switchRoadmap (not createCustomRoadmap) fires.
     const cards = [...app.querySelectorAll('.template-card')];
 
-    cards[2].querySelector('.template-card-pick').click();
+    cards[1].querySelector('.template-card-pick').click();
 
     expect(cards[0].classList.contains('is-disabled')).toBe(true);
-    expect(cards[1].classList.contains('is-disabled')).toBe(true);
-    expect(cards[3].classList.contains('is-disabled')).toBe(true);
+    expect(cards[2].classList.contains('is-disabled')).toBe(true);
     resolvePick();
   });
 
@@ -323,9 +323,11 @@ describe('onboarding page — switch-template mode (onboardingDone === true)', (
   });
 });
 
-// Manual roadmap creation (issue #4) — the "Create your own roadmap" card,
-// and rendering/deleting the user's own custom roadmaps in the same grid.
-describe('onboarding page — create-your-own roadmap (issue #4)', () => {
+// AI-assisted "Create your own roadmap" (issue #100 — supersedes the
+// separate manual-create/import cards issue #4/#64 shipped) — one card,
+// opening openCreateRoadmapModal(), and rendering/deleting the user's own
+// custom roadmaps in the same grid.
+describe('onboarding page — create-your-own roadmap (issue #100)', () => {
   it('renders the "Create your own roadmap" card first, before any template card', async () => {
     const { app } = await setup();
     const firstCard = app.querySelector('.template-grid .template-card');
@@ -333,29 +335,42 @@ describe('onboarding page — create-your-own roadmap (issue #4)', () => {
     expect(firstCard.textContent).toContain('Create your own roadmap');
   });
 
-  it('clicking the create card opens the modal, creates the roadmap on submit, and navigates to /app', async () => {
-    const { openNewRoadmapModal } = await import('../../src/ui/components/newRoadmapModal.js');
-    openNewRoadmapModal.mockResolvedValue({ title: 'My Roadmap', description: 'Notes' });
+  it('clicking the create card opens the modal, creates the roadmap from the resolved data, and navigates to /app', async () => {
+    const { openCreateRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
+    const created = { title: 'My Roadmap', phases: [{ id: 'phase-1', title: 'P1', priority: 'P1', sections: [] }], items: {} };
+    openCreateRoadmapModal.mockResolvedValue(created);
     const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-new');
     const { app, navigate } = await setup({ createCustomRoadmap });
 
     app.querySelector('.template-card-create .template-card-pick').click();
 
-    await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalledWith({ title: 'My Roadmap', description: 'Notes' }));
+    await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalledWith(created));
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 
   it('does nothing when the create modal is cancelled', async () => {
-    const { openNewRoadmapModal } = await import('../../src/ui/components/newRoadmapModal.js');
-    openNewRoadmapModal.mockResolvedValue(null);
+    const { openCreateRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
+    openCreateRoadmapModal.mockResolvedValue(null);
     const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-new');
     const { app, navigate } = await setup({ createCustomRoadmap });
 
     app.querySelector('.template-card-create .template-card-pick').click();
 
-    await vi.waitFor(() => expect(openNewRoadmapModal).toHaveBeenCalled());
+    await vi.waitFor(() => expect(openCreateRoadmapModal).toHaveBeenCalled());
     expect(createCustomRoadmap).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('shows an error toast and re-enables the card when createCustomRoadmap fails', async () => {
+    const { openCreateRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
+    openCreateRoadmapModal.mockResolvedValue({ title: 'Bad roadmap', phases: [], items: {} });
+    const createCustomRoadmap = vi.fn().mockRejectedValue(new Error('network error'));
+    const { app } = await setup({ createCustomRoadmap });
+
+    app.querySelector('.template-card-create .template-card-pick').click();
+    await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalled());
+    await vi.waitFor(() => expect(app.querySelector('.template-card-create').classList.contains('is-disabled')).toBe(false));
+    await vi.waitFor(() => expect(document.querySelector('.toast')?.textContent).toMatch(/could not create/i));
   });
 
   it('renders a card per custom roadmap with its title/description and a delete button', async () => {
@@ -403,59 +418,11 @@ describe('onboarding page — create-your-own roadmap (issue #4)', () => {
   });
 });
 
-// AI-assisted import (issue #4) — the "Import roadmap" card and its wiring
-// into store.createCustomRoadmap via openImportRoadmapModal().
-describe('onboarding page — AI-assisted import (issue #4)', () => {
-  it('renders the "Import roadmap" card second, right after "Create your own roadmap"', async () => {
-    const { app } = await setup();
-    const cards = [...app.querySelectorAll('.template-grid .template-card')];
-    expect(cards[0].classList.contains('template-card-create')).toBe(true);
-    expect(cards[1].classList.contains('template-card-import')).toBe(true);
-    expect(cards[1].textContent).toContain('Import roadmap');
-  });
-
-  it('clicking the import card opens the modal, creates the roadmap from the resolved data, and navigates to /app', async () => {
-    const { openImportRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
-    const imported = { title: 'Imported Roadmap', phases: [{ id: 'phase-1', title: 'P1', priority: 'P1', sections: [] }], items: {} };
-    openImportRoadmapModal.mockResolvedValue(imported);
-    const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-imported');
-    const { app, navigate } = await setup({ createCustomRoadmap });
-
-    app.querySelector('.template-card-import').click();
-
-    await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalledWith(imported));
-    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
-  });
-
-  it('does nothing when the import modal is cancelled', async () => {
-    const { openImportRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
-    openImportRoadmapModal.mockResolvedValue(null);
-    const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-imported');
-    const { app, navigate } = await setup({ createCustomRoadmap });
-
-    app.querySelector('.template-card-import').click();
-
-    await vi.waitFor(() => expect(openImportRoadmapModal).toHaveBeenCalled());
-    expect(createCustomRoadmap).not.toHaveBeenCalled();
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  it('shows an error toast and re-enables cards when createCustomRoadmap fails for an imported roadmap', async () => {
-    const { openImportRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
-    openImportRoadmapModal.mockResolvedValue({ title: 'Bad Import', phases: [], items: {} });
-    const createCustomRoadmap = vi.fn().mockRejectedValue(new Error('network error'));
-    const { app } = await setup({ createCustomRoadmap });
-
-    app.querySelector('.template-card-import').click();
-    await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalled());
-    await vi.waitFor(() => expect(app.querySelector('.template-card-import').classList.contains('is-disabled')).toBe(false));
-    await vi.waitFor(() => expect(document.querySelector('.toast')?.textContent).toMatch(/could not import/i));
-  });
-});
-
 // "Build your own roadmap" guide moved from the now-retired "blank" template
-// onto "Create your own roadmap"'s corner info button (issue #4 follow-up).
-describe('onboarding page — "build your own roadmap" guide (issue #4 follow-up)', () => {
+// onto "Create your own roadmap"'s corner info button (issue #4 follow-up);
+// rewritten in issue #100 to present the AI-generate flow as the only
+// starting method, with manual editing framed as a fine-tune step after.
+describe('onboarding page — "build your own roadmap" guide (issue #100)', () => {
   it('clicking the corner info button opens the guide without picking the card', async () => {
     const createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-test');
     const { app } = await setup({ createCustomRoadmap });
@@ -465,21 +432,21 @@ describe('onboarding page — "build your own roadmap" guide (issue #4 follow-up
     const modal = document.querySelector('.build-guide-card');
     expect(modal).toBeTruthy();
     expect(modal.textContent).toContain('Build your own roadmap');
-    expect(modal.textContent).toContain('Import roadmap');
+    expect(modal.textContent).toContain('AI assistant');
     expect(createCustomRoadmap).not.toHaveBeenCalled();
   });
 
-  it('the guide\'s "Open Import roadmap" button closes the guide and opens the import modal', async () => {
-    const { openImportRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
-    openImportRoadmapModal.mockResolvedValue(null);
+  it('the guide\'s "Open the roadmap builder" button closes the guide and opens the create modal', async () => {
+    const { openCreateRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
+    openCreateRoadmapModal.mockResolvedValue(null);
     const { app } = await setup();
 
     app.querySelector('.template-card-create .template-card-info-corner').click();
-    const openImportBtn = [...document.querySelectorAll('.build-guide-card button')].find(b => b.textContent === 'Open Import roadmap');
-    openImportBtn.click();
+    const openBuilderBtn = [...document.querySelectorAll('.build-guide-card button')].find(b => b.textContent === 'Open the roadmap builder');
+    openBuilderBtn.click();
 
     expect(document.querySelector('.build-guide-card')).toBeNull();
-    await vi.waitFor(() => expect(openImportRoadmapModal).toHaveBeenCalled());
+    await vi.waitFor(() => expect(openCreateRoadmapModal).toHaveBeenCalled());
   });
 
   it('"Got it" closes the guide without picking anything', async () => {

@@ -4,7 +4,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
 
 // Issue #6 Phase 9 — extracted out of openModal() below so every other ad hoc
 // `.modal-overlay`/`.modal-card` implementation in the app (confirmDialog.js,
-// newRoadmapModal.js, importRoadmapModal.js, addToDailyTodoModal.js,
+// importRoadmapModal.js, addToDailyTodoModal.js,
 // buildYourOwnGuide.js, dailyTodoGuide.js, deleteAccountModal.js) can
 // get real Tab-cycling focus containment without duplicating this logic —
 // they already had Escape-to-close, but none of them kept Tab focus inside

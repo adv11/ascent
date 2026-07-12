@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildImportPrompt, IMPORT_PROMPT_VERSION } from '../../src/data/importPrompt.js';
+import { buildImportPrompt, buildImportFixPrompt, IMPORT_PROMPT_VERSION } from '../../src/data/importPrompt.js';
 
 describe('buildImportPrompt', () => {
   it('renders the schema contract and a placeholder topic line when nothing is provided', () => {
@@ -67,5 +67,86 @@ describe('buildImportPrompt', () => {
     const prompt = buildImportPrompt('Rust', { experienceLevel: 'Beginner' });
     expect(prompt).toContain('"schemaVersion": 1');
     expect(prompt).toContain('Do not add any fields beyond those listed above.');
+  });
+
+  it('renders weekly time commitment alone', () => {
+    const prompt = buildImportPrompt('Rust', { weeklyTime: '2–5 hrs/week' });
+    expect(prompt).toContain('Weekly time commitment: 2–5 hrs/week');
+  });
+
+  it('renders preferred resource types as a joined list, omits when empty', () => {
+    const prompt = buildImportPrompt('Rust', { resourceTypes: ['YouTube videos', 'Official docs'] });
+    expect(prompt).toContain('Preferred resource types: YouTube videos, Official docs');
+
+    expect(buildImportPrompt('Rust', { resourceTypes: [] })).not.toContain('Preferred resource types:');
+    expect(buildImportPrompt('Rust', {})).not.toContain('Preferred resource types:');
+  });
+
+  it('always documents the resources-carrying object item shape and its rules, regardless of options', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt).toContain('"resources"');
+    expect(prompt).toContain('up to 5 per item');
+    expect(prompt).toContain('never invent a URL');
+  });
+
+  // Issue #100 follow-up — real-world use found the AI omitting resources
+  // from nearly every roadmap once the prompt only weakly suggested them
+  // ("only include if confident"); the wording was strengthened to actively
+  // encourage resources for most items instead of reading as an easy-to-skip
+  // edge case, while still forbidding invented URLs.
+  it('actively encourages including resources for most items, not just permits them', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt).toContain('Use the object form with "resources" for MOST items');
+    expect(prompt).toContain('this is expected and encouraged');
+  });
+
+  it('renders all six fields together, each on its own line, in a stable order', () => {
+    const prompt = buildImportPrompt('Rust', {
+      experienceLevel: 'Advanced',
+      timeframe: '1 year',
+      goal: 'Academic or exam prep',
+      weeklyTime: '10+ hrs/week',
+      resourceTypes: ['Online courses'],
+      alreadyKnow: 'basic syntax'
+    });
+    const lines = prompt.trim().split('\n').slice(-6);
+    expect(lines).toEqual([
+      'Experience level: Advanced',
+      'Target timeframe: 1 year',
+      'Goal / context: Academic or exam prep',
+      'Weekly time commitment: 10+ hrs/week',
+      'Preferred resource types: Online courses',
+      'Already know: basic syntax'
+    ]);
+  });
+});
+
+describe('buildImportFixPrompt', () => {
+  it('handles an empty errors array without throwing, and still restates the contract', () => {
+    const prompt = buildImportFixPrompt([]);
+    expect(prompt).toContain(`schema version ${IMPORT_PROMPT_VERSION}`);
+    expect(prompt).toContain('resend the complete corrected JSON');
+  });
+
+  it('lists a single error verbatim', () => {
+    const prompt = buildImportFixPrompt(['title is required']);
+    expect(prompt).toContain('- title is required');
+  });
+
+  it('lists multiple errors verbatim, one per line', () => {
+    const errors = ['title is required', 'phases[0].title is required', 'item at phases[0].sections[0].items[0] is invalid'];
+    const prompt = buildImportFixPrompt(errors);
+    errors.forEach(message => expect(prompt).toContain(`- ${message}`));
+  });
+
+  it('always instructs the AI to resend the complete JSON, not a diff/patch', () => {
+    const prompt = buildImportFixPrompt(['title is required']);
+    expect(prompt.toLowerCase()).toContain('complete corrected json');
+    expect(prompt).toContain('no markdown fences');
+  });
+
+  it('always includes the schema-version reminder regardless of error count', () => {
+    expect(buildImportFixPrompt(['a'])).toContain(`schema version ${IMPORT_PROMPT_VERSION}`);
+    expect(buildImportFixPrompt(['a', 'b', 'c'])).toContain(`schema version ${IMPORT_PROMPT_VERSION}`);
   });
 });

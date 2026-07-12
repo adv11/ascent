@@ -124,6 +124,14 @@ const ICON_SHAPES = {
   bell: () => [
     { d: 'M6 10.5a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14.5 6 10.5z', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
     { d: 'M10.3 19.5a1.9 1.9 0 0 0 3.4 0', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+  ],
+  // The dashboard's "Resources" filter chip (issue #100 follow-up) — a
+  // chain-link glyph, adapted from Feather's "link" icon (MIT licensed),
+  // same precedent as the settings gear above.
+  link: () => [
+    { d: 'M9.5 14.5l5-5', 'stroke-linecap': 'round' },
+    { d: 'M11 6.5l1-1a3.5 3.5 0 0 1 5 5l-1 1', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+    { d: 'M13 17.5l-1 1a3.5 3.5 0 0 1-5-5l1-1', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
   ]
 };
 

@@ -2983,3 +2983,156 @@ behavior. Any future feature announced in `changelog.json` with a real UI elemen
 opt in the same way: add `featureKey` to its changelog item, drop `createFeatureBadge(key)` into
 that element's `el()` children (filtered for `null`), and call `dismissFeatureBadge(key)` from
 its interaction handler.
+
+### 2026-07-12 — PR TBD — Retire manual roadmap creation; merge onboarding cards; two-column AI-creation modal (issue #100)
+
+`src/ui/components/newRoadmapModal.js` (and its test) is deleted — the standalone "start
+truly blank" entry point on `/onboarding` is retired, since it handed a first-time user a
+zero-phase roadmap with no guidance, a strictly worse experience than the already-existing
+AI-assisted path. `onboarding.js`'s two separate cards ("Create your own roadmap" /
+"Import roadmap") collapse into one "Create your own roadmap" card, which now opens
+`importRoadmapModal.js`'s `openCreateRoadmapModal()` (renamed from
+`openImportRoadmapModal()`) directly. Dashboard-level manual phase/section/item CRUD is
+completely untouched — this issue only removes the *standalone* empty-seed entry point,
+not the editing tools every custom roadmap (AI-created or not) already used to fine-tune
+itself afterward.
+
+The creation modal itself is redesigned from a single stacked-scroll flow (issue #64) into
+a two-column "Build your prompt" / "Paste the AI's answer" grid (`.import-modal-grid`,
+`app.css`) at a new `min-width: 1025px` tier, collapsing back to the original single-column
+flow below it — each column scrolls independently, and Import/Cancel now live in a
+`.modal-card`-level footer outside the grid so they're always reachable. Two real
+correctness fixes rode along: (1) "Copy prompt" is now disabled until the topic field is
+non-empty — previously a user could copy the prompt with its literal placeholder text and
+no warning; (2) `parseImportJson()` (`src/core/roadmap/importValidator.js`) now strips a
+single leading/trailing fenced code block before parsing, recovering from the most common
+real-world AI-output failure mode (assistants wrapping JSON in ` ```json ` fences despite
+being told not to). A new `buildImportFixPrompt(errors)` (`src/data/importPrompt.js`, same
+module/versioning discipline as `buildImportPrompt`) composes a ready-to-copy message a
+user can hand back to their AI assistant when validation fails, restating the schema
+contract and listing the specific errors — surfaced via a new "Copy fix-it message for
+your AI" button next to a plain-language error summary, with the original technical error
+list kept behind a "Show technical details" disclosure. `buildYourOwnGuide.js` is rewritten
+from "two alternative starting methods" (add manually / generate with AI) to a single flow
+(generate with AI, then fine-tune manually afterward), matching the onboarding change.
+
+See `.claude/rules/roadmap-store.md`'s "Manual 'start truly blank' roadmap creation was
+retired" and "AI-assisted roadmap creation" sections, and `.claude/rules/ui-styling.md`'s
+"A two-column modal with a shared header/footer outside the grid" section, for the full
+writeup.
+
+### 2026-07-12 — PR TBD — Creation-modal revamp: resource links, more filters, always-visible Copy step, redesigned card (issue #100 follow-up)
+
+Live feedback on the just-shipped two-column modal (previous entry) drove a second pass,
+no new files added — pure follow-up to the same components. Four pieces:
+
+1. **Readability + layout fix.** `.import-prompt-block`'s font size went from 12px to the
+   app's `--text-sm` token (13px). More substantially, the "Copy it" step (heading, Copy
+   prompt button, hint text) used to live inside the same scrollable area as the topic
+   field and customization filters — on a shorter window it could be scrolled out of view
+   entirely, unreachable on first open without knowing to scroll. Fixed by restructuring
+   `.import-column-build` into a flex column with a scrollable `.import-column-scroll`
+   child (`flex: 1; min-height: 0; overflow-y: auto`) and a sibling `.import-copy-sticky`
+   block that sits outside the scrolling area in normal flow — not `position: sticky`,
+   which would need its own containing-block reasoning; a plain flex sibling is simpler
+   and just as effective. See `.claude/rules/ui-styling.md`'s new "sticky-by-layout"
+   section for the reusable pattern.
+2. **Numbered step badges + entrance animation.** Each of the six build/paste steps
+   (`buildStepHeading()`, `importRoadmapModal.js`) now renders a small circular numbered
+   badge (`.import-step-badge`) instead of plain "1. …" text, with a short staggered
+   fade-in (`.import-step-heading.entering`/`.entering-delay-N`, reusing the existing
+   `item-entering` keyframes and `--stagger-base` token `.check-item` already
+   established — no new keyframes needed).
+3. **Two more optional filters.** "Weekly time commitment" (single-select chips) and
+   "Preferred resource types" (the first **multi**-select field in this modal —
+   `buildMultiChipGroup()`, a new sibling to the existing `buildChipGroup()`) join the
+   existing four, each appending one line to `buildImportPrompt()`'s instructions block
+   exactly like the others — no schema change, no `IMPORT_PROMPT_VERSION` bump.
+4. **Resource links in the generated schema.** The real substantive addition: the import
+   JSON schema now accepts a third item shape — `{ title, priority?, resources? }` —
+   alongside the existing plain-string and tuple forms, where `resources` is an array of
+   up to 5 `{ label, url }` pairs. `buildImportPrompt()` instructs the AI to include real,
+   working links (YouTube, official docs, articles/blogs, courses) and never fabricate a
+   URL. `validateImportPayload()` (`src/core/roadmap/importValidator.js`) validates each
+   resource against the same rules `limits.js`'s `isValidResource` already enforces
+   everywhere else a resource enters the store (label/url length caps, http(s)-only URL —
+   a local `isHttpUrl()` duplicate of `src/ui/dom.js`'s `isValidUrl()`, kept as a
+   duplicate rather than a cross-layer import so this module stays DOM-free).
+   `adaptImportToRoadmap()` maps validated resources straight onto `item.resources`, so an
+   AI-generated topic with resources renders identically to one whose links were added by
+   hand — the existing resource-count badge/type-icon/"Open" link in `dashboard.js`/
+   `itemPanel.js` needed zero changes.
+5. **Card redesign.** `.template-card-create` (the "Create your own roadmap" card) went
+   from a plain dashed-border box to a brand-tinted background/border/glow plus a new
+   "AI-powered" pill (`.template-card-ai-badge`) — real feedback called the old version
+   easy to miss among the built-in template cards. Every value used is an existing
+   theme-aware token (`--brand-light`/`--brand-light-border`/`--shadow-brand`), no new
+   color literals.
+
+See `.claude/rules/roadmap-store.md`'s updated "AI-assisted roadmap creation" and "Prompt
+customization inputs" sections, and `.claude/rules/ui-styling.md`'s new "sticky-by-layout"
+section, for the full writeup.
+
+### 2026-07-12 — PR TBD — Fix real-world validation false-positives on resource URLs/priority casing; restore CI (issue #100 follow-up)
+
+Real-world testing of the resources feature above surfaced two problems:
+
+1. **Roadmaps were failing validation intermittently** — "item is invalid" errors spread
+   across many unrelated topics, sometimes on the first and second generation attempt.
+   Traced to two AI-output quirks previously treated as hard failures: a resource URL
+   missing its `https://` scheme (very common — `docs.docker.com` "looks complete" to a
+   model without it), and a priority value with different casing/whitespace (`p0`,
+   ` P0 `). Fixed by normalizing priority (trim + uppercase, `normalizePriority()` in
+   `importValidator.js`, applied everywhere a priority is checked) and by moving resource
+   URL *protocol* correctness entirely out of validation and into
+   `adaptImportToRoadmap()`'s new `sanitizeResources()` — auto-prepends `https://` to a
+   bare-domain URL, silently drops a resource whose URL is still invalid after that,
+   never fails the whole topic over one bad link. A secondary symptom this also fixes:
+   some AI assistants, after repeated "fix it and resend" round-trips, gave up and
+   stopped including resources at all — with roadmaps succeeding on the first real
+   attempt far more often, resources now come through as originally generated.
+2. **CI was red on the PR** — two unrelated causes, both now fixed: (a) ESLint's
+   theme-correctness check (`scripts/lint-theme.mjs`) flagged `.import-step-badge`'s
+   `color: #fff` for missing the required `/* intentional: ... */` comment (issue #116's
+   convention) — added, same pattern as `.reset-success-icon`/`.template-card-delete:hover`
+   above it in `app.css`. (b) `tests/e2e/customRoadmap.test.js` was missed when manual
+   "start truly blank" creation was retired — it still drove the deleted title/description
+   modal to seed its test roadmaps. Rewritten to seed via the AI-import flow (a minimal
+   valid paste) instead; the actual manual phase/section/topic CRUD the file exists to
+   test (dashboard-level, untouched by #100) is unchanged.
+
+See `.claude/rules/roadmap-store.md`'s new "A single malformed resource URL or oddly-cased
+priority must never fail the whole roadmap" section for the full writeup.
+
+### 2026-07-12 — PR TBD — Corrupted-text detection; "Resources" filter chip (issue #100 follow-up)
+
+Two more real-world reports on the same AI-import flow, both traced and fixed:
+
+1. **Data corruption, not a display bug.** A pasted roadmap rendered several topic titles
+   as garbled text mixing readable words with URL-encoded JSON fragments (`Learn](https://
+   example.com%22]},{%22title%22:%22Learn) the command line`). Ran the exact reported
+   payload through `validateImportPayload()`/`adaptImportToRoadmap()` directly and got
+   clean output — proving the corruption was already present in what got pasted, most
+   likely some AI chat UI's "select and copy rendered text" auto-linkifying a raw URL
+   inside the JSON code block and splicing markdown-link syntax into neighboring text.
+   Since the result is still syntactically valid JSON, it passed every existing check.
+   `importValidator.js` gained `looksCorrupted()`/`findItemCorruption()` — a heuristic
+   marker scan (`%22`, `"title":`, etc.) run on every title/section-name/phase-name/
+   resource-label/resource-url *before* normal shape validation, producing a specific,
+   actionable error naming the exact field and suggesting the "copy raw" fix, instead of
+   either silently importing garbage or a generic "item is invalid". Refactored
+   `isValidItem()`/`findItemCorruption()` into smaller named helpers (`isValidTupleItem()`,
+   `isValidObjectItem()`, `extractItemTitleText()`, `findCorruptedResourceIndex()`) while
+   at it, to stay under the repo's complexity lint threshold.
+2. **New "Resources" filter chip** (`dashboard.js`) — real feedback that there was no way
+   to see every resource link in a roadmap without opening each topic's edit panel one at
+   a time. A fifth chip alongside All/P0-P3; `matchesActiveFilter()` (shared by
+   `filterItems()`/`priorityCounts()`) treats it as "has ≥1 resource". Active, it expands
+   each matched row's resources inline (`renderInlineResources()`) as clickable,
+   type-colored links — reusing `linkDetector.js`'s existing per-type icon/color and
+   `.check-body`'s existing `flex-wrap: wrap` (a `flex-basis: 100%` wrapper drops the list
+   onto its own line with zero structural change to the row). A new `link` icon shape was
+   added to `icons.js` for the chip itself.
+
+See `.claude/rules/roadmap-store.md`'s new "Corrupted-text detection" and "'Resources'
+filter chip" sections for the full writeup.

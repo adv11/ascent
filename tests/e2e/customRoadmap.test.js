@@ -4,30 +4,56 @@ import { test, expect } from './fixtures.js';
 // needs a real (anonymous) sign-in so roadmapStore's Firebase paths actually run.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
-test.describe('manual roadmap creation — full phase/section/topic CRUD (issue #4)', () => {
+// Issue #100 retired manual "start truly blank" creation — every custom
+// roadmap now starts via the AI-import flow (paste a minimal valid payload)
+// instead of the old title/description-only modal. Everything after
+// creation — the dashboard-level manual phase/section/topic CRUD this file
+// actually exercises — is untouched by that change.
+function minimalImportJson(title) {
+  return JSON.stringify({
+    schemaVersion: 1,
+    title,
+    phases: [{
+      title: 'Seed Phase',
+      priority: 'P1',
+      sections: [{ title: 'Seed Section', items: ['Seed topic'] }]
+    }]
+  });
+}
+
+async function createCustomRoadmapViaImport(page, title) {
+  await page.goto('/#/signin');
+  await page.click('text=Continue as guest');
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+  await page.locator('.template-card-create .template-card-pick').click();
+  const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
+  await expect(modal).toBeVisible();
+  await modal.locator('.import-paste-area').fill(minimalImportJson(title));
+  await modal.locator('button', { hasText: 'Import roadmap' }).click();
+  await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+}
+
+test.describe('manual roadmap creation — full phase/section/topic CRUD (issue #4, seeded via issue #100\'s AI-import flow)', () => {
   test('creating a roadmap, adding a phase, a section, and a topic all render correctly', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/#/signin');
-    await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-
-    await page.click('.template-card-create');
-    const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
-    await expect(modal).toBeVisible();
-    await modal.locator('input.field-input').fill('My Test Roadmap');
-    await modal.locator('textarea.field-input').fill('A roadmap for testing');
-    await modal.locator('button', { hasText: 'Create roadmap' }).click();
-
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await createCustomRoadmapViaImport(page, 'My Test Roadmap');
     await expect(page.locator('.current-roadmap-badge')).toContainText('My Test Roadmap');
-    // A brand-new custom roadmap starts with zero phases — only the "+ Add
-    // phase" control, no phase cards yet.
-    await expect(page.locator('.phase-card')).toHaveCount(0);
+    // The seed payload already has one phase — this is the "add a second
+    // phase and CRUD it" scenario, not a from-empty one anymore, since #100
+    // dropped the from-empty starting point.
+    await expect(page.locator('.phase-card')).toHaveCount(1);
 
     await page.fill('input[placeholder="New phase name…"]', 'Phase One');
     await page.locator('button', { hasText: '+ Add phase' }).click();
     const phaseCard = page.locator('.phase-card', { hasText: 'Phase One' });
     await expect(phaseCard).toBeVisible();
+    // Only the first phase (index 0) starts open by default — with the seed
+    // phase already occupying index 0, the freshly-added phase lands at
+    // index 1 and starts collapsed, so its .phase-manage-row (inside
+    // .phase-body, `.phase-card.open .phase-body { display: block }`) isn't
+    // reachable until its header is clicked.
+    await phaseCard.locator('.phase-head').click();
     // Freshly-added phase has zero sections — must still render the card
     // (regression check: it must not disappear, since that would hide the
     // only way to reach "+ Add section").
@@ -44,17 +70,19 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
   test('renaming a phase and a section updates their titles and keeps the topic filed correctly', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/#/signin');
-    await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.click('.template-card-create');
-    await page.locator('.modal-overlay input.field-input').fill('Rename Test');
-    await page.locator('.modal-overlay button', { hasText: 'Create roadmap' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await createCustomRoadmapViaImport(page, 'Rename Test');
 
     await page.fill('input[placeholder="New phase name…"]', 'Old Phase');
     await page.locator('button', { hasText: '+ Add phase' }).click();
-    const phaseCard = page.locator('.phase-card');
+    // A `hasText` filter re-evaluates lazily on every use — after the rename
+    // below, a locator still filtered on "Old Phase" would stop matching
+    // anything. `+ Add phase` always appends, so the freshly-added phase is
+    // reliably the last `.phase-card`; keep that positional handle instead.
+    const phaseCard = page.locator('.phase-card').last();
+    await expect(phaseCard).toContainText('Old Phase');
+    // See the "creating a roadmap..." test's comment — a freshly-added phase
+    // lands at index 1 (behind the seed phase) and starts collapsed.
+    await phaseCard.locator('.phase-head').click();
     await phaseCard.locator('input[placeholder="New section name…"]').fill('Old Section');
     await phaseCard.locator('button', { hasText: '+ Add section' }).click();
     await phaseCard.locator('input[placeholder="Add a custom topic…"]').fill('Topic');
@@ -62,7 +90,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
     await phaseCard.locator('.phase-manage-row input').fill('New Phase');
     await phaseCard.locator('.phase-manage-row button', { hasText: 'Rename' }).click();
-    await expect(page.locator('.phase-name')).toContainText('New Phase');
+    await expect(phaseCard.locator('.phase-name', { hasText: 'New Phase' })).toBeVisible();
 
     await phaseCard.locator('.section-manage-row input').fill('New Section');
     await phaseCard.locator('.section-manage-row button', { hasText: 'Rename' }).click();
@@ -72,17 +100,14 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
   test('deleting a section removes its topics; deleting a phase removes the whole card', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/#/signin');
-    await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.click('.template-card-create');
-    await page.locator('.modal-overlay input.field-input').fill('Delete Test');
-    await page.locator('.modal-overlay button', { hasText: 'Create roadmap' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await createCustomRoadmapViaImport(page, 'Delete Test');
 
     await page.fill('input[placeholder="New phase name…"]', 'Doomed Phase');
     await page.locator('button', { hasText: '+ Add phase' }).click();
-    const phaseCard = page.locator('.phase-card');
+    const phaseCard = page.locator('.phase-card', { hasText: 'Doomed Phase' });
+    // See the "creating a roadmap..." test's comment — a freshly-added phase
+    // lands at index 1 (behind the seed phase) and starts collapsed.
+    await phaseCard.locator('.phase-head').click();
     await phaseCard.locator('input[placeholder="New section name…"]').fill('Doomed Section');
     await phaseCard.locator('button', { hasText: '+ Add section' }).click();
     await phaseCard.locator('input[placeholder="Add a custom topic…"]').fill('Doomed Topic');
@@ -94,18 +119,12 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
     await phaseCard.locator('.phase-manage-row button', { hasText: 'Delete phase' }).click();
     await page.locator('.modal-overlay [data-action="confirm"]').click();
-    await expect(page.locator('.phase-card')).toHaveCount(0);
+    await expect(page.locator('.phase-card', { hasText: 'Doomed Phase' })).toHaveCount(0);
   });
 
   test('the onboarding picker lists the custom roadmap with a delete button, and deleting it removes the card', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await page.goto('/#/signin');
-    await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.click('.template-card-create');
-    await page.locator('.modal-overlay input.field-input').fill('Deletable Roadmap');
-    await page.locator('.modal-overlay button', { hasText: 'Create roadmap' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await createCustomRoadmapViaImport(page, 'Deletable Roadmap');
 
     await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
@@ -126,13 +145,15 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
-    await page.click('.template-card-create');
+    await page.locator('.template-card-create .template-card-pick').click();
     const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
     await expect(modal).toBeVisible();
     await modal.locator('button', { hasText: 'Cancel' }).click();
 
     await expect(modal).toHaveCount(0);
     await expect(page).toHaveURL(/#\/onboarding/);
-    await expect(page.locator('.template-card')).toHaveCount(9);
+    // 7 built-in templates + the single "Create your own roadmap" card
+    // (issue #100 merged what used to be two separate cards into one).
+    await expect(page.locator('.template-card')).toHaveCount(8);
   });
 });

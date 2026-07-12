@@ -867,15 +867,40 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .template-card-hidden .btn { margin-top: auto; align-self: flex-start; }
 
-.template-card-create, .template-card-import {
+/* Issue #100 revamp — the plain dashed-border box read as an inert
+   placeholder rather than the primary "start something new" action it is
+   (real user feedback: "I don't think it is good we need to remake this").
+   A glowing brand-colored border + a small "AI-powered" pill make it the
+   visually loudest card in the grid — deliberately keeping the same
+   .template-card `--surface-glass`/`backdrop-filter` base every other card
+   uses (never overriding `background` to a solid fill) so it reads as a
+   highlighted variant of the existing card language, not a mismatched flat
+   block dropped into a glassmorphism grid (a real regression reported live
+   in dark theme: solid `--brand-light` fill looked like an opaque colored
+   box next to every neighboring card's translucency). */
+.template-card-create {
   align-items: center;
   justify-content: center;
   text-align: center;
-  border-style: dashed;
   gap: 6px;
+  border: 1.5px solid var(--brand);
+  box-shadow: var(--shadow-brand);
 }
-.template-card-create .template-card-icon, .template-card-import .template-card-icon { color: var(--brand); }
-.template-card-create .template-card-name, .template-card-import .template-card-name { color: var(--brand-dark); }
+.template-card-create:hover, .template-card-create:has(.template-card-pick:focus-visible) { box-shadow: var(--shadow-lg), var(--shadow-brand); }
+.template-card-create .template-card-icon { color: var(--brand); }
+.template-card-create .template-card-name { color: var(--brand-dark); }
+.template-card-ai-badge {
+  align-self: center;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand-dark);
+  background: var(--panel);
+  border: 1px solid var(--brand-light-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
 
 /* Dashboard */
 .dashboard { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
@@ -1389,26 +1414,74 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .share-modal-actions .btn { width: 100%; }
 }
 
-/* Import roadmap modal (issue #4; collapsed to a single flow in issue #64) */
-.import-modal-card { max-width: 560px; display: grid; gap: 4px; max-height: 88vh; overflow-y: auto; }
-.import-tab-panel { display: grid; gap: 12px; }
-.import-options { display: grid; gap: 12px; padding: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); }
+/* "Create your own roadmap" AI-creation modal (issues #4/#64, redesigned as a
+   two-column build/paste layout in #100). Below the ≥1024px tier (see the
+   breakpoint scale at the bottom of this file) this collapses to the single
+   top-to-bottom column the flow always used — only the grid/footer split
+   below is gated on that tier, not the content itself. */
+.import-modal-card { max-width: 1040px; display: grid; gap: 16px; max-height: 88vh; overflow-y: auto; }
+.import-modal-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.import-column { min-width: 0; }
+.import-column-paste { display: grid; gap: 12px; align-content: start; }
+/* The build column is a flex column, not a plain scrolling block — the
+   "Copy it" step (`.import-copy-sticky`) is a sibling of the scrollable
+   `.import-column-scroll`, not a descendant of it, so it always renders in
+   its own natural space below whatever height the scroll area is given,
+   instead of requiring a scroll to reach it. This is what fixes "the prompt
+   and Copy button are under the scrollable, not visible on first open"
+   without removing the scroll itself — the topic/filters area still scrolls
+   independently, the copy step never does. */
+.import-column-build { display: flex; flex-direction: column; min-width: 0; }
+.import-column-scroll { display: grid; gap: 14px; align-content: start; }
+.import-step-heading { display: flex; align-items: center; gap: 10px; font-size: var(--text-sm); font-weight: 800; color: var(--ink); margin: 6px 0 0; }
+.import-step-heading:first-child { margin-top: 0; }
+/* intentional: fixed white text on a solid --brand background, same theme-agnostic pattern as .reset-success-icon/.template-card-delete:hover above (issue #116) */
+.import-step-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.field-hint { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.import-options { display: grid; gap: 14px; padding: 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); }
 .import-option-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .import-prompt-block {
   font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: var(--text-sm);
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
   background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 16px;
   max-height: 260px;
   overflow-y: auto;
   color: var(--ink);
 }
+/* Always visible the instant the modal opens — see the .import-column-build
+   comment above. A top border + panel background give it a subtle "this is
+   a fixed footer, not just more scrolling content" cue even though it isn't
+   position: fixed/sticky. */
+.import-copy-sticky {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+.import-copy-hint { font-size: 12px; color: var(--muted); margin: 0; }
+.import-copy-instructions { font-size: 12px; color: var(--muted); margin: 0; }
 .import-paste-area { font-family: var(--mono); font-size: 12px; resize: vertical; }
+.import-technical-toggle { justify-self: start; }
 .import-errors {
   list-style: none;
   display: grid;
@@ -1422,6 +1495,24 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   font-size: 12px;
 }
 .import-errors:empty { display: none; }
+.import-errors[hidden] { display: none; }
+.import-modal-footer { display: grid; gap: 10px; }
+
+/* ≥1024px (tablet landscape / small laptop and up) — the two-column
+   "build your prompt" / "paste the AI's answer" split. Each column scrolls
+   independently (not the whole .modal-card) so the prompt-building column
+   can stay in view while scrolling the paste column, or vice versa — the
+   exact disorientation a single shared scroll caused pre-#100. The paste
+   textarea is set to fill its column so it reads as the visually dominant
+   element there, per the issue's "attention should land on the paste box"
+   requirement. */
+@media (min-width: 1025px) {
+  .import-modal-grid { grid-template-columns: 45% minmax(0, 1fr); gap: 32px; }
+  .import-column-build { max-height: 60vh; }
+  .import-column-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+  .import-column-paste { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+  .import-column-paste .import-paste-area { min-height: 260px; flex: 1; }
+}
 
 .dashboard-header {
   background: var(--surface-glass);
@@ -2092,6 +2183,22 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .check-item.entering { animation: none; }
 }
 
+/* Same item-entering keyframes/stagger token reused for the "Create your own
+   roadmap" modal's numbered step headings (issue #100 revamp) — a short,
+   staggered fade-in so the six steps read as a guided sequence instead of
+   all snapping in at once. */
+.import-step-heading.entering { animation: item-entering var(--duration-base) var(--ease-out) both; }
+.import-step-heading.entering-delay-0 { animation-delay: 0ms; }
+.import-step-heading.entering-delay-1 { animation-delay: calc(var(--stagger-base) * 1); }
+.import-step-heading.entering-delay-2 { animation-delay: calc(var(--stagger-base) * 2); }
+.import-step-heading.entering-delay-3 { animation-delay: calc(var(--stagger-base) * 3); }
+.import-step-heading.entering-delay-4 { animation-delay: calc(var(--stagger-base) * 4); }
+.import-step-heading.entering-delay-5 { animation-delay: calc(var(--stagger-base) * 5); }
+.import-step-heading.entering-delay-6 { animation-delay: calc(var(--stagger-base) * 6); }
+@media (prefers-reduced-motion: reduce) {
+  .import-step-heading.entering { animation: none; }
+}
+
 .check-box {
   width: 20px;
   height: 20px;
@@ -2166,6 +2273,18 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .resource-count:hover { transform: translateY(-1px); }
 .resource-count:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 
+/* Issue #100 follow-up — expanded, always-visible resource links shown on a
+   checklist row when the "Resources" filter chip is active (dashboard.js's
+   renderInlineResources()), alongside the existing collapsed count badge.
+   `flex-basis: 100%` on the wrapper drops it onto its own line within
+   .check-body's existing `flex-wrap: wrap` row — no structural change to
+   .check-body needed, the same wrap behavior that already lets .priority-tag
+   /.resource-count reflow on narrow widths handles this for free. */
+.check-resources-inline { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; margin-top: 2px; }
+.resource-inline-link { text-decoration: none; cursor: pointer; transition: transform 140ms ease, border-color 140ms ease; }
+.resource-inline-link:hover { transform: translateY(-1px); }
+.resource-inline-link:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+
 .notes-indicator {
   display: inline-flex;
   align-items: center;
@@ -2219,7 +2338,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    next to the bordered/shadowed phase-cards below it. Matches .phase-card's
    box but keeps a dashed border throughout (rather than just the top edge)
    as the same "this creates something new" cue used by
-   .template-card-create/.template-card-import/.template-card-hidden. */
+   .template-card-create/.template-card-hidden. */
 .add-row-standalone {
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius);
