@@ -1,5 +1,6 @@
 import { el } from '../dom.js';
 import { attachFocusTrap } from './modal.js';
+import { createSelect } from './select.js';
 import { MAX_TODO_TITLE_LENGTH, DURATION_PRESETS, MIN_DURATION_MS, MAX_DURATION_MS } from '../../core/dailyTodo/limits.js';
 
 const CUSTOM_VALUE = 'custom';
@@ -16,6 +17,7 @@ export function openAddToDailyTodoModal({ topicTitle }) {
   return new Promise(resolve => {
     function close(result) {
       detachTrap();
+      durationSelect._cleanup?.();
       overlay.remove();
       resolve(result);
     }
@@ -27,11 +29,10 @@ export function openAddToDailyTodoModal({ topicTitle }) {
       maxlength: String(MAX_TODO_TITLE_LENGTH)
     });
 
-    const durationSelect = el('select', { className: 'field-input todo-duration-select' }, [
-      ...DURATION_PRESETS.map(p => el('option', { value: String(p.ms), text: p.label })),
-      el('option', { value: CUSTOM_VALUE, text: 'Custom…' })
-    ]);
-    durationSelect.value = String(DEFAULT_PRESET_MS);
+    const durationSelect = createSelect(
+      [...DURATION_PRESETS.map(p => ({ value: String(p.ms), label: p.label })), { value: CUSTOM_VALUE, label: 'Custom…' }],
+      { value: String(DEFAULT_PRESET_MS), ariaLabel: 'Due in', className: 'todo-duration-select' }
+    );
 
     const customHoursInput = el('input', {
       className: 'field-input todo-custom-hours',

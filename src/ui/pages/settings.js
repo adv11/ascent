@@ -17,6 +17,7 @@ import { createIcon } from '../components/icons.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPrompt } from '../../services/pwaInstall.js';
 import { createFeatureBadge, dismissFeatureBadge } from '../components/featureBadge.js';
+import { createSelect } from '../components/select.js';
 
 const FILTER_OPTIONS = [
   { value: 'ALL', label: 'All' },
@@ -218,18 +219,18 @@ function buildProfileSection(user) {
 }
 
 function buildPreferencesSection() {
-  const themeSelect = el('select', { className: 'field-input settings-select' }, [
-    el('option', { value: 'light', text: 'Light' }),
-    el('option', { value: 'dark', text: 'Dark' })
-  ]);
-  themeSelect.value = getTheme();
+  const themeSelect = createSelect(
+    [{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }],
+    { value: getTheme(), ariaLabel: 'Theme', className: 'settings-select' }
+  );
   themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
   const unsubTheme = onThemeChange(theme => { themeSelect.value = theme; });
 
-  const filterSelect = el('select', { className: 'field-input settings-select' },
-    FILTER_OPTIONS.map(opt => el('option', { value: opt.value, text: opt.label }))
-  );
-  filterSelect.value = readDefaultFilterPreference();
+  const filterSelect = createSelect(FILTER_OPTIONS, {
+    value: readDefaultFilterPreference(),
+    ariaLabel: 'Default filter',
+    className: 'settings-select'
+  });
   filterSelect.addEventListener('change', () => {
     localStorage.setItem(KEYS.DEFAULT_FILTER, filterSelect.value);
     showToast('Default filter saved.', 'success');
@@ -286,7 +287,12 @@ function buildPreferencesSection() {
     installRow
   ]);
 
-  section._cleanup = () => { unsubTheme(); unsubInstall(); };
+  section._cleanup = () => {
+    unsubTheme();
+    unsubInstall();
+    themeSelect._cleanup?.();
+    filterSelect._cleanup?.();
+  };
   return section;
 }
 

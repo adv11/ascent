@@ -3172,3 +3172,38 @@ emoji/SVG-icon mismatch on the onboarding picker's card grid to be the single mo
 
 See `.claude/rules/ui-styling.md`'s revised "When to use `createIcon()` vs.
 `createDecorativeIcon()`" section for the full policy.
+
+### 2026-07-12 — PR TBD — Component consistency pass (issue #136 Phase 3)
+
+New module **`src/ui/components/select.js`** — `createSelect(options, { value, ariaLabel,
+className })` — a custom-styled listbox that mirrors a native `<select>`'s API (`.value`
+get/set with no `change` dispatch on programmatic set, `.addEventListener('change', fn)`
+on user-driven selection, `.disabled` proxy) so every existing `el('select', ...)` call
+site only needed its element-construction line swapped, not its surrounding logic.
+Keyboard-operable per the ARIA combobox/listbox pattern (Arrow keys, Home/End, Enter/Space,
+Escape, type-ahead); the trigger is a real `<button>` so a wrapping `<label>` associates it
+exactly like a native `<select>` did. The listbox itself is appended straight to
+`document.body` while open and removed on close (a portal) rather than living inside its
+caller's DOM subtree — found live that `itemPanel.js`'s `.item-panel` has a permanent
+`transform` for its slide-in animation, which per the CSS spec hijacks the positioning
+context of any `position: fixed` descendant, so a naively-nested listbox rendered offset
+from its trigger by roughly the panel's own position. The portal approach sidesteps this
+bug class structurally for every current and future call site, rather than requiring each
+one to be audited for a transformed ancestor. Converted every bare `<select>` in the app:
+`itemPanel.js`'s Priority field, `dailyTodoPanel.js`'s and `addToDailyTodoModal.js`'s
+duration dropdowns, `importRoadmapModal.js`'s Goal/context field, and `settings.js`'s Theme
+and Default filter selects — each caller now also calls `select._cleanup()` (removes the
+shared `document` click listener and detaches the portal listbox) from its own teardown
+path, per the existing component-cleanup convention.
+
+`app.css` gained a shared "metadata chip" box-model scale — `--chip-height`/
+`--chip-padding-x`/`--chip-radius` (`:root`) — now read by `.badge`, `.resource-count`, and
+the template card's `-current-badge`/`-started-badge`/`-ai-badge` pills, so every small
+inline badge in the app shares identical height/padding/corner-radius regardless of its
+own font-size; each component's colors stay semantically distinct. `.priority-tag` reads
+only `--chip-height` (for row alignment) and deliberately keeps its bare-text treatment,
+since adding a background would need its own WCAG contrast pass against every `--p0`–`--p3`
+pair in both themes.
+
+See `.claude/rules/ui-styling.md`'s new `createSelect()` and chip-scale sections for the
+full API/usage rules.

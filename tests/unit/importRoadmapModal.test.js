@@ -86,7 +86,9 @@ describe('openCreateRoadmapModal — build-your-prompt column', () => {
     oneMonthChip.click();
     expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Target timeframe: 1 month');
 
-    const goalSelect = overlay.querySelector('select.field-input');
+    // issue #136 Phase 3 — goalSelect is now a custom-styled listbox
+    // (select.js), not a native <select>.
+    const goalSelect = overlay.querySelector('.custom-select');
     goalSelect.value = 'Interview prep';
     goalSelect.dispatchEvent(new Event('change'));
     expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Goal / context: Interview prep');
