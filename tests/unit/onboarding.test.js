@@ -371,6 +371,30 @@ describe('onboarding page — create-your-own roadmap (issue #100)', () => {
     await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalled());
     await vi.waitFor(() => expect(app.querySelector('.template-card-create').classList.contains('is-disabled')).toBe(false));
     await vi.waitFor(() => expect(document.querySelector('.toast')?.textContent).toMatch(/could not create/i));
+    expect(app.querySelector('.template-card-create').classList.contains('picking')).toBe(false);
+  });
+
+  // Regression: store.createCustomRoadmap() still has real Firebase work
+  // left to do after the import modal itself already closed (see
+  // roadmapStore.js's switchRoadmap) — the create card's dim-and-disable
+  // alone read as unresponsive lag, the same bug the picking overlay below
+  // already fixed for switching roadmaps (see the describe block above).
+  it('shows the picking overlay ("Importing…") on the create card while createCustomRoadmap is in flight', async () => {
+    const { openCreateRoadmapModal } = await import('../../src/ui/components/importRoadmapModal.js');
+    openCreateRoadmapModal.mockResolvedValue({ title: 'My Roadmap', phases: [], items: {} });
+    let resolveCreate;
+    const createCustomRoadmap = vi.fn(() => new Promise(resolve => { resolveCreate = resolve; }));
+    const { app, navigate } = await setup({ createCustomRoadmap });
+
+    const createCard = app.querySelector('.template-card-create');
+    createCard.querySelector('.template-card-pick').click();
+
+    await vi.waitFor(() => expect(createCustomRoadmap).toHaveBeenCalled());
+    expect(createCard.classList.contains('picking')).toBe(true);
+    expect(createCard.querySelector('.template-card-picking-overlay').textContent).toMatch(/importing/i);
+
+    resolveCreate('croadmap-new');
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 
   it('renders a card per custom roadmap with its title/description and a delete button', async () => {

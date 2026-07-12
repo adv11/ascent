@@ -595,6 +595,37 @@ and, if set, cancels the pending timer and `await`s `flush()` **before** reassig
 `tests/integration/roadmapStore.test.js`. If you ever add another path that can change
 `activeTemplateId`, it must do the same.
 
+**`switchRoadmap()`'s three network round trips run concurrently, not sequentially — a
+real, reported slowness bug (issue #121 item 6).** The outgoing-template flush (above),
+`resolveRoadmapItems()`'s read of the incoming template's saved progress, and the meta
+write recording the new `activeTemplateId`/`startedTemplateIds` each touch a different
+Firebase path and none of their inputs depends on another's result, but the original
+implementation `await`ed them one after another — meaning opening an already-started
+roadmap, or creating one via AI import, paid for up to three sequential round trips
+before the UI could move on. `flushOutgoingRoadmap()` and `saveSwitchMeta()` (extracted
+out of `switchRoadmap()` itself to keep its own complexity under the ESLint gate) are
+started together and awaited via a single `Promise.all`. `saveSwitchMeta()` takes an
+optional `extraMeta` object merged into the same `saveMeta` call — `createCustomRoadmap()`
+uses this to fold its own `customRoadmaps` patch into `switchRoadmap()`'s one meta write
+instead of doing a separate `saveMeta` round trip first (the previous behavior). If you
+add a fourth independent Firebase call to this path, add it to the same `Promise.all`
+rather than `await`ing it separately — don't reintroduce a sequential chain here.
+
+**Perceived speed still needs its own fix — a fast operation with no loading feedback
+still reads as lag.** Fixing the round trips above only helps once picking a card is
+actually fast; there's a real, reported UX bug for however long a slow-network 500ms+
+round trip has to run: `onboarding.js`'s picker cards already show a spinner overlay
+(`buildPickingOverlay()`, `.template-card-picking-overlay` in `app.css`) for
+`pickTemplate()`/`pickCustomRoadmap()` ("Opening…") — the "Create your own roadmap" card
+did not have the same treatment for `handleCreate()`'s `store.createCustomRoadmap()` call,
+leaving only the shared `setBusy()` dim-and-disable as feedback, which reads as
+unresponsive rather than "in progress." `buildPickingOverlay(label)` now takes an optional
+label (default `'Opening…'`) and `handleCreate()` toggles `.picking` on the create card
+itself with `'Importing…'`, the same class/CSS every other card already uses — no new CSS
+needed, `.template-card-create` is still a `.template-card`. If you add a fourth card type
+or another `store.switchRoadmap()`/`store.createCustomRoadmap()` call site, give it the
+same `.picking` overlay rather than relying on `setBusy()` alone.
+
 **Stale-listener guard replaces the old #51 cross-template payload tag.** Since each
 template now has its own Firebase path, `attachRoadmapListener(templateId)`'s `onValue`
 callback closes over the `templateId` it was attached for and drops any invocation once
@@ -761,14 +792,24 @@ still be queued when the user clicks "Sign out." `authApi.signOut()` invalidates
 token immediately, so a write that fires (or was still in flight) after that point silently
 fails — and this same "Sign-out contract" guard above then wipes local storage right after,
 so the edit is gone from both places with nothing surfaced to the user. `confirmAndSignOut()`
-(`src/ui/utils/signOut.js`) fixes this at the source: on confirm, if `store.getSnapshot().dirty`
-and the account isn't a guest (`user.isAnonymous`), it `await`s `store.flush()` **before**
-calling `authApi.signOut()`, while the auth token is still valid. A guest is deliberately left
+(`src/ui/utils/signOut.js`) fixes this at the source: if `store.getSnapshot().dirty` and the
+account isn't a guest (`user.isAnonymous`), it passes `store.flush()` as `confirmDialog()`'s
+`onConfirm` callback rather than `await`ing it after the dialog already resolved — this
+both flushes **before** `authApi.signOut()` is called (while the auth token is still valid)
+and keeps the dialog open with a spinner on the "Sign out" button
+(`confirmingText: 'Signing out…'`) for however long the flush takes, instead of the dialog
+closing instantly and the user watching nothing happen. A guest is deliberately left
 alone — guest data never reaches Firebase regardless of timing, and the existing dirty-guest
 confirm-dialog copy already warns about that. `dailyTodoStore.js` has the identical debounced
 `queueSave()` shape and is exposed to the same race — not yet wired into `confirmAndSignOut()`
 (it isn't currently passed a `dailyTodoStore` reference) — treat this as known follow-up, not
-an oversight, if you're touching this area again.
+an oversight, if you're touching this area again. `confirmDialog()`'s `onConfirm` param
+(`src/ui/components/confirmDialog.js`) is generic, not sign-out-specific: pass it whenever
+confirming kicks off async work the user needs to see is actually happening — it disables
+both buttons, swaps the confirm button to `setButtonLoading()`'s spinner state, and only
+closes/resolves `true` once the callback resolves; every pre-existing `confirmDialog()` call
+site (delete roadmap, delete account, hide template, etc.) omits it and keeps its original
+instant-close-on-click behavior unchanged.
 
 **Realtime Database rules — no path other than `roadmap`/`roadmaps`/`meta`/`dailyTodos`/`activityLog`/`reports` may be written under `users/{uid}`.** `firebase/database.rules.json` has a `$other: { ".validate": "false" }` catch-all under `users/$uid` specifically to stop a buggy or malicious client from writing arbitrary data outside the known shape (still auth-scoped to that uid, just unbounded before this). If you add a genuinely new top-level field under a user's data, add an explicit `.validate` rule for it — never rely on the `$other` catch-all rejecting it silently as "good enough." Realtime Database rules cannot count a map's children, so a per-roadmap item cap is enforced client-side instead, in `roadmapStore.js`'s `addItem()` (the one place items are created) — it returns `false` instead of mutating anything once a roadmap already holds 800 non-deleted items (lowered from 1,000 in issue #53 — no real roadmap organically approaches even 800 topics); callers must check this return value and surface an error rather than assuming success. The same client-side-cap pattern applies to `dailyTodoStore.js`'s `addTodo()` (issue #56) — active (not-done, not-expired) todos are capped at `MAX_ACTIVE_TODOS` (20).
 

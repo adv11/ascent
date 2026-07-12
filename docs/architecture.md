@@ -3207,3 +3207,42 @@ pair in both themes.
 
 See `.claude/rules/ui-styling.md`'s new `createSelect()` and chip-scale sections for the
 full API/usage rules.
+
+### 2026-07-13 — PR TBD — Sign-out data loss fix; roadmap-switch speed + loading feedback (issue #121 item 6 + live reports)
+
+Two related, live-reported bugs, both traced to `roadmapStore.js`'s `switchRoadmap()`.
+
+**Data loss on sign-out.** `confirmAndSignOut()` (`src/ui/utils/signOut.js`) called
+`authApi.signOut()` immediately on confirm, with no regard for `queueSave()`'s 500ms
+debounce — an edit still queued at that moment (most visibly right after
+`createCustomRoadmap()`'s AI-import flow) silently failed to reach Firebase once the auth
+token was invalidated, and was then wiped from local storage too by `setUser()`'s
+sign-out privacy guard. Fixed by flushing a dirty real account's pending roadmap changes
+*before* calling `authApi.signOut()`.
+
+**Slowness + no loading feedback.** `switchRoadmap()` — the shared path both "open an
+already-started roadmap" and "create one via AI import" go through — used to await up to
+three independent Firebase round trips sequentially (flush the outgoing template, read
+the incoming template's saved progress, write the switch's meta patch), even though none
+depends on another's result. Now run concurrently via `Promise.all`; `createCustomRoadmap()`'s
+own `customRoadmaps` meta write is folded into that same call via a new optional
+`extraMeta` param instead of a separate round trip first. Two named helpers
+(`flushOutgoingRoadmap()`, `saveSwitchMeta()`) were extracted out of `switchRoadmap()`
+itself to keep its own ESLint complexity from growing further (it was already over the
+`warn` threshold pre-existing this change; extraction brought it down, not up).
+
+Once the round trips are fast, a fast operation still needs to *look* fast: the "Create
+your own roadmap" onboarding card gained the same spinner overlay
+(`buildPickingOverlay('Importing…')`) the template-picker cards already had for
+`pickTemplate()`/`pickCustomRoadmap()` ("Opening…") — previously the only feedback during
+`createCustomRoadmap()`'s Firebase work was a dim-and-disable, indistinguishable from
+unresponsive lag. `confirmDialog()` (`src/ui/components/confirmDialog.js`) gained a new
+optional `onConfirm` callback, used by the sign-out fix above: passing it keeps the dialog
+open with a `setButtonLoading()` spinner on the confirm button until the callback
+resolves, instead of closing instantly and leaving the user watching nothing happen.
+Every pre-existing `confirmDialog()` call site omits it and is unaffected.
+
+See `.claude/rules/roadmap-store.md`'s "A dirty real account must be flushed" and
+"`switchRoadmap()`'s three network round trips run concurrently" sections for the full
+reasoning, and `docs/api.md`'s `switchRoadmap`/`createCustomRoadmap` entries for the
+updated signatures.

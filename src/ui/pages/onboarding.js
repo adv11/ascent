@@ -23,10 +23,10 @@ import { createDecorativeIcon } from '../components/decorativeIcon.js';
 // gives immediate, unambiguous feedback the instant the card is clicked, for
 // however long the round-trip actually takes. Shared by buildCard() and
 // buildCustomCard() — both set the same `.picking` class on click.
-function buildPickingOverlay() {
+function buildPickingOverlay(label = 'Opening…') {
   return el('div', { className: 'template-card-picking-overlay' }, [
     el('span', { className: 'btn-spinner' }),
-    ' Opening…'
+    ` ${label}`
   ]);
 }
 
@@ -56,6 +56,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   let picking = false;
   const cardEls = [];
+  let createCardEl = null;
 
   function setBusy(busy) {
     cardEls.forEach(card => {
@@ -110,6 +111,13 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     if (!result) return;
     picking = true;
     setBusy(true);
+    // The modal itself closes the instant "Import roadmap" is clicked, but
+    // store.createCustomRoadmap() still has real Firebase work left to do
+    // (see roadmapStore.js's switchRoadmap) — without this, the create
+    // card's own dim-and-disable was the only feedback, which read as
+    // unresponsive lag rather than "importing," the same bug the pick/open
+    // picking-overlay above already fixed for switching roadmaps.
+    createCardEl?.classList.add('picking');
     try {
       const { droppedResourceCount, ...roadmap } = result;
       await store.createCustomRoadmap(roadmap);
@@ -124,6 +132,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       console.error('Failed to create custom roadmap', error);
       picking = false;
       setBusy(false);
+      createCardEl?.classList.remove('picking');
       showToast('Could not create your roadmap. Try again.', 'error');
     }
   }
@@ -155,9 +164,11 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         'aria-label': 'How do I build my own roadmap?',
         title: 'How do I build my own roadmap?',
         onClick: () => openBuildYourOwnGuide({ onOpenImport: handleCreate })
-      }, [createIcon('info', { size: 'xs' })])
+      }, [createIcon('info', { size: 'xs' })]),
+      buildPickingOverlay('Importing…')
     ]);
     cardEls.push(cardEl);
+    createCardEl = cardEl;
     return el('div', { role: 'listitem' }, [cardEl]);
   }
 

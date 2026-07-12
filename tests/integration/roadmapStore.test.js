@@ -1317,7 +1317,15 @@ describe('custom roadmaps — creation and identity (issue #4)', () => {
       { id, title: 'My Roadmap', description: 'A description', createdAt: expect.any(Number) }
     ]);
     expect(store.getSnapshot().startedTemplateIds).toContain(id);
-    expect(dbApi.saveMeta).toHaveBeenCalledWith('creator-user', { customRoadmaps: store.getSnapshot().customRoadmaps });
+    // customRoadmaps is folded into switchRoadmap's own single meta write
+    // (one round trip, not two — see switchRoadmap's "why extraMeta" note).
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('creator-user', {
+      customRoadmaps: store.getSnapshot().customRoadmaps,
+      activeTemplateId: id,
+      startedTemplateIds: store.getSnapshot().startedTemplateIds,
+      onboardingDone: true
+    });
+    expect(dbApi.saveMeta).toHaveBeenCalledTimes(1);
   });
 
   it('createCustomRoadmap rejects an empty title without mutating state', async () => {
