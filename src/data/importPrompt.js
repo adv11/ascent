@@ -66,10 +66,17 @@ Rules:
 - priority at the phase level indicates how critical the whole phase is (P0 = must-do, P3 = optional).
 - An item is a plain string (inherits the phase's priority), a ["title","priority"] tuple, or an object
   { "title", "priority" (optional, inherits the phase's priority if omitted), "resources" (optional) }.
-- "resources" is an array of up to 5 real, working links per item — each a { "label", "url" } pair.
-  Only include a resource if you are confident the URL is real and correct; never invent a URL.
-  "url" must be a genuine http(s) link (YouTube video, official documentation, a reputable article or
-  blog post, or a well-known course page). Omit "resources" entirely for an item with no good link.
+- Use the object form with "resources" for MOST items — this is expected and encouraged, not an edge
+  case. Include 1-2 resources per item wherever a well-known, stable reference exists, which is true
+  for the vast majority of standard technical/educational/professional topics. Good, safe choices:
+  an official documentation site's homepage or a top-level section of it (e.g. https://docs.docker.com,
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript), a well-known learning platform's subject
+  page (freeCodeCamp, Khan Academy, W3Schools, Coursera, MDN), or a reputable, widely-known YouTube
+  channel or search results page for the topic. It is fine if a link is a general/top-level page rather
+  than a highly specific one — a broad but correct link is far more useful than no link at all.
+  Only skip "resources" for a genuinely niche or ambiguous item where you cannot recall any real,
+  well-known source — never invent a URL or guess at one you are not confident exists.
+  "url" must be a genuine http(s) link — each a { "label", "url" } pair, up to 5 per item.
 - Do not add any fields beyond those listed above.
 - "phases" must have at least 1 entry; each phase must have at least 1 section; each section at least 1 item.
 - Keep the total number of items at or under 500.

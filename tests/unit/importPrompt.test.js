@@ -85,8 +85,19 @@ describe('buildImportPrompt', () => {
   it('always documents the resources-carrying object item shape and its rules, regardless of options', () => {
     const prompt = buildImportPrompt('Rust');
     expect(prompt).toContain('"resources"');
-    expect(prompt).toContain('up to 5 real, working links per item');
+    expect(prompt).toContain('up to 5 per item');
     expect(prompt).toContain('never invent a URL');
+  });
+
+  // Issue #100 follow-up — real-world use found the AI omitting resources
+  // from nearly every roadmap once the prompt only weakly suggested them
+  // ("only include if confident"); the wording was strengthened to actively
+  // encourage resources for most items instead of reading as an easy-to-skip
+  // edge case, while still forbidding invented URLs.
+  it('actively encourages including resources for most items, not just permits them', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt).toContain('Use the object form with "resources" for MOST items');
+    expect(prompt).toContain('this is expected and encouraged');
   });
 
   it('renders all six fields together, each on its own line, in a stable order', () => {
