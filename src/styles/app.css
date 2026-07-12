@@ -870,20 +870,23 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* Issue #100 revamp — the plain dashed-border box read as an inert
    placeholder rather than the primary "start something new" action it is
    (real user feedback: "I don't think it is good we need to remake this").
-   A solid brand-tinted background + border + glow (--brand-light/--brand/
-   --shadow-brand, all already theme-aware tokens) plus a small "AI-powered"
-   pill make it the visually loudest card in the grid without introducing any
-   new color literal — everything here is an existing token. */
+   A glowing brand-colored border + a small "AI-powered" pill make it the
+   visually loudest card in the grid — deliberately keeping the same
+   .template-card `--surface-glass`/`backdrop-filter` base every other card
+   uses (never overriding `background` to a solid fill) so it reads as a
+   highlighted variant of the existing card language, not a mismatched flat
+   block dropped into a glassmorphism grid (a real regression reported live
+   in dark theme: solid `--brand-light` fill looked like an opaque colored
+   box next to every neighboring card's translucency). */
 .template-card-create {
   align-items: center;
   justify-content: center;
   text-align: center;
   gap: 6px;
-  background: var(--brand-light);
-  border: 1.5px solid var(--brand-light-border);
+  border: 1.5px solid var(--brand);
   box-shadow: var(--shadow-brand);
 }
-.template-card-create:hover, .template-card-create:has(.template-card-pick:focus-visible) { border-color: var(--brand); }
+.template-card-create:hover, .template-card-create:has(.template-card-pick:focus-visible) { box-shadow: var(--shadow-lg), var(--shadow-brand); }
 .template-card-create .template-card-icon { color: var(--brand); }
 .template-card-create .template-card-name { color: var(--brand-dark); }
 .template-card-ai-badge {

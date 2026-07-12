@@ -126,7 +126,7 @@ export function openCreateRoadmapModal() {
     });
 
     const promptBlock = el('pre', { className: 'import-prompt-block' });
-    const copyBtn = el('button', { type: 'button', className: 'btn btn-primary btn-block', text: 'Copy prompt' });
+    const copyBtn = el('button', { type: 'button', className: 'btn btn-secondary btn-block', text: 'Copy prompt' });
     const copyHint = el('p', { className: 'import-copy-hint', text: 'Tell us what this roadmap should cover first.' });
 
     function refreshCopyState() {
