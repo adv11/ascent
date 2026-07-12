@@ -1,5 +1,6 @@
 import { el, debounce } from '../dom.js';
 import { attachFocusTrap } from './modal.js';
+import { createSelect } from './select.js';
 import { buildImportPrompt, buildImportFixPrompt } from '../../data/importPrompt.js';
 import { validateImportText } from '../../core/roadmap/importValidator.js';
 import { adaptImportToRoadmap } from '../../core/roadmap/schemaAdapter.js';
@@ -103,6 +104,7 @@ export function openCreateRoadmapModal() {
   return new Promise(resolve => {
     function close(result) {
       detachTrap();
+      goalSelect._cleanup?.();
       overlay.remove();
       resolve(result);
     }
@@ -166,10 +168,10 @@ export function openCreateRoadmapModal() {
       resourceTypes = values;
       refreshPrompt();
     });
-    const goalSelect = el('select', { className: 'field-input' }, [
-      el('option', { value: '', text: 'No preference' }),
-      ...GOALS.map(value => el('option', { value, text: value }))
-    ]);
+    const goalSelect = createSelect(
+      [{ value: '', label: 'No preference' }, ...GOALS.map(value => ({ value, label: value }))],
+      { value: '', ariaLabel: 'Goal / context' }
+    );
     goalSelect.addEventListener('change', () => {
       goal = goalSelect.value;
       refreshPrompt();

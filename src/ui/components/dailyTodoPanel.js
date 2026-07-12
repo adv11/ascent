@@ -3,6 +3,7 @@ import { createIcon } from './icons.js';
 import { showToast } from './toast.js';
 import { confirmDialog } from './confirmDialog.js';
 import { openDailyTodoGuide } from './dailyTodoGuide.js';
+import { createSelect } from './select.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
 import { MAX_TODO_TITLE_LENGTH, MAX_ACTIVE_TODOS, DURATION_PRESETS, MIN_DURATION_MS, MAX_DURATION_MS } from '../../core/dailyTodo/limits.js';
 import { getTemplate } from '../../data/templates/index.js';
@@ -47,11 +48,10 @@ export function createDailyTodoPanel(store, roadmapStore) {
     maxlength: String(MAX_TODO_TITLE_LENGTH)
   });
 
-  const durationSelect = el('select', { className: 'field-input compact todo-duration-select', 'aria-label': 'Due in' }, [
-    ...DURATION_PRESETS.map(p => el('option', { value: String(p.ms), text: p.label })),
-    el('option', { value: CUSTOM_VALUE, text: 'Custom…' })
-  ]);
-  durationSelect.value = String(DEFAULT_PRESET_MS);
+  const durationSelect = createSelect(
+    [...DURATION_PRESETS.map(p => ({ value: String(p.ms), label: p.label })), { value: CUSTOM_VALUE, label: 'Custom…' }],
+    { value: String(DEFAULT_PRESET_MS), ariaLabel: 'Due in', className: 'compact todo-duration-select' }
+  );
 
   const customHoursInput = el('input', {
     className: 'field-input compact todo-custom-hours',
@@ -315,6 +315,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
   node._cleanup = () => {
     unsubStore();
     clearInterval(tickTimer);
+    durationSelect._cleanup?.();
   };
 
   return node;

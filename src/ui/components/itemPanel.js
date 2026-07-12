@@ -2,6 +2,7 @@ import { el, isValidUrl } from '../dom.js';
 import { confirmDialog } from './confirmDialog.js';
 import { createIcon } from './icons.js';
 import { createDecorativeIcon } from './decorativeIcon.js';
+import { createSelect } from './select.js';
 import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../core/roadmap/limits.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 
@@ -16,12 +17,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   const panel = el('aside', { className: 'item-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Edit topic' });
 
   const titleInput = el('input', { className: 'field-input', value: item.title, placeholder: 'Topic title' });
-  const prioritySelect = el('select', { className: 'field-input' });
-  ['P0', 'P1', 'P2', 'P3'].forEach(p => {
-    const opt = el('option', { value: p, text: p });
-    if (item.priority === p) opt.selected = true;
-    prioritySelect.append(opt);
-  });
+  const prioritySelect = createSelect(
+    ['P0', 'P1', 'P2', 'P3'].map(p => ({ value: p, label: p })),
+    { value: item.priority, ariaLabel: 'Priority' }
+  );
   const resourceList = el('div', { className: 'resource-list' });
   const labelInput = el('input', { className: 'field-input', placeholder: 'Resource label (e.g. YouTube tutorial)' });
   const urlInput = el('input', { className: 'field-input', placeholder: 'https://...', type: 'url' });
@@ -143,6 +142,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
     }
     overlay.classList.remove('show');
     panel.classList.remove('show');
+    prioritySelect._cleanup?.();
     setTimeout(() => overlay.remove(), 240);
     onClose?.();
   }
