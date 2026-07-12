@@ -91,7 +91,12 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
 
     await modal.locator('.import-option-chips button', { hasText: 'Intermediate' }).click();
     await modal.locator('.import-option-chips button', { hasText: '3 months' }).click();
-    await modal.locator('select').selectOption('Interview prep');
+    // issue #136 Phase 3 — the Goal/context field is now a custom-styled
+    // listbox (select.js), not a native <select>; its listbox is a
+    // body-level portal (see select.js's own comment), so the open option
+    // is queried on `page`, not scoped to `modal`.
+    await modal.locator('.custom-select-trigger').click();
+    await page.locator('.custom-select-option', { hasText: 'Interview prep' }).click();
     await modal.locator('.import-options input[type="text"]').fill('already comfortable with Docker');
 
     // "Already know" is debounced (150ms), unlike the chip/select clicks above,

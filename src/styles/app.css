@@ -1243,7 +1243,18 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   list-style: none;
   display: none;
   flex-direction: column;
-  z-index: 210;
+  /* Unlike .dropdown-menu above (only ever triggered from topbar/sidebar
+     chrome, never nested inside a modal), select.js is explicitly meant to
+     be droppable into any form — including importRoadmapModal.js's Goal/
+     context field, inside a `.modal-overlay` at z-index 1000. A portaled
+     listbox at the same z-index: 210 as .dropdown-menu rendered visually
+     underneath the modal card: geometrically correct (per the transformed-
+     ancestor portal fix above) but click-intercepted by the modal's own
+     content on top of it in the stacking order — found via a real E2E
+     failure (issue #136 Phase 3 follow-up), not a visual review. Must stay
+     above every modal in the app; .modal-overlay's z-index: 1000 is the
+     highest of any component this can be nested inside. */
+  z-index: 1010;
 }
 /* Not a descendant selector — select.js appends .custom-select-listbox
    straight to <body> while open (a portal), specifically so its
