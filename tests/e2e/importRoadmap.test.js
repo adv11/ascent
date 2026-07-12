@@ -168,6 +168,50 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await expect(row.locator('[data-action="resources"]')).toContainText('2');
   });
 
+  test('the "Resources" filter chip shows every resource link inline, in one go (issue #100 follow-up)', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const modal = await openCreateModal(page);
+
+    await modal.locator('.import-paste-area').fill(importJsonWithResources());
+    await modal.locator('button', { hasText: 'Import roadmap' }).click();
+    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+
+    const resourcesChip = page.locator('.filter-chip', { hasText: 'Resources' });
+    await expect(resourcesChip).toBeVisible();
+    await resourcesChip.click();
+    await expect(resourcesChip).toHaveClass(/active/);
+
+    const row = page.locator('.check-item', { hasText: 'Learn Docker' });
+    const inline = row.locator('.check-resources-inline .resource-inline-link');
+    await expect(inline).toHaveCount(2);
+    await expect(inline.first()).toHaveAttribute('href', /^https:\/\//);
+    await expect(inline.first()).toHaveAttribute('target', '_blank');
+  });
+
+  test('a corrupted title (encoded/JSON-fragment text spliced in) is rejected with an actionable error, not silently imported', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const modal = await openCreateModal(page);
+
+    const corrupted = JSON.stringify({
+      schemaVersion: 1,
+      title: 'Corrupted Roadmap',
+      phases: [{
+        title: 'Phase One',
+        priority: 'P1',
+        sections: [{
+          title: 'Section One',
+          items: ['Learn](https://example.com%22]},{%22title%22:%22Learn) the basics']
+        }]
+      }]
+    });
+
+    await modal.locator('.import-paste-area').fill(corrupted);
+    await expect(modal.locator('.import-errors')).toBeHidden();
+    await modal.locator('button', { hasText: 'Show technical details' }).click();
+    await expect(modal.locator('.import-errors')).toContainText(/looks corrupted/i);
+    await expect(modal.locator('button', { hasText: 'Import roadmap' })).toBeDisabled();
+  });
+
   test('pasting a fenced-code-block-wrapped payload still imports successfully', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const modal = await openCreateModal(page);

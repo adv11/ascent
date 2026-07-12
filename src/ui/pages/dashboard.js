@@ -1,4 +1,4 @@
-import { el, debounce } from '../dom.js';
+import { el, debounce, isValidUrl } from '../dom.js';
 import { navigate } from '../router.js';
 import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
@@ -31,6 +31,34 @@ const RESOURCE_TYPE_NOUN = {
   youtube: 'video', github: 'repo', notion: 'page', 'google-doc': 'doc',
   'google-drive': 'file', medium: 'article', stackoverflow: 'answer', article: 'link'
 };
+
+// Issue #100 follow-up — real feedback: with AI-generated roadmaps now
+// commonly carrying resource links, there was no way to see them "in one
+// go" without opening each topic's edit panel individually. When the
+// Resources filter chip is active, renderItemRow() appends this expanded,
+// always-visible list of clickable links (in addition to, not instead of,
+// the collapsed count badge above, which still opens the full edit panel).
+// `isValidUrl()`-guards each href the same way itemPanel.js already does
+// for every other resource link render (roadmap-store.md's "Resource URLs
+// must be validated before use as href").
+function renderInlineResources(item) {
+  if (!item.resources?.length) return null;
+  return el('div', { className: 'check-resources-inline' }, item.resources.map(r => {
+    const type = detectLinkType(r.url);
+    const meta = LINK_TYPE_META[type];
+    return el('a', {
+      className: `link-badge resource-inline-link ${meta.badgeClass}`,
+      href: isValidUrl(r.url) ? r.url : '#',
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'data-action': 'open-resource',
+      onClick: e => { e.stopPropagation(); if (!isValidUrl(r.url)) e.preventDefault(); }
+    }, [
+      el('span', { 'aria-hidden': 'true', text: `${meta.icon} ` }),
+      r.label
+    ]);
+  }));
+}
 
 function buildResourceCountBadge(item, onOpen) {
   const { primaryIcon, breakdown } = summarizeResourceTypes(item.resources);
@@ -105,17 +133,25 @@ function countStats(items) {
   return { total, done, pct };
 }
 
+// `priority` is really "which filter chip is active" — issue #100 follow-up
+// added a fifth value, 'RESOURCES', alongside ALL/P0-P3, matching items that
+// carry at least one resource link rather than filtering by priority at all.
+function matchesActiveFilter(item, priority) {
+  if (priority === 'ALL') return true;
+  if (priority === 'RESOURCES') return !!item.resources?.length;
+  return item.priority === priority;
+}
+
 function filterItems(items, { priority, query }) {
   const q = query.trim().toLowerCase();
   return items.filter(item => {
-    const matchesPriority = priority === 'ALL' || item.priority === priority;
     const matchesQuery = !q || item.title.toLowerCase().includes(q) || item.phase.toLowerCase().includes(q) || item.section.toLowerCase().includes(q);
-    return matchesPriority && matchesQuery;
+    return matchesActiveFilter(item, priority) && matchesQuery;
   });
 }
 
 function priorityCounts(items, priority) {
-  const list = priority === 'ALL' ? items : items.filter(i => i.priority === priority);
+  const list = priority === 'ALL' ? items : items.filter(i => matchesActiveFilter(i, priority));
   return { total: list.length, done: list.filter(i => i.done).length };
 }
 
@@ -140,10 +176,17 @@ export function formatLastSynced(ms) {
 // priority id and the caller owns re-rendering/persisting the new filter.
 // Issue #6 Phase 4.3 — the active non-ALL chip gets an inline ✕ to clear
 // just that filter, a lower-friction alternative to re-clicking the chip.
+// Issue #100 follow-up — a fifth chip, 'RESOURCES', filters to topics that
+// carry at least one resource link (real feedback: with resources now a
+// first-class part of AI-generated roadmaps, there was no way to see them
+// all "in one go" without opening each topic's edit panel individually).
+// When it's active, renderItemRow() also expands each matched row's
+// resources inline instead of just showing the collapsed count badge — see
+// the "Render resource links inline" comment there.
 export function renderFilterChips(items, activeFilter, onFilterChange) {
-  return ['ALL', 'P0', 'P1', 'P2', 'P3'].map(p => {
+  return ['ALL', 'P0', 'P1', 'P2', 'P3', 'RESOURCES'].map(p => {
     const { total, done } = priorityCounts(items, p);
-    const label = p === 'ALL' ? 'All' : p;
+    const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Resources' : p;
     const isActive = activeFilter === p;
     return el('button', {
       type: 'button',
@@ -152,7 +195,8 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
       'aria-pressed': String(isActive),
       onClick: () => onFilterChange(p)
     }, [
-      `${label} `,
+      p === 'RESOURCES' ? createIcon('link', { size: 'xs' }) : null,
+      ` ${label} `,
       el('span', { className: 'chip-count', text: `${done}/${total}` }),
       // Issue #6 Phase 9 — a plain <span> with only an onClick was never
       // reachable by keyboard (a nested <button> inside this chip's own
@@ -637,7 +681,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           'data-action': 'completed-via-todo',
           title: `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`,
           'aria-label': `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`
-        }, [createIcon('timer', { size: 'xs' }), createIcon('check', { size: 'xs' })]) : null
+        }, [createIcon('timer', { size: 'xs' }), createIcon('check', { size: 'xs' })]) : null,
+        activeFilter === 'RESOURCES' ? renderInlineResources(item) : null
       ].filter(Boolean)),
       el('div', { className: 'check-actions' }, [
         dailyTodoStore ? el('button', {

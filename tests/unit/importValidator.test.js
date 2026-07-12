@@ -438,3 +438,84 @@ describe('validateImportText', () => {
     expect(result.data).toBeNull();
   });
 });
+
+// Issue #100 follow-up — a real report: some AI chat UIs auto-linkify raw
+// URLs found inside a code block when a user selects/copies rendered text
+// instead of using the tool's own "copy raw" button, splicing markdown-link
+// syntax and URL-encoded JSON fragments into neighboring text. The result
+// still parses as valid JSON (quotes stay balanced) but every field
+// involved is nonsense — these tests use a corrupted title/label/url
+// matching the exact pattern from that report.
+describe('validateImportPayload — corrupted-text detection (issue #100 follow-up)', () => {
+  const CORRUPTED_TITLE = 'Learn](https://www.khanacademy.org/computing%22]},{%22title%22:%22Learn) the command line';
+
+  it('flags a plain-string item title containing a corruption marker', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [CORRUPTED_TITLE];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].items[0].title looks corrupted'))).toBe(true);
+  });
+
+  it('flags a tuple item title containing a corruption marker', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [[CORRUPTED_TITLE, 'P0']];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('.title looks corrupted'))).toBe(true);
+  });
+
+  it('flags an object item title containing a corruption marker', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: CORRUPTED_TITLE }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('.title looks corrupted'))).toBe(true);
+  });
+
+  it('flags a corrupted resource label or url without flagging the (clean) title', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docker docs%22]},{%22title%22', url: 'https://docs.docker.com/' }]
+    }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].items[0].resources[0] looks corrupted'))).toBe(true);
+    expect(errors.some(e => e.includes('.title looks corrupted'))).toBe(false);
+  });
+
+  it('flags a corrupted resource url', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docker docs', url: 'https://docs.docker.com/%22]},{%22title%22:%22' }]
+    }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].items[0].resources[0] looks corrupted'))).toBe(true);
+  });
+
+  it('flags a corrupted phase title', () => {
+    const data = validPayload();
+    data.phases[0].title = CORRUPTED_TITLE;
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].title looks corrupted'))).toBe(true);
+  });
+
+  it('flags a corrupted section title', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].title = CORRUPTED_TITLE;
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.includes('phases[0].sections[0].title looks corrupted'))).toBe(true);
+  });
+
+  it('does not flag ordinary titles that happen to contain brackets or parentheses', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['Understand how computers work (CPU, RAM, storage)', ['Arrays [and] lists', 'P0']];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('the corruption error message gives actionable guidance, not just "is invalid"', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [CORRUPTED_TITLE];
+    const errors = validateImportPayload(data);
+    const corruptionError = errors.find(e => e.includes('looks corrupted'));
+    expect(corruptionError).toMatch(/copy/i);
+  });
+});

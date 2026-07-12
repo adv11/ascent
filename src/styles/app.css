@@ -2270,6 +2270,18 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .resource-count:hover { transform: translateY(-1px); }
 .resource-count:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 
+/* Issue #100 follow-up — expanded, always-visible resource links shown on a
+   checklist row when the "Resources" filter chip is active (dashboard.js's
+   renderInlineResources()), alongside the existing collapsed count badge.
+   `flex-basis: 100%` on the wrapper drops it onto its own line within
+   .check-body's existing `flex-wrap: wrap` row — no structural change to
+   .check-body needed, the same wrap behavior that already lets .priority-tag
+   /.resource-count reflow on narrow widths handles this for free. */
+.check-resources-inline { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; margin-top: 2px; }
+.resource-inline-link { text-decoration: none; cursor: pointer; transition: transform 140ms ease, border-color 140ms ease; }
+.resource-inline-link:hover { transform: translateY(-1px); }
+.resource-inline-link:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+
 .notes-indicator {
   display: inline-flex;
   align-items: center;

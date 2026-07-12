@@ -482,6 +482,45 @@ flow), some AI assistants gave up and stopped including resources at all in thei
 with roadmaps now succeeding on the first real attempt far more often, resources come
 through as originally generated instead of being silently dropped by a frustrated model.
 
+**Corrupted-text detection — a real, reported data-corruption bug (issue #100 follow-up).**
+Some AI chat UIs auto-linkify raw URLs found inside a code block when a user selects and
+copies *rendered* text instead of using the tool's own "copy raw"/"copy code" button —
+this splices markdown-link syntax and URL-encoded JSON fragments into neighboring text
+(a title ends up looking like `Learn](https://example.com%22]},{%22title%22:%22Learn) the
+command line`). The result is still syntactically valid JSON (quotes stay balanced), so
+it sailed straight past every check above and rendered as garbled topic titles on the
+dashboard — a genuine data-corruption bug, not a display bug (confirmed by running the
+exact reported payload through `validateImportPayload()`/`adaptImportToRoadmap()`
+directly and observing clean output, i.e. the corruption was already present in what got
+pasted, not introduced by our code). `importValidator.js`'s `looksCorrupted(text)` checks
+a title/section-name/phase-name/resource-label/resource-url against a short list of
+markers (`%22`, a stray `"title":`, `"url":`, `"resources":`, etc.) that are essentially
+never legitimate in real roadmap content; `findItemCorruption()` runs this check on every
+item *before* `isValidItem()`'s normal shape validation, so a corrupted item gets a
+specific, actionable error (`...title looks corrupted (contains encoded/JSON-like text) —
+... try the AI's "copy code"/"copy raw" button, or ask it to resend the JSON`) instead of
+either silently importing garbage or the previous generic "item is invalid". Phase titles
+and section titles get the identical check. This is a heuristic, not a formal grammar —
+if you ever need a sixth marker, add it to `CORRUPTION_MARKERS` rather than writing a new
+detection path.
+
+**"Resources" filter chip — see all resource links "in one go" (issue #100 follow-up).**
+Real feedback: once AI-generated roadmaps commonly carry resource links, there was no way
+to see every one without opening each topic's edit panel individually. `dashboard.js`'s
+`renderFilterChips()` gained a fifth chip, `'RESOURCES'`, alongside `ALL`/`P0`-`P3` —
+`matchesActiveFilter()` (shared by `filterItems()`/`priorityCounts()`) treats it as "has
+at least one resource" rather than a priority comparison. When it's the active filter,
+`renderItemRow()` also renders `renderInlineResources(item)` — every resource as a
+clickable, type-colored `<a>` (reusing `linkDetector.js`'s `detectLinkType()`/
+`LINK_TYPE_META`, the same per-type icon/color the edit panel and count-badge tooltip
+already use) directly under the title, via `flex-basis: 100%` inside `.check-body`'s
+existing `flex-wrap: wrap` row — no structural change to the row needed. This is strictly
+additive: the collapsed count badge (opens the full edit panel) and every other filter
+chip are unaffected. Every inline link's `href` is `isValidUrl()`-guarded exactly like
+`itemPanel.js`'s own resource links (roadmap-store.md's "Resource URLs must be validated
+before use" rule) — an invalid URL renders as `href="#"` with its default-navigation
+click suppressed, never a raw unvalidated value.
+
 **Prompt customization inputs (issue #64 Part 2, extended in #100).** Below the topic
 field, the generate section renders six optional inputs — Experience level
 (Beginner/Intermediate/Advanced, a chip group reusing `.filter-chip` styling), Target

@@ -40,13 +40,16 @@ describe('renderFilterChips (issue #53)', () => {
     { priority: 'P1', done: false },
   ];
 
-  it('renders one chip per priority plus "All", with correct done/total counts', async () => {
+  it('renders one chip per priority plus "All" plus "Resources", with correct done/total counts', async () => {
     const chips = await build(items, 'ALL', () => {});
-    expect(chips).toHaveLength(5);
+    expect(chips).toHaveLength(6);
     const p0 = chips.find(c => c.dataset.p === 'P0');
     expect(p0.querySelector('.chip-count').textContent).toBe('1/2');
     const all = chips.find(c => c.dataset.p === 'ALL');
     expect(all.querySelector('.chip-count').textContent).toBe('1/3');
+    const resources = chips.find(c => c.dataset.p === 'RESOURCES');
+    expect(resources).toBeTruthy();
+    expect(resources.textContent).toContain('Resources');
   });
 
   it('marks the active filter chip', async () => {
@@ -80,6 +83,54 @@ describe('renderFilterChips (issue #53)', () => {
     const p0 = chips.find(c => c.dataset.p === 'P0');
     p0.querySelector('.filter-chip-clear').click();
     expect(onFilterChange).toHaveBeenCalledWith('ALL');
+  });
+});
+
+// Issue #100 follow-up — a fifth filter chip, "Resources", matching topics
+// that carry at least one resource link (real feedback: no way to see every
+// resource in the roadmap "in one go" without opening each topic's edit
+// panel individually).
+describe('renderFilterChips — "Resources" filter (issue #100 follow-up)', () => {
+  async function build(items, activeFilter, onFilterChange) {
+    const { renderFilterChips } = await import('../../src/ui/pages/dashboard.js');
+    return renderFilterChips(items, activeFilter, onFilterChange);
+  }
+
+  const resourceItems = [
+    { priority: 'P0', done: true, resources: [{ label: 'Docs', url: 'https://example.com' }] },
+    { priority: 'P0', done: false, resources: [] },
+    { priority: 'P1', done: false, resources: [{ label: 'Video', url: 'https://example.com/v' }] }
+  ];
+
+  it('counts only items that carry at least one resource', async () => {
+    const chips = await build(resourceItems, 'ALL', () => {});
+    const resourcesChip = chips.find(c => c.dataset.p === 'RESOURCES');
+    expect(resourcesChip.querySelector('.chip-count').textContent).toBe('1/2');
+  });
+
+  it('is unaffected by items whose resources array is empty', async () => {
+    const chips = await build([{ priority: 'P2', done: false, resources: [] }], 'ALL', () => {});
+    const resourcesChip = chips.find(c => c.dataset.p === 'RESOURCES');
+    expect(resourcesChip.querySelector('.chip-count').textContent).toBe('0/0');
+  });
+
+  it('is unaffected by items with no resources field at all', async () => {
+    const chips = await build([{ priority: 'P2', done: false }], 'ALL', () => {});
+    const resourcesChip = chips.find(c => c.dataset.p === 'RESOURCES');
+    expect(resourcesChip.querySelector('.chip-count').textContent).toBe('0/0');
+  });
+
+  it('marks the Resources chip active and calls onFilterChange with RESOURCES when clicked', async () => {
+    const onFilterChange = vi.fn();
+    const chips = await build(resourceItems, 'ALL', onFilterChange);
+    const resourcesChip = chips.find(c => c.dataset.p === 'RESOURCES');
+    resourcesChip.click();
+    expect(onFilterChange).toHaveBeenCalledWith('RESOURCES');
+
+    const activeChips = await build(resourceItems, 'RESOURCES', () => {});
+    const activeResourcesChip = activeChips.find(c => c.dataset.p === 'RESOURCES');
+    expect(activeResourcesChip.classList.contains('active')).toBe(true);
+    expect(activeResourcesChip.getAttribute('aria-pressed')).toBe('true');
   });
 });
 

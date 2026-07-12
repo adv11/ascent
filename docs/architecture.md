@@ -3103,3 +3103,36 @@ Real-world testing of the resources feature above surfaced two problems:
 
 See `.claude/rules/roadmap-store.md`'s new "A single malformed resource URL or oddly-cased
 priority must never fail the whole roadmap" section for the full writeup.
+
+### 2026-07-12 — PR TBD — Corrupted-text detection; "Resources" filter chip (issue #100 follow-up)
+
+Two more real-world reports on the same AI-import flow, both traced and fixed:
+
+1. **Data corruption, not a display bug.** A pasted roadmap rendered several topic titles
+   as garbled text mixing readable words with URL-encoded JSON fragments (`Learn](https://
+   example.com%22]},{%22title%22:%22Learn) the command line`). Ran the exact reported
+   payload through `validateImportPayload()`/`adaptImportToRoadmap()` directly and got
+   clean output — proving the corruption was already present in what got pasted, most
+   likely some AI chat UI's "select and copy rendered text" auto-linkifying a raw URL
+   inside the JSON code block and splicing markdown-link syntax into neighboring text.
+   Since the result is still syntactically valid JSON, it passed every existing check.
+   `importValidator.js` gained `looksCorrupted()`/`findItemCorruption()` — a heuristic
+   marker scan (`%22`, `"title":`, etc.) run on every title/section-name/phase-name/
+   resource-label/resource-url *before* normal shape validation, producing a specific,
+   actionable error naming the exact field and suggesting the "copy raw" fix, instead of
+   either silently importing garbage or a generic "item is invalid". Refactored
+   `isValidItem()`/`findItemCorruption()` into smaller named helpers (`isValidTupleItem()`,
+   `isValidObjectItem()`, `extractItemTitleText()`, `findCorruptedResourceIndex()`) while
+   at it, to stay under the repo's complexity lint threshold.
+2. **New "Resources" filter chip** (`dashboard.js`) — real feedback that there was no way
+   to see every resource link in a roadmap without opening each topic's edit panel one at
+   a time. A fifth chip alongside All/P0-P3; `matchesActiveFilter()` (shared by
+   `filterItems()`/`priorityCounts()`) treats it as "has ≥1 resource". Active, it expands
+   each matched row's resources inline (`renderInlineResources()`) as clickable,
+   type-colored links — reusing `linkDetector.js`'s existing per-type icon/color and
+   `.check-body`'s existing `flex-wrap: wrap` (a `flex-basis: 100%` wrapper drops the list
+   onto its own line with zero structural change to the row). A new `link` icon shape was
+   added to `icons.js` for the chip itself.
+
+See `.claude/rules/roadmap-store.md`'s new "Corrupted-text detection" and "'Resources'
+filter chip" sections for the full writeup.
