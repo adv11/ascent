@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Design token refinement — color + typography (issue #136 Phase 1 of 4).** A live screenshot audit found `app.css`'s token *engineering* solid but the aesthetic result reading as a generic "SaaS starter template." This phase fixes what tokens alone can fix, both themes:
+  - New secondary accent token pair, `--accent-2`/`--accent-2-dark`/`--accent-2-light`/`--accent-2-light-border` (violet/indigo, WCAG-verified ≥5.9:1 in every text pairing, both themes) — reserved for AI-assisted affordances specifically. `.template-card-create` (the "Create your own roadmap" card) and `.template-card-ai-badge` ("AI-POWERED" pill) now draw from it instead of brand teal, so "this is AI-related" no longer looks identical to "this is selected" (`.template-card-current`, still teal).
+  - `--font-display` swapped from `'Plus Jakarta Sans'` to `'Space Grotesk'` (`index.html`'s Google Fonts `<link>` updated to match) — `--font` (Inter, body text) is unchanged.
+  - The unexplained peach/salmon `--glow-accent` ambient corner gradient (light theme, top-right of the auth-shell/dashboard background) is recolored to the new violet `--accent-2` hue and softened, committing to it as a deliberate secondary-accent signature element instead of an accidental leftover.
+  - `--track-bg` (the phase-card progress ring's background track) darkened in both themes — it previously rendered as a near-invisible hairline at 0% complete, reading as a rendering glitch rather than a "not started" state.
+  - `.resource-count` (the "N resources" pill) recolored from brand teal to a neutral gray pill (`--muted`/`--panel-2`/`--line`) — a resource count is metadata, not a status, and no longer competes visually with the brand/selection/AI hues above it.
+
 ### Fixed
 - **Dark-theme regression: "Copy prompt" rendered as a washed-out grey block, and "Create your own roadmap" was a flat solid-color box clashing with every other card's glassmorphism (issue #100 follow-up, reported live with screenshots).** "Copy prompt" was switched to `.btn-primary` for prominence in an earlier pass — `.btn-primary`'s dark-theme colors are intentionally inverted (light background, dark text) for its one existing use case, which reads as a disabled-looking pill once dimmed. Reverted to `.btn-secondary`, matching "Cancel"/"Copy fix-it message for your AI" (same dark-teal-with-bright-teal-text look, already correct in both themes). `.template-card-create` no longer overrides `background` to a solid `--brand-light` fill — it keeps the same `--surface-glass`/`backdrop-filter` base every other template card uses, with only the border (now solid `--brand`) and glow (`--shadow-brand`) signaling "highlighted," so it reads as a glowing variant of the existing card style instead of a mismatched opaque block.
 
