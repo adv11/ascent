@@ -13,10 +13,14 @@ export function svgEl(tag, attrs = {}) {
 // `{ tag = 'path', ...attrs }`. `stroke`/`fill`/`stroke-width` default to the
 // app's one shared icon style (currentColor stroke, no fill, 1.8 stroke
 // width) so call sites only need to specify the geometry — pass any of
-// those keys per-shape to override (e.g. a filled dot).
-export function svgIcon(shapes, { size = 24 } = {}) {
+// those keys per-shape to override (e.g. a filled dot). `viewBox` defaults to
+// `24 24` (this app's hand-drawn line icons) but is overridable per call —
+// issue #136 Phase 2's Phosphor-sourced icons ship in their native `256 256`
+// viewBox as filled paths (`fill: 'currentColor', stroke: 'none'` per shape),
+// not this module's stroke-icon defaults.
+export function svgIcon(shapes, { size = 24, viewBox = '0 0 24 24' } = {}) {
   const svg = svgEl('svg', {
-    viewBox: '0 0 24 24',
+    viewBox,
     width: String(size),
     height: String(size),
     'aria-hidden': 'true',

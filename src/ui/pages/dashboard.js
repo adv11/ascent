@@ -21,6 +21,7 @@ import { animateCountUp } from '../../utils/countUp.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { attachTooltip } from '../components/tooltip.js';
 import { createIcon } from '../components/icons.js';
+import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 
 // Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
@@ -54,7 +55,7 @@ function renderInlineResources(item) {
       'data-action': 'open-resource',
       onClick: e => { e.stopPropagation(); if (!isValidUrl(r.url)) e.preventDefault(); }
     }, [
-      el('span', { 'aria-hidden': 'true', text: `${meta.icon} ` }),
+      el('span', { className: 'link-badge-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(meta.icon, { size: 'xs' })]),
       r.label
     ]);
   }));
@@ -69,13 +70,18 @@ function buildResourceCountBadge(item, onOpen) {
     'aria-label': `View resources for ${item.title}`,
     onClick: e => { e.stopPropagation(); onOpen(); }
   }, [
-    el('span', { 'aria-hidden': 'true', text: `${primaryIcon} ` }),
+    el('span', { className: 'link-badge-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(primaryIcon, { size: 'xs' })]),
     el('span', { text: `${item.resources.length} resource${item.resources.length > 1 ? 's' : ''}` })
   ]);
   attachTooltip(badge, breakdown);
   return badge;
 }
 
+// `breakdown` feeds attachTooltip(), which only ever renders plain text
+// (tooltip.js's `text:` prop) — never a DOM node — so it deliberately stays
+// glyph-free (issue #136 Phase 2: LINK_TYPE_META.icon is now a
+// decorativeIcon.js name, not an emoji glyph, and can't be inlined into a
+// text string the way the old emoji could).
 function summarizeResourceTypes(resources) {
   const counts = {};
   resources.forEach(r => {
@@ -85,7 +91,7 @@ function summarizeResourceTypes(resources) {
   const orderedTypes = RESOURCE_TYPE_PRIORITY.filter(type => counts[type]);
   const primaryIcon = LINK_TYPE_META[orderedTypes[0]].icon;
   const breakdown = orderedTypes
-    .map(type => `${LINK_TYPE_META[type].icon} ${counts[type]} ${RESOURCE_TYPE_NOUN[type]}${counts[type] > 1 ? 's' : ''}`)
+    .map(type => `${counts[type]} ${RESOURCE_TYPE_NOUN[type]}${counts[type] > 1 ? 's' : ''}`)
     .join(' · ');
   return { primaryIcon, breakdown };
 }
@@ -651,7 +657,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
             toggleDone(item);
           }
         }
-      }, [el('span', { className: 'check-mark', 'aria-hidden': 'true', text: '✓' })]),
+      }, [el('span', { className: 'check-mark', 'aria-hidden': 'true' }, [createIcon('check', { size: 'xs' })])]),
       el('div', { className: 'check-body' }, [
         el('span', { className: 'check-title', text: item.title }),
         el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
@@ -1086,12 +1092,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           // with a meta row instead of a separate header section.
           el('div', { className: 'roadmap-header' }, [
             el('div', { className: 'current-roadmap-badge' }, [
-              // currentTemplate.icon is a decorative per-template emoji
-              // string for a built-in template (getTemplate(), out of scope
-              // for issue #107's SVG migration), or the shared createIcon()
-              // "edit" node for a custom roadmap's fallback icon (in scope).
+              // currentTemplate.icon is a decorativeIcon.js name string for a
+              // built-in template (getTemplate(), issue #136 Phase 2 — was a
+              // raw emoji string before), or the shared createIcon() "edit"
+              // node for a custom roadmap's fallback icon (issue #107).
               typeof currentTemplate.icon === 'string'
-                ? el('span', { 'aria-hidden': 'true', text: currentTemplate.icon })
+                ? el('span', { 'aria-hidden': 'true' }, [createDecorativeIcon(currentTemplate.icon, { size: 'sm' })])
                 : el('span', { 'aria-hidden': 'true' }, [currentTemplate.icon]),
               el('span', { text: `${currentTemplate.name} roadmap` })
             ]),

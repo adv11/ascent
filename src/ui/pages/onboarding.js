@@ -11,6 +11,7 @@ import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 import { pickCustomRoadmapIcon } from '../utils/customRoadmapIcon.js';
 import { createIcon } from '../components/icons.js';
+import { createDecorativeIcon } from '../components/decorativeIcon.js';
 
 // Picking a roadmap (built-in template or custom) awaits a real
 // `store.switchRoadmap()` — a Firebase round-trip for anything not already
@@ -206,7 +207,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       'aria-current': isCurrent ? 'true' : null,
       onClick: () => pickCustomRoadmap(roadmap, cardEl)
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: pickCustomRoadmapIcon(roadmap.id) }),
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(pickCustomRoadmapIcon(roadmap.id), { size: 'lg' })]),
       el('span', { className: 'template-card-name', text: roadmap.title }),
       el('span', { className: 'template-card-desc', text: roadmap.description || 'Your own roadmap.' }),
       footerEl
@@ -250,7 +251,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       'aria-current': isCurrent ? 'true' : null,
       onClick: () => pickTemplate(template, cardEl)
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: template.icon }),
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(template.icon, { size: 'lg' })]),
       el('span', { className: 'template-card-name', text: template.name }),
       el('span', { className: 'template-card-desc', text: template.description }),
       footerEl
@@ -306,7 +307,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   function buildRestoreCard(template) {
     const cardEl = el('div', { className: 'template-card template-card-hidden' }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true', text: template.icon }),
+      el('span', { className: 'template-card-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(template.icon, { size: 'lg' })]),
       el('span', { className: 'template-card-name', text: template.name }),
       el('span', { className: 'template-card-desc', text: template.description }),
       el('button', {

@@ -22,7 +22,9 @@ developer-facing, not something an end user ever reads in the running app.
 ## Grammar and mechanics baseline
 
 - No sentence fragments in body copy (headings, button labels, and status chips are
-  exempt — "Autosaved ✓" is a label, not a sentence).
+  exempt — "Autosaved" next to a checkmark icon (`itemPanel.js`'s `.notes-status`, issue
+  #136 Phase 2 — was a literal "✓" glyph appended to the string, now a real `createIcon()`
+  svg sibling) is a label, not a sentence).
 - Sentence case for buttons/headings ("Delete roadmap", not "Delete Roadmap" or "DELETE
   ROADMAP") — matches the existing UI convention, not Title Case.
 - Every toast message and modal body sentence ends with terminal punctuation (a period

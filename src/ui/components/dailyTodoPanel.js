@@ -301,7 +301,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
         'aria-label': "About Today's Todos",
         title: "About Today's Todos",
         onClick: () => openDailyTodoGuide()
-      }, [createIcon('info', { size: 'xs' })]),
+      }, [createIcon('info', { size: 'sm' })]),
       collapseBtn
     ]),
     addForm,

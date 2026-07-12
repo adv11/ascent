@@ -1,5 +1,6 @@
 import { el, debounce } from '../dom.js';
 import { captureScreenshot, readUploadedImage } from './screenshotCapture.js';
+import { createIcon } from './icons.js';
 
 // Shared form primitives for feedbackModal.js's three report-type forms
 // (issue #9 §3.4) — field + char counter, radio groups, screenshot control.
@@ -145,7 +146,6 @@ export function createScreenshotControl({ onChange }) {
   const captureBtn = el('button', {
     type: 'button',
     className: 'btn btn-secondary btn-sm',
-    text: '📷 Capture current screen',
     onClick: async () => {
       errorEl.hidden = true;
       captureBtn.disabled = true;
@@ -164,14 +164,13 @@ export function createScreenshotControl({ onChange }) {
         captureBtn.disabled = false;
       }
     }
-  });
+  }, [createIcon('camera', { size: 'xs' }), ' Capture current screen']);
 
   const uploadBtn = el('button', {
     type: 'button',
     className: 'btn btn-secondary btn-sm',
-    text: '📁 Upload image',
     onClick: () => fileInput.click()
-  });
+  }, [createIcon('upload', { size: 'xs' }), ' Upload image']);
 
   fileInput.addEventListener('change', async () => {
     const file = fileInput.files?.[0];

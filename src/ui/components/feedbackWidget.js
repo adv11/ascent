@@ -1,5 +1,6 @@
 import { el } from '../dom.js';
 import { openFeedbackModal } from './feedbackModal.js';
+import { createDecorativeIcon } from './decorativeIcon.js';
 
 // Persistent floating trigger button (issue #9 §2.1) — mounted exactly once
 // in main.js, outside the router, directly on document.body, so it survives
@@ -12,7 +13,7 @@ export function createFeedbackWidget({ user }) {
     'aria-label': 'Send feedback',
     onClick: () => openFeedbackModal({ user: currentUser })
   }, [
-    el('span', { className: 'feedback-widget-emoji', 'aria-hidden': 'true', text: '💬' }),
+    el('span', { className: 'feedback-widget-emoji', 'aria-hidden': 'true' }, [createDecorativeIcon('chat-circle', { size: 'sm' })]),
     el('span', { className: 'feedback-widget-label', text: 'Feedback' })
   ]);
 

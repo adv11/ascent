@@ -1,6 +1,7 @@
 import { el } from '../dom.js';
 import { exportBackupJson } from '../utils/backupActions.js';
 import { ensureBackupFirstSeenAt, shouldShowBackupReminder, dismissBackupReminder } from '../utils/backupReminder.js';
+import { createIcon } from './icons.js';
 
 // Nudges a user to download a fresh JSON backup every so often (issue #18
 // follow-up) — nothing else in the app ever prompts for one, and a backup
@@ -37,7 +38,7 @@ export function createBackupReminderBanner({ user, store }) {
   });
 
   const banner = el('div', { className: 'backup-reminder-banner', role: 'status', 'aria-live': 'polite' }, [
-    el('span', { className: 'backup-reminder-icon', 'aria-hidden': 'true', text: '💾' }),
+    el('span', { className: 'backup-reminder-icon', 'aria-hidden': 'true' }, [createIcon('save', { size: 'sm' })]),
     el('span', {
       className: 'backup-reminder-msg',
       text: "It's been a couple of weeks since your last backup. Download one now so your roadmap progress is safe if this device is ever lost, or your data is corrupted or deleted."

@@ -3136,3 +3136,39 @@ Two more real-world reports on the same AI-import flow, both traced and fixed:
 
 See `.claude/rules/roadmap-store.md`'s new "Corrupted-text detection" and "'Resources'
 filter chip" sections for the full writeup.
+
+### 2026-07-12 — PR TBD — Icon system unification: Phosphor Icons replace all emoji (issue #136 Phase 2)
+
+Continuing Phase 1's screenshot-audit-driven design revamp. `src/ui/components/icons.js`'s
+`createIcon()` (functional/navigational chrome) is re-drawn onto real Phosphor Icons
+(Regular weight, MIT licensed) source paths in their native `256x256` viewBox, replacing
+this app's original hand-drawn `24x24` stroke icons — same names, same call sites, same
+`--icon-size-*` token contract. `src/ui/utils/svg.js`'s `svgIcon()` gained an optional
+`viewBox` parameter (defaulting to `24 24`, unchanged for any future hand-drawn icon) to
+support this.
+
+A new module, **`src/ui/components/decorativeIcon.js`**, holds a second icon factory,
+`createDecorativeIcon(name, { size })`, over Phosphor's **Duotone** weight (a faint
+`opacity: 0.2` base path plus a full-opacity detail path, both `currentColor`) — this is
+the reversal of issue #107's original "emoji is fine for decorative content" carve-out.
+Every previously-emoji decorative glyph now routes through it: `src/data/templates/index.js`'s
+7 template `icon` fields, `src/ui/utils/linkDetector.js`'s `LINK_TYPE_META` (8 resource
+types), and `src/ui/utils/customRoadmapIcon.js`'s `pickCustomRoadmapIcon()` (16-icon hash
+rotation for custom/imported roadmap cards) — all three modules kept their existing "return
+a plain string" contract, now returning a `decorativeIcon.js` name instead of a glyph, so
+none of them gained a DOM/component dependency. Call sites that used to interpolate an
+emoji glyph directly into a `text:` string or a tooltip string (`dashboard.js`'s resource
+badges, `itemPanel.js`'s resource-type label) were changed to render a real `<svg>` child
+node instead; the one exception is `attachTooltip()`'s breakdown string (plain text only,
+no DOM), which dropped its icon glyphs entirely rather than trying to inline an SVG into
+text.
+
+Rationale for the reversal: cross-platform emoji rendering (a coffee-cup emoji is a
+different illustration style/color/weight on every OS) was an acceptable tradeoff before
+the product's own quality bar moved toward "sellable enterprise product" (root
+`CLAUDE.md`) — a live screenshot audit (issue #136) found the built-in-template
+emoji/SVG-icon mismatch on the onboarding picker's card grid to be the single most visible
+"not enterprise" tell in the app.
+
+See `.claude/rules/ui-styling.md`'s revised "When to use `createIcon()` vs.
+`createDecorativeIcon()`" section for the full policy.

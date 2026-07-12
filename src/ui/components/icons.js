@@ -1,137 +1,120 @@
 import { svgIcon } from '../utils/svg.js';
 
-// Curated named icon set for functional/navigational chrome (issue #107) —
-// every icon used as UI chrome (nav, buttons, toolbars, status) should come
-// from here rather than a fresh Unicode/emoji glyph. Decorative, data-driven
-// glyphs (per-template icons in src/data/templates/index.js, resource-type
-// badges from linkDetector.js) are explicitly out of scope — see
-// .claude/rules/ui-styling.md's "Icon system" section.
+// Curated named icon set for functional/navigational chrome (issue #107,
+// re-drawn onto real Phosphor Icons (Regular weight, MIT licensed) source
+// paths in issue #136 Phase 2 — every icon used as UI chrome (nav, buttons,
+// toolbars, status) should come from here rather than a fresh Unicode/emoji
+// glyph. Decorative, data-driven glyphs (per-template icons in
+// src/data/templates/index.js, resource-type badges from linkDetector.js)
+// now come from decorativeIcon.js's Phosphor Duotone set instead of emoji —
+// see .claude/rules/ui-styling.md's "Icon system" section for the full
+// policy (revised from the original emoji carve-out this phase replaces).
+//
+// Each shape is a single filled Phosphor path in that icon's native 256x256
+// viewBox (`fill: currentColor`, `stroke: none`) — a structurally different
+// shape than svg.js's stroke-icon defaults, so every shape here sets both
+// explicitly rather than relying on svgIcon()'s defaults.
 const ICON_SHAPES = {
   dashboard: () => [
-    { d: 'M4 11.5 L12 4 L20 11.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z', fill: 'currentColor', stroke: 'none' }
   ],
   roadmaps: () => [
-    { tag: 'rect', x: '5', y: '3.5', width: '14', height: '17', rx: '2' },
-    { d: 'M9 3.5v3h6v-3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M8.5 12h7M8.5 15.5h7', 'stroke-linecap': 'round' }
+    { d: 'M12,111l112,64a8,8,0,0,0,7.94,0l112-64a8,8,0,0,0,0-13.9l-112-64a8,8,0,0,0-7.94,0l-112,64A8,8,0,0,0,12,111ZM128,49.21,223.87,104,128,158.79,32.13,104ZM246.94,140A8,8,0,0,1,244,151L132,215a8,8,0,0,1-7.94,0L12,151A8,8,0,0,1,20,137.05l108,61.74,108-61.74A8,8,0,0,1,246.94,140Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // A gear/cog, not the sun-with-rays glyph a plain circle + 8 straight
-  // spokes reads as (reported live — indistinguishable from a light-theme
-  // toggle at 20px). Toothed-ring path adapted from Feather's "settings"
-  // icon (MIT licensed) for a shape that's unambiguously a gear at small
-  // sizes, with the same currentColor/1.8-stroke/round-cap treatment every
-  // other icon here uses.
   settings: () => [
-    { tag: 'circle', cx: '12', cy: '12', r: '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    {
-      d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
-      'stroke-linecap': 'round',
-      'stroke-linejoin': 'round'
-    }
+    { d: 'M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z', fill: 'currentColor', stroke: 'none' }
   ],
   signOut: () => [
-    { d: 'M12 4v7', 'stroke-linecap': 'round' },
-    { d: 'M7 6.2a7.5 7.5 0 1 0 10 0', 'stroke-linecap': 'round' }
+    { d: 'M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z', fill: 'currentColor', stroke: 'none' }
   ],
   menu: () => [
-    { d: 'M4 6.5h16M4 12h16M4 17.5h16', 'stroke-linecap': 'round' }
+    { d: 'M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z', fill: 'currentColor', stroke: 'none' }
   ],
   collapse: () => [
-    { d: 'M15 5l-7 7 7 7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z', fill: 'currentColor', stroke: 'none' }
   ],
   chevron: () => [
-    { d: 'M9 5l7 7-7 7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z', fill: 'currentColor', stroke: 'none' }
   ],
   check: () => [
-    { d: 'M5 12.5l4.5 4.5L19 7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z', fill: 'currentColor', stroke: 'none' }
   ],
   search: () => [
-    { tag: 'circle', cx: '11', cy: '11', r: '6.5' },
-    { d: 'M20 20l-4.3-4.3', 'stroke-linecap': 'round' }
+    { d: 'M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z', fill: 'currentColor', stroke: 'none' }
   ],
   timer: () => [
-    { tag: 'circle', cx: '12', cy: '13', r: '8' },
-    { d: 'M12 9v4l3 2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M9.5 2.5h5', 'stroke-linecap': 'round' }
+    { d: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z', fill: 'currentColor', stroke: 'none' }
   ],
   note: () => [
-    { tag: 'rect', x: '5', y: '3.5', width: '14', height: '17', rx: '2' },
-    { d: 'M8.5 8h7M8.5 11.5h7M8.5 15h4.5', 'stroke-linecap': 'round' }
+    { d: 'M229.66,58.34l-32-32a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,88,128v32a8,8,0,0,0,8,8h32a8,8,0,0,0,5.66-2.34l96-96A8,8,0,0,0,229.66,58.34ZM124.69,152H104V131.31l64-64L188.69,88ZM200,76.69,179.31,56,192,43.31,212.69,64ZM224,128v80a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h80a8,8,0,0,1,0,16H48V208H208V128a8,8,0,0,1,16,0Z', fill: 'currentColor', stroke: 'none' }
   ],
   info: () => [
-    { tag: 'circle', cx: '12', cy: '12', r: '8.5' },
-    { d: 'M12 11v5.5', 'stroke-linecap': 'round' },
-    { tag: 'circle', cx: '12', cy: '8', r: '0.9', fill: 'currentColor', stroke: 'none' }
+    { d: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z', fill: 'currentColor', stroke: 'none' }
   ],
   trash: () => [
-    { d: 'M5 7h14', 'stroke-linecap': 'round' },
-    { d: 'M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M7.5 7l.7 12a2 2 0 0 0 2 1.9h3.6a2 2 0 0 0 2-1.9l.7-12', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M10.3 10.5v6M13.7 10.5v6', 'stroke-linecap': 'round' }
+    { d: 'M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z', fill: 'currentColor', stroke: 'none' }
   ],
   close: () => [
-    { d: 'M6 6l12 12M18 6L6 18', 'stroke-linecap': 'round' }
+    { d: 'M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z', fill: 'currentColor', stroke: 'none' }
   ],
   plus: () => [
-    { d: 'M12 5v14M5 12h14', 'stroke-linecap': 'round' }
+    { d: 'M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z', fill: 'currentColor', stroke: 'none' }
   ],
   edit: () => [
-    { d: 'M15.5 4.5l4 4-9.5 9.5-4.6.6.6-4.6z', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M13.5 6.5l4 4', 'stroke-linecap': 'round' }
+    { d: 'M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z', fill: 'currentColor', stroke: 'none' }
   ],
   sparkle: () => [
-    { d: 'M12 3.5l1.7 4.8 4.8 1.7-4.8 1.7L12 16.5l-1.7-4.8-4.8-1.7 4.8-1.7z', 'stroke-linejoin': 'round' },
-    { d: 'M19 15l.85 2.15L22 18l-2.15.85L19 21l-.85-2.15L16 18l2.15-.85z', 'stroke-linejoin': 'round' }
+    { d: 'M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // Streak stat card (issue #8) — a simple flame outline, same minimalist
-  // line-art treatment as every other icon here (no fill, currentColor
-  // stroke, round joins).
+  // Streak stat card (issue #8)
   flame: () => [
-    {
-      d: 'M12 21c-4 0-6.5-2.5-6.5-6 0-3 2-5 3-7.5C9.5 5 10 3 12 2c0 2 .5 3.5 2 5 1.5 1.5 2.5 3.5 2.5 6 0 3.5-2.5 6-6 6z',
-      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
-    },
-    {
-      d: 'M12 21a3 3 0 0 0 3-3c0-1.5-1-2.5-1.5-3.5.2 1-.3 2-1.5 2-1 0-1.5-.7-1.3-1.7-1 1-1.7 2-1.7 3.2a3 3 0 0 0 3 3z',
-      'stroke-linecap': 'round', 'stroke-linejoin': 'round'
-    }
+    { d: 'M173.79,51.48a221.25,221.25,0,0,0-41.67-34.34,8,8,0,0,0-8.24,0A221.25,221.25,0,0,0,82.21,51.48C54.59,80.48,40,112.47,40,144a88,88,0,0,0,176,0C216,112.47,201.41,80.48,173.79,51.48ZM96,184c0-27.67,22.53-47.28,32-54.3,9.48,7,32,26.63,32,54.3a32,32,0,0,1-64,0Zm77.27,15.93A47.8,47.8,0,0,0,176,184c0-44-42.09-69.79-43.88-70.86a8,8,0,0,0-8.24,0C122.09,114.21,80,140,80,184a47.8,47.8,0,0,0,2.73,15.93A71.88,71.88,0,0,1,56,144c0-34.41,20.4-63.15,37.52-81.19A216.21,216.21,0,0,1,128,33.54a215.77,215.77,0,0,1,34.48,29.27C193.49,95.5,200,125,200,144A71.88,71.88,0,0,1,173.27,199.93Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // Velocity stat card (issue #8) — adapted from Feather's "trending-up"
-  // icon (MIT licensed), same precedent as the settings gear above.
+  // Velocity stat card (issue #8)
   trendingUp: () => [
-    { d: 'M4 16l6-6 4 4 6-7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M15 7h5v5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M240,56v64a8,8,0,0,1-16,0V75.31l-82.34,82.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,212.69,64H168a8,8,0,0,1,0-16h64A8,8,0,0,1,240,56Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // Progress sidebar nav item (issue #8) — three ascending bars, distinct
-  // from `trendingUp`'s line-chart shape so the nav icon and a stat-tile
-  // icon never look interchangeable at a glance.
+  // Progress sidebar nav item (issue #8) — horizontal bar-chart glyph,
+  // distinct from `trendingUp`'s line-chart shape.
   progress: () => [
-    { d: 'M5 20v-8', 'stroke-linecap': 'round' },
-    { d: 'M12 20V6', 'stroke-linecap': 'round' },
-    { d: 'M19 20v-5', 'stroke-linecap': 'round' }
+    { d: 'M224,96H184V56a8,8,0,0,0-8-8H56V40a8,8,0,0,0-16,0V216a8,8,0,0,0,16,0v-8h88a8,8,0,0,0,8-8V160h72a8,8,0,0,0,8-8V104A8,8,0,0,0,224,96ZM168,64V96H56V64ZM136,192H56V160h80Zm80-48H56V112H216Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // Share button (issue #8) — adapted from Feather's "share" icon (box +
-  // up-arrow), same precedent as the settings gear above.
+  // Share button (issue #8)
   share: () => [
-    { d: 'M12 15V3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M8 7l4-4 4 4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // Notification bell — the topbar "What's New" changelog trigger (issue
-  // #20), adapted from Feather's "bell" icon (MIT licensed), same precedent
-  // as the settings gear above.
+  // Notification bell — the topbar "What's New" changelog trigger (issue #20)
   bell: () => [
-    { d: 'M6 10.5a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14.5 6 10.5z', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M10.3 19.5a1.9 1.9 0 0 0 3.4 0', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z', fill: 'currentColor', stroke: 'none' }
   ],
-  // The dashboard's "Resources" filter chip (issue #100 follow-up) — a
-  // chain-link glyph, adapted from Feather's "link" icon (MIT licensed),
-  // same precedent as the settings gear above.
+  // The dashboard's "Resources" filter chip (issue #100 follow-up)
   link: () => [
-    { d: 'M9.5 14.5l5-5', 'stroke-linecap': 'round' },
-    { d: 'M11 6.5l1-1a3.5 3.5 0 0 1 5 5l-1 1', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
-    { d: 'M13 17.5l-1 1a3.5 3.5 0 0 1-5-5l1-1', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+    { d: 'M165.66,90.34a8,8,0,0,1,0,11.32l-64,64a8,8,0,0,1-11.32-11.32l64-64A8,8,0,0,1,165.66,90.34ZM215.6,40.4a56,56,0,0,0-79.2,0L106.34,70.45a8,8,0,0,0,11.32,11.32l30.06-30a40,40,0,0,1,56.57,56.56l-30.07,30.06a8,8,0,0,0,11.31,11.32L215.6,119.6a56,56,0,0,0,0-79.2ZM138.34,174.22l-30.06,30.06a40,40,0,1,1-56.56-56.57l30.05-30.05a8,8,0,0,0-11.32-11.32L40.4,136.4a56,56,0,0,0,79.2,79.2l30.06-30.07a8,8,0,0,0-11.32-11.31Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  // Theme toggle (issue #136 Phase 2 follow-up — was raw '☀'/'☾' glyphs,
+  // themeToggle.js)
+  sun: () => [
+    { d: 'M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  moon: () => [
+    { d: 'M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  // Error status (feedbackModal.js — was raw '⚠' glyph)
+  warning: () => [
+    { d: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  // Screenshot-capture / upload-image buttons (feedbackForm.js — were raw
+  // '📷'/'📁' glyphs). Functional action buttons, not decorative content, so
+  // Regular weight through createIcon() rather than createDecorativeIcon().
+  camera: () => [
+    { d: 'M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  upload: () => [
+    { d: 'M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0ZM93.66,77.66,120,51.31V144a8,8,0,0,0,16,0V51.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,77.66Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  // Backup reminder banner (backupReminderBanner.js — was raw '💾' glyph)
+  save: () => [
+    { d: 'M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z', fill: 'currentColor', stroke: 'none' }
   ]
 };
 
@@ -149,7 +132,7 @@ export function createIcon(name, { size = 'sm' } = {}) {
   const shapes = ICON_SHAPES[name];
   if (!shapes) throw new Error(`Unknown icon: "${name}"`);
   if (!VALID_SIZES.has(size)) throw new Error(`Unknown icon size: "${size}"`);
-  const svg = svgIcon(shapes());
+  const svg = svgIcon(shapes(), { viewBox: '0 0 256 256' });
   svg.setAttribute('class', `icon icon-${size}`);
   return svg;
 }

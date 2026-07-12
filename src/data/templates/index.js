@@ -21,43 +21,46 @@ export const TEMPLATES = [
     id: 'java-backend',
     name: 'Java Backend Engineer',
     description: 'Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep.',
-    icon: '☕'
+    // issue #136 Phase 2 — was the '☕' emoji; now a decorativeIcon.js name
+    // (rendered via createDecorativeIcon(), Phosphor Duotone). Every id below
+    // is deliberately also its own decorativeIcon.js key.
+    icon: 'java-backend'
   },
   {
     id: 'genai-agentic-ai',
     name: 'GenAI / Agentic AI Engineer',
     description: 'LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep.',
-    icon: '🤖'
+    icon: 'genai-agentic-ai'
   },
   {
     id: 'frontend',
     name: 'Frontend Developer',
     description: 'HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep.',
-    icon: '🖥'
+    icon: 'frontend'
   },
   {
     id: 'data-science',
     name: 'Data Scientist',
     description: 'Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep.',
-    icon: '📊'
+    icon: 'data-science'
   },
   {
     id: 'math-grade12',
     name: '12th Grade Mathematics',
     description: 'Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep.',
-    icon: '📐'
+    icon: 'math-grade12'
   },
   {
     id: 'piano',
     name: 'Learning Piano',
     description: 'Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills.',
-    icon: '🎹'
+    icon: 'piano'
   },
   {
     id: 'marketing',
     name: 'Marketing',
     description: 'Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep.',
-    icon: '📈'
+    icon: 'marketing'
   }
 ].map(template => ({
   ...template,

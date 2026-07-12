@@ -104,7 +104,7 @@ after calling `setUser`.
 
 | Export | Signature | Notes |
 |---|---|---|
-| `TEMPLATES` | `{ id, name, description, icon, buildItems: () => Promise<Record<string, Item>> }[]` | The 7 starter templates, in display order (`'blank'` retired — issue #4 follow-up). `buildItems()` dynamically imports the template module. Has no concept of "hidden" — that's a per-user preference in `roadmapStore`, not a registry property. |
+| `TEMPLATES` | `{ id, name, description, icon, buildItems: () => Promise<Record<string, Item>> }[]` | The 7 starter templates, in display order (`'blank'` retired — issue #4 follow-up). `buildItems()` dynamically imports the template module. Has no concept of "hidden" — that's a per-user preference in `roadmapStore`, not a registry property. `icon` is a `src/ui/components/decorativeIcon.js` icon name (issue #136 Phase 2, e.g. `'java-backend'` — currently identical to each template's own `id`), not a raw emoji glyph as it was before; render it via `createDecorativeIcon(template.icon, { size })`. |
 | `getTemplate` | `(id: string) => TemplateEntry` | Falls back to `TEMPLATES[0]` (`java-backend`) for an unknown or missing id — including `'blank'` now. |
 | `buildSeedItems` | `(templateId: string) => Promise<Record<string, Item>>` | Equivalent to `getTemplate(templateId).buildItems()`. |
 | `getTemplatePhases` | `(templateId: string) => Promise<TemplatePhase[]>` | The template's `PHASES` export — used for `dashboard.js`'s phase-card skeleton. |
@@ -226,7 +226,7 @@ Pure — no DOM, no side effects.
 | Export | Signature | Notes |
 |---|---|---|
 | `detectLinkType` | `(url: string) => string` | Detects a resource's link type from its hostname/path: `'youtube'`, `'github'`, `'notion'`, `'google-doc'`, `'google-drive'`, `'medium'`, `'stackoverflow'`, or the fallback `'article'` for any other http/https URL. Never throws — an unparseable string, a non-http(s) protocol (e.g. `javascript:`), or `undefined` all resolve to `'article'`. |
-| `LINK_TYPE_META` | `Record<string, { label: string, icon: string, badgeClass: string }>` | Display metadata for every `detectLinkType` return value — the resource card badge (`itemPanel.js`) and the checklist row's resource-count tooltip breakdown (`dashboard.js`) both read from this instead of hardcoding their own icon/label per type. |
+| `LINK_TYPE_META` | `Record<string, { label: string, icon: string, badgeClass: string }>` | Display metadata for every `detectLinkType` return value — the resource card badge (`itemPanel.js`) and the checklist row's resource badges (`dashboard.js`) both read from this instead of hardcoding their own icon/label per type. `icon` is a `decorativeIcon.js` icon name (issue #136 Phase 2), not a raw emoji glyph — render it via `createDecorativeIcon(meta.icon, { size })`, never interpolate it directly into a text string. |
 
 ## `createActivityLogStore()` — `src/services/activityLogStore.js` (issue #8)
 

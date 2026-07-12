@@ -4,14 +4,17 @@ import { createIcon } from '../../src/ui/components/icons.js';
 const ICON_NAMES = [
   'dashboard', 'roadmaps', 'settings', 'signOut', 'menu', 'collapse', 'chevron',
   'check', 'search', 'timer', 'note', 'info', 'trash', 'close', 'plus', 'edit', 'sparkle',
-  'flame', 'trendingUp', 'progress', 'share', 'link'
+  'flame', 'trendingUp', 'progress', 'share', 'bell', 'link'
 ];
 
 describe('icons.js', () => {
-  it.each(ICON_NAMES)('createIcon("%s") returns a valid 24x24 <svg> node', name => {
+  // issue #136 Phase 2 — re-drawn onto real Phosphor Icons (Regular weight)
+  // source paths, which ship in a native 256x256 viewBox, not this app's
+  // previous hand-drawn line icons' 24x24.
+  it.each(ICON_NAMES)('createIcon("%s") returns a valid 256x256 <svg> node', name => {
     const svg = createIcon(name);
     expect(svg.tagName).toBe('svg');
-    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
+    expect(svg.getAttribute('viewBox')).toBe('0 0 256 256');
     expect(svg.getAttribute('aria-hidden')).toBe('true');
     expect(svg.classList.contains('icon')).toBe(true);
     expect(svg.children.length).toBeGreaterThan(0);

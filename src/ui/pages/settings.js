@@ -13,6 +13,7 @@ import { isValidEmailFormat, attachFieldValidationIcon } from '../utils/fieldVal
 import { setButtonLoading } from '../utils/buttonLoading.js';
 import { getTheme, setTheme, onThemeChange } from '../../services/theme.js';
 import { KEYS } from '../../services/localStorageKeys.js';
+import { createIcon } from '../components/icons.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPrompt } from '../../services/pwaInstall.js';
 import { createFeatureBadge, dismissFeatureBadge } from '../components/featureBadge.js';
@@ -201,7 +202,10 @@ function buildProfileSection(user) {
   const verifiedRow = el('div', { className: 'settings-row' }, [
     el('div', { className: 'settings-row-main' }, [
       el('span', { className: 'settings-row-label', text: 'Email verified' }),
-      el('span', { className: `settings-row-value ${user.emailVerified ? 'settings-verified' : 'settings-unverified'}`, text: user.emailVerified ? '✅ Verified' : '⚠️ Not verified' })
+      el('span', { className: `settings-row-value ${user.emailVerified ? 'settings-verified' : 'settings-unverified'}` }, [
+        createIcon(user.emailVerified ? 'check' : 'warning', { size: 'xs' }),
+        user.emailVerified ? ' Verified' : ' Not verified'
+      ])
     ])
   ]);
 

@@ -12,15 +12,19 @@ const LINK_TYPES = [
   { type: 'stackoverflow', test: url => /(^|\.)stackoverflow\.com$/.test(url.hostname) }
 ];
 
+// `icon` was a raw emoji glyph before issue #136 Phase 2 — now a
+// decorativeIcon.js icon name (src/ui/components/decorativeIcon.js), still a
+// plain string so this module stays DOM/import-free per the header comment
+// above. Every key here is also a decorativeIcon.js key.
 export const LINK_TYPE_META = {
-  youtube: { label: 'YouTube', icon: '▶', badgeClass: 'link-badge-youtube' },
-  github: { label: 'GitHub', icon: '⭐', badgeClass: 'link-badge-github' },
-  notion: { label: 'Notion', icon: '📓', badgeClass: 'link-badge-notion' },
-  'google-doc': { label: 'Doc', icon: '📄', badgeClass: 'link-badge-google-doc' },
-  'google-drive': { label: 'Drive', icon: '🗂', badgeClass: 'link-badge-google-drive' },
-  medium: { label: 'Medium', icon: '✍', badgeClass: 'link-badge-medium' },
-  stackoverflow: { label: 'Stack Overflow', icon: '🧠', badgeClass: 'link-badge-stackoverflow' },
-  article: { label: 'Article', icon: '🔗', badgeClass: 'link-badge-article' }
+  youtube: { label: 'YouTube', icon: 'youtube', badgeClass: 'link-badge-youtube' },
+  github: { label: 'GitHub', icon: 'github', badgeClass: 'link-badge-github' },
+  notion: { label: 'Notion', icon: 'notion', badgeClass: 'link-badge-notion' },
+  'google-doc': { label: 'Doc', icon: 'google-doc', badgeClass: 'link-badge-google-doc' },
+  'google-drive': { label: 'Drive', icon: 'google-drive', badgeClass: 'link-badge-google-drive' },
+  medium: { label: 'Medium', icon: 'medium', badgeClass: 'link-badge-medium' },
+  stackoverflow: { label: 'Stack Overflow', icon: 'stackoverflow', badgeClass: 'link-badge-stackoverflow' },
+  article: { label: 'Article', icon: 'article', badgeClass: 'link-badge-article' }
 };
 
 /**
