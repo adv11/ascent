@@ -49,40 +49,49 @@ function normalizeResourceUrl(rawUrl) {
 // "Resource URLs must be validated before use" rule (roadmap-store.md) — a
 // bad/dangerous URL never reaches the store, it just doesn't reach it as
 // silently-broken data attached to an otherwise-good topic either.
+// Returns { resources, droppedCount } rather than just the filtered array —
+// callers (adaptImportToRoadmap) sum droppedCount across every item so the
+// UI (importRoadmapModal.js) can tell the user N links were skipped instead
+// of a topic silently ending up with resources: [] (issue #121 item 3).
 function sanitizeResources(rawResources) {
-  return (rawResources || [])
+  const resources = (rawResources || [])
     .map(r => ({ label: r.label.trim(), url: normalizeResourceUrl(r.url) }))
     .filter(r => isHttpUrl(r.url));
+  return { resources, droppedCount: (rawResources || []).length - resources.length };
 }
 
 // Normalizes any of the three item shapes validateImportPayload() accepts
 // (plain string / [title, priority] tuple / { title, priority?, resources? }
-// object, issue #100) into { title, priority, resources }.
+// object, issue #100) into { title, priority, resources, droppedResourceCount }.
 function normalizeItem(rawItem, phasePriority) {
   if (typeof rawItem === 'string') {
-    return { title: rawItem, priority: normalizePriority(phasePriority), resources: [] };
+    return { title: rawItem, priority: normalizePriority(phasePriority), resources: [], droppedResourceCount: 0 };
   }
   if (Array.isArray(rawItem)) {
     const [title, priority] = rawItem;
-    return { title, priority: normalizePriority(priority), resources: [] };
+    return { title, priority: normalizePriority(priority), resources: [], droppedResourceCount: 0 };
   }
+  const { resources, droppedCount } = sanitizeResources(rawItem.resources);
   return {
     title: rawItem.title,
     priority: normalizePriority(rawItem.priority) || normalizePriority(phasePriority),
-    resources: sanitizeResources(rawItem.resources)
+    resources,
+    droppedResourceCount: droppedCount
   };
 }
 
 export function adaptImportToRoadmap(data) {
   const phases = [];
   const items = {};
+  let droppedResourceCount = 0;
 
   data.phases.forEach(phase => {
     const sections = [];
     const phasePriority = normalizePriority(phase.priority);
     phase.sections.forEach(section => {
       section.items.forEach(rawItem => {
-        const { title, priority, resources } = normalizeItem(rawItem, phasePriority);
+        const { title, priority, resources, droppedResourceCount: itemDropped } = normalizeItem(rawItem, phasePriority);
+        droppedResourceCount += itemDropped;
         const id = genId('custom');
         items[id] = {
           id,
@@ -102,5 +111,5 @@ export function adaptImportToRoadmap(data) {
     phases.push({ id: genId('phase'), title: phase.title, priority: phasePriority, resourceKey: null, sections });
   });
 
-  return { phases, items };
+  return { phases, items, droppedResourceCount };
 }

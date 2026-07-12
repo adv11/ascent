@@ -29,14 +29,27 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
     return btn;
   });
 
-  const wrap = el('div', { className: 'dropdown' }, [trigger, menu]);
+  // `menu` is NOT nested inside `wrap` — it's appended straight to
+  // `document.body` on open and removed on close (a portal, same pattern as
+  // `select.js`'s listbox). `.dropdown-menu` is `position: fixed`, but a
+  // `position: fixed` element positions itself — and stacks (z-index)
+  // — relative to the nearest ancestor with a `transform`/`filter`/etc.
+  // (or that establishes its own stacking context), not the viewport/root,
+  // if one exists between it and the root
+  // (`.claude/rules/ui-styling.md`'s "overflow value that isn't visible..."
+  // and transformed-ancestor rules). This component was previously assumed
+  // to always live in a "known-safe" chrome location (topbar/sidebar) and
+  // left un-portaled — but the sidebar's own avatar menu is nested inside
+  // `.app-shell-2`/animated dashboard content, which real use showed
+  // intermittently renders the menu above or *below* other page content
+  // depending on which sibling stacking contexts exist at open time (issue
+  // #121 follow-up, reported live with a screenshot). Portaling sidesteps
+  // the whole bug class regardless of which container a future trigger is
+  // nested inside, exactly like `select.js`'s fix for the identical
+  // underlying issue.
+  const wrap = el('div', { className: 'dropdown' }, [trigger]);
   let open = false;
 
-  // `.dropdown-menu` is `position: fixed` (see app.css comment) so it can
-  // escape a clipping ancestor like `.app-sidebar` — but fixed positioning
-  // ignores `.dropdown`'s own offset entirely, so the menu's screen position
-  // has to be computed from the trigger's real geometry every time it opens,
-  // not left to a static CSS rule.
   function positionMenu() {
     const rect = trigger.getBoundingClientRect();
     if (align === 'start') {
@@ -54,10 +67,16 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
 
   function setOpen(next) {
     open = next;
-    if (open) positionMenu();
     wrap.classList.toggle('open', open);
+    menu.classList.toggle('open', open);
     trigger.setAttribute('aria-expanded', String(open));
-    if (open) itemEls[0]?.focus();
+    if (open) {
+      document.body.appendChild(menu);
+      positionMenu();
+      itemEls[0]?.focus();
+    } else if (menu.isConnected) {
+      menu.remove();
+    }
   }
 
   function close() {
@@ -71,7 +90,7 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   }
 
   function onDocClick(e) {
-    if (!wrap.contains(e.target)) close();
+    if (!wrap.contains(e.target) && !menu.contains(e.target)) close();
   }
 
   function onKeydown(e) {
@@ -93,10 +112,17 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   trigger.setAttribute('aria-expanded', 'false');
   trigger.addEventListener('click', toggle);
   document.addEventListener('click', onDocClick);
-  wrap.addEventListener('keydown', onKeydown);
+  // `menu` is portaled out of `wrap` (see the comment above `wrap`'s
+  // declaration) — a single `wrap`-level keydown listener would never see
+  // events from a focused item once it's a body-level sibling, not a
+  // descendant, of `wrap`. Attach to both explicitly, same split
+  // `select.js` uses for its trigger/listbox.
+  trigger.addEventListener('keydown', onKeydown);
+  menu.addEventListener('keydown', onKeydown);
 
   wrap._cleanup = () => {
     document.removeEventListener('click', onDocClick);
+    if (menu.isConnected) menu.remove();
   };
 
   return wrap;

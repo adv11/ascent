@@ -114,10 +114,16 @@ describe('createSidebar — account identity', () => {
   // here too, unlike "Delete account" which stays signed-in-only below.
   it('gives an anonymous user a Settings + backup dropdown with no "Delete account" item', async () => {
     const node = await freshSidebar({ activeRoute: '/app', user: { isAnonymous: true }, store: fakeStore() });
+    document.body.append(node);
     expect(node.querySelector('.app-sidebar-identity').textContent).toContain('Guest session');
     expect(node.querySelector('.dropdown')).not.toBeNull();
-    expect(node.querySelector('.dropdown-item-danger')).toBeNull();
-    const itemText = Array.from(node.querySelectorAll('.dropdown-item')).map(el => el.textContent);
+
+    // The dropdown menu is portaled to document.body on open (issue #121
+    // follow-up, dropdown.js) — its items only exist in the document once
+    // opened, not always-in-DOM-but-hidden inside .dropdown.
+    node.querySelector('.app-sidebar-identity').click();
+    expect(document.querySelector('.dropdown-item-danger')).toBeNull();
+    const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
     expect(itemText).toEqual(['Settings', 'My reports', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
   });
 
@@ -132,7 +138,7 @@ describe('createSidebar — account identity', () => {
     document.body.append(node);
 
     node.querySelector('.app-sidebar-identity').click();
-    node.querySelector('.dropdown-item-danger').click();
+    document.querySelector('.dropdown-item-danger').click();
 
     expect(onDeleteAccount).toHaveBeenCalledTimes(1);
   });

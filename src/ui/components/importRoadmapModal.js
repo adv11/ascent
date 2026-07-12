@@ -258,6 +258,26 @@ export function openCreateRoadmapModal() {
       placeholder: 'Paste the AI output here'
     });
     const summaryMsg = el('p', { className: 'form-message', text: '' });
+    // Issue #121 item 1: a captured real-world ChatGPT payload confirmed the
+    // corruption-marker heuristic below is catching genuine data corruption
+    // (ChatGPT's web UI auto-linkifying bare URLs inside the JSON, then a
+    // "select rendered text and copy" action capturing that markdown-link
+    // syntax instead of the raw JSON) — not a false positive in our
+    // validator. The generic per-error CORRUPTION_HINT text
+    // (importValidator.js) is still shown in "technical details", but a
+    // provider-specific callout surfaces the actual fix up front, since
+    // resending the same way ("fix it and resend") reproduces the identical
+    // corruption every time.
+    // A distinct class from .form-message.error (summaryMsg's class) —
+    // both a Playwright locator and this modal's own DOM structure need to
+    // tell "N things need fixing" apart from this callout unambiguously
+    // (a bare `.form-message.error` locator matched both, breaking
+    // tests/e2e/importRoadmap.test.js in CI once this element existed).
+    const corruptionHint = el('p', {
+      className: 'import-corruption-hint',
+      hidden: true,
+      text: 'This looks like it was copied from ChatGPT\'s rendered response instead of the raw text. In ChatGPT, use the copy-code button in the top-right corner of the code block (not text selection) — then paste again.'
+    });
     const technicalToggle = el('button', {
       type: 'button',
       className: 'btn btn-ghost btn-sm import-technical-toggle',
@@ -302,6 +322,7 @@ export function openCreateRoadmapModal() {
       technicalToggle.hidden = true;
       technicalToggle.textContent = 'Show technical details';
       fixItBtn.hidden = true;
+      corruptionHint.hidden = true;
       summaryMsg.textContent = '';
       summaryMsg.className = 'form-message';
       lastValidData = null;
@@ -323,14 +344,15 @@ export function openCreateRoadmapModal() {
         errorList.replaceChildren(...result.errors.map(message => el('li', { text: message })));
         technicalToggle.hidden = false;
         fixItBtn.hidden = false;
+        corruptionHint.hidden = !result.errors.some(message => message.includes('looks corrupted'));
       }
     }
     pasteArea.addEventListener('input', debounce(runValidation, 300));
 
     importBtn.addEventListener('click', () => {
       if (!lastValidData) return;
-      const { phases, items } = adaptImportToRoadmap(lastValidData);
-      close({ title: lastValidData.title, phases, items });
+      const { phases, items, droppedResourceCount } = adaptImportToRoadmap(lastValidData);
+      close({ title: lastValidData.title, phases, items, droppedResourceCount });
     });
 
     const pasteColumn = el('div', { className: 'import-column import-column-paste' }, [
@@ -338,6 +360,7 @@ export function openCreateRoadmapModal() {
       el('label', { className: 'field' }, [pasteArea]),
       buildStepHeading(6, 'Fix any issues', 5),
       summaryMsg,
+      corruptionHint,
       technicalToggle,
       errorList,
       fixItBtn

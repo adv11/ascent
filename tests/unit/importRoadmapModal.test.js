@@ -224,6 +224,36 @@ describe('openCreateRoadmapModal — paste-and-import column', () => {
     vi.useRealTimers();
   });
 
+  it('pasting a corrupted (markdown-linkified) payload shows the ChatGPT-specific copy-button hint (issue #121 item 1)', async () => {
+    vi.useFakeTimers();
+    openCreateRoadmapModal();
+    const overlay = getOverlay();
+    const pasteArea = overlay.querySelector('.import-paste-area');
+
+    const { CHATGPT_CORRUPTED_PAYLOAD } = await import('./fixtures/chatgptCorruptedPayload.js');
+    pasteArea.value = CHATGPT_CORRUPTED_PAYLOAD;
+    pasteArea.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+
+    const hint = overlay.querySelector('.import-corruption-hint');
+    expect(hint.hidden).toBe(false);
+    expect(hint.textContent).toContain('copy-code button');
+    vi.useRealTimers();
+  });
+
+  it('pasting ordinary invalid JSON (not a corruption case) does not show the ChatGPT-specific hint', () => {
+    vi.useFakeTimers();
+    openCreateRoadmapModal();
+    const overlay = getOverlay();
+    const pasteArea = overlay.querySelector('.import-paste-area');
+    pasteArea.value = '{not valid json';
+    pasteArea.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+
+    expect(overlay.querySelector('.import-corruption-hint').hidden).toBe(true);
+    vi.useRealTimers();
+  });
+
   it('"Show technical details" reveals the technical error list', () => {
     vi.useFakeTimers();
     openCreateRoadmapModal();

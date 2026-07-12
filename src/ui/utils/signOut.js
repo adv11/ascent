@@ -12,18 +12,42 @@ import { confirmDialog } from '../components/confirmDialog.js';
 // first, with a message tailored to what's actually at stake.
 export async function confirmAndSignOut(user, store) {
   const isDirtyGuest = user.isAnonymous && !!store?.getSnapshot().dirty;
+  const needsFlush = !user.isAnonymous && !!store?.getSnapshot().dirty;
   const message = isDirtyGuest
     ? 'You have unsaved changes. Guest session data is only stored on this device and will be cleared on sign-out.'
     : user.isAnonymous
       ? 'Guest session data is only stored on this device and will be cleared on sign-out.'
       : "You'll need to sign in again to access your roadmap.";
 
-  if (!await confirmDialog({
+  const confirmed = await confirmDialog({
     title: 'Sign out?',
     message,
     confirmText: 'Sign out',
-    danger: isDirtyGuest
-  })) return;
+    confirmingText: needsFlush ? 'Signing out…' : undefined,
+    danger: isDirtyGuest,
+    // A real (non-guest) account can still have a debounced roadmap write
+    // queued (roadmapStore.js's 500ms queueSave()) that hasn't reached
+    // Firebase yet. authApi.signOut() invalidates the auth token
+    // immediately, so any in-flight or not-yet-fired write after that point
+    // silently fails — and roadmapStore.js's own setUser() uid-transition
+    // guard wipes local storage right after, so the edit is lost from both
+    // places with no error surfaced. Flushing here, while still
+    // authenticated, closes that window; passed as onConfirm (rather than
+    // just awaited after the dialog resolves) so the dialog itself stays
+    // open with a spinner instead of the user watching nothing happen for
+    // however long the flush takes. Guest data never reaches Firebase
+    // either way, so this only ever runs for a real account.
+    onConfirm: needsFlush
+      ? async () => {
+          try {
+            await store.flush();
+          } catch (error) {
+            console.error('Failed to flush pending roadmap changes before sign-out', error);
+          }
+        }
+      : undefined
+  });
+  if (!confirmed) return;
 
   await authApi.signOut();
   navigate('/signin', true);

@@ -781,32 +781,35 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       'aria-label': `Rename phase "${phase.title}"`
     });
     return el('div', { className: 'phase-manage-row' }, [
-      renameInput,
-      el('button', {
-        type: 'button',
-        className: 'btn btn-ghost btn-sm',
-        text: 'Rename',
-        onClick: () => {
-          const value = renameInput.value.trim();
-          if (!value || value === phase.title) return;
-          store.renamePhase(phase.id, value);
-        }
-      }),
-      el('button', {
-        type: 'button',
-        className: 'btn btn-ghost btn-sm btn-danger-text',
-        text: 'Delete phase',
-        onClick: async () => {
-          if (!await confirmDialog({
-            title: `Delete "${phase.title}"?`,
-            message: 'This deletes the phase and every topic inside it. This cannot be undone.',
-            confirmText: 'Delete',
-            danger: true
-          })) return;
-          store.removePhase(phase.id);
-          showToast(`Deleted phase "${phase.title}".`, 'success');
-        }
-      })
+      el('span', { className: 'field-hint', text: 'Rename or delete this phase' }),
+      el('div', { className: 'phase-manage-row-controls' }, [
+        renameInput,
+        el('button', {
+          type: 'button',
+          className: 'btn btn-ghost btn-sm',
+          text: 'Rename',
+          onClick: () => {
+            const value = renameInput.value.trim();
+            if (!value || value === phase.title) return;
+            store.renamePhase(phase.id, value);
+          }
+        }),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-ghost btn-sm btn-danger-text',
+          text: 'Delete phase',
+          onClick: async () => {
+            if (!await confirmDialog({
+              title: `Delete "${phase.title}"?`,
+              message: 'This deletes the phase and every topic inside it. This cannot be undone.',
+              confirmText: 'Delete',
+              danger: true
+            })) return;
+            store.removePhase(phase.id);
+            showToast(`Deleted phase "${phase.title}".`, 'success');
+          }
+        })
+      ])
     ]);
   }
 
@@ -818,32 +821,35 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       'aria-label': `Rename section "${section.title}"`
     });
     return el('div', { className: 'section-manage-row' }, [
-      renameInput,
-      el('button', {
-        type: 'button',
-        className: 'btn btn-ghost btn-sm',
-        text: 'Rename',
-        onClick: () => {
-          const value = renameInput.value.trim();
-          if (!value || value === section.title) return;
-          store.renameSection(phase.id, section.id, value);
-        }
-      }),
-      el('button', {
-        type: 'button',
-        className: 'btn btn-ghost btn-sm btn-danger-text',
-        text: 'Delete section',
-        onClick: async () => {
-          if (!await confirmDialog({
-            title: `Delete "${section.title || 'this section'}"?`,
-            message: 'This deletes the section and every topic inside it. This cannot be undone.',
-            confirmText: 'Delete',
-            danger: true
-          })) return;
-          store.removeSection(phase.id, section.id);
-          showToast('Section deleted.', 'success');
-        }
-      })
+      el('span', { className: 'field-hint', text: 'Rename or delete this section' }),
+      el('div', { className: 'section-manage-row-controls' }, [
+        renameInput,
+        el('button', {
+          type: 'button',
+          className: 'btn btn-ghost btn-sm',
+          text: 'Rename',
+          onClick: () => {
+            const value = renameInput.value.trim();
+            if (!value || value === section.title) return;
+            store.renameSection(phase.id, section.id, value);
+          }
+        }),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-ghost btn-sm btn-danger-text',
+          text: 'Delete section',
+          onClick: async () => {
+            if (!await confirmDialog({
+              title: `Delete "${section.title || 'this section'}"?`,
+              message: 'This deletes the section and every topic inside it. This cannot be undone.',
+              confirmText: 'Delete',
+              danger: true
+            })) return;
+            store.removeSection(phase.id, section.id);
+            showToast('Section deleted.', 'success');
+          }
+        })
+      ])
     ]);
   }
 

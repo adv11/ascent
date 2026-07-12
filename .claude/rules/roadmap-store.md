@@ -481,6 +481,18 @@ also fixes: after several "fix it and resend" round-trips (issue #100's fix-it-m
 flow), some AI assistants gave up and stopped including resources at all in their retry —
 with roadmaps now succeeding on the first real attempt far more often, resources come
 through as originally generated instead of being silently dropped by a frustrated model.
+**No longer silent (issue #121 item 3):** dropping an invalid resource URL used to leave
+zero signal anywhere that it happened — a topic could end up with `resources: []` after
+import with no way to tell that from the AI simply not including any. `sanitizeResources()`
+now returns `{ resources, droppedCount }` instead of just the filtered array;
+`adaptImportToRoadmap()` sums this across every item into a top-level
+`droppedResourceCount`, threaded through `importRoadmapModal.js`'s resolved
+`{ title, phases, items, droppedResourceCount }` value to `onboarding.js`'s
+`handleCreate()`, which shows an info toast (`"Roadmap imported — N resource link(s)
+skipped (invalid URL)."`) instead of the plain success toast whenever it's nonzero. This
+only covers the "dropped-URL" half of item 3's two root causes — the other half (an item
+shape that structurally can't carry `resources` at all, e.g. a plain string or tuple item)
+is unaddressed; see issue #121 for the full investigation.
 
 **Corrupted-text detection — a real, reported data-corruption bug (issue #100 follow-up).**
 Some AI chat UIs auto-linkify raw URLs found inside a code block when a user selects and
@@ -503,6 +515,31 @@ either silently importing garbage or the previous generic "item is invalid". Pha
 and section titles get the identical check. This is a heuristic, not a formal grammar —
 if you ever need a sixth marker, add it to `CORRUPTION_MARKERS` rather than writing a new
 detection path.
+
+**Corrupted-text detection, confirmed against a real ChatGPT payload (issue #121 item 1).**
+Issue #100's hypothesis above was confirmed, not disproven, by a live captured payload: a
+"Music Development" roadmap pasted from ChatGPT's web UI reproduced the exact
+`looksCorrupted` errors reported (41 of them, one real payload, verified via
+`tests/unit/fixtures/chatgptCorruptedPayload.js`). Every corrupted field was literal
+markdown-link syntax (`[label](url%22},{%22...)`) spliced into JSON string values —
+ChatGPT's renderer auto-linkified the bare `https://` URLs it found inside the JSON, and
+copying the *rendered* response (not via ChatGPT's own "copy code" button) captured that
+markdown-link source text instead of raw JSON. The identical prompt handed to Claude in the
+same session did not trigger this and imported cleanly on the first attempt — this is a
+ChatGPT-web-UI-specific rendering behavior, not a generic AI-output quirk, and not a false
+positive or bug in `looksCorrupted()`/`parseImportJson()` (both were already correctly
+rejecting genuinely corrupted data). Per issue #121's own decision tree for this finding
+("if confirmed as a ChatGPT-UI copy-mechanism issue: add explicit, provider-specific
+guidance... rather than relying on the generic hint"), the fix is UI guidance, not a
+validator/recovery change: `importRoadmapModal.js`'s `corruptionHint` element shows a
+ChatGPT-specific callout ("use the copy-code button in the top-right corner of the code
+block, not text selection") whenever any validation error contains `'looks corrupted'`,
+above the generic per-error `CORRUPTION_HINT` text that stays in "technical details". A
+best-effort *repair* pass (recovering the clean substring instead of rejecting) was
+explicitly **not** attempted — the issue itself flagged that a repair heuristic needs its
+own dedicated test fixtures and risks silently producing a wrong-but-plausible title, which
+is harder for a user to notice than today's hard rejection; if repair is ever built, it
+needs that same rigor, not a quick addition here.
 
 **"Resources" filter chip — see all resource links "in one go" (issue #100 follow-up).**
 Real feedback: once AI-generated roadmaps commonly carry resource links, there was no way
@@ -557,6 +594,37 @@ and, if set, cancels the pending timer and `await`s `flush()` **before** reassig
 `activeTemplateId` — see the "flush-before-switch" describe block in
 `tests/integration/roadmapStore.test.js`. If you ever add another path that can change
 `activeTemplateId`, it must do the same.
+
+**`switchRoadmap()`'s three network round trips run concurrently, not sequentially — a
+real, reported slowness bug (issue #121 item 6).** The outgoing-template flush (above),
+`resolveRoadmapItems()`'s read of the incoming template's saved progress, and the meta
+write recording the new `activeTemplateId`/`startedTemplateIds` each touch a different
+Firebase path and none of their inputs depends on another's result, but the original
+implementation `await`ed them one after another — meaning opening an already-started
+roadmap, or creating one via AI import, paid for up to three sequential round trips
+before the UI could move on. `flushOutgoingRoadmap()` and `saveSwitchMeta()` (extracted
+out of `switchRoadmap()` itself to keep its own complexity under the ESLint gate) are
+started together and awaited via a single `Promise.all`. `saveSwitchMeta()` takes an
+optional `extraMeta` object merged into the same `saveMeta` call — `createCustomRoadmap()`
+uses this to fold its own `customRoadmaps` patch into `switchRoadmap()`'s one meta write
+instead of doing a separate `saveMeta` round trip first (the previous behavior). If you
+add a fourth independent Firebase call to this path, add it to the same `Promise.all`
+rather than `await`ing it separately — don't reintroduce a sequential chain here.
+
+**Perceived speed still needs its own fix — a fast operation with no loading feedback
+still reads as lag.** Fixing the round trips above only helps once picking a card is
+actually fast; there's a real, reported UX bug for however long a slow-network 500ms+
+round trip has to run: `onboarding.js`'s picker cards already show a spinner overlay
+(`buildPickingOverlay()`, `.template-card-picking-overlay` in `app.css`) for
+`pickTemplate()`/`pickCustomRoadmap()` ("Opening…") — the "Create your own roadmap" card
+did not have the same treatment for `handleCreate()`'s `store.createCustomRoadmap()` call,
+leaving only the shared `setBusy()` dim-and-disable as feedback, which reads as
+unresponsive rather than "in progress." `buildPickingOverlay(label)` now takes an optional
+label (default `'Opening…'`) and `handleCreate()` toggles `.picking` on the create card
+itself with `'Importing…'`, the same class/CSS every other card already uses — no new CSS
+needed, `.template-card-create` is still a `.template-card`. If you add a fourth card type
+or another `store.switchRoadmap()`/`store.createCustomRoadmap()` call site, give it the
+same `.picking` overlay rather than relying on `setBusy()` alone.
 
 **Stale-listener guard replaces the old #51 cross-template payload tag.** Since each
 template now has its own Firebase path, `attachRoadmapListener(templateId)`'s `onValue`
@@ -715,6 +783,56 @@ skipped on first load. Do not restructure `setUser` in a way that removes this g
 that reads local data before clearing — that would silently re-introduce the privacy leak.
 This same guard also applies to `dailyTodoStore.js` (see "Daily Todos store" above) — see
 `.claude/rules/auth-security.md` for the auth-side half of the sign-out flow.
+
+**A dirty real account must be flushed *before* `authApi.signOut()` is called, not after —
+a real, reported data-loss bug.** `queueSave()`'s 500ms debounce means an edit made just
+before sign-out (most visibly, right after `createCustomRoadmap()`'s AI-import flow, whose
+own `switchRoadmap()` call ends in a debounced `queueSave()`, not an immediate flush) can
+still be queued when the user clicks "Sign out." `authApi.signOut()` invalidates the auth
+token immediately, so a write that fires (or was still in flight) after that point silently
+fails — and this same "Sign-out contract" guard above then wipes local storage right after,
+so the edit is gone from both places with nothing surfaced to the user. `confirmAndSignOut()`
+(`src/ui/utils/signOut.js`) fixes this at the source: if `store.getSnapshot().dirty` and the
+account isn't a guest (`user.isAnonymous`), it passes `store.flush()` as `confirmDialog()`'s
+`onConfirm` callback rather than `await`ing it after the dialog already resolved — this
+both flushes **before** `authApi.signOut()` is called (while the auth token is still valid)
+and keeps the dialog open with a spinner on the "Sign out" button
+(`confirmingText: 'Signing out…'`) for however long the flush takes, instead of the dialog
+closing instantly and the user watching nothing happen. A guest is deliberately left
+alone — guest data never reaches Firebase regardless of timing, and the existing dirty-guest
+confirm-dialog copy already warns about that. `dailyTodoStore.js` has the identical debounced
+`queueSave()` shape and is exposed to the same race — not yet wired into `confirmAndSignOut()`
+(it isn't currently passed a `dailyTodoStore` reference) — treat this as known follow-up, not
+an oversight, if you're touching this area again. `confirmDialog()`'s `onConfirm` param
+(`src/ui/components/confirmDialog.js`) is generic, not sign-out-specific: pass it whenever
+confirming kicks off async work the user needs to see is actually happening — it disables
+both buttons, swaps the confirm button to `setButtonLoading()`'s spinner state, and only
+closes/resolves `true` once the callback resolves; every pre-existing `confirmDialog()` call
+site (delete roadmap, delete account, hide template, etc.) omits it and keeps its original
+instant-close-on-click behavior unchanged.
+
+**The flush-before-sign-out fix above only helps if `dirty` is actually `true` by the time
+`confirmAndSignOut()` reads it — a second, still-reproducible way to lose a just-imported
+roadmap (found by re-testing live, over the real Firebase websocket protocol).**
+`switchRoadmap()` doesn't set `dirty = true` until its own internal `Promise.all` resolves
+and it reaches `queueSave()` — while a switch (e.g. `createCustomRoadmap()`'s AI-import
+flow) is still in flight, `store.getSnapshot().dirty` still reflects whatever it was
+*before* the switch started, often `false`. `onboarding.js`'s picker cards are correctly
+disabled for the whole duration via `setBusy()`/`picking`, but the page's own top-row
+"Sign out" button (separate from the app-shell sidebar's — see the "no sign-out affordance"
+note elsewhere in this file) was never included in that disable pass. Clicking it mid-import
+read a stale `dirty: false`, so the flush-before-`signOut()` fix never triggered — the auth
+token was invalidated while `switchRoadmap()` was still mid-flight, and the new roadmap's
+items/phases were silently never written (only its `customRoadmaps` meta entry survived,
+from the part of the switch that had already completed by then — the roadmap "existed" in
+the picker but loaded empty on the next sign-in). Fixed by wiring `signOutBtn` into
+`setBusy()` alongside the cards. **The general lesson**: any UI affordance that can trigger
+`authApi.signOut()` must be disabled for the full duration of any in-flight
+`switchRoadmap()`/`createCustomRoadmap()` call, not just the controls that obviously look
+busy — `store.getSnapshot().dirty` is a point-in-time snapshot, not a "is there pending
+work" signal, and only becomes accurate once the in-flight call has progressed far enough
+to set it. If you add another page or component with its own sign-out entry point, gate it
+on the same busy flag your page already uses for its own async store calls.
 
 **Realtime Database rules — no path other than `roadmap`/`roadmaps`/`meta`/`dailyTodos`/`activityLog`/`reports` may be written under `users/{uid}`.** `firebase/database.rules.json` has a `$other: { ".validate": "false" }` catch-all under `users/$uid` specifically to stop a buggy or malicious client from writing arbitrary data outside the known shape (still auth-scoped to that uid, just unbounded before this). If you add a genuinely new top-level field under a user's data, add an explicit `.validate` rule for it — never rely on the `$other` catch-all rejecting it silently as "good enough." Realtime Database rules cannot count a map's children, so a per-roadmap item cap is enforced client-side instead, in `roadmapStore.js`'s `addItem()` (the one place items are created) — it returns `false` instead of mutating anything once a roadmap already holds 800 non-deleted items (lowered from 1,000 in issue #53 — no real roadmap organically approaches even 800 topics); callers must check this return value and surface an error rather than assuming success. The same client-side-cap pattern applies to `dailyTodoStore.js`'s `addTodo()` (issue #56) — active (not-done, not-expired) todos are capped at `MAX_ACTIVE_TODOS` (20).
 

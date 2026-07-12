@@ -519,3 +519,35 @@ describe('validateImportPayload — corrupted-text detection (issue #100 follow-
     expect(corruptionError).toMatch(/copy/i);
   });
 });
+
+// Issue #121 item 1: a real ChatGPT payload was captured live and diffed
+// against what our code receives — this fixture is that exact payload
+// (a "Music Development" roadmap, ChatGPT web UI, 6 phases), confirming the
+// corruption markers are genuinely present in the raw text before it ever
+// reaches parseImportJson()/validateImportPayload(), not introduced by our
+// code. Every "%22"/"]("-style corruption in this fixture is literal
+// markdown-link syntax (`[label](url%22},{%22...)`) spliced into the JSON
+// string values — ChatGPT's web UI auto-linkified the bare https:// URLs it
+// found inside the JSON, and copying the *rendered* response (rather than
+// via the "copy code" button) captured that markdown-link source text
+// instead of raw JSON. The identical prompt handed to Claude in the same
+// session did not trigger this and imported cleanly — this fixture is
+// ChatGPT-specific, not a generic AI-output quirk. Locks in the validator's
+// existing (correct) rejection behavior; see `.claude/rules/roadmap-store.md`
+// for the fix this shipped alongside (provider-specific copy guidance in
+// `importRoadmapModal.js`, not a validator/recovery change).
+describe('validateImportText — real captured ChatGPT payload (issue #121 item 1)', () => {
+  it('rejects the payload with corruption errors, matching the exact reported error count (41)', async () => {
+    const { CHATGPT_CORRUPTED_PAYLOAD } = await import('./fixtures/chatgptCorruptedPayload.js');
+    const result = validateImportText(CHATGPT_CORRUPTED_PAYLOAD);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toHaveLength(41);
+    expect(result.errors.every(e => e.includes('looks corrupted'))).toBe(true);
+  });
+
+  it('flags the exact first corrupted field ChatGPT produced: the second resource of the first item', async () => {
+    const { CHATGPT_CORRUPTED_PAYLOAD } = await import('./fixtures/chatgptCorruptedPayload.js');
+    const result = validateImportText(CHATGPT_CORRUPTED_PAYLOAD);
+    expect(result.errors[0]).toContain('phases[0].sections[0].items[0].resources[1] looks corrupted');
+  });
+});

@@ -238,6 +238,41 @@ describe('adaptImportToRoadmap — resource URL sanitization (issue #100 follow-
   });
 });
 
+// Issue #121 item 3: sanitizeResources() used to silently drop invalid
+// resource URLs with zero signal anywhere — droppedResourceCount surfaces
+// how many were dropped so the UI can tell the user.
+describe('adaptImportToRoadmap — droppedResourceCount reporting (issue #121)', () => {
+  it('returns 0 when every resource URL is valid', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Docs', url: 'https://docs.docker.com/' }]
+    }];
+    const { droppedResourceCount } = adaptImportToRoadmap(data);
+    expect(droppedResourceCount).toBe(0);
+  });
+
+  it('counts a single dropped resource URL', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [{
+      title: 'Learn Docker',
+      resources: [{ label: 'Bad link', url: 'javascript:alert(1)' }]
+    }];
+    const { droppedResourceCount } = adaptImportToRoadmap(data);
+    expect(droppedResourceCount).toBe(1);
+  });
+
+  it('sums dropped resources across multiple items and phases', () => {
+    const data = payload();
+    data.phases[0].sections[0].items = [
+      { title: 'A', resources: [{ label: 'Bad', url: 'javascript:x' }, { label: 'Good', url: 'https://a.com' }] },
+      { title: 'B', resources: [{ label: 'Bad', url: 'data:text/html,x' }] }
+    ];
+    const { droppedResourceCount } = adaptImportToRoadmap(data);
+    expect(droppedResourceCount).toBe(2);
+  });
+});
+
 // Issue #100 follow-up: normalize priority casing/whitespace consistently
 // with importValidator.js's normalizePriority(), so an item that passed
 // validation with "p0"/" P0 " still ends up with the canonical "P0" in the

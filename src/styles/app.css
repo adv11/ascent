@@ -470,6 +470,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .form-message { min-height: 20px; font-size: var(--text-sm); font-weight: 600; color: var(--muted); }
 .form-message.error { color: var(--danger); }
 .form-message.success { color: var(--brand-dark); }
+/* Issue #121 item 1 — deliberately not .form-message.error: a Playwright
+   locator scoped to that class needs to match exactly one element
+   (summaryMsg's "N things need fixing" line), never this callout too. */
+.import-corruption-hint { font-size: var(--text-sm); font-weight: 600; color: var(--danger); margin: 0; }
 .form-error { color: var(--danger); font-size: 12px; font-weight: 600; min-height: 18px; }
 .field-error { color: var(--danger); font-size: 12px; font-weight: 600; min-height: 16px; }
 
@@ -1177,7 +1181,20 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    `left`/`right`/`top`/`bottom` from the trigger's `getBoundingClientRect()`
    at open time instead of leaning on static CSS offsets. z-index raised to
    sit above the mobile sidebar drawer (200) and its backdrop (199), since a
-   fixed-position menu can now be triggered from inside that drawer too. */
+   fixed-position menu can now be triggered from inside that drawer too.
+   Issue #121 follow-up: `position: fixed` is *positioned* relative to the
+   viewport only as long as no ancestor between it and the root has a
+   transform/filter/etc. — but it also *stacks* (z-index paint order) within
+   whatever stacking context its containing block belongs to, so even a
+   correctly-positioned fixed menu can render behind/in front of unrelated
+   page content inconsistently if such an ancestor exists (reported live: the
+   sidebar's avatar menu, nested inside the animated dashboard shell,
+   intermittently rendered under phase-card content). `dropdown.js` now
+   portals `.dropdown-menu` to a direct child of `document.body` on open (the
+   same fix `.custom-select-listbox` below already uses for the identical bug
+   class) — it is no longer a DOM descendant of `.dropdown`, so its
+   open/closed visibility is driven by `.dropdown-menu.open` directly, not a
+   `.dropdown.open .dropdown-menu` descendant selector. */
 .dropdown { position: relative; display: inline-flex; min-width: 0; }
 .dropdown-menu {
   position: fixed;
@@ -1191,7 +1208,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   flex-direction: column;
   z-index: 210;
 }
-.dropdown.open .dropdown-menu { display: flex; }
+.dropdown-menu.open { display: flex; }
 .dropdown-item {
   display: block;
   width: 100%;
@@ -1596,6 +1613,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .field-hint { font-size: 12px; color: var(--muted); margin-top: -4px; }
 .import-options { display: grid; gap: 14px; padding: 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); }
 .import-option-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* An implicit CSS Grid row's "auto" sizing (.import-column-scroll, the
+   parent) gives a scroll-container item (overflow-y: auto here) an
+   automatic minimum content size of 0 — per spec, a non-"visible" overflow
+   value zeroes out an item's content-based minimum size, which collapsed
+   this block to ~34px (just its padding/border) regardless of max-height,
+   the real cause of issue #121 item 5's "renders very short" report, not
+   the 260px cap alone. A definite `height` sidesteps the ambiguous
+   "auto" track-sizing algorithm entirely — the box is always exactly this
+   tall, scrolling its own overflow, rather than being derived from content. */
 .import-prompt-block {
   font-family: var(--mono);
   font-size: var(--text-sm);
@@ -1606,7 +1632,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 16px;
-  max-height: 260px;
+  height: 420px;
   overflow-y: auto;
   color: var(--ink);
 }
@@ -1654,6 +1680,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .import-modal-grid { grid-template-columns: 45% minmax(0, 1fr); gap: 32px; }
   .import-column-build { max-height: 60vh; }
   .import-column-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+  .import-prompt-block { height: min(420px, 40vh); }
   .import-column-paste { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
   .import-column-paste .import-paste-area { min-height: 260px; flex: 1; }
 }
@@ -2261,14 +2288,25 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    animation's `onfinish` clears the inline `overflow`. */
 .phase-body-animating .section-label { position: static; }
 
-/* Custom roadmap phase/section CRUD (issue #4) */
+/* Custom roadmap phase/section CRUD (issue #4). Column layout with the
+   .field-hint caption on its own line (issue #121 item 4) — without it, the
+   rename input directly under the phase/section header reads as an
+   unlabeled duplicate title rather than an obviously-a-rename-field
+   control. */
 .phase-manage-row, .section-manage-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   padding: 10px 16px;
   background: var(--panel-2);
   border-bottom: 1px dashed var(--line);
+}
+.phase-manage-row .field-hint, .section-manage-row .field-hint { margin-top: 0; }
+.phase-manage-row-controls, .section-manage-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .phase-manage-row .field-input, .section-manage-row .field-input { flex: 1; }
 
@@ -2839,10 +2877,24 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   color: var(--muted);
 }
 
-/* Save badge */
+/* Save badge — stacked directly above the feedback widget trigger, not
+   sharing its bottom-right corner. Both are permanently fixed to that same
+   corner (.feedback-widget-trigger below is mounted once on document.body
+   for the whole app session — .claude/rules/roadmap-store.md's "never
+   unmount" note on feedbackWidget.js), so whenever a save-badge event fired
+   at the same time the feedback button visually sat on top of (and
+   partially hid) the save badge's text — reported live with a screenshot
+   ("Save f[ailed]" clipped behind "Feedback"). Moving to the opposite
+   (bottom-left) corner isn't safe either — the dashboard/progress/settings
+   app-shell sidebar (`.app-sidebar`, 240px, `position: sticky` but still
+   occupying that full-height column) would sit underneath a fixed-position
+   badge there. `84px` = the feedback trigger's own bottom offset (24px) +
+   its rendered height (`padding: 12px 18px` + text-sm line-height + border,
+   ~46px) + a 12px gap, rounded up — if the feedback trigger's own size ever
+   changes, re-check this offset still clears it. */
 .save-badge {
   position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(84px + env(safe-area-inset-bottom));
   right: calc(20px + env(safe-area-inset-right));
   background: var(--panel);
   color: var(--ink);

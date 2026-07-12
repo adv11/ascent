@@ -685,12 +685,49 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     notify({ saveState: 'synced' });
   }
 
+  // Flush any pending debounced edit on the *outgoing* template before
+  // switching. Without this, once the debounce timer fired after the
+  // switch, flush() would run using the by-then-reassigned
+  // activeTemplateId/items — silently attributing the outgoing template's
+  // edit to the new template's Firebase path and dropping it from the path
+  // it actually belongs to. Extracted out of switchRoadmap (below) so that
+  // function's own complexity stays under the ESLint gate.
+  async function flushOutgoingRoadmap() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    try {
+      await flush();
+    } catch (error) {
+      console.error('Failed to flush before switching roadmap', error);
+    }
+  }
+
+  // The meta write a roadmap switch always needs — extracted for the same
+  // complexity reason as flushOutgoingRoadmap above. `extraMeta` lets
+  // createCustomRoadmap fold its own `customRoadmaps` patch into this same
+  // round trip instead of paying for a separate one first.
+  function saveSwitchMeta(requestedTemplateId, nextStartedTemplateIds, extraMeta) {
+    if (!uid) return Promise.resolve();
+    return adapter.saveMeta(uid, {
+      activeTemplateId: requestedTemplateId,
+      startedTemplateIds: nextStartedTemplateIds,
+      onboardingDone: true,
+      ...extraMeta
+    }).catch(error => {
+      console.error('Failed to save roadmap-switch meta', error);
+    });
+  }
+
   // Called by the onboarding picker (src/ui/pages/onboarding.js), both for a
   // first-time pick and for switching to a different template later — the two
   // cases share the same logic: an already-started template is loaded
   // (cache-first, never re-seeded), a not-yet-started one is seeded fresh.
   // Neither path ever touches any other template's stored items (issue #58).
-  async function switchRoadmap(requestedTemplateId) {
+  // `extraMeta` (optional) lets a caller that's already mutated local meta
+  // state fold its own saveMeta patch into the single meta write below
+  // instead of paying for a separate round trip first — see
+  // createCustomRoadmap's `customRoadmaps` usage.
+  async function switchRoadmap(requestedTemplateId, extraMeta) {
     // `&& onboardingDone` matters: `activeTemplateId` defaults to the
     // placeholder 'java-backend' before any sign-in's setUser() has resolved
     // (module init, above). If a user reaches /onboarding and picks the
@@ -707,39 +744,40 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     const isStale = () => callId !== stateCallId;
 
     const alreadyStarted = startedTemplateIds.includes(requestedTemplateId);
+    const nextStartedTemplateIds = alreadyStarted
+      ? startedTemplateIds
+      : [...startedTemplateIds, requestedTemplateId];
 
     const { baseItems, phases } = await fetchTemplateData(requestedTemplateId);
     if (isStale()) return;
 
-    let resolved = { items: baseItems, phases, dirty: true };
-    if (alreadyStarted) {
-      resolved = await resolveRoadmapItems(requestedTemplateId, baseItems, phases);
-      if (isStale()) return;
-    }
+    notify({ saveState: 'saving' });
 
-    // Flush any pending debounced edit on the *outgoing* template before
-    // switching. Without this, once the debounce timer fired after the
-    // switch, flush() would run using the by-then-reassigned
-    // activeTemplateId/items — silently attributing the outgoing template's
-    // edit to the new template's Firebase path and dropping it from the path
-    // it actually belongs to.
-    if (activeTemplateId && dirty) {
-      clearTimeout(saveTimer);
-      saveTimer = null;
-      try {
-        await flush();
-      } catch (error) {
-        console.error('Failed to flush before switching roadmap', error);
-      }
-      if (isStale()) return;
-    }
+    // A real, reported slowness bug: opening an already-started roadmap (or
+    // creating a new one) used to pay for up to three sequential Firebase
+    // round trips — flushing the outgoing template's pending edit, reading
+    // the incoming template's saved progress, then writing the switch's own
+    // meta patch — one after another, even though they touch three
+    // independent Firebase paths and none of their inputs depends on
+    // another's result. Running them concurrently is what actually makes
+    // this fast, not just perceived-fast (see onboarding.js's picking
+    // overlay / importRoadmapModal's loader for the perceived-fast half).
+    const outgoingFlush = (activeTemplateId && dirty) ? flushOutgoingRoadmap() : Promise.resolve();
+
+    const resolvedPromise = alreadyStarted
+      ? resolveRoadmapItems(requestedTemplateId, baseItems, phases)
+      : Promise.resolve({ items: baseItems, phases, dirty: true });
+
+    const metaSave = saveSwitchMeta(requestedTemplateId, nextStartedTemplateIds, extraMeta);
+
+    const [, resolved] = await Promise.all([outgoingFlush, resolvedPromise, metaSave]);
+    if (isStale()) return;
 
     if (unsubscribeRoadmap) unsubscribeRoadmap();
     unsubscribeRoadmap = null;
     if (activeTemplateId) roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
 
-    if (!alreadyStarted) startedTemplateIds = [...startedTemplateIds, requestedTemplateId];
-
+    startedTemplateIds = nextStartedTemplateIds;
     activeTemplateId = requestedTemplateId;
     templatePhases = resolved.phases;
     items = resolved.items;
@@ -751,14 +789,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
 
     persistLocal();
     persistLocalOnboarding();
-    notify({ saveState: 'saving' });
 
     if (uid) {
-      try {
-        await adapter.saveMeta(uid, { activeTemplateId, startedTemplateIds, onboardingDone: true });
-      } catch (error) {
-        console.error('Failed to save roadmap-switch meta', error);
-      }
       attachRoadmapListener(activeTemplateId);
       if (!alreadyStarted) {
         queueSave();
@@ -818,14 +850,10 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     const meta = { id, title: trimmedTitle, description: (description || '').trim(), createdAt: Date.now() };
     customRoadmaps = [...customRoadmaps, meta];
     persistLocalCustomRoadmaps();
-    if (uid) {
-      try {
-        await adapter.saveMeta(uid, { customRoadmaps });
-      } catch (error) {
-        console.error('Failed to save custom roadmap meta', error);
-      }
-    }
-    await switchRoadmap(id);
+    // customRoadmaps is folded into switchRoadmap's own single meta write
+    // (via extraMeta) instead of its own separate saveMeta round trip first —
+    // see switchRoadmap's comment on why this matters for speed.
+    await switchRoadmap(id, { customRoadmaps });
     return id;
   }
 
