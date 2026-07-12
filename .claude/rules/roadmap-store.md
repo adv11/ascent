@@ -753,6 +753,23 @@ that reads local data before clearing — that would silently re-introduce the p
 This same guard also applies to `dailyTodoStore.js` (see "Daily Todos store" above) — see
 `.claude/rules/auth-security.md` for the auth-side half of the sign-out flow.
 
+**A dirty real account must be flushed *before* `authApi.signOut()` is called, not after —
+a real, reported data-loss bug.** `queueSave()`'s 500ms debounce means an edit made just
+before sign-out (most visibly, right after `createCustomRoadmap()`'s AI-import flow, whose
+own `switchRoadmap()` call ends in a debounced `queueSave()`, not an immediate flush) can
+still be queued when the user clicks "Sign out." `authApi.signOut()` invalidates the auth
+token immediately, so a write that fires (or was still in flight) after that point silently
+fails — and this same "Sign-out contract" guard above then wipes local storage right after,
+so the edit is gone from both places with nothing surfaced to the user. `confirmAndSignOut()`
+(`src/ui/utils/signOut.js`) fixes this at the source: on confirm, if `store.getSnapshot().dirty`
+and the account isn't a guest (`user.isAnonymous`), it `await`s `store.flush()` **before**
+calling `authApi.signOut()`, while the auth token is still valid. A guest is deliberately left
+alone — guest data never reaches Firebase regardless of timing, and the existing dirty-guest
+confirm-dialog copy already warns about that. `dailyTodoStore.js` has the identical debounced
+`queueSave()` shape and is exposed to the same race — not yet wired into `confirmAndSignOut()`
+(it isn't currently passed a `dailyTodoStore` reference) — treat this as known follow-up, not
+an oversight, if you're touching this area again.
+
 **Realtime Database rules — no path other than `roadmap`/`roadmaps`/`meta`/`dailyTodos`/`activityLog`/`reports` may be written under `users/{uid}`.** `firebase/database.rules.json` has a `$other: { ".validate": "false" }` catch-all under `users/$uid` specifically to stop a buggy or malicious client from writing arbitrary data outside the known shape (still auth-scoped to that uid, just unbounded before this). If you add a genuinely new top-level field under a user's data, add an explicit `.validate` rule for it — never rely on the `$other` catch-all rejecting it silently as "good enough." Realtime Database rules cannot count a map's children, so a per-roadmap item cap is enforced client-side instead, in `roadmapStore.js`'s `addItem()` (the one place items are created) — it returns `false` instead of mutating anything once a roadmap already holds 800 non-deleted items (lowered from 1,000 in issue #53 — no real roadmap organically approaches even 800 topics); callers must check this return value and surface an error rather than assuming success. The same client-side-cap pattern applies to `dailyTodoStore.js`'s `addTodo()` (issue #56) — active (not-done, not-expired) todos are capped at `MAX_ACTIVE_TODOS` (20).
 
 **In-app feedback & bug reporting (`src/services/feedbackStore.js`, `src/core/feedback/`, `src/ui/components/feedbackWidget.js`+friends, issue #9) — a fire-and-forget write, not a fifth instance of the Store pattern above.** Every other store in this file (`roadmapStore`/`dailyTodoStore`/`activityLogStore`) is bidirectional, subscribe/notify, debounced-sync account state that has to survive offline edits and echo guards. A feedback report is the opposite shape: a user fills a form once, it either submits or it doesn't, and there's nothing to keep in sync afterward — so `feedbackStore.js` is a thin, stateless wrapper around two Firebase calls (`submitReport()`, `listenMyReports(uid, callback)`), not a `createFeedbackStore()` factory with `subscribe`/`queueSave`/a Firebase-echo guard. It imports `database` from `firebase.js` directly rather than going through `src/services/storage/` — the `StorageAdapter` interface is shaped around **one document per (uid, templateId)** with offline-first local fallback (`.claude/rules/roadmap-store.md`'s "Storage adapter abstraction" above); `reports/{reportId}` is a top-level, per-report, write-only path with no per-user local cache or offline queue, which doesn't fit that contract and isn't worth bending it for a single fire-and-forget write.

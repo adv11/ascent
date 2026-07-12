@@ -25,6 +25,22 @@ export async function confirmAndSignOut(user, store) {
     danger: isDirtyGuest
   })) return;
 
+  // A real (non-guest) account can still have a debounced roadmap write
+  // queued (roadmapStore.js's 500ms queueSave()) that hasn't reached Firebase
+  // yet. authApi.signOut() invalidates the auth token immediately, so any
+  // in-flight or not-yet-fired write after that point silently fails — and
+  // roadmapStore.js's own setUser() uid-transition guard wipes local storage
+  // right after, so the edit is lost from both places with no error surfaced.
+  // Flushing here, while still authenticated, closes that window. Guest data
+  // never reaches Firebase either way, so this only matters for a real account.
+  if (!user.isAnonymous && store?.getSnapshot().dirty) {
+    try {
+      await store.flush();
+    } catch (error) {
+      console.error('Failed to flush pending roadmap changes before sign-out', error);
+    }
+  }
+
   await authApi.signOut();
   navigate('/signin', true);
 }
