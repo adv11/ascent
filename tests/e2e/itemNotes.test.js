@@ -9,6 +9,16 @@ async function openFirstItemPanel(page) {
   await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
 }
 
+// The "Autosaved" indicator itself only depends on the 800ms
+// NOTES_AUTOSAVE_DEBOUNCE_MS timer firing (itemPanel.js) — it's shown
+// synchronously right after the local store call, not after any Firebase
+// round trip. Under concurrent Playwright workers, though, main-thread
+// scheduling jitter can delay that setTimeout firing well past a tight
+// margin, which is what made this assertion intermittently time out under
+// full-suite load. Give it real headroom rather than a margin barely wider
+// than the debounce itself.
+const AUTOSAVE_INDICATOR_TIMEOUT = 8_000;
+
 test.describe('personal notes per topic (issue #15)', () => {
   test('adding a note, closing, and reopening the panel shows the note restored', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
@@ -20,7 +30,7 @@ test.describe('personal notes per topic (issue #15)', () => {
 
     await openFirstItemPanel(page);
     await page.locator('.notes-textarea').fill('Remember: virtual threads need JDK 21+');
-    await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: 3_000 });
+    await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: AUTOSAVE_INDICATOR_TIMEOUT });
     await page.locator('button', { hasText: 'Cancel' }).click();
     await expect(page.locator('.item-panel')).toHaveCount(0);
 
@@ -41,7 +51,7 @@ test.describe('personal notes per topic (issue #15)', () => {
 
     await openFirstItemPanel(page);
     await page.locator('.notes-textarea').fill('Key command examples here');
-    await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: 3_000 });
+    await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: AUTOSAVE_INDICATOR_TIMEOUT });
     await page.locator('button', { hasText: 'Cancel' }).click();
     await expect(page.locator('.item-panel')).toHaveCount(0);
 
@@ -62,7 +72,7 @@ test.describe('personal notes per topic (issue #15)', () => {
 
     await openFirstItemPanel(page);
     await page.locator('.notes-textarea').fill('Survives reload');
-    await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: 3_000 });
+    await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: AUTOSAVE_INDICATOR_TIMEOUT });
     await page.locator('button', { hasText: 'Cancel' }).click();
 
     await page.reload();

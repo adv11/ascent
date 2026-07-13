@@ -42,6 +42,13 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       await page.click('text=Continue as guest');
       await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
       await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+      // pickTemplate() awaits a real switchRoadmap() round trip against the
+      // Firebase emulator (seed + first flush + first listener attach) before
+      // navigating — under concurrent Playwright workers hitting the same
+      // emulator, that round trip (not just rendering) can take longer than
+      // a plain render-only wait should need, so this waits on the URL
+      // transition first and gives the network-bound step its own timeout.
+      await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
       await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
       const firstRow = page.locator('.check-item').nth(0);
@@ -139,6 +146,17 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
         const menu = page.locator('.dropdown-menu.open, .dropdown.open .dropdown-menu');
         await expect(menu).toBeVisible();
         await expect(menu).toContainText('Delete account');
+        // The dev server is a single-threaded `python3 -m http.server` (same
+        // caveat as waitForRailFooterLayout above) — under concurrent workers
+        // it can be slow enough serving app.css that `.dropdown-menu`'s
+        // `position: fixed` rule hasn't applied yet when the box is read,
+        // making it fall back to default static block layout (observed as a
+        // wildly oversized boundingBox, e.g. height: 6081). Wait for the real
+        // CSS to be in effect before trusting the geometry.
+        await page.waitForFunction(() => {
+          const el = document.querySelector('.dropdown-menu.open');
+          return el && getComputedStyle(el).position === 'fixed';
+        }, { timeout: 10_000 });
         const menuBox = await menu.boundingBox();
         const viewport = page.viewportSize();
         // Issue #102 follow-up — the menu used to be clipped to the sidebar's
