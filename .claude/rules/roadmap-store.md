@@ -541,6 +541,22 @@ own dedicated test fixtures and risks silently producing a wrong-but-plausible t
 is harder for a user to notice than today's hard rejection; if repair is ever built, it
 needs that same rigor, not a quick addition here.
 
+**Cross-provider/edge-case test matrix — automated coverage plus its real limit (issue
+#121 item 2).** `tests/unit/fixtures/aiProviderPayloads.js` covers the structural edge
+cases the issue named that don't require a live AI session to test: a roadmap just under
+the 500-item cap with resources on every item, non-ASCII/unicode titles at every level
+(Japanese, Arabic, accented Latin — confirming `looksCorrupted()`'s ASCII-specific
+markers never false-positive on real non-English content), and a payload mixing all three
+allowed item shapes in one section. Also covers a multi-round "fix it and resend" sequence
+converging to zero errors without regressing to a prior one. Unlike
+`chatgptCorruptedPayload.js` (a real captured transcript), these are deliberately
+synthetic — this repo's CI/dev environment has no live access to ChatGPT/Gemini/
+Claude/Copilot chat sessions to capture real transcripts from, so a genuine cross-provider
+manual matrix (paste the same generated prompt into each, record pass/fail) is still a
+human-in-the-loop follow-up, not something an automated suite can close out on its own.
+If a future report captures a real payload from a provider other than ChatGPT, add it
+alongside `chatgptCorruptedPayload.js` rather than only extending the synthetic fixtures.
+
 **"Resources" filter chip — see all resource links "in one go" (issue #100 follow-up).**
 Real feedback: once AI-generated roadmaps commonly carry resource links, there was no way
 to see every one without opening each topic's edit panel individually. `dashboard.js`'s
@@ -610,6 +626,32 @@ uses this to fold its own `customRoadmaps` patch into `switchRoadmap()`'s one me
 instead of doing a separate `saveMeta` round trip first (the previous behavior). If you
 add a fourth independent Firebase call to this path, add it to the same `Promise.all`
 rather than `await`ing it separately — don't reintroduce a sequential chain here.
+
+**The `Promise.all` above still had a sequential prerequisite step in front of it — the
+actual remaining cause of issue #121 item 6's live-escalated "still slow" report.**
+`fetchTemplateData(templateId)` (a dynamic `import()` for a built-in template — real
+network/parse time on a slow connection or a cold module cache) was `await`ed to
+completion *before* `switchRoadmap()` even built the three-way `Promise.all` above, and
+`setUser()` (the path a fresh sign-in/page load actually goes through, not
+`switchRoadmap()`) had the identical shape: `await fetchTemplateData(...)` followed by
+`await resolveRoadmapItems(...)`, fully sequential. Neither dependency is real:
+`resolveRoadmapItems()`'s own Firebase read (`adapter.getRoadmap`) doesn't need
+`baseItems`/`basePhases` until the final merge step, only the cache-hit/dirty-local-blob
+short-circuits and the fallback branches do. `resolveRoadmapItems(templateId,
+templateDataPromise)` now takes `fetchTemplateData()`'s *unresolved* promise instead of
+its already-`await`ed value — it starts `adapter.getRoadmap()` immediately and only
+`await`s the template-data promise where a branch actually needs the result (skipped
+entirely for a cache hit whose `phases` is already populated, the common, already-fast
+case). Both call sites (`setUser()`, `switchRoadmap()`) now do
+`const templateDataPromise = fetchTemplateData(id);` without awaiting it, so the module
+import and the Firebase read run concurrently instead of stacked. See
+`tests/integration/roadmapStoreConcurrency.test.js` for a regression test that fails
+against the old sequential code and passes against this fix (verified by reverting the
+fix locally and confirming the test catches it). If you add a third thing that depends on
+`baseItems`/`basePhases`, pass it the still-pending promise the same way rather than
+`await`ing `fetchTemplateData()` up front again — that's exactly how this regressed once
+already (the three-round-trip fix above shipped first and still left this one sequential
+step in front of it).
 
 **Perceived speed still needs its own fix — a fast operation with no loading feedback
 still reads as lag.** Fixing the round trips above only helps once picking a card is

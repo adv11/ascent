@@ -424,9 +424,26 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // always just `basePhases` (its static PHASES never differ from what's
   // stored), but for a custom roadmap the persisted phases ARE the only
   // record of the phases/sections the user has added.
-  async function resolveRoadmapItems(templateId, baseItems, basePhases) {
+  //
+  // Takes `templateDataPromise` (fetchTemplateData()'s *unresolved* promise,
+  // not its already-awaited value) — issue #121 item 6: fetchTemplateData()
+  // is a dynamic import() for a built-in template, which can take real time
+  // on a slow connection or a cold module cache, and it has no dependency on
+  // this function's own Firebase read (only the final merge step needs
+  // baseItems/basePhases). Every caller used to `await fetchTemplateData(...)`
+  // in full before calling this function at all, so that import's latency
+  // was pure added time stacked in front of the Firebase round trip instead
+  // of overlapping it. Passing the promise through lets the two run
+  // concurrently — `await`ed here only where a branch actually needs the
+  // result, and skipped entirely for a cache hit with its own phases already
+  // populated (the common, already-fast case), so a fast cache hit never
+  // pays for the import either.
+  async function resolveRoadmapItems(templateId, templateDataPromise) {
     const cached = roadmapCache[templateId];
-    if (cached) return { items: cached.items, phases: cached.phases || basePhases, dirty: !!cached.dirty };
+    if (cached) {
+      const phases = cached.phases || (await templateDataPromise).phases;
+      return { items: cached.items, phases, dirty: !!cached.dirty };
+    }
 
     const localBlob = readLocalRoadmaps()[templateId];
     // A dirty local blob means a queued-or-in-flight write from a previous
@@ -438,6 +455,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     // (issue #58 hardening) — that guard only covered the realtime listener,
     // this initial-load path needed it too (issue #67).
     if (localBlob?.items && localBlob.dirty) {
+      const { baseItems, phases: basePhases } = await templateDataPromise;
       return {
         items: mergeWithSeed(localBlob.items, baseItems),
         phases: normalizeStringArray(localBlob.phases) || basePhases,
@@ -445,14 +463,17 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       };
     }
 
-    let remote = null;
-    if (uid) {
-      try {
-        remote = await adapter.getRoadmap(uid, templateId);
-      } catch (error) {
-        console.error('Failed to load roadmap from Firebase', error);
-      }
-    }
+    // Neither of these depends on the other's result — running them
+    // concurrently (rather than awaiting the template-data fetch first) is
+    // the actual fix for issue #121 item 6.
+    const remotePromise = uid
+      ? adapter.getRoadmap(uid, templateId).catch(error => {
+          console.error('Failed to load roadmap from Firebase', error);
+          return null;
+        })
+      : Promise.resolve(null);
+    const [remote, { baseItems, phases: basePhases }] = await Promise.all([remotePromise, templateDataPromise]);
+
     if (remote?.items) {
       return {
         items: mergeWithSeed(remote.items, baseItems),
@@ -663,14 +684,21 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       return;
     }
 
-    const { baseItems, phases } = await fetchTemplateData(activeTemplateId);
-    if (isStale()) return;
+    // Not awaited here — issue #121 item 6: this is a dynamic import() for a
+    // built-in template, which has no dependency on resolveRoadmapItems()'s
+    // own Firebase read below. Handing it the still-pending promise lets the
+    // two run concurrently instead of paying for the import's latency before
+    // the Firebase round trip even starts (see resolveRoadmapItems()'s own
+    // comment for the full reasoning).
+    const templateDataPromise = fetchTemplateData(activeTemplateId);
 
     if (migratedLegacyItems && !roadmapCache[activeTemplateId]) {
+      const { baseItems, phases } = await templateDataPromise;
+      if (isStale()) return;
       roadmapCache[activeTemplateId] = { items: mergeWithSeed(migratedLegacyItems, baseItems), phases, dirty: false };
     }
 
-    const resolved = await resolveRoadmapItems(activeTemplateId, baseItems, phases);
+    const resolved = await resolveRoadmapItems(activeTemplateId, templateDataPromise);
     if (isStale()) return;
 
     items = resolved.items;
@@ -748,8 +776,13 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       ? startedTemplateIds
       : [...startedTemplateIds, requestedTemplateId];
 
-    const { baseItems, phases } = await fetchTemplateData(requestedTemplateId);
-    if (isStale()) return;
+    // Not awaited here — issue #121 item 6 (continued below): fetchTemplateData()
+    // is a dynamic import() for a built-in template, and used to be awaited in
+    // full before any of the three independent operations below even started,
+    // stacking its own latency in front of theirs instead of overlapping it.
+    // Handing the still-pending promise to resolveRoadmapItems() (and to the
+    // fresh-seed branch below) lets it run concurrently with everything else.
+    const templateDataPromise = fetchTemplateData(requestedTemplateId);
 
     notify({ saveState: 'saving' });
 
@@ -765,8 +798,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     const outgoingFlush = (activeTemplateId && dirty) ? flushOutgoingRoadmap() : Promise.resolve();
 
     const resolvedPromise = alreadyStarted
-      ? resolveRoadmapItems(requestedTemplateId, baseItems, phases)
-      : Promise.resolve({ items: baseItems, phases, dirty: true });
+      ? resolveRoadmapItems(requestedTemplateId, templateDataPromise)
+      : templateDataPromise.then(({ baseItems, phases }) => ({ items: baseItems, phases, dirty: true }));
 
     const metaSave = saveSwitchMeta(requestedTemplateId, nextStartedTemplateIds, extraMeta);
 

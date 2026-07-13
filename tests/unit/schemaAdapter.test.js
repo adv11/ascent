@@ -301,3 +301,45 @@ describe('adaptImportToRoadmap — priority normalization (issue #100 follow-up)
     expect(Object.values(items)[0].priority).toBe('P2');
   });
 });
+
+// Issue #121 item 2 — full validator-then-adapter round trip for the
+// cross-provider/edge-case matrix fixtures (see
+// tests/unit/fixtures/aiProviderPayloads.js for why these are synthetic,
+// not captured live-provider transcripts).
+describe('adaptImportToRoadmap — cross-provider/edge-case matrix (issue #121 item 2)', () => {
+  it('converts a near-500-item, resource-heavy roadmap with every item preserved and every resource sanitized through', async () => {
+    const { buildLargeRoadmapPayload } = await import('./fixtures/aiProviderPayloads.js');
+    const data = buildLargeRoadmapPayload(490);
+    const { phases, items, droppedResourceCount } = adaptImportToRoadmap(data);
+    expect(phases.length).toBe(data.phases.length);
+    expect(Object.keys(items)).toHaveLength(490);
+    expect(droppedResourceCount).toBe(0);
+    expect(Object.values(items).every(item => item.resources.length === 2)).toBe(true);
+  });
+
+  it('preserves non-ASCII/unicode text exactly (no mangling) through phase, section, item, and resource-label conversion', async () => {
+    const { NON_ASCII_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    const { phases, items } = adaptImportToRoadmap(NON_ASCII_PAYLOAD);
+    expect(phases[0].title).toBe('フェーズ1: 基礎 (Fundamentals)');
+    expect(phases[0].sections[0].title).toBe('قسم الأساسيات');
+    const titles = Object.values(items).map(i => i.title);
+    expect(titles).toContain('変数とデータ型を理解する');
+    expect(titles).toContain('تعلم الأساسيات');
+    expect(titles).toContain('Étudier les structures de contrôle');
+    const withResources = Object.values(items).find(i => i.resources.length > 0);
+    expect(withResources.resources[0].label).toBe('ドキュメント');
+  });
+
+  it('converts a payload mixing all three item shapes (string, tuple, resource-bearing object) with the bare-domain resource URL auto-corrected', async () => {
+    const { MIXED_SHAPE_CLEAN_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    const { items, droppedResourceCount } = adaptImportToRoadmap(MIXED_SHAPE_CLEAN_PAYLOAD);
+    expect(Object.keys(items)).toHaveLength(7);
+    expect(droppedResourceCount).toBe(0);
+    const dockerItem = Object.values(items).find(i => i.title === 'Set up your first container');
+    expect(dockerItem.resources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: 'Docker docs', url: 'https://docs.docker.com' })
+    ]));
+    const serverlessItem = Object.values(items).find(i => i.title === 'Learn about serverless functions');
+    expect(serverlessItem.priority).toBe('P1');
+  });
+});

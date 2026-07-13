@@ -551,3 +551,76 @@ describe('validateImportText — real captured ChatGPT payload (issue #121 item 
     expect(result.errors[0]).toContain('phases[0].sections[0].items[0].resources[1] looks corrupted');
   });
 });
+
+// Issue #121 item 2 — automated edge-case matrix. This environment has no
+// live access to ChatGPT/Gemini/Claude/Copilot chat sessions, so this covers
+// what CAN be verified without one: the structural edge cases the issue
+// itself named (near-cap-size roadmap, resource-heavy roadmap, non-ASCII
+// titles, mixed item shapes) plus the "multiple consecutive fix-it round
+// trips" scenario, all run through the real validator with no mocking. A
+// live manual matrix across real AI provider sessions (the issue's own
+// action item) is a separate, human-in-the-loop follow-up this suite cannot
+// substitute for — see the PR description.
+describe('validateImportPayload — cross-provider/edge-case matrix (issue #121 item 2)', () => {
+  it('accepts a roadmap just under the 500-item cap with resources on every item', async () => {
+    const { buildLargeRoadmapPayload } = await import('./fixtures/aiProviderPayloads.js');
+    const payload = buildLargeRoadmapPayload(490);
+    const errors = validateImportPayload(payload);
+    expect(errors).toEqual([]);
+  });
+
+  it('still rejects a roadmap one item over the 500-item cap, even resource-heavy', async () => {
+    const { buildLargeRoadmapPayload } = await import('./fixtures/aiProviderPayloads.js');
+    const payload = buildLargeRoadmapPayload(501);
+    const errors = validateImportPayload(payload);
+    expect(errors).toEqual(['Roadmap too large (> 500 items)']);
+  });
+
+  it('accepts non-ASCII/unicode titles at every level (Japanese, Arabic, accented Latin) with no false-positive corruption flags', async () => {
+    const { NON_ASCII_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    const errors = validateImportPayload(NON_ASCII_PAYLOAD);
+    expect(errors).toEqual([]);
+  });
+
+  it('accepts a payload mixing all three allowed item shapes (string, tuple, resource-bearing object) in the same section', async () => {
+    const { MIXED_SHAPE_CLEAN_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    const errors = validateImportPayload(MIXED_SHAPE_CLEAN_PAYLOAD);
+    expect(errors).toEqual([]);
+  });
+
+  it('accepts a resource URL missing its scheme (docs.docker.com) in the mixed-shape payload — validation defers protocol correctness to adaptImportToRoadmap', async () => {
+    const { MIXED_SHAPE_CLEAN_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    const dockerItem = MIXED_SHAPE_CLEAN_PAYLOAD.phases[0].sections[0].items[2];
+    expect(dockerItem.resources[0].url).toBe('docs.docker.com');
+    const errors = validateImportPayload(MIXED_SHAPE_CLEAN_PAYLOAD);
+    expect(errors).toEqual([]);
+  });
+
+  // Issue #121 item 1's own follow-up ask: confirm the fix-it loop actually
+  // terminates across several consecutive rounds instead of looping forever
+  // — each round fixes exactly the errors from the previous round's result,
+  // simulating an AI assistant iteratively correcting its own output.
+  it('a payload with several consecutive rounds of "fix it and resend" converges to zero errors, never regressing back to a prior error', () => {
+    const round1 = {
+      schemaVersion: 1,
+      // Missing top-level title (round 1 error).
+      phases: [
+        { title: 'Phase One', priority: 'p0', sections: [{ title: 'Section One', items: ['Learn the basics'] }] }
+      ]
+    };
+    const round1Errors = validateImportPayload(round1);
+    expect(round1Errors).toEqual(['title is required']);
+
+    // Round 2: title added, but a new mistake introduced (empty section title) —
+    // simulates an AI response that fixes the reported issue but introduces
+    // a different one, which is common in real multi-round-trip use.
+    const round2 = { ...round1, title: 'My Roadmap', phases: [{ ...round1.phases[0], sections: [{ title: '', items: ['Learn the basics'] }] }] };
+    const round2Errors = validateImportPayload(round2);
+    expect(round2Errors).toEqual(['phases[0].sections[0].title is required']);
+    expect(round2Errors).not.toContain('title is required');
+
+    // Round 3: fully corrected.
+    const round3 = { ...round2, phases: [{ ...round2.phases[0], sections: [{ title: 'Section One', items: ['Learn the basics'] }] }] };
+    expect(validateImportPayload(round3)).toEqual([]);
+  });
+});
