@@ -31,7 +31,18 @@ async function createCustomRoadmapViaImport(page, title) {
   await expect(modal).toBeVisible();
   await modal.locator('.import-paste-area').fill(minimalImportJson(title));
   await modal.locator('button', { hasText: 'Import roadmap' }).click();
-  await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+  // createCustomRoadmap() -> switchRoadmap() is a real round trip against the
+  // Firebase emulator (seed write + meta write + first listener attach), not
+  // just a render — under concurrent Playwright workers sharing one emulator,
+  // this can take noticeably longer than a render-only wait should need
+  // (issue #141 item 3: intermittent full-suite-only flakes traced to timing
+  // pressure across this file's sequential CRUD steps). Give the network-bound
+  // navigation its own generous timeout, then separately wait for the
+  // dashboard to actually finish rendering the new roadmap's badge before any
+  // caller starts interacting with it — the URL can change slightly before
+  // the dashboard has fetched/rendered the roadmap it just switched to.
+  await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
+  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 10_000 });
 }
 
 test.describe('manual roadmap creation — full phase/section/topic CRUD (issue #4, seeded via issue #100\'s AI-import flow)', () => {
