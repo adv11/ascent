@@ -1199,6 +1199,47 @@ describe('switchRoadmap — concurrent progress across templates', () => {
   });
 });
 
+// Issue #143 investigation follow-up: flushOutgoingRoadmap() swallows its own
+// failure (by design — a stalled Firebase write must not block the switch
+// itself), which correctly leaves roadmapCache[outgoingId].dirty as `true`.
+// But switchRoadmap()'s own end used to only call queueSave() for a
+// not-yet-started template, never for an already-started one loaded from
+// that dirty cache entry — so switching back into it left `dirty: true` in
+// memory with no timer ever queued to actually flush it, silently
+// abandoning the edit until some unrelated mutation happened to call
+// queueSave() again.
+describe('switchRoadmap — re-queues a save for a template left dirty by a failed outgoing flush (issue #143)', () => {
+  it('switching back into an already-started template that a prior failed outgoing flush left dirty re-queues its save', async () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'dirty-switch-back-user' }); // starts on java-backend
+
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    store.updateItem(firstId, { done: true }); // dirty=true, 500ms debounce queued
+
+    // The outgoing flush triggered by switching away fails once (e.g. a
+    // stalled connection) — flushOutgoingRoadmap() swallows this internally
+    // so the switch itself still succeeds, but java-backend's roadmapCache
+    // entry must be left dirty:true, not silently marked clean.
+    dbApi.saveRoadmap.mockRejectedValueOnce(new Error('network error'));
+    await store.switchRoadmap('piano'); // not yet started -> seeds fresh
+    expect(store.getSnapshot().activeTemplateId).toBe('piano');
+
+    dbApi.saveRoadmap.mockClear();
+    dbApi.saveRoadmap.mockResolvedValue(undefined); // every save succeeds from here on
+
+    await store.switchRoadmap('java-backend'); // already-started -> cache-first read
+
+    expect(store.getSnapshot().dirty).toBe(true);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(dbApi.saveRoadmap).toHaveBeenCalledWith(
+      'dirty-switch-back-user',
+      'java-backend',
+      expect.objectContaining({ items: expect.objectContaining({ [firstId]: expect.objectContaining({ done: true }) }) })
+    );
+  });
+});
+
 // Per-user "hide this template from my picker" preference (Issue #51 follow-up).
 // Must never touch the template's content, another user's account, or an
 // already-started template's ability to be switched to (Issue #58).

@@ -19,7 +19,8 @@ async function setup({
   hideTemplate = vi.fn().mockResolvedValue(undefined),
   unhideTemplate = vi.fn().mockResolvedValue(undefined),
   createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-test'),
-  deleteCustomRoadmap = vi.fn().mockResolvedValue(undefined)
+  deleteCustomRoadmap = vi.fn().mockResolvedValue(undefined),
+  dailyTodoStore
 } = {}) {
   const { navigate } = await import('../../src/ui/router.js');
   const { renderOnboarding } = await import('../../src/ui/pages/onboarding.js');
@@ -34,7 +35,7 @@ async function setup({
     deleteCustomRoadmap
   };
   const user = { uid: 'uid-1', isAnonymous: false };
-  const cleanup = renderOnboarding(app, { user, store });
+  const cleanup = renderOnboarding(app, { user, store, dailyTodoStore });
   return { app, navigate, store, cleanup };
 }
 
@@ -131,6 +132,29 @@ describe('onboarding page — sign-out button', () => {
 
     await vi.waitFor(() => expect(switchRoadmap).toHaveBeenCalled());
     expect(signOutBtn.disabled).toBe(true);
+  });
+
+  // Issue #143 follow-up — this page's own sign-out button must flush a
+  // dirty dailyTodoStore too, not just the roadmap store, same as
+  // sidebar.js's footer button.
+  it('flushes a dirty dailyTodoStore before signing out', async () => {
+    const todoFlush = vi.fn().mockResolvedValue(undefined);
+    const dailyTodoStore = {
+      getSnapshot: () => ({ dirty: true, todos: [] }),
+      flush: todoFlush,
+      subscribe: vi.fn(callback => {
+        callback({ dirty: true, todos: [] });
+        return () => {};
+      })
+    };
+    const { app } = await setup({ dailyTodoStore });
+    const { authApi } = await import('../../src/services/firebase.js');
+
+    app.querySelector('[aria-label="Sign out"]').click();
+    clickDialogAction('confirm');
+
+    await vi.waitFor(() => expect(authApi.signOut).toHaveBeenCalled());
+    expect(todoFlush).toHaveBeenCalled();
   });
 });
 

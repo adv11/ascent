@@ -143,3 +143,27 @@ describe('createSidebar — account identity', () => {
     expect(onDeleteAccount).toHaveBeenCalledTimes(1);
   });
 });
+
+// Issue #143 follow-up — dailyTodoStore.js has the same debounced-write race
+// roadmapStore.js does; createSidebar() must thread it through to
+// confirmAndSignOut() (src/ui/utils/signOut.js) so a dirty Daily Todos list
+// gets flushed before sign-out too, not just the roadmap.
+describe('createSidebar — sign-out flush', () => {
+  it('flushes a dirty dailyTodoStore passed in alongside the roadmap store', async () => {
+    const todoFlush = vi.fn().mockResolvedValue(undefined);
+    const dailyTodoStore = { getSnapshot: () => ({ dirty: true }), flush: todoFlush };
+    const node = await freshSidebar({
+      activeRoute: '/app',
+      user: { isAnonymous: false, email: 'jane@example.com' },
+      store: fakeStore(false),
+      dailyTodoStore
+    });
+    document.body.append(node);
+
+    node.querySelector('.app-sidebar-signout').click();
+    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+    document.querySelector('[data-action="confirm"]').click();
+
+    await vi.waitFor(() => expect(todoFlush).toHaveBeenCalled());
+  });
+});

@@ -792,7 +792,17 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
 
     if (uid) {
       attachRoadmapListener(activeTemplateId);
-      if (!alreadyStarted) {
+      // Not just `!alreadyStarted` (which is always dirty:true from the
+      // fresh-seed branch above): resolveRoadmapItems() can also return
+      // dirty:true for an ALREADY-started template, e.g. its roadmapCache
+      // entry was left dirty:true by a previous flushOutgoingRoadmap()
+      // failure (see that function's comment) or a dirty local blob from an
+      // interrupted session. Without this, switching into that template
+      // left the in-memory `dirty` flag true with no timer ever queued to
+      // actually flush it — the edit would silently sit unflushed until some
+      // other mutation happened to call queueSave() again (found during the
+      // issue #143 investigation).
+      if (dirty) {
         queueSave();
       } else {
         notify({ saveState: 'synced' });

@@ -261,7 +261,7 @@ function renderProjectionCard(projection) {
   ]);
 }
 
-export function renderProgress(app, { user, store, activityLogStore }) {
+export function renderProgress(app, { user, store, activityLogStore, dailyTodoStore }) {
   if (!user) {
     navigate('/signin', true);
     return undefined;
@@ -294,6 +294,7 @@ export function renderProgress(app, { user, store, activityLogStore }) {
     activeRoute: '/progress',
     user,
     store,
+    dailyTodoStore,
     onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
   });
   const topbar = createTopbar({

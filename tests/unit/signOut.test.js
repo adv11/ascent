@@ -102,12 +102,83 @@ describe('confirmAndSignOut', () => {
     expect(flush).not.toHaveBeenCalled();
   });
 
-  it('still signs out even if the flush fails', async () => {
+  // Issue #143: a failed flush used to be swallowed (console.error only) and
+  // sign-out proceeded anyway — silently converting a save failure into
+  // permanent data loss, since roadmapStore.js's own uid-transition guard
+  // wipes local storage right after. It must now block sign-out and ask the
+  // user explicitly, rather than assume "fire and forget" success.
+  it('does not sign out immediately when the flush fails — asks the user instead', async () => {
     const flush = vi.fn().mockRejectedValue(new Error('network error'));
     const { confirmAndSignOut } = await import('../../src/ui/utils/signOut.js');
     confirmAndSignOut({ isAnonymous: false }, fakeStore(true, flush));
     await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
     clickDialogAction('confirm');
+
+    await vi.waitFor(() => expect(flush).toHaveBeenCalled());
+    // A second dialog (stacked on top of the first) asks whether to sign out
+    // anyway — sign-out must not have happened yet.
+    await vi.waitFor(() => expect(document.querySelectorAll('.modal-overlay')).toHaveLength(2));
+    expect(signOutMock).not.toHaveBeenCalled();
+    expect(document.querySelectorAll('.modal-overlay')[1].textContent).toMatch(/couldn.t save/i);
+  });
+
+  it('signs out anyway once the user explicitly accepts losing the unsaved changes', async () => {
+    const flush = vi.fn().mockRejectedValue(new Error('network error'));
+    const { confirmAndSignOut } = await import('../../src/ui/utils/signOut.js');
+    confirmAndSignOut({ isAnonymous: false }, fakeStore(true, flush));
+    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+    clickDialogAction('confirm');
+
+    await vi.waitFor(() => expect(document.querySelectorAll('.modal-overlay')).toHaveLength(2));
+    // The second (failure) dialog's own confirm button — "Sign out anyway".
+    document.querySelectorAll('.modal-overlay')[1].querySelector('[data-action="confirm"]').click();
+
     await vi.waitFor(() => expect(signOutMock).toHaveBeenCalled());
+  });
+
+  it('stays signed in and lets the user retry when they choose to keep the unsaved changes', async () => {
+    const flush = vi.fn().mockRejectedValue(new Error('network error'));
+    const { confirmAndSignOut } = await import('../../src/ui/utils/signOut.js');
+    confirmAndSignOut({ isAnonymous: false }, fakeStore(true, flush));
+    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+    clickDialogAction('confirm');
+
+    await vi.waitFor(() => expect(document.querySelectorAll('.modal-overlay')).toHaveLength(2));
+    // The second dialog's cancel button — "Stay signed in".
+    document.querySelectorAll('.modal-overlay')[1].querySelector('[data-action="cancel"]').click();
+
+    // Back to just the original dialog, re-enabled, ready for a retry.
+    await vi.waitFor(() => expect(document.querySelectorAll('.modal-overlay')).toHaveLength(1));
+    expect(signOutMock).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(document.querySelector('[data-action="confirm"]').disabled).toBe(false));
+
+    // Retrying (flush now succeeds) signs out normally.
+    flush.mockResolvedValueOnce(undefined);
+    clickDialogAction('confirm');
+    await vi.waitFor(() => expect(signOutMock).toHaveBeenCalled());
+  });
+
+  it('flushes a dirty dailyTodoStore alongside a dirty roadmap store', async () => {
+    const roadmapFlush = vi.fn().mockResolvedValue(undefined);
+    const todoFlush = vi.fn().mockResolvedValue(undefined);
+    const { confirmAndSignOut } = await import('../../src/ui/utils/signOut.js');
+    confirmAndSignOut({ isAnonymous: false }, fakeStore(false, roadmapFlush), fakeStore(true, todoFlush));
+    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+    clickDialogAction('confirm');
+
+    await vi.waitFor(() => expect(signOutMock).toHaveBeenCalled());
+    expect(roadmapFlush).not.toHaveBeenCalled();
+    expect(todoFlush).toHaveBeenCalled();
+  });
+
+  it('does not flush a dirty dailyTodoStore for a guest session either', async () => {
+    const todoFlush = vi.fn().mockResolvedValue(undefined);
+    const { confirmAndSignOut } = await import('../../src/ui/utils/signOut.js');
+    confirmAndSignOut({ isAnonymous: true }, fakeStore(false), fakeStore(true, todoFlush));
+    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+    expect(document.querySelector('.confirm-dialog-body').textContent).toMatch(/unsaved changes/i);
+    clickDialogAction('confirm');
+    await vi.waitFor(() => expect(signOutMock).toHaveBeenCalled());
+    expect(todoFlush).not.toHaveBeenCalled();
   });
 });

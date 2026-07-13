@@ -339,7 +339,7 @@ function buildGuestView() {
   ]);
 }
 
-export function renderSettings(app, { user, store }) {
+export function renderSettings(app, { user, store, dailyTodoStore }) {
   if (!user) {
     navigate('/signin', true);
     return;
@@ -350,6 +350,7 @@ export function renderSettings(app, { user, store }) {
     activeRoute: '/settings',
     user,
     store,
+    dailyTodoStore,
     onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
   });
   const topbar = createTopbar({

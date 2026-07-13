@@ -792,24 +792,69 @@ still be queued when the user clicks "Sign out." `authApi.signOut()` invalidates
 token immediately, so a write that fires (or was still in flight) after that point silently
 fails — and this same "Sign-out contract" guard above then wipes local storage right after,
 so the edit is gone from both places with nothing surfaced to the user. `confirmAndSignOut()`
-(`src/ui/utils/signOut.js`) fixes this at the source: if `store.getSnapshot().dirty` and the
-account isn't a guest (`user.isAnonymous`), it passes `store.flush()` as `confirmDialog()`'s
-`onConfirm` callback rather than `await`ing it after the dialog already resolved — this
-both flushes **before** `authApi.signOut()` is called (while the auth token is still valid)
-and keeps the dialog open with a spinner on the "Sign out" button
+(`src/ui/utils/signOut.js`) fixes this at the source: if any dirty store's `getSnapshot().dirty`
+is true and the account isn't a guest (`user.isAnonymous`), it passes a flush of every dirty
+store as `confirmDialog()`'s `onConfirm` callback rather than `await`ing it after the dialog
+already resolved — this both flushes **before** `authApi.signOut()` is called (while the auth
+token is still valid) and keeps the dialog open with a spinner on the "Sign out" button
 (`confirmingText: 'Signing out…'`) for however long the flush takes, instead of the dialog
 closing instantly and the user watching nothing happen. A guest is deliberately left
 alone — guest data never reaches Firebase regardless of timing, and the existing dirty-guest
-confirm-dialog copy already warns about that. `dailyTodoStore.js` has the identical debounced
-`queueSave()` shape and is exposed to the same race — not yet wired into `confirmAndSignOut()`
-(it isn't currently passed a `dailyTodoStore` reference) — treat this as known follow-up, not
-an oversight, if you're touching this area again. `confirmDialog()`'s `onConfirm` param
+confirm-dialog copy already warns about that. `confirmDialog()`'s `onConfirm` param
 (`src/ui/components/confirmDialog.js`) is generic, not sign-out-specific: pass it whenever
 confirming kicks off async work the user needs to see is actually happening — it disables
 both buttons, swaps the confirm button to `setButtonLoading()`'s spinner state, and only
 closes/resolves `true` once the callback resolves; every pre-existing `confirmDialog()` call
 site (delete roadmap, delete account, hide template, etc.) omits it and keeps its original
 instant-close-on-click behavior unchanged.
+
+**A failed flush must never be silently swallowed — issue #143, the gap the paragraph above
+didn't cover.** The original fix above only handled a *successful* flush; if `store.flush()`
+(or `dailyTodoStore.flush()`, see below) rejected — a real possibility, since every one-time
+Firebase write is wrapped in a 15s timeout specifically because stalled connections are a
+known failure mode (see "Every one-time Firebase read/write..." above) — `onConfirm`'s `catch`
+block used to only `console.error` the failure and let execution fall through: `confirmDialog`
+still resolved `true`, `authApi.signOut()` still ran, and the uid-transition guard still wiped
+local storage right after. A save failure silently became permanent data loss with zero
+signal to the user. `flushDirtyStores()` (`signOut.js`) now returns whether every flush
+succeeded (via `Promise.allSettled`, so multiple stores flush concurrently and one failing
+doesn't cancel the other); if any failed, `onConfirm` opens a **second, stacked**
+`confirmDialog()` (`confirmSignOutDespiteFailedFlush()`) explicitly asking the user to choose:
+**"Sign out anyway"** (danger-styled, resolves the outer `onConfirm` normally — an informed,
+explicit choice to proceed and lose the unsaved changes) or **"Stay signed in"** (throws inside
+`onConfirm`, which — per `confirmDialog.js`'s own documented `onConfirm` contract — re-enables
+the *outer* dialog's buttons and keeps it open instead of closing, so clicking "Sign out" again
+simply retries the whole flush once the connection recovers, and "Cancel" backs out of
+sign-out entirely). Sign-out only ever proceeds past a failed save once the user has
+explicitly said so — never automatically, never silently.
+
+**`dailyTodoStore.js` shares the identical debounced `queueSave()` race and is now covered
+too (issue #143 follow-up).** Previously documented here as a known, unfixed gap —
+`confirmAndSignOut(user, store, dailyTodoStore)` takes an optional third param, flushed
+alongside the roadmap store whenever it's dirty (both run concurrently, same
+`flushDirtyStores()` call). Every call site now passes it: `sidebar.js`'s `createSidebar()`
+takes a `dailyTodoStore` prop threaded straight through (its three render call sites —
+`dashboard.js`, `progress.js`, `settings.js` — already receive it in their route `ctx` from
+`main.js`, just weren't destructuring/passing it before), and `onboarding.js`'s own sign-out
+button (which already had a `dailyTodoStore` reference for its Daily Todos panel) passes the
+same one. If you add a fifth store with the same debounced-write shape, wire it into
+`confirmAndSignOut()` the same way rather than leaving it as a documented-but-unfixed gap
+again.
+
+**A related latent bug found during the issue #143 investigation: `switchRoadmap()` could
+leave a dirty template's edit with no timer ever queued to flush it.** `flushOutgoingRoadmap()`
+deliberately swallows its own failure (a stalled outgoing flush must not block the switch
+itself) — correctly leaving that template's `roadmapCache` entry at `dirty: true`. But
+`switchRoadmap()`'s own end only called `queueSave()` when activating a template for the very
+first time (`!alreadyStarted`) — an already-started template loaded via `resolveRoadmapItems()`
+never did, even though that function can also return `dirty: true` for an already-started
+template (exactly the cache entry a prior failed outgoing flush leaves behind). Switching back
+into it left the in-memory `dirty` flag `true` with no timer queued to actually flush it — the
+edit would silently sit unflushed until some unrelated mutation happened to call `queueSave()`
+again. Fixed by checking `dirty` itself rather than `!alreadyStarted` (a fresh seed's `dirty` is
+always `true` anyway, so the fresh-seed case behaves identically) — see the "re-queues a save
+for a template left dirty by a failed outgoing flush" test in
+`tests/integration/roadmapStore.test.js`.
 
 **The flush-before-sign-out fix above only helps if `dirty` is actually `true` by the time
 `confirmAndSignOut()` reads it — a second, still-reproducible way to lose a just-imported
