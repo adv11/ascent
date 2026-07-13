@@ -32,8 +32,15 @@ test.describe('roadmap sharing — publish, view, revoke', () => {
     // relative goto('/#/shared?id=...') here would resolve against nothing.
     const shareUrl = statusText.match(/https?:\/\/\S+/)[0];
 
-    // Fresh, unauthenticated context — a stranger with the link.
+    // Fresh, unauthenticated context — a stranger with the link. Also needs
+    // the same emulator-flag init script fixtures.js injects into the
+    // fixtured `page` — a manually created context never gets it, so
+    // firebase.js would otherwise connect to real prod Firebase instead of
+    // the emulator this snapshot was actually published into, and
+    // getSharedRoadmap() would resolve null (rendering the revoked state
+    // instead of the real snapshot).
     const guestContext = await browser.newContext();
+    await guestContext.addInitScript(() => { window.__USE_FIREBASE_EMULATOR__ = true; });
     const guestPage = await guestContext.newPage();
     await guestPage.goto(shareUrl);
     await expect(guestPage.locator('.shared-view')).toBeVisible({ timeout: 10_000 });
@@ -47,6 +54,7 @@ test.describe('roadmap sharing — publish, view, revoke', () => {
     await expect(modal.locator('.share-link-list')).toContainText('No published links yet.', { timeout: 10_000 });
 
     const revokedContext = await browser.newContext();
+    await revokedContext.addInitScript(() => { window.__USE_FIREBASE_EMULATOR__ = true; });
     const revokedPage = await revokedContext.newPage();
     await revokedPage.goto(shareUrl);
     await expect(revokedPage.locator('.shared-view-state')).toBeVisible({ timeout: 10_000 });
