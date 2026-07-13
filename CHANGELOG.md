@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **ICS calendar export for Daily Todos, and print/PDF export for a roadmap (issue #133).** The account menu gains two new entries. "Export to calendar (.ics)" downloads a valid RFC 5545 `.ics` file with one event per active (not done, not expired) Daily Todo — a 15-minute block ending at the todo's deadline, importable into Google Calendar/Apple Calendar/Outlook without duplicating on re-export (a stable per-todo `UID`). "Print roadmap…" opens a small dialog (default: exclude notes, matching the privacy-conscious default from roadmap sharing) then prints a plain, checkbox-style view of the active roadmap — phase/section/topic titles, priority, done state, and resource URLs as visible text — via the browser's native print-to-PDF, using a dedicated `@media print` stylesheet rather than a new PDF-generation dependency.
+
+### Added
 - **Local "Remind me" reminders for Daily Todo deadlines (issue #132, Phase A).** An opt-in bell toggle next to the Daily Todos heading requests notification permission and, once granted, schedules a local browser notification 15 minutes before each active todo's deadline — no server, no push infrastructure, works while the app/PWA is open or backgrounded on this device. Clicking the notification focuses an already-open app window or opens one at the Daily Todos panel. Completing or deleting a todo before its reminder fires cancels the scheduled notification. This is a single-device, best-effort reminder, not real cross-device push — a real server-push follow-up (Cloud Functions + FCM) is deliberately out of scope, tracked separately if it's ever needed (see `.claude/rules/roadmap-store.md`).
 
 ### Fixed

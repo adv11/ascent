@@ -11,7 +11,7 @@ vi.mock('../../src/ui/components/importBackupModal.js', () => ({ openImportBacku
 vi.mock('../../src/ui/components/toast.js', () => ({ showToast }));
 vi.mock('../../src/ui/utils/backupReminder.js', () => ({ markBackupTaken }));
 
-const { exportBackupJson, exportBackupCsv, importBackupFromFile } = await import('../../src/ui/utils/backupActions.js');
+const { exportBackupJson, exportBackupCsv, exportTodosIcs, importBackupFromFile } = await import('../../src/ui/utils/backupActions.js');
 
 function fakeStore(overrides = {}) {
   const allItems = overrides.allItems || {
@@ -51,6 +51,24 @@ describe('exportBackupCsv', () => {
     expect(filename).toMatch(/\.csv$/);
     expect(mimeType).toBe('text/csv');
     expect(markBackupTaken).not.toHaveBeenCalled();
+  });
+});
+
+describe('exportTodosIcs', () => {
+  it('downloads a .ics file built from the daily todo store snapshot', () => {
+    const dailyTodoStore = {
+      getSnapshot: () => ({
+        todos: [{ id: 'todo-1', title: 'Review notes', done: false, expiresAt: Date.now() + 60 * 60 * 1000 }]
+      })
+    };
+    exportTodosIcs(dailyTodoStore);
+
+    expect(downloadTextFile).toHaveBeenCalledTimes(1);
+    const [filename, content, mimeType] = downloadTextFile.mock.calls[0];
+    expect(filename).toMatch(/\.ics$/);
+    expect(mimeType).toBe('text/calendar');
+    expect(content).toContain('BEGIN:VEVENT');
+    expect(showToast).toHaveBeenCalledWith('Calendar file downloaded.', 'success');
   });
 });
 

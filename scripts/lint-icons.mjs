@@ -35,7 +35,11 @@ const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu;
 // shortcut around converting a real UI icon.
 const EXEMPT_FILES = new Set([
   'src/ui/components/shareCard.js',
-  'src/ui/components/shareModal.js'
+  'src/ui/components/shareModal.js',
+  // Printed checklist glyphs (issue #133) — content rendered onto a printed
+  // page/PDF, not this app's own on-screen UI icon system; the issue's own
+  // spec calls for a plain "☐/☑" glyph here, not an interactive control.
+  'src/ui/utils/printRoadmap.js'
 ]);
 
 // Strips `//` line comments and `/* */` block comments so a comment

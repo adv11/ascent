@@ -3388,3 +3388,21 @@ add a fallback `onClick` on the outer card, gated on `e.target === cardEl` so it
 for a click landing in the dead padding zone and never double-fires for clicks that bubble
 from the button or another child control. Confirmed fixed against the real Firebase Auth/DB
 emulator (was ~50% flaky before, 100% pass across 40+ repeated runs after).
+
+### 2026-07-14 — PR #TBD — ICS calendar export for Daily Todos + print/PDF export for a roadmap (issue #133)
+
+Two independent export surfaces added to the account menu (`sidebar.js`), both
+client-side only. `src/core/dailyTodo/icsExport.js` (`buildTodosIcs()`) is a pure module
+building a valid RFC 5545 `VCALENDAR`/`VEVENT` string for every active Daily Todo —
+`DTSTART`/`DTEND` derived from `expiresAt` as a 15-minute block, a stable per-todo `UID`
+so re-exporting into the same calendar app updates rather than duplicates, and explicit
+line-folding for any `SUMMARY` over 75 octets. `src/ui/utils/printRoadmap.js` builds a
+plain `.print-roadmap` DOM snapshot (title/phase/section/topic/priority/done-state/
+resource-URLs-as-text, notes excluded unless explicitly opted in) and appends it to
+`document.body` just for the duration of `window.print()`, driven entirely by a new
+`@media print` block in `app.css` (`body.print-mode` hides everything else) — no new
+PDF-generation dependency, per root `CLAUDE.md`'s "no build step, no bundler" constraint.
+`exportTodosIcs()`/`triggerRoadmapPrint()` (`src/ui/utils/backupActions.js` and
+`printRoadmap.js` respectively) sit alongside the existing `exportBackupJson`/
+`exportBackupCsv` helpers for consistency, though neither is a store-level method — both
+are pure reads over an existing snapshot.

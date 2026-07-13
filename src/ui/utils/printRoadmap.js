@@ -1,0 +1,108 @@
+// Issue #133 Part 2 — print/PDF export of a roadmap via a dedicated print
+// stylesheet + the browser's native print-to-PDF, not a client-side PDF
+// library (root CLAUDE.md's "no build step, no bundler" constraint; a printed
+// checklist doesn't need pixel-perfect PDF control). Builds a plain,
+// print-only DOM snapshot from the current roadmap and appends it to
+// document.body just long enough to print, then removes it — app.css's
+// `@media print` rules hide everything else and show only `.print-roadmap`.
+import { el, isValidUrl } from '../dom.js';
+import { openModal } from '../components/modal.js';
+import { getTemplate } from '../../data/templates/index.js';
+
+function resolveRoadmapTitle(snapshot) {
+  const custom = (snapshot.customRoadmaps || []).find(r => r.id === snapshot.activeTemplateId);
+  if (custom) return custom.title;
+  return getTemplate(snapshot.activeTemplateId)?.name || 'Roadmap';
+}
+
+function buildPrintNode(snapshot, { includeNotes }) {
+  const phaseNodes = (snapshot.phases || []).map(phase => {
+    const items = Object.values(snapshot.allItems || {})
+      .filter(item => !item.deleted && item.phase === phase.title);
+    const sectionTitles = [...new Set(items.map(item => item.section))];
+    const sectionNodes = sectionTitles.map(sectionTitle => {
+      const sectionItems = items.filter(item => item.section === sectionTitle);
+      return el('div', { className: 'print-section' }, [
+        el('h3', { className: 'print-section-title', text: sectionTitle }),
+        el('ul', { className: 'print-item-list' }, sectionItems.map(item => renderPrintItem(item, includeNotes)))
+      ]);
+    });
+    return el('section', { className: 'print-phase' }, [
+      el('h2', { className: 'print-phase-title', text: `${phase.title} (${phase.priority})` }),
+      ...sectionNodes
+    ]);
+  });
+
+  return el('div', { className: 'print-roadmap' }, [
+    el('h1', { className: 'print-roadmap-title', text: resolveRoadmapTitle(snapshot) }),
+    ...phaseNodes
+  ]);
+}
+
+function renderPrintItem(item, includeNotes) {
+  const resourceNodes = (item.resources || [])
+    .filter(resource => isValidUrl(resource?.url))
+    .map(resource => el('div', { className: 'print-resource', text: `${resource.label}: ${resource.url}` }));
+
+  const children = [
+    el('span', { className: 'print-check-glyph', text: item.done ? '☑' : '☐' }),
+    el('span', { className: 'print-item-title', text: ` ${item.title} ` }),
+    el('span', { className: 'print-item-priority', text: `[${item.priority}]` })
+  ];
+  if (includeNotes && item.notes) {
+    children.push(el('div', { className: 'print-item-notes', text: item.notes }));
+  }
+  resourceNodes.forEach(node => children.push(node));
+
+  return el('li', { className: 'print-item' }, children);
+}
+
+function printSnapshot(store, includeNotes) {
+  const snapshot = store.getSnapshot();
+  const node = buildPrintNode(snapshot, { includeNotes });
+  document.body.appendChild(node);
+  document.body.classList.add('print-mode');
+
+  function cleanup() {
+    node.remove();
+    document.body.classList.remove('print-mode');
+    window.removeEventListener('afterprint', cleanup);
+  }
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
+// Asks whether to include notes (off by default — same privacy-conscious
+// default as roadmap sharing, issue #131) before printing.
+export function triggerRoadmapPrint(store) {
+  let includeNotes = false;
+  const checkbox = el('input', {
+    type: 'checkbox',
+    id: 'print-include-notes',
+    onChange: e => { includeNotes = e.target.checked; }
+  });
+
+  const { close } = openModal({
+    ariaLabel: 'Print roadmap',
+    content: [
+      el('h2', { text: 'Print roadmap' }),
+      el('p', { text: 'This opens your browser’s print dialog, where you can save the roadmap as a PDF.' }),
+      el('label', { className: 'print-include-notes-row' }, [
+        checkbox,
+        el('span', { text: 'Include notes' })
+      ]),
+      el('div', { className: 'confirm-dialog-actions' }, [
+        el('button', { type: 'button', className: 'btn btn-secondary', text: 'Cancel', onClick: () => close() }),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-primary',
+          text: 'Print',
+          onClick: () => {
+            close();
+            printSnapshot(store, includeNotes);
+          }
+        })
+      ])
+    ]
+  });
+}

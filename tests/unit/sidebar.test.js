@@ -124,7 +124,23 @@ describe('createSidebar — account identity', () => {
     node.querySelector('.app-sidebar-identity').click();
     expect(document.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
+    expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Import backup…', 'Print roadmap…']);
+  });
+
+  // Issue #133 — the ICS export item only appears when a dailyTodoStore is
+  // actually passed in, same optional-prop precedent as confirmAndSignOut's
+  // third param.
+  it('adds an "Export to calendar (.ics)" item only when dailyTodoStore is passed', async () => {
+    const node = await freshSidebar({
+      activeRoute: '/app',
+      user: { isAnonymous: true },
+      store: fakeStore(),
+      dailyTodoStore: { getSnapshot: () => ({ todos: [] }) }
+    });
+    document.body.append(node);
+    node.querySelector('.app-sidebar-identity').click();
+    const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
+    expect(itemText).toContain('Export to calendar (.ics)');
   });
 
   // Issue #123 — persistent local-only-data risk indicator, guest only.

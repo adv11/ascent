@@ -1,6 +1,7 @@
 import { isValidUrl } from '../dom.js';
 import { buildRoadmapExport, buildRoadmapCsv, exportFileBaseName } from '../../core/roadmap/backupSchema.js';
 import { validateBackupText } from '../../core/roadmap/backupValidator.js';
+import { buildTodosIcs } from '../../core/dailyTodo/icsExport.js';
 import { downloadTextFile, readFileAsText } from './backupTransfer.js';
 import { openImportBackupModal } from '../components/importBackupModal.js';
 import { showToast } from '../components/toast.js';
@@ -25,6 +26,18 @@ export function exportBackupCsv(store) {
   const csv = buildRoadmapCsv(snapshot);
   downloadTextFile(`${exportFileBaseName(snapshot.activeTemplateId)}.csv`, csv, 'text/csv');
   showToast('CSV exported.', 'success');
+}
+
+// Issue #133 Part 1 — exports active Daily Todos as an ICS file. Separate
+// from the roadmap export helpers above since it reads dailyTodoStore, not
+// roadmapStore, but lives alongside them for the same "sidebar's export menu
+// drives this directly" reason.
+export function exportTodosIcs(dailyTodoStore) {
+  const snapshot = dailyTodoStore.getSnapshot();
+  const ics = buildTodosIcs(snapshot.todos);
+  const date = new Date().toISOString().slice(0, 10);
+  downloadTextFile(`ascent-daily-todos-${date}.ics`, ics, 'text/calendar');
+  showToast('Calendar file downloaded.', 'success');
 }
 
 // Resource URLs are untrusted input here just like anywhere else a URL

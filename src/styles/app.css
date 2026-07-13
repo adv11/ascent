@@ -3712,3 +3712,34 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
     scroll-behavior: auto !important;
   }
 }
+
+/* Print/PDF export of a roadmap (issue #133 Part 2) — a dedicated print
+   stylesheet, not a separate route: printRoadmap.js appends a plain
+   `.print-roadmap` snapshot to document.body and toggles `.print-mode` on it
+   just for the duration of window.print(). `.print-include-notes-row` is the
+   small on-screen checkbox in the pre-print modal; everything else here only
+   applies inside an actual print/PDF context. */
+.print-include-notes-row { display: flex; align-items: center; gap: 8px; margin: 16px 0; }
+.print-roadmap { display: none; }
+
+/* intentional: every literal color in this @media print block is fixed,
+   theme-independent print output — a printed page always renders on
+   assumed-white paper/PDF viewer background regardless of the app's active
+   on-screen theme, so none of these should ever read from a --token that
+   could resolve to a dark-theme value. */
+@media print {
+  body.print-mode > *:not(.print-roadmap) { display: none !important; }
+  body.print-mode .print-roadmap {
+    display: block;
+    background: #ffffff; /* intentional: fixed print background, see block comment above */
+    color: #111111; /* intentional: fixed print text color, see block comment above */
+  }
+  .print-roadmap-title { font-size: 22px; margin-bottom: 16px; }
+  .print-phase-title { font-size: 18px; margin: 20px 0 8px; border-bottom: 1px solid #ccc; /* intentional: fixed print divider color */ }
+  .print-section-title { font-size: 14px; margin: 12px 0 4px; color: #444; /* intentional: fixed print text color */ }
+  .print-item-list { list-style: none; margin: 0; padding: 0; }
+  .print-item { margin: 4px 0; page-break-inside: avoid; }
+  .print-item-priority { color: #555; font-size: 12px; margin-left: 4px; /* intentional: fixed print text color */ }
+  .print-item-notes { font-size: 12px; color: #333; margin: 2px 0 2px 24px; white-space: pre-wrap; /* intentional: fixed print text color */ }
+  .print-resource { font-size: 12px; color: #333; margin: 2px 0 2px 24px; /* intentional: fixed print text color */ }
+}

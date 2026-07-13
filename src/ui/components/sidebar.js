@@ -7,7 +7,8 @@ import { createIcon } from './icons.js';
 import { attachTooltip } from './tooltip.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
-import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../utils/backupActions.js';
+import { exportBackupJson, exportBackupCsv, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
+import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { openMyReports } from './myReports.js';
 import { openShareRoadmapModal } from './shareRoadmapModal.js';
 
@@ -37,7 +38,7 @@ function readCollapsed() {
 // identity, including an anonymous guest session — local-only progress is
 // exactly the data most at risk of being lost, so it isn't gated behind
 // `!user.isAnonymous` the way "Delete account" is.
-function buildAccountMenu({ user, store, identityTrigger, onDeleteAccount }) {
+function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount }) {
   const importInput = el('input', {
     type: 'file',
     accept: '.json,application/json',
@@ -55,8 +56,12 @@ function buildAccountMenu({ user, store, identityTrigger, onDeleteAccount }) {
     { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
-    { text: 'Import backup…', onClick: () => importInput.click() }
+    { text: 'Import backup…', onClick: () => importInput.click() },
+    { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
   ];
+  if (dailyTodoStore) {
+    dropdownItems.push({ text: 'Export to calendar (.ics)', onClick: () => exportTodosIcs(dailyTodoStore) });
+  }
   if (!user.isAnonymous && onDeleteAccount) {
     dropdownItems.push({ text: 'Delete account', danger: true, onClick: onDeleteAccount });
   }
@@ -113,7 +118,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     guestRiskIndicator
   ]);
 
-  const { identity, importInput } = buildAccountMenu({ user, store, identityTrigger, onDeleteAccount });
+  const { identity, importInput } = buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount });
 
   const footer = el('div', { className: 'app-sidebar-footer' }, [
     identity,
