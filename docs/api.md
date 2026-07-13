@@ -54,6 +54,10 @@ Returns a store instance with the following methods.
   notes?: string,     // issue #15 — plain text, ≤ 5000 chars. Missing/'' both mean "no notes".
   completedViaTodoAt?: number | null,  // issue #56 follow-up — set only via setItemDoneInTemplate()
                                         // (a linked Daily Todo), distinct from completedAt above.
+  lastReviewedAt?: number | null,  // issue #134 — set only via the dashboard's "Mark reviewed" action
+                                    // on a review-due topic. Missing/null both mean "never reviewed
+                                    // since completion" (backward compat, same as notes). See
+                                    // core/roadmap/reviewSchedule.js's isReviewDue()/getReviewDueItems().
   createdAt: number, updatedAt?: number,
 }
 ```
@@ -136,6 +140,17 @@ Pure — no DOM, no store, no Firebase. Only ever called on data that has alread
 | Export | Signature | Notes |
 |---|---|---|
 | `adaptImportToRoadmap` | `(data: object) => { phases: TemplatePhase[], items: Record<string, Item>, droppedResourceCount: number }` | Converts a validated import payload into the exact shape `roadmapStore.createCustomRoadmap({ phases, items })` expects — generating `phase-...`/`section-...`/`custom-...` ids the same way `addPhase`/`addSection`/`addItem` do. A plain-string item inherits its phase's `priority` and gets `resources: []`; a `[title, priority]` tuple uses its own priority and also gets `resources: []`; an object item (issue #100) uses its own `priority` if set (else the phase's) and **sanitizes** (not just maps) its `resources` array onto `item.resources`: `sanitizeResources()` auto-prepends `https://` to a bare-domain URL and drops (rather than fails the whole item over) any resource whose URL still isn't a valid http(s) link after that — issue #100 follow-up. Every priority value is re-normalized via `importValidator.js`'s `normalizePriority()`. **`droppedResourceCount`** (issue #121 item 3) is the total number of resources dropped this way across every item, summed at the top level — `importRoadmapModal.js` passes it through its resolved `{ title, phases, items, droppedResourceCount }` value so the caller (`onboarding.js`'s `handleCreate()`) can tell the user N links were skipped instead of a topic silently ending up with `resources: []` and no explanation. |
+
+## `src/core/roadmap/reviewSchedule.js` — spaced-repetition review reminders (issue #134)
+
+Pure — no DOM, no store, no Firebase. Phase A only: a simple fixed-interval reminder,
+not a full spaced-repetition algorithm (no per-item ease factors/growing intervals).
+
+| Export | Signature | Notes |
+|---|---|---|
+| `REVIEW_INTERVAL_DAYS` / `REVIEW_INTERVAL_MS` | `number` | The fixed review interval (14 days). |
+| `isReviewDue` | `(item: Item, now?: number) => boolean` | `false` for a soft-deleted, not-`done`, or never-`completedAt` item. Otherwise compares `now` against `item.lastReviewedAt` if set, else `item.completedAt` — due once that gap is `>= REVIEW_INTERVAL_MS`. |
+| `getReviewDueItems` | `(items: Item[], now?: number) => Item[]` | Filters a snapshot's item list with `isReviewDue`. |
 
 ## `src/data/importPrompt.js` — versioned AI-import prompt (issue #4)
 

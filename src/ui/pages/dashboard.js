@@ -25,6 +25,7 @@ import { createIcon } from '../components/icons.js';
 import { createEmptyState } from '../components/emptyState.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { KEYS } from '../../services/localStorageKeys.js';
+import { isReviewDue, getReviewDueItems } from '../../core/roadmap/reviewSchedule.js';
 
 // Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
 // "most valuable" type (a video worth watching over a plain article, etc.)
@@ -147,6 +148,7 @@ function countStats(items) {
 function matchesActiveFilter(item, priority) {
   if (priority === 'ALL') return true;
   if (priority === 'RESOURCES') return !!item.resources?.length;
+  if (priority === 'REVIEW') return isReviewDue(item);
   return item.priority === priority;
 }
 
@@ -192,9 +194,9 @@ export function formatLastSynced(ms) {
 // resources inline instead of just showing the collapsed count badge — see
 // the "Render resource links inline" comment there.
 export function renderFilterChips(items, activeFilter, onFilterChange) {
-  return ['ALL', 'P0', 'P1', 'P2', 'P3', 'RESOURCES'].map(p => {
+  return ['ALL', 'P0', 'P1', 'P2', 'P3', 'RESOURCES', 'REVIEW'].map(p => {
     const { total, done } = priorityCounts(items, p);
-    const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Resources' : p;
+    const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Resources' : p === 'REVIEW' ? 'Review due' : p;
     const isActive = activeFilter === p;
     return el('button', {
       type: 'button',
@@ -204,6 +206,7 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
       onClick: () => onFilterChange(p)
     }, [
       p === 'RESOURCES' ? createIcon('link', { size: 'xs' }) : null,
+      p === 'REVIEW' ? createIcon('bell', { size: 'xs' }) : null,
       ` ${label} `,
       el('span', { className: 'chip-count', text: `${done}/${total}` }),
       // Issue #6 Phase 9 — a plain <span> with only an onClick was never
@@ -693,6 +696,17 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
         activeFilter === 'RESOURCES' ? renderInlineResources(item) : null
       ].filter(Boolean)),
       el('div', { className: 'check-actions' }, [
+        isReviewDue(item) ? el('button', {
+          type: 'button',
+          className: 'btn btn-ghost btn-sm',
+          'data-action': 'mark-reviewed',
+          'aria-label': `Mark "${item.title}" reviewed`,
+          onClick: e => {
+            e.stopPropagation();
+            store.updateItem(item.id, { lastReviewedAt: Date.now() });
+            showToast(`Marked "${item.title}" as reviewed.`, 'success');
+          }
+        }, [createIcon('bell', { size: 'xs' }), 'Mark reviewed']) : null,
         dailyTodoStore ? el('button', {
           type: 'button',
           className: 'btn btn-ghost btn-sm',
@@ -862,6 +876,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     doneStatTotal.textContent = `/ ${stats.total}`;
     roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
     updateSaveBadge(snapshot.saveState);
+    updateReviewDueBadge(allItems);
     if (hasAnimatedStats) {
       doneStat.textContent = String(stats.done);
       percentStat.textContent = String(stats.pct);
@@ -961,6 +976,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     percentStat.textContent = String(stats.pct);
     percentRing._setPct(stats.pct);
     updateSaveBadge(snapshot.saveState);
+    updateReviewDueBadge(allItems);
     roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
 
     filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
@@ -1040,6 +1056,34 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     dailyTodoNavText
   ]) : null;
 
+  // Issue #134 — a small header pill showing how many completed topics are
+  // due for a spaced-repetition-style review, next to the Daily Todo
+  // countdown badge (same header-badge precedent). Clicking it jumps
+  // straight to the REVIEW filter chip rather than a separate page.
+  const reviewDueText = el('span', { className: 'review-due-nav-text' });
+  const reviewDueBadge = el('button', {
+    type: 'button',
+    className: 'review-due-nav-badge',
+    title: 'Topics due for review',
+    hidden: true,
+    onClick: () => {
+      activeFilter = 'REVIEW';
+      persistUi();
+      render(store.getSnapshot());
+    }
+  }, [
+    el('span', { className: 'review-due-nav-icon' }, [createIcon('bell', { size: 'xs' })]),
+    reviewDueText
+  ]);
+
+  function updateReviewDueBadge(allItems) {
+    const dueCount = getReviewDueItems(allItems).length;
+    reviewDueBadge.hidden = dueCount === 0;
+    if (dueCount === 0) return;
+    reviewDueText.textContent = `${dueCount} due for review`;
+    reviewDueBadge.setAttribute('aria-label', `${dueCount} topic${dueCount === 1 ? '' : 's'} due for review`);
+  }
+
   function updateDailyTodoBadge() {
     if (!dailyTodoStore) return;
     const now = Date.now();
@@ -1078,6 +1122,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     syncPill,
     themeToggleBtn,
     dailyTodoNavBadge,
+    reviewDueBadge,
     notificationBell: createChangelogBell(),
     onToggleMobileSidebar: () => sidebar._toggleMobile()
   });

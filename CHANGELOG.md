@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Spaced-repetition review reminders — Phase A, fixed-interval (issue #134).** A completed topic left unchecked for 14 days now surfaces as "due for review": a new "Review due" filter chip and a header pill (next to the Daily Todo countdown badge) show how many topics qualify, each with a "Mark reviewed" action that resets its own review clock without touching its `done` state. This is a simple fixed-interval reminder, not a full spaced-repetition algorithm (no per-item ease factors or growing intervals) — see `.claude/rules/roadmap-store.md` for the scope note.
+
 - **ICS calendar export for Daily Todos, and print/PDF export for a roadmap (issue #133).** The account menu gains two new entries. "Export to calendar (.ics)" downloads a valid RFC 5545 `.ics` file with one event per active (not done, not expired) Daily Todo — a 15-minute block ending at the todo's deadline, importable into Google Calendar/Apple Calendar/Outlook without duplicating on re-export (a stable per-todo `UID`). "Print roadmap…" opens a small dialog (default: exclude notes, matching the privacy-conscious default from roadmap sharing) then prints a plain, checkbox-style view of the active roadmap — phase/section/topic titles, priority, done state, and resource URLs as visible text — via the browser's native print-to-PDF, using a dedicated `@media print` stylesheet rather than a new PDF-generation dependency.
 
 ### Added

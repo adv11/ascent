@@ -1064,6 +1064,35 @@ the same field alongside the existing `completedViaTodoAt` via a small
 moment either side is unchecked, per the "Linking a roadmap topic" section above), while
 `completedAt` tracks completion generally, through any path.
 
+**Spaced-repetition review reminders — Phase A, fixed-interval only (issue #134).**
+`src/core/roadmap/reviewSchedule.js` (`getReviewDueItems(items, now)`/`isReviewDue(item,
+now)`) is a pure module computing which completed topics are "due for review": a
+non-deleted, `done: true` item whose `item.completedAt` (or `item.lastReviewedAt` if
+set — see below) is older than `REVIEW_INTERVAL_MS` (14 days, `REVIEW_INTERVAL_DAYS`, a
+named constant). **This is deliberately not a full spaced-repetition algorithm** — no
+per-item ease factors, no growing intervals, a single fixed global interval for every
+item — see the issue for why a true SM-2-style model was scoped out of this first
+version; don't assume more sophistication exists here than actually does.
+`item.lastReviewedAt: number | null` is the one new item field (missing/`null` both mean
+"never reviewed since completion" — same backward-compat convention as
+`notes`/`completedViaTodoAt`), set only when a user clicks the dashboard's "Mark
+reviewed" action on a review-due row (`store.updateItem(id, { lastReviewedAt: Date.now()
+})`) — **never** re-derived from `completedAt` alone, so a topic cycles review-due ->
+reviewed -> review-due-again over time without ever touching `done`/`completedAt`. No
+`updateItem()` change was needed for this: the existing cosmetic-check
+(`Object.keys(patch).every(key => key === 'done')`) already treats any patch key other
+than `done` as non-cosmetic, so a `{ lastReviewedAt }` patch bumps `structuralVersion` for
+free, same as `notes`. `dashboard.js` surfaces this as a sixth filter chip, `'REVIEW'`
+(alongside `ALL`/`P0`-`P3`/`RESOURCES` — `matchesActiveFilter()` delegates to
+`isReviewDue()`), plus a header pill (`.review-due-nav-badge`, next to the Daily Todo
+countdown badge in `topbar.js`'s actions row, same cross-roadmap-badge precedent) showing
+the due count; clicking it jumps straight to the `REVIEW` filter rather than a separate
+page. `renderItemRow()`'s "Mark reviewed" button only renders on a currently review-due
+row, following the same `data-action`/`e.stopPropagation()` click-guard convention as
+every other nested row control. A `done` toggle (`patchDoneStates()`'s fast path, not just
+the full `render()`) also refreshes the header pill, since checking/unchecking an item
+can flip it in or out of review-due state via `completedAt` alone.
+
 **`activityLogStore.js` and the `onCompletionToggle` hook (issue #8, part 1 — data layer
 only, no UI yet).** A fourth store alongside `roadmapStore.js`/`dailyTodoStore.js`
 (`src/services/activityLogStore.js`), same Store pattern precedent as `dailyTodoStore.js`

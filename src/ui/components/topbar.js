@@ -21,7 +21,7 @@ function navigationItems() {
 // an avatar or dropdown. The hamburger button is CSS-hidden above the mobile
 // breakpoint (app.css); `onToggleMobileSidebar` wires it to the sidebar's own
 // `_toggleMobile()`.
-export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, dailyTodoNavBadge, notificationBell, onToggleMobileSidebar }) {
+export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, dailyTodoNavBadge, reviewDueBadge, notificationBell, onToggleMobileSidebar }) {
   const hamburger = el('button', {
     type: 'button',
     className: 'app-topbar-hamburger',
@@ -43,6 +43,7 @@ export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, daily
   }, [createIcon('search', { size: 'sm' })]);
 
   const actions = el('div', { className: 'app-topbar-actions' }, [
+    reviewDueBadge,
     dailyTodoNavBadge,
     syncPill,
     user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,

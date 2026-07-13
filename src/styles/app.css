@@ -91,16 +91,23 @@
   --font-display: 'Space Grotesk', var(--font);
   --mono: ui-monospace, 'SF Mono', Monaco, Consolas, monospace;
 
-  /* Type scale (issue #6 Phase 1.1) */
-  --text-xs: 11px;
-  --text-sm: 13px;
-  --text-base: 14px;
-  --text-md: 15px;
-  --text-lg: 17px;
-  --text-xl: 20px;
-  --text-2xl: 24px;
-  --text-3xl: 32px;
-  --text-4xl: 44px;
+  /* Type scale (issue #6 Phase 1.1) — role-mapped to Material Design 3's
+     15 named type roles (issue #155: Display/Headline/Title/Body/Label,
+     each Large/Medium/Small) via the comment on each line below, rather
+     than a repo-wide rename of these custom-property names — the issue
+     explicitly allows this cheaper option since every existing call site
+     already reads one of these names. Pick the *role* comment that matches
+     what you're building (e.g. "this is a headline") before reaching for a
+     raw size. */
+  --text-xs: 11px;   /* role: Label Small */
+  --text-sm: 13px;   /* role: Label Medium / Body Small */
+  --text-base: 14px; /* role: Body Medium */
+  --text-md: 15px;   /* role: Body Large / Label Large */
+  --text-lg: 17px;   /* role: Title Medium */
+  --text-xl: 20px;   /* role: Title Large */
+  --text-2xl: 24px;  /* role: Headline Small */
+  --text-3xl: 32px;  /* role: Headline Large */
+  --text-4xl: 44px;  /* role: Display Small */
 
   --leading-tight: 1.1;
   --leading-snug: 1.3;
@@ -152,7 +159,10 @@
      regardless of its own font-size. */
   --chip-height: 22px;
   --chip-padding-x: 9px;
-  --chip-radius: 999px;
+  /* issue #155 — sourced from the new M3 shape scale (--radius-full,
+     declared below) instead of a literal; same 9999px value, no visual
+     change, just token-sourced like the rest of the shape scale. */
+  --chip-radius: var(--radius-full);
 
   /* Surface hierarchy — surface-0/1/2 alias the existing theme-flipping
      tokens so they resolve correctly per theme without a dark-block
@@ -206,6 +216,72 @@
   --duration-enter: 480ms;
 
   --stagger-base: 40ms;
+
+  /* Material Design 3 motion tokens (issue #155) — named duration tiers +
+     easing curves, added alongside the existing --duration-*/--ease-spring
+     scale above rather than replacing it. --ease-spring/--duration-instant
+     etc. stay exactly as-is (many components, including .fade-in — see the
+     ".claude/rules/ui-styling.md" warning about that animation's fill-mode —
+     read those specific names); these are the M3-named set for new/restyled
+     motion this issue introduces (hover shimmer, staggered entrances,
+     count-up, badge/gauge transitions). */
+  --duration-short: 100ms;   /* M3 "short" tier, 50-200ms */
+  --duration-medium: 300ms;  /* M3 "medium" tier, 250-400ms */
+  --duration-long: 500ms;    /* M3 "long" tier, 450-600ms */
+  --duration-extra-long: 800ms; /* M3 "extra-long" tier, 700-1000ms */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0.1, 1);
+  --ease-standard-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-standard-accelerate: cubic-bezier(0.3, 0, 1, 1);
+
+  /* Material Design 3 shape scale (issue #155) — named corner-radius tiers.
+     --radius (10px, between xs/sm) and --radius-lg (16px, = --radius-xl's
+     little sibling — actually equal to this scale's own "large" tier) stay
+     defined exactly as before for backward compatibility with every existing
+     call site; new/restyled components should reach for the named scale
+     below instead of a fresh magic-number radius. */
+  --radius-none: 0;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  /* --radius-lg already declared above at 16px — same M3 "large" tier */
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Material Design 3 elevation tokens (issue #155) — pairs the existing
+     5-tier shadow scale with a "surface tint" background mix, M3's core
+     idea that a more-elevated surface gets a subtle tint of the primary
+     color mixed in *in addition to* a deeper shadow, not shadow alone.
+     Defined once here (not repeated in the dark block) because each
+     reads var(--panel)/var(--brand-deep), which already resolve to the
+     correct theme's value on their own — same pattern as --surface-0/1/2
+     above. --elevation-N is a drop-in box-shadow value; --surface-tint-N
+     (tiers 2+ only — a "resting"/tier-0-1 surface has no tint) is a
+     background-color for anything that wants the richer teal-tinted card
+     surface described in issue #155's extracted-value table. color-mix()
+     has full support in every browser this app already targets (Chrome/Edge
+     111+, Safari 16.2+, Firefox 113+ — all older than this app's own
+     ES-module baseline). */
+  --elevation-0: none;
+  --elevation-1: var(--shadow-xs);
+  --elevation-2: var(--shadow-sm);
+  --elevation-3: var(--shadow-md);
+  --elevation-4: var(--shadow-lg);
+  --elevation-5: var(--shadow-xl);
+  --surface-tint-2: color-mix(in srgb, var(--panel) 96%, var(--brand-deep) 4%);
+  --surface-tint-3: color-mix(in srgb, var(--panel) 92%, var(--brand-deep) 8%);
+  --surface-tint-4: color-mix(in srgb, var(--panel) 88%, var(--brand-deep) 12%);
+  --surface-tint-5: color-mix(in srgb, var(--panel) 82%, var(--brand-deep) 18%);
+
+  /* Material Design 3 state-layer tokens (issue #155) — a semantic overlay
+     of a fixed opacity applied on top of any interactive element's resting
+     background, replacing today's per-component ad hoc hover/focus tweaks.
+     Light theme washes with --ink (a neutral darken); dark theme washes with
+     --brand (a teal-tinted lighten) — redefined in the dark block below. */
+  --state-hover: rgba(15, 23, 42, 0.08);
+  --state-focus: rgba(15, 23, 42, 0.12);
+  --state-pressed: rgba(15, 23, 42, 0.12);
+  --state-dragged: rgba(15, 23, 42, 0.16);
 }
 
 :root[data-theme='dark'] {
@@ -215,13 +291,47 @@
      --soft (was 3.2:1/3.6:1); --muted already passed in dark mode, unchanged.
      #5b6b85 -> #7b889d */
   --faint: #7b889d;
-  --soft: #0a0f1a;
-  --panel: #121a2b;
-  --panel-2: #182238;
+  /* issue #155 — retuned from a distinctly navy-black (#0a0f1a, B=26 vs
+     R=10, a real blue undertone) to a neutral teal-black with almost no blue
+     cast, per the reference's pixel-sampled page background (#05090a, R≈G≈B).
+     --panel/--panel-2 retuned alongside it from flat navy to a deliberately
+     teal-tinted surface (the reference's card panels pixel-sample to
+     #082828-#0a2c2c, clearly more saturated-teal than its page background) —
+     this is the single most important recalibration issue #155 asks for, and
+     is also literally what Material 3's surface-tint-elevation model
+     describes (see --surface-tint-N above). Every text/background pairing
+     that reads --soft/--panel/--panel-2 was re-verified with a WCAG
+     relative-luminance calculation before this change (issue #116/#136
+     precedent) — all real usages (--ink/--muted/--brand/--brand-dark/every
+     --status-*-text) clear 4.5:1+ against all three new values, several by a
+     wide margin. One pairing does not: --faint (a rarely-used, deliberately
+     de-emphasized "even lighter than --muted" tier) against --panel-2 sits
+     at ~3.8:1, and against --surface-3 below at ~3.5:1 — both "large text
+     only" territory, not full AA. This is not a new regression to fix:
+     --faint's *only* four real call sites (.check-item.done .check-title,
+     .priority-cell[data-band="empty"], .landing-hero-stat,
+     .landing-footer-copy) all render against --panel or --soft (both verified
+     4.5:1+), never against --panel-2/--surface-3 directly — the old
+     pre-#155 values already sat at 4.42:1/3.95:1 against this exact
+     never-rendered pairing, i.e. already marginal/failing and already
+     unexercised. If a future component ever paints --faint text on a
+     --panel-2 or --surface-3 background for real, re-verify contrast for
+     that specific pairing first — don't assume this note still covers it. */
+  --soft: #070c0d;
+  --panel: #0d2422;
+  --panel-2: #123330;
   --line: #253147;
   --line-strong: #33415c;
   --brand: #2dd4bf;
   --brand-dark: #5eead4;
+  /* issue #155 — dark-theme data-viz teal (--brand-deep, declared once in
+     the base :root above and overridden here), pixel-sampled directly from
+     the reference's gauge-ring stroke (a thick, solid element — high
+     confidence sample, unlike thin-text samples elsewhere in the issue).
+     Deliberately darker/more saturated than --brand (#2dd4bf) — see the
+     base :root's --brand-deep comment for why this stays a separate token
+     rather than retuning --brand itself. */
+  --brand-deep: #14b0a0;
   --brand-light: #123832;
   --brand-light-border: #1f5148;
   --accent: #fb923c;
@@ -248,13 +358,29 @@
      the light-theme fix above. */
   --track-bg: #33415c;
   --emphasis-bg: #e7ecf5;
-  --emphasis-text: #0a0f1a;
+  --emphasis-text: #070c0d;
   --surface-glass: rgba(18, 26, 43, 0.88);
   --border-glass: rgba(51, 65, 92, 0.8);
-  --glow-brand: rgba(45, 212, 191, 0.1);
+  /* issue #155 — nudged slightly stronger to read against the new neutral
+     teal-black --soft (was tuned for the old, lighter navy #0a0f1a). */
+  --glow-brand: rgba(45, 212, 191, 0.13);
   /* issue #136 Phase 1 — dark-theme counterpart of the recolor above, same
      violet --accent-2 family in place of orange. */
-  --glow-accent: rgba(167, 139, 250, 0.05);
+  --glow-accent: rgba(167, 139, 250, 0.06);
+  /* issue #155 — a third, coordinated ambient glow stop using --brand-deep
+     (not a fresh uncoordinated hue) for the "brightest teal-glow moment"
+     the reference reserves for one section per page (e.g. .landing-cta
+     below) — reuses the same low-alpha radial-gradient-stop pattern as
+     --glow-brand/--glow-accent rather than inventing a new mechanism. */
+  --glow-brand-deep: rgba(20, 176, 160, 0.16);
+  /* Material Design 3 state-layer tokens, dark-theme override (issue #155)
+     — washes with --brand (teal) instead of light theme's neutral --ink
+     wash, since a dark surface reads a colored highlight better than a
+     plain white overlay at these opacities. */
+  --state-hover: rgba(45, 212, 191, 0.08);
+  --state-focus: rgba(45, 212, 191, 0.12);
+  --state-pressed: rgba(45, 212, 191, 0.12);
+  --state-dragged: rgba(45, 212, 191, 0.16);
   --status-ok-bg: #10241f;
   --status-ok-text: #5eead4;
   --status-ok-border: #1f5148;
@@ -270,7 +396,9 @@
   --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55), 0 8px 16px rgba(0, 0, 0, 0.32);
   --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(0, 0, 0, 0.36);
   --shadow-brand: 0 8px 24px rgba(45, 212, 191, 0.28);
-  --surface-3: #1f2b42;
+  /* issue #155 — retuned alongside --panel/--panel-2 above to the same
+     teal-tinted family (was #1f2b42, flat navy). */
+  --surface-3: #173a37;
 
   /* Activity heatmap intensity scale (issue #8), dark-theme stops — see the
      light-theme definition above for what each level means. */
@@ -286,11 +414,19 @@
 html { scroll-behavior: smooth; }
 html, body { min-height: 100%; }
 
+/* issue #155 — a third, low ("Explore Dashboard"/"Everything You Need"
+   territory) radial stop reusing --glow-brand-deep, giving the whole-page
+   ambient background a subtle shift further down the page instead of two
+   corner glows that never change past the fold. --glow-brand-deep resolves
+   to fully transparent in light theme (declared once, dark-only override
+   above) — the extra gradient layer is a visual no-op there, so this rule
+   doesn't need a light/dark split of its own. */
 body {
   font-family: var(--font);
   background:
     radial-gradient(1200px 500px at 10% -10%, var(--glow-brand), transparent 55%),
     radial-gradient(900px 400px at 90% 0%, var(--glow-accent), transparent 50%),
+    radial-gradient(1000px 600px at 50% 120%, var(--glow-brand-deep, transparent), transparent 60%),
     var(--soft);
   color: var(--ink);
   line-height: 1.5;
@@ -399,14 +535,19 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 
 /* Buttons */
+/* issue #155 — moved from --radius (10px) to --radius-full: every button in
+   the reference is a true pill, and the M3 shape scale treats "full" as the
+   deliberate tier for buttons/chips/badges rather than a fixed corner
+   radius. Re-verified against issue #116's contrast precedent: this is a
+   shape-only change, no color pairing moved, so no new contrast risk. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 40px;
-  padding: 10px 16px;
-  border-radius: var(--radius);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--line-strong);
   background: var(--panel);
   color: var(--ink);
@@ -414,16 +555,31 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   font-weight: 700;
   font-size: var(--text-base);
   cursor: pointer;
+  position: relative;
   transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease;
 }
 
-.btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+/* issue #155 — Material Design 3 state layer: an inset wash of
+   --state-hover/-pressed, additive on top of whatever background/shadow the
+   button already has (comma-separated box-shadow, not a background swap) —
+   works uniformly across every .btn variant below without each needing its
+   own hover color. */
+.btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm), inset 0 0 0 999px var(--state-hover); }
+.btn:active:not(:disabled) { box-shadow: inset 0 0 0 999px var(--state-pressed); transform: translateY(0); }
 .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 .btn-primary { background: var(--emphasis-bg); color: var(--emphasis-text); border-color: var(--emphasis-bg); }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 .btn-secondary { background: var(--brand-light); color: var(--brand-dark); border-color: var(--brand-light-border); }
+/* issue #155 — dark-outline option (the reference's secondary CTA pairing:
+   a transparent/dark fill with a visible border, next to the solid-white
+   primary pill) — an explicit variant class rather than replacing
+   .btn-secondary's existing brand-tinted fill everywhere, since that fill
+   is already used correctly in lower-emphasis contexts (form actions,
+   modal secondary buttons) where a dark outline would read as too muted. */
+.btn-outline { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn-outline:hover:not(:disabled) { border-color: var(--brand); }
 .btn-danger { color: var(--danger); border-color: var(--danger-border); background: var(--panel); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--ink); }
 .btn-ghost:hover:not(:disabled) { background: var(--panel-2); box-shadow: none; transform: none; }
@@ -767,7 +923,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   width: 100%;
   position: relative;
 }
-.template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--brand); }
+/* issue #155 — M3 state layer, additive inset wash on top of the existing
+   glass surface + shadow-lg, same pattern as .btn/.filter-chip above. */
+.template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-2px); box-shadow: var(--shadow-lg), inset 0 0 0 999px var(--state-hover); border-color: var(--brand); }
 .template-card.is-disabled { cursor: not-allowed; opacity: 0.6; transform: none; pointer-events: none; }
 .template-card.picking { opacity: 0.85; }
 /* `store.switchRoadmap()` (onClick, buildCard()/buildCustomCard(),
@@ -1042,7 +1200,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   font-size: var(--text-sm);
   transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
-.nav-item:hover { background: var(--surface-2); color: var(--ink); }
+/* issue #155 — M3 state layer, additive on top of the existing solid
+   hover-background swap (kept, rather than removed, since it's already an
+   established/tested look) — same inset-shadow pattern as .btn above. */
+.nav-item:hover { background: var(--surface-2); color: var(--ink); box-shadow: inset 0 0 0 999px var(--state-hover); }
 .nav-item.active { background: var(--brand-light); color: var(--brand-dark); }
 .nav-item-icon { display: inline-flex; flex-shrink: 0; }
 
@@ -1817,6 +1978,33 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .daily-todo-nav-badge.danger { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); }
 .daily-todo-nav-icon { display: inline-flex; flex-shrink: 0; }
 
+/* Review-due nav pill (issue #134) — same box model/status-color family as
+   .daily-todo-nav-badge above, but a <button> (it toggles the REVIEW filter
+   chip in place rather than navigating), so color/font are set explicitly
+   per the "every custom interactive element must set color/font" rule
+   (.claude/rules/ui-styling.md). Hidden entirely (not just emptied) when
+   nothing is due — see updateReviewDueBadge in dashboard.js. */
+.review-due-nav-badge[hidden] { display: none; }
+.review-due-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid var(--status-warn-border);
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+  transition: transform 0.15s ease;
+}
+.review-due-nav-badge:hover, .review-due-nav-badge:focus-visible { transform: translateY(-1px); }
+.review-due-nav-badge:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+.review-due-nav-icon { display: inline-flex; flex-shrink: 0; }
+
 /* Roadmap header (issue #6 Phase 4.4) — identity badge + freshness meta row.
    Replaces the old hero-panel's marketing tagline entirely: a returning
    user's daily-driver dashboard doesn't need re-pitching the product on
@@ -1944,7 +2132,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   position: relative;
   min-height: 36px;
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--ink);
@@ -1955,7 +2143,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   overflow: hidden;
   transition: transform var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease;
 }
-.filter-chip:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+/* issue #155 — M3 state layer, same additive inset-shadow pattern as .btn
+   above; .filter-chip already has overflow:hidden (for its ::before shimmer
+   sweep) so the inset wash is clipped to the pill shape automatically. */
+.filter-chip:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: inset 0 0 0 999px var(--state-hover); }
 .filter-chip:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 .filter-chip.active { background: var(--emphasis-bg); border-color: var(--emphasis-bg); color: var(--emphasis-text); }
 /* intentional: white text over --p0../--p3 in light theme; see the dark-theme override
@@ -2432,6 +2623,56 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 :root[data-theme='dark'] .badge.P2,
 :root[data-theme='dark'] .badge.P3 { color: var(--soft); }
 
+/* issue #155 — icon-leading pill variant (the reference's "NEW"/
+   "AI-Powered"/tracked-caps-overline badges: an icon or dot, then a label,
+   always fully pill-shaped). A separate class from .badge (which stays a
+   bare colored dot-sized priority tag) rather than a modifier on it, since
+   this variant has real padding/gap/text a priority tag never needs. Reads
+   the same --chip-height/--chip-padding-x scale so it still vertically
+   aligns with every other chip in a shared row; --radius-full (not
+   --chip-radius, though they're currently the same value) per the M3 shape
+   scale so a future chip-radius retune can't accidentally un-pill this. */
+.pill-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--chip-height);
+  padding: 0 var(--chip-padding-x);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-snug);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  border: 1px solid var(--brand-light-border);
+  white-space: nowrap;
+}
+.pill-icon .icon { flex-shrink: 0; }
+/* A leading solid-color dot instead of an icon glyph — the reference's
+   tracked-caps overline pills ("PLATFORM INSIGHTS", "UNIFIED DASHBOARD"). */
+.pill-icon-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+.pill-icon-dot::before { content: ''; }
+
+/* issue #155 — status-dot + label pattern (a small currentColor circle next
+   to status text), for any future tabular/list status display — reuses the
+   existing --status-*-text tokens rather than new colors, per the "one
+   accent-color discipline" the issue's extracted-value table calls out
+   (dark-theme "Healthy" text reads as brand teal, not a separate green;
+   "Scaling" reads as the existing warm amber --status-warn-text). Not yet
+   wired into a real component — see .claude/rules/ui-styling.md's Visual
+   design language section for when to reach for this. */
+.status-dot-label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: 600; }
+.status-dot { width: 7px; height: 7px; border-radius: var(--radius-full); background: currentColor; flex-shrink: 0; }
+.status-dot-label.ok { color: var(--status-ok-text); }
+.status-dot-label.warn { color: var(--status-warn-text); }
+.status-dot-label.error { color: var(--status-error-text); }
+
 /* Checklist items */
 .check-item {
   display: flex;
@@ -2443,7 +2684,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   transition: background 140ms ease;
 }
 .check-item:last-of-type { border-bottom: none; }
-.check-item:hover { background: var(--panel-2); }
+/* issue #155 — M3 state layer, additive on top of the existing hover
+   background swap, same pattern as .nav-item/.btn above. */
+.check-item:hover { background: var(--panel-2); box-shadow: inset 0 0 0 999px var(--state-hover); }
 .check-item:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--focus); }
 
 /* Issue #6 Phase 4.2 — stagger-in entrance for a newly-added topic row (see
@@ -2912,6 +3155,11 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   stroke: var(--brand);
   transition: stroke-dashoffset var(--duration-enter) var(--ease-spring);
 }
+/* issue #155 — dotted-track variant (progressRing.js's `variant: 'dotted'`
+   option) reads the dedicated data-viz teal, not --brand, per the reference
+   spec's gauge-ring sample; the track's dash color stays --track-bg either
+   way, only the fill differs. */
+.progress-ring-dotted .progress-ring-fill { stroke: var(--brand-deep); }
 
 /* 3.8 Notification badge */
 /* intentional: fixed white text on a solid --danger background, same in both themes (issue #116) */
@@ -3316,6 +3564,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   margin: 0 auto;
   padding: var(--space-12) var(--space-6) var(--space-16);
 }
+/* issue #155 — icon-leading status pill above the headline, the reference's
+   "NEW · ..." badge pattern. Uses the shared .pill-icon primitive (app.css,
+   Phase A) rather than a one-off style. */
+.landing-hero-badge { margin-bottom: var(--space-5); }
 .landing-hero-title {
   font-family: var(--font-display);
   font-weight: 800;
@@ -3324,7 +3576,13 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   letter-spacing: var(--tracking-tight);
   margin: 0 0 var(--space-4);
   color: var(--ink);
+  display: block;
 }
+.landing-hero-title span { display: block; }
+/* issue #155 — two-tone headline: the reference's mixed-emphasis treatment
+   (same weight/size, second line muted) rather than a full-strength
+   headline throughout. */
+.landing-hero-title-muted { color: var(--muted); }
 .landing-hero-subtitle {
   font-size: var(--text-lg);
   line-height: var(--leading-relaxed);
@@ -3335,15 +3593,27 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .landing-hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
 .landing-hero-stat { font-size: var(--text-sm); color: var(--faint); margin: 0; }
 
-.landing-hero-mock { display: flex; justify-content: center; }
+/* issue #155 — position: relative so .landing-mock-badge (below) can
+   overlap the card's top-left corner via absolute positioning against this
+   wrapper instead of the card, matching the reference's "badge floats
+   partially outside the card" detail. */
+.landing-hero-mock { display: flex; justify-content: center; position: relative; }
 .landing-mock-card {
   width: 100%;
   max-width: 380px;
-  background: var(--panel);
+  /* issue #155 — teal surface-tint elevation (M3 tier 4) instead of a flat
+     --panel background, per the reference's layered card-surface look. */
+  background: var(--surface-tint-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--elevation-4);
   overflow: hidden;
+}
+.landing-mock-badge {
+  position: absolute;
+  top: 8px;
+  left: var(--space-4);
+  box-shadow: var(--elevation-2);
 }
 .landing-mock-head { display: flex; gap: 6px; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--line); }
 .landing-mock-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
@@ -3382,17 +3652,21 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   align-items: stretch;
   gap: var(--space-6);
 }
+/* issue #155 — M3 elevation tier 2 (teal surface-tint + matching shadow)
+   instead of a flat --panel/--shadow-sm pairing. */
 .feature-card {
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background: var(--panel);
+  background: var(--surface-tint-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--elevation-2);
   padding: var(--space-8);
+  transition: box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
+.feature-card:hover { transform: translateY(-2px); box-shadow: var(--elevation-3); }
 .feature-card-icon {
   width: 48px;
   height: 48px;

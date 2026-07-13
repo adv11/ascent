@@ -3406,3 +3406,16 @@ PDF-generation dependency, per root `CLAUDE.md`'s "no build step, no bundler" co
 `printRoadmap.js` respectively) sit alongside the existing `exportBackupJson`/
 `exportBackupCsv` helpers for consistency, though neither is a store-level method — both
 are pure reads over an existing snapshot.
+
+### 2026-07-14 — PR #TBD — Spaced-repetition review reminders, Phase A (issue #134)
+
+New pure module `src/core/roadmap/reviewSchedule.js` (`isReviewDue`/`getReviewDueItems`,
+`REVIEW_INTERVAL_DAYS`/`REVIEW_INTERVAL_MS`) computes which completed roadmap topics are
+due for review — a fixed 14-day interval, deliberately not a full spaced-repetition
+algorithm (no per-item ease factors or growing intervals). One new item field,
+`item.lastReviewedAt: number | null`, set only via a new `dashboard.js` "Mark reviewed"
+row action (`store.updateItem(id, { lastReviewedAt })`) — needed no `roadmapStore.js`
+change, since `updateItem()`'s existing cosmetic-check already treats any non-`done`
+patch key as structural. `dashboard.js` gained a sixth filter chip (`'REVIEW'`) and a new
+header pill (`.review-due-nav-badge`, `topbar.js`'s actions row, alongside the Daily Todo
+countdown badge) showing the due count and jumping to the `REVIEW` filter on click.

@@ -40,9 +40,9 @@ describe('renderFilterChips (issue #53)', () => {
     { priority: 'P1', done: false },
   ];
 
-  it('renders one chip per priority plus "All" plus "Resources", with correct done/total counts', async () => {
+  it('renders one chip per priority plus "All", "Resources", and "Review due", with correct done/total counts', async () => {
     const chips = await build(items, 'ALL', () => {});
-    expect(chips).toHaveLength(6);
+    expect(chips).toHaveLength(7);
     const p0 = chips.find(c => c.dataset.p === 'P0');
     expect(p0.querySelector('.chip-count').textContent).toBe('1/2');
     const all = chips.find(c => c.dataset.p === 'ALL');
@@ -50,6 +50,9 @@ describe('renderFilterChips (issue #53)', () => {
     const resources = chips.find(c => c.dataset.p === 'RESOURCES');
     expect(resources).toBeTruthy();
     expect(resources.textContent).toContain('Resources');
+    const review = chips.find(c => c.dataset.p === 'REVIEW');
+    expect(review).toBeTruthy();
+    expect(review.textContent).toContain('Review due');
   });
 
   it('marks the active filter chip', async () => {
