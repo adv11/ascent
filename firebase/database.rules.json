@@ -98,8 +98,8 @@
     "sharedRoadmaps": {
       "$shareId": {
         ".read": true,
-        ".write": "auth != null && (!data.exists() ? newData.child('ownerUid').val() == auth.uid : (data.child('ownerUid').val() == auth.uid && newData.val() === null))",
-        ".validate": "newData.hasChildren(['schemaVersion', 'ownerUid', 'templateId', 'title', 'phases', 'items', 'publishedAt'])",
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() == auth.uid) || (data.exists() && data.child('ownerUid').val() == auth.uid && newData.val() === null))",
+        ".validate": "newData.hasChildren(['schemaVersion', 'ownerUid', 'templateId', 'title', 'publishedAt'])",
         "schemaVersion": { ".validate": "newData.isNumber()" },
         "ownerUid": { ".validate": "newData.isString()" },
         "templateId": { ".validate": "newData.isString()" },

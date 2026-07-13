@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Publishing a share link for a genuinely empty roadmap (no phases yet) always failed with a generic error (issue #131 follow-up).** `sharedRoadmaps/{shareId}`'s Firebase rule required `phases`/`items` to be present via `hasChildren([...])`, but Realtime Database silently drops an empty array/object on write — so a share snapshot with no phases yet never actually created those keys, and validation rejected it every time with a `permission_denied` indistinguishable from an unrelated write-permission failure. Found by testing the deployed rule directly against a real Firebase emulator instance. The rule's required-field list now only lists the fields that are always scalar and therefore always present; added `tests/e2e/roadmapSharingRules.test.js`, direct emulator-backed coverage of the rule's create/no-edit/owner-only-revoke behavior that issue #131 called for but the original PR's E2E test didn't independently verify.
+
 ### Added
 - **Roadmap sharing — read-only published snapshot links (issue #131).** "Share this roadmap…" (account menu, next to the export actions) publishes a frozen, read-only snapshot of the active roadmap to a new public link (`#/shared?id=...`) that anyone can view without signing in — done state, priorities, and resource links, but never notes. Republishing generates a brand-new link rather than mutating an existing one; each published link can be revoked individually from the same menu, which immediately 404s (a clear "this link has been revoked" state, not a raw blank page). Backed by a new top-level Firebase path, `sharedRoadmaps/{shareId}`, deliberately separate from every other per-user path in this app (`.claude/rules/roadmap-store.md`'s "Roadmap sharing" section has the full data-model rationale).
 
