@@ -73,7 +73,13 @@ function isValidResourceEntry(resource) {
     && resource.url.length <= MAX_RESOURCE_URL_LENGTH;
 }
 
-const CORRUPTION_HINT = 'this usually means it was copied from a rendered/markdown view of the AI\'s response instead of the raw text — try the AI\'s "copy code"/"copy raw" button, or ask it to resend the JSON';
+// A copy-code/copy-raw button was originally recommended here as the fix,
+// but a live report (issue #121 item 1 follow-up) showed ChatGPT's own copy
+// button reproducing the identical corruption, while manually selecting the
+// raw text in the code block and copying that selection did not — a copy
+// button is not reliably safe across AI providers/UI versions, so this no
+// longer tells the user to trust one.
+const CORRUPTION_HINT = 'this usually means it was copied from a rendered/markdown view of the AI\'s response instead of the raw text — try selecting the raw text directly with your mouse or trackpad instead of using a copy button, or ask it to resend the JSON';
 
 function extractItemTitleText(item) {
   if (typeof item === 'string') return item;

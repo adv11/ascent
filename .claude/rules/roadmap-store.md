@@ -532,14 +532,30 @@ rejecting genuinely corrupted data). Per issue #121's own decision tree for this
 ("if confirmed as a ChatGPT-UI copy-mechanism issue: add explicit, provider-specific
 guidance... rather than relying on the generic hint"), the fix is UI guidance, not a
 validator/recovery change: `importRoadmapModal.js`'s `corruptionHint` element shows a
-ChatGPT-specific callout ("use the copy-code button in the top-right corner of the code
-block, not text selection") whenever any validation error contains `'looks corrupted'`,
-above the generic per-error `CORRUPTION_HINT` text that stays in "technical details". A
+ChatGPT-specific callout whenever any validation error contains `'looks corrupted'`, above
+the generic per-error `CORRUPTION_HINT` text that stays in "technical details". A
 best-effort *repair* pass (recovering the clean substring instead of rejecting) was
 explicitly **not** attempted — the issue itself flagged that a repair heuristic needs its
 own dedicated test fixtures and risks silently producing a wrong-but-plausible title, which
 is harder for a user to notice than today's hard rejection; if repair is ever built, it
 needs that same rigor, not a quick addition here.
+
+**The remedy half of the guidance above was itself wrong, proven by a second live report
+(issue #121 item 1 follow-up) — a screenshot of the reporter's own corrupted paste showed
+they had used ChatGPT's own copy button (bottom-of-message toolbar in their session's UI,
+not necessarily "top-right of the code block" as originally assumed) and still hit the
+identical corruption; manually selecting the raw text inside the code block with a mouse
+or trackpad and copying that selection imported cleanly on the first try — the exact
+opposite of what the original callout told users to do.** ChatGPT's web UI evidently still
+routes at least one of its copy affordances through the same rendered/markdown path that
+introduces the corruption in the first place, regardless of which button or UI layout is
+involved — a copy button is not reliably safe to recommend for this provider. Both
+`corruptionHint`'s ChatGPT-specific callout and `importValidator.js`'s generic
+`CORRUPTION_HINT` now tell the user to manually select and copy the raw text instead of
+using any copy button, not the other way around. **Do not flip this guidance back to
+recommending a copy button without a new confirmed report** — it has now been wrong in
+both directions, which means neither direction should be trusted from reasoning about the
+UI alone; only a fresh captured repro (screenshot or saved payload) should change it again.
 
 **Cross-provider/edge-case test matrix — automated coverage plus its real limit (issue
 #121 item 2).** `tests/unit/fixtures/aiProviderPayloads.js` covers the structural edge

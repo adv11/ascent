@@ -237,7 +237,7 @@ describe('openCreateRoadmapModal — paste-and-import column', () => {
 
     const hint = overlay.querySelector('.import-corruption-hint');
     expect(hint.hidden).toBe(false);
-    expect(hint.textContent).toContain('copy-code button');
+    expect(hint.textContent).toContain('select all the text with your mouse or trackpad');
     vi.useRealTimers();
   });
 

@@ -273,10 +273,22 @@ export function openCreateRoadmapModal() {
     // tell "N things need fixing" apart from this callout unambiguously
     // (a bare `.form-message.error` locator matched both, breaking
     // tests/e2e/importRoadmap.test.js in CI once this element existed).
+    //
+    // Issue #121 item 1's original remedy ("use ChatGPT's copy-code button,
+    // not text selection") was itself proven backwards by a second live
+    // report (found via a screenshot of the actual corrupted paste): clicking
+    // ChatGPT's own copy button reproduced the identical corruption, while
+    // manually selecting the raw text inside the code block with a mouse or
+    // trackpad and copying that selection imported cleanly on the first try.
+    // ChatGPT's web UI evidently still routes its copy button through the
+    // same rendered/markdown path that introduces the corruption in the
+    // first place — manual raw-text selection is the one method confirmed
+    // reliable. Guidance flipped accordingly; do not flip it back without a
+    // new confirmed report, since this has now been wrong in both directions.
     const corruptionHint = el('p', {
       className: 'import-corruption-hint',
       hidden: true,
-      text: 'This looks like it was copied from ChatGPT\'s rendered response instead of the raw text. In ChatGPT, use the copy-code button in the top-right corner of the code block (not text selection) — then paste again.'
+      text: "This looks like it was copied from ChatGPT's rendered response instead of the raw text. ChatGPT's own copy button can cause this. Instead, click inside the code block, select all the text with your mouse or trackpad, and copy that selection — then paste it here again."
     });
     const technicalToggle = el('button', {
       type: 'button',
