@@ -162,7 +162,12 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
       el('span', { className: 'template-card-desc', text: 'Answer a few questions, generate it with an AI assistant, and paste the result back in.' })
     ]);
-    const cardEl = el('div', { className: 'template-card template-card-create' }, [
+    // onClick/e.target === cardEl fallback: same dead-padding-zone fix as
+    // buildCard()/buildCustomCard() — see buildCard()'s comment for the story.
+    const cardEl = el('div', {
+      className: 'template-card template-card-create',
+      onClick: e => { if (e.target === cardEl) handleCreate(); }
+    }, [
       pickBtn,
       el('button', {
         type: 'button',
@@ -238,9 +243,13 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     ]);
     // Issue #6 Phase 9 — see buildCard()'s identical comment: plain wrapper,
     // role="button" moved onto the nested .template-card-pick button so the
-    // delete button is a sibling, not nested inside another button.
+    // delete button is a sibling, not nested inside another button. The
+    // `onClick`/`e.target === cardEl` fallback below is the same real,
+    // reproducible dead-padding-zone fix buildCard() needed — see that
+    // comment for the full story.
     const cardEl = el('div', {
-      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`
+      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
+      onClick: e => { if (e.target === cardEl) pickCustomRoadmap(roadmap, cardEl); }
     }, [
       pickBtn,
       el('button', {
@@ -283,9 +292,23 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     // Issue #6 Phase 9 — the card is a plain wrapper; role="button" moved off
     // it onto the real nested .template-card-pick button so the hide button
     // (a second, independently-focusable control) is a sibling, not nested
-    // inside another button — see the .template-card-pick CSS comment.
+    // inside another button — see the .template-card-pick CSS comment, which
+    // already documented (but never implemented) that the outer card "can
+    // still have a plain (non-ARIA) onClick for mouse convenience." Without
+    // it, `.template-card`'s own 24px/20px padding around `.template-card-pick`
+    // is real, unhandled dead space — a click landing there (not uncommon:
+    // found via a genuinely reproducible E2E flake where Playwright, unable
+    // to scroll a card fully into view on a short/narrow viewport, clicked
+    // the center of whatever portion *was* visible, which sometimes fell
+    // in this padding rather than on the button) silently does nothing, no
+    // error, exactly the symptom investigated. `e.target === cardEl` only
+    // fires this fallback for a click that lands directly on the div itself
+    // (the dead zone) — a click on any real child (the button, the hide
+    // button, the picking overlay) already has its own handler and must not
+    // also re-trigger this one via bubbling.
     const cardEl = el('div', {
-      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`
+      className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
+      onClick: e => { if (e.target === cardEl) pickTemplate(template, cardEl); }
     }, [
       pickBtn,
       el('button', {

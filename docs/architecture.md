@@ -3374,3 +3374,17 @@ new bell toggle in `dailyTodoPanel.js`'s heading row that calls
 new device-level `KEYS.DAILY_TODO_REMINDERS_ENABLED` entry in `localStorageKeys.js`. See
 `.claude/rules/roadmap-store.md`'s new "Local 'Remind me' reminders" section for the full
 scoping rationale and why Phase B needs its own issue.
+
+### 2026-07-14 — PR #157 (follow-up) — Fixed a real dead-click-zone bug on onboarding.js's template cards
+
+Found while chasing a real, reproducible CI E2E flake on `feat/issue-132-local-push-notifications`
+(a template-card click intermittently no-op'd, no console error). Root-caused with a raw
+DOM `click` listener: `.template-card`'s own ~20-24px padding around the nested
+`.template-card-pick` button has no click handler (deliberate, per issue #6 Phase 9's WCAG
+4.1.2 fix) — a click landing there does nothing. That fix's own code comment already said
+the outer card "can still have a plain (non-ARIA) `onClick` for mouse convenience," but it
+was never implemented. `buildCard()`, `buildCustomCard()`, and `buildCreateCard()` now each
+add a fallback `onClick` on the outer card, gated on `e.target === cardEl` so it only fires
+for a click landing in the dead padding zone and never double-fires for clicks that bubble
+from the button or another child control. Confirmed fixed against the real Firebase Auth/DB
+emulator (was ~50% flaky before, 100% pass across 40+ repeated runs after).
