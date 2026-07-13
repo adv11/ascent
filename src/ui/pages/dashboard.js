@@ -1070,6 +1070,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     activeRoute: '/app',
     user,
     store,
+    dailyTodoStore,
     onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
   });
   const topbar = createTopbar({

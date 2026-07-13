@@ -404,7 +404,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     type: 'button',
     className: 'btn btn-ghost btn-icon',
     'aria-label': 'Sign out',
-    onClick: () => confirmAndSignOut(user, store)
+    onClick: () => confirmAndSignOut(user, store, dailyTodoStore)
   }, [createIcon('signOut', { size: 'sm' })]);
   // Rendered on this page (not the roadmap dashboard) precisely because it's
   // independent of any single roadmap — this is the "all roadmaps" screen,

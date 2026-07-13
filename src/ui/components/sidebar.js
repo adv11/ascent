@@ -66,7 +66,10 @@ function buildAccountMenu({ user, store, identityTrigger, onDeleteAccount }) {
 // hamburger button calls to open/close the mobile drawer. `onDeleteAccount`
 // is optional — omitted (or a no-op) for anonymous users, since there's
 // nothing to delete but the guest session itself (handled by sign-out).
-export function createSidebar({ activeRoute, user, store, onDeleteAccount }) {
+// `dailyTodoStore` is optional too (issue #143) — passed straight through to
+// confirmAndSignOut() so a dirty Daily Todos list gets the same
+// flush-before-sign-out protection the roadmap store already has.
+export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDeleteAccount }) {
   const navEl = el('nav', { className: 'app-sidebar-nav', 'aria-label': 'Primary' },
     NAV_ITEMS.map(item => el('a', {
       href: `#${item.route}`,
@@ -103,7 +106,7 @@ export function createSidebar({ activeRoute, user, store, onDeleteAccount }) {
       type: 'button',
       className: 'btn btn-ghost btn-icon app-sidebar-signout',
       'aria-label': 'Sign out',
-      onClick: () => confirmAndSignOut(user, store)
+      onClick: () => confirmAndSignOut(user, store, dailyTodoStore)
     }, [createIcon('signOut', { size: 'sm' })])
   ]);
 
