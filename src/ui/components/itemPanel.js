@@ -85,10 +85,12 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
       const meta = LINK_TYPE_META[linkType];
       const urlWarning = el('p', { className: 'field-error resource-url-warning', text: '' });
 
+      const resourceLabel = resource.label?.trim() || `Resource ${index + 1}`;
+
       const urlInput = el('input', {
         className: 'field-input compact',
         value: resource.url,
-        'aria-label': 'Resource URL',
+        'aria-label': `${resourceLabel} URL`,
         onInput: e => { resources[index] = { ...resources[index], url: e.target.value }; },
         // Issue #22/#12B Phase 4 — an edited existing resource URL was never
         // re-validated, only a newly-added one. Re-validate on blur so a
@@ -111,7 +113,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
           el('input', {
             className: 'field-input compact resource-label-input',
             value: resource.label,
-            'aria-label': 'Resource label',
+            'aria-label': `Resource ${index + 1} label`,
             onInput: e => { resources[index] = { ...resources[index], label: e.target.value }; }
           }),
           urlInput,

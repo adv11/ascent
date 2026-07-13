@@ -127,7 +127,11 @@ export function openCreateRoadmapModal() {
       placeholder: 'e.g. already comfortable with Docker and basic networking'
     });
 
-    const promptBlock = el('pre', { className: 'import-prompt-block' });
+    // Issue #124 — a fixed-height, overflow-y-scrollable block needs its own
+    // tab stop (WCAG 2.1.1 "scrollable-region-focusable") so a keyboard-only
+    // user can reach and scroll it, same reasoning as heatmap.js's
+    // `.heatmap-scroll` fix.
+    const promptBlock = el('pre', { className: 'import-prompt-block', tabindex: '0', 'aria-label': 'Generated prompt, scrollable' });
     const copyBtn = el('button', { type: 'button', className: 'btn btn-secondary btn-block', text: 'Copy prompt' });
     const copyHint = el('p', { className: 'import-copy-hint', text: 'Tell us what this roadmap should cover first.' });
 

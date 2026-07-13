@@ -91,9 +91,20 @@ export function createHeatmap(heatmapData = []) {
 
   const cellGrid = el('div', { className: 'heatmap-grid' },
     positioned.map(cell => {
-      const button = el('button', {
-        type: 'button',
-        tabindex: '-1',
+      // Each cell is a mouse-hover-only affordance, not a keyboard tab stop —
+      // 364 individually-focusable controls would be unusable to navigate,
+      // and the parent .heatmap's role="img"/aria-label already gives
+      // assistive tech a full text summary. Issue #124: a `<button
+      // tabindex="-1" aria-hidden="true">` still tripped axe's
+      // focusable-content/focusable-element/nested-interactive rules — axe
+      // flags a `tabindex="-1"` + `aria-hidden="true"` interactive element as
+      // "serious" regardless, since some assistive tech can still focus it.
+      // The actual fix is a plain, non-interactive `<span>` (matching
+      // monthRow/dayLabelColumn's existing decorative-label pattern above)
+      // instead of a `<button>` — there's no native interactive semantics to
+      // suppress once the element was never a real button to begin with.
+      const button = el('span', {
+        'aria-hidden': 'true',
         className: `heatmap-cell gr-${cell.row + 1}`,
         dataset: { level: String(cell.level), today: cell.isToday ? 'true' : 'false' },
         title: cellTooltipText(cell)
@@ -113,7 +124,18 @@ export function createHeatmap(heatmapData = []) {
   // each is ~780-795px wide, wider than most phones) — same "let the wide
   // thing scroll inside its own container, don't shrink it" approach used
   // for wide tables/code blocks elsewhere.
-  const scrollRegion = el('div', { className: 'heatmap-scroll' }, [monthRow, cellGrid]);
+  // Issue #124 — a horizontally-overflowing region needs its own tab stop
+  // (WCAG 2.1.1 "scrollable-region-focusable") so a keyboard-only user can
+  // reach and scroll it via arrow keys; this became a real gap (not just an
+  // axe false positive) the moment the cells inside it stopped being
+  // individually focusable (see the `<span>` change above) — before that,
+  // the 364 cell buttons incidentally satisfied the same requirement.
+  const scrollRegion = el('div', {
+    className: 'heatmap-scroll',
+    tabindex: '0',
+    role: 'group',
+    'aria-label': 'Activity heatmap, scrollable'
+  }, [monthRow, cellGrid]);
 
   return el('div', {
     className: 'heatmap',

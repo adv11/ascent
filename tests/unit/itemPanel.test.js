@@ -150,7 +150,7 @@ describe('itemPanel — resource card UI (issue #12B Phase 2/4)', () => {
     openItemPanel({
       item: { ...baseItem, resources: [{ label: 'Docs', url: 'https://example.com' }] }
     });
-    const urlInput = getPanel().querySelector('.resource-card input[aria-label="Resource URL"]');
+    const urlInput = getPanel().querySelector('.resource-card input[aria-label="Docs URL"]');
     const warning = getPanel().querySelector('.resource-url-warning');
     expect(warning.textContent).toBe('');
 
@@ -164,7 +164,7 @@ describe('itemPanel — resource card UI (issue #12B Phase 2/4)', () => {
     openItemPanel({
       item: { ...baseItem, resources: [{ label: 'Docs', url: 'https://example.com' }] }
     });
-    const urlInput = getPanel().querySelector('.resource-card input[aria-label="Resource URL"]');
+    const urlInput = getPanel().querySelector('.resource-card input[aria-label="Docs URL"]');
     urlInput.value = 'not-a-url';
     urlInput.dispatchEvent(new Event('input'));
     urlInput.dispatchEvent(new Event('blur'));
@@ -174,5 +174,36 @@ describe('itemPanel — resource card UI (issue #12B Phase 2/4)', () => {
     urlInput.dispatchEvent(new Event('input'));
     urlInput.dispatchEvent(new Event('blur'));
     expect(getPanel().querySelector('.resource-url-warning').textContent).toBe('');
+  });
+});
+
+describe('itemPanel — unique resource aria-labels (issue #124)', () => {
+  it('gives each resource row a distinct URL and label aria-label, incorporating the resource\'s own label', () => {
+    openItemPanel({
+      item: {
+        ...baseItem,
+        resources: [
+          { label: 'Docs', url: 'https://example.com' },
+          { label: 'Tutorial', url: 'https://example.com/2' }
+        ]
+      }
+    });
+    const urlInputs = getPanel().querySelectorAll('.resource-card input.compact:not(.resource-label-input)');
+    const labelInputs = getPanel().querySelectorAll('.resource-label-input');
+
+    expect(urlInputs[0].getAttribute('aria-label')).toBe('Docs URL');
+    expect(urlInputs[1].getAttribute('aria-label')).toBe('Tutorial URL');
+    expect(urlInputs[0].getAttribute('aria-label')).not.toBe(urlInputs[1].getAttribute('aria-label'));
+
+    expect(labelInputs[0].getAttribute('aria-label')).toBe('Resource 1 label');
+    expect(labelInputs[1].getAttribute('aria-label')).toBe('Resource 2 label');
+  });
+
+  it('falls back to a positional aria-label for a resource with no label text yet', () => {
+    openItemPanel({
+      item: { ...baseItem, resources: [{ label: '', url: 'https://example.com' }] }
+    });
+    const urlInput = getPanel().querySelector('.resource-card input.compact:not(.resource-label-input)');
+    expect(urlInput.getAttribute('aria-label')).toBe('Resource 1 URL');
   });
 });
