@@ -165,3 +165,129 @@ not just each in isolation.
 **`--accent-2` is reserved for AI-assisted affordances specifically, not general "second brand color" use (issue #136 Phase 1).** A live screenshot audit found brand teal (`--brand`/`--brand-light`) doing too many jobs at once — the "AI-powered" create card/badge, "this is selected" (`.template-card-current`), and a resource-count pill all drew from the identical hue, so none of them read as visually distinct meanings. `--accent-2`/`--accent-2-dark`/`--accent-2-light`/`--accent-2-light-border` (a violet/indigo family, both themes WCAG-verified ≥5.9:1 for every text pairing) is the fix — used today by `.template-card-create`/`.template-card-ai-badge`. Don't reach for it as a generic "second color" for anything that isn't AI-related; `--accent` (orange) remains the token for priority/daily-todo/"not brand teal" uses that predate this. The ambient `--glow-accent` corner-gradient token also now resolves to this violet family (was orange, screenshotted as a stray, unexplained clash) — recolor both theme blocks together if you ever retune it. A resource count or other pure-metadata pill should default to a neutral gray (`--muted`/`--panel-2`/`--line`, see `.resource-count`), not a token from either accent family — metadata isn't a status and doesn't need its own hue.
 
 **Re-enabling `color-contrast` immediately caught a real, previously-undetected bug, not just the two already known ones (issue #116).** `.badge.P0`–`.badge.P3` and `.filter-chip[data-p="…"].active` set fixed white text on `--p0`–`--p3` — correct in light theme, where those tokens are dark/saturated, but dark theme's `--p0`–`--p3` are light pastel values (tuned for *visibility as borders/dots* against the dark panel, not for hosting white text), so white-on-them fails WCAG contrast (`.badge.P1` measured 1.66:1 against `#fbbf24` in CI; the other three priorities have the identical gap by the same luminance math, just untested by axe because the visible dashboard state only happened to render P1). Fixed with a `:root[data-theme='dark']` override on both selectors switching to `var(--soft)` (near-black) text, which reads >6:1 against all four dark-theme priority tokens. **The lesson for any future token whose light- and dark-theme values differ in more than just lightness direction:** don't assume a text/background pairing that's contrast-safe in one theme is automatically safe in the other just because the same CSS rule "looks" theme-aware (it reads a token, not a literal) — a token can still fail contrast in exactly one theme if that theme's value was tuned for a different purpose (border/accent visibility) than the pairing assumes (text legibility). Verify both themes' *token values*, not just whether the rule uses a token.
+
+## Visual design language (issue #155)
+
+A dark-teal reference ("Neura", three Dribbble product-page/dashboard screenshots — not
+committed to this public repo, since re-hosting another designer's shipped work would be
+a copyright problem; if you need to sanity-check a future change against the originals,
+ask the user directly) drove a system-wide recalibration: richer teal-tinted card
+surfaces instead of flat panels, ambient glow backgrounds, icon-leading pill badges,
+dotted-arc gauges, and — per explicit user direction — [Material Design 3](https://m3.material.io/)
+as the *governing structural/interaction system* (elevation, shape scale, state layers,
+type scale, motion timing). **Decided and final, do not relitigate: icon glyphs stay
+Phosphor (`createIcon()`/`createDecorativeIcon()`, issue #107/#136) — M3 supplies
+structure and interaction only, never a second icon set.**
+
+**Elevation is a surface-tint + shadow pair, not shadow alone.** `--elevation-0`
+through `--elevation-5` (`app.css` `:root`) alias the existing `--shadow-xs`…`--shadow-xl`
+scale; `--surface-tint-2` through `--surface-tint-5` are `color-mix()`s of `--panel` and
+`--brand-deep` at increasing strength, each defined once in the base `:root` (not
+repeated in the dark block) because they read theme-flipping tokens and resolve
+correctly per theme automatically — same pattern `--surface-0`/`-1`/`-2` already
+established. A restyled card gets both together: `background: var(--surface-tint-2);
+box-shadow: var(--elevation-2);`, promoting a tier on `:hover` (`.stat-tile`,
+`.feature-card`, `.step-card` in `app.css` are the reference implementations) — never
+just bump the shadow and leave the background flat, or the card won't read as "lifted"
+against the new teal-tinted page background the way the reference's cards do.
+
+**`--brand-deep` is the dedicated data-viz teal — gauges, charts, and the heatmap's
+highest bucket read it, general UI accents keep reading `--brand`.** Pixel-sampled from
+the reference's gauge-ring stroke (`#14b0a0`, dark theme), measurably darker/more
+saturated than `--brand` (`#2dd4bf`). Deliberately a separate token rather than a
+retune of `--brand` itself — swapping `--brand` globally would re-trigger the entire
+issue #116/#136 contrast audit for every existing call site that already passed WCAG
+against the old value. `progressRing.js`'s dotted variant, `chartWrapper.js`'s line/bar
+fill, and dark theme's `--heat-3` all read it; `--brand` stays the token for buttons,
+links, focus rings, and everything else that isn't specifically a chart/gauge/data-ink
+color.
+
+**Shape scale — `--radius-none`/`-xs`/`-sm`/`-md`/`-lg`/`-xl`/`-full` (`app.css`
+`:root`).** Every button, chip, and badge in the reference is a true pill — `.btn`,
+`.filter-chip`, and `--chip-radius` all read `--radius-full` now (was a `999px`/`10px`
+literal each). `--radius`/`--radius-lg` stay defined exactly as before (too many
+existing call sites to rename without a disruptive repo-wide diff the issue didn't ask
+for) — treat them as this scale's `sm`/`md` and `lg` tiers respectively. When you add a
+new interactive chip/button/badge, reach for `--radius-full`; a card/panel reaches for
+`--radius-lg`/`-md` depending on how prominent it is.
+
+**State layers — `--state-hover`/`-focus`/`-pressed`/`-dragged` (`app.css` `:root`,
+redefined per theme).** A fixed-opacity overlay (8/12/12/16%) applied as an **additive**
+`inset 0 0 0 999px var(--state-hover)` box-shadow alongside whatever shadow/background
+the element already has — never a background-color swap, which is what makes this
+composable on top of an already-established hover treatment (`.check-item`'s `panel-2`
+swap, `.nav-item`'s `surface-2` swap) without having to rewrite it. Light theme washes
+with a neutral `--ink`-based rgba; dark theme washes with a teal `--brand`-based rgba,
+since a colored highlight reads better than white on a dark surface. `.btn`,
+`.filter-chip`, `.check-item`, `.nav-item`, and `.template-card` all carry this now —
+wire a new interactive element into the same three-line pattern
+(`box-shadow: var(--shadow-x), inset 0 0 0 999px var(--state-hover);` on `:hover`,
+`--state-pressed` on `:active`) rather than inventing a bespoke opacity/color tweak.
+
+**Motion — `--duration-short`/`-medium`/`-long`/`-extra-long` and
+`--ease-standard`/`-emphasized`/`-standard-decelerate`/`-standard-accelerate` (`app.css`
+`:root`), added alongside the existing scale, not replacing it.** `--ease-spring` and
+`--duration-instant`/`-fast`/`-base`/`-slow`/`-enter` are unchanged and still read by
+name in several places (`.fade-in` specifically — see this file's own warning above
+about that animation's fill-mode, still applies) — don't rename those call sites.
+New/restyled motion (a card's hover-shadow transition, e.g. `.feature-card`/`.step-card`
+above) reaches for the M3-named set instead.
+
+**Type scale role comments, not a rename.** Each `--text-*` token in `app.css` `:root`
+now has a one-line `/* role: Headline Large */`-style comment mapping it to one of M3's
+15 named roles (Display/Headline/Title/Body/Label × Large/Medium/Small) — the custom
+property names themselves are unchanged, since a repo-wide rename wasn't worth the diff
+size for a purely organizational mapping. Pick a component's type size by role ("this
+is a headline, use Headline Large's token") rather than eyeballing a raw pixel value.
+
+**Ambient glow — three coordinated radial-gradient stops, not per-page hardcoded
+gradients.** `body`'s background (`app.css`) is three low-alpha radial gradients over
+`--soft`: `--glow-brand` (top-left), `--glow-accent` (top-right, violet, AI-assisted
+affordances only per the `--accent-2` rule above), and `--glow-brand-deep` (bottom-center,
+dark-theme-only — resolves to fully transparent in light theme via a `var(..., transparent)`
+fallback, so this rule needs no light/dark split of its own). A section that wants to be
+the page's "brightest moment" (the reference reserves this for one closing CTA per page)
+layers a fourth, stronger, locally-scoped radial gradient via `::before` +
+`position: relative; z-index: -1` — see `.landing-cta` in `app.css` for the reference
+implementation. Never add a fourth *page-wide* glow stop; a section-local `::before`
+layer composes with the existing three instead of competing with them.
+
+**Icon-leading pill badges — `.pill-icon` (`app.css`), not a one-off inline-styled
+span.** The reference's "NEW"/"AI-Powered"/tracked-caps-overline pills all share one
+shape: an icon (or `.pill-icon-dot` leading dot) + label, fully pilled, reading the same
+`--chip-height`/`--chip-padding-x` scale every other chip already uses. `landing.js`'s
+hero badge and the dashboard-mock corner badge (`.landing-mock-badge`) are the reference
+call sites — both use real, already-shipped Ascent capabilities as their label text
+("AI-assisted roadmap import", "Autosaved"), never an invented claim; see the
+`.claude/rules/content-style.md`-adjacent "no fabricated social proof" precedent
+`landing.js`'s `landingProofLine()` and `authMarketingPanel.js` already established —
+this issue extends the same discipline to badge copy, not just testimonials/trust logos.
+
+**Status-dot + label — `.status-dot-label`/`.status-dot` (`app.css`), a built primitive
+with no current call site.** Reuses the existing `--status-ok/warn/error-text` tokens (a
+`currentColor` dot + text, one accent-color-discipline: dark theme's "healthy" reads as
+brand teal, not a separate green, matching the reference's pixel-sampled status text).
+Ascent has no tabular/list status display to retrofit today — don't force one into
+existence just to use this class; reach for it the day a real one is built (a sync-status
+row, a deployment-style status list) instead of inventing bespoke status-color markup
+again.
+
+**Gauge rings — `createProgressRing(pct, { variant: 'dotted' })` (`progressRing.js`), an
+opt-in variant, not a replacement for the continuous-stroke default.** Renders the
+*track* circle (never the fill) as short evenly-spaced dashes via `stroke-dasharray`,
+reading `--brand-deep` for its fill instead of `--brand`. Only `dashboard.js`'s headline
+`percentRing` opts in today — every per-item ring in `.phase-head` keeps the
+continuous-stroke default. Before migrating another call site to `dotted`, take a
+before/after screenshot at that size — a ring under ~32px reads the dashes as noise
+rather than a deliberate texture, which is exactly why this stayed opt-in instead of a
+blanket default.
+
+**Buttons — solid pill primary, dark-outline secondary.** `.btn-primary` already reads
+`--emphasis-bg`/`--emphasis-text`, which happens to resolve to an off-white pill with
+near-black text in dark theme — matching the reference's white-CTA-pill exactly with zero
+color changes needed, only the `--radius-full` shape change above. `.btn-outline`
+(new — transparent fill, `--line-strong` border, brightens to `--brand` on hover) is the
+dark-outline secondary pairing; `.btn-secondary`'s existing brand-tinted fill is
+unchanged and still correct for lower-emphasis contexts (form actions, modal secondary
+buttons) where a bare outline would read as too muted — pick per context, don't treat
+one as a strict replacement for the other.

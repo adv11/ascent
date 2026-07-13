@@ -1,5 +1,6 @@
 import { el } from '../dom.js';
-import { createBrandMark } from '../components/brand.js';
+import { createBrandMark, createBrandWordmark } from '../components/brand.js';
+import { createIcon } from '../components/icons.js';
 import { svgIcon } from '../utils/svg.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 
@@ -94,6 +95,14 @@ function buildNav() {
 // external screenshot asset. Keeps the "no build step, no bundler, no
 // external dependency" convention intact instead of requiring a committed
 // PNG (and a Playwright-based generation step) for one hero graphic.
+//
+// issue #155 — the mock card now sits inside a `position: relative`
+// wrapper so `.landing-mock-badge` can overlap its top-left corner (the
+// reference's "badge floats partially outside the card it's labeling, not
+// fully inside it" detail) via absolute positioning against that wrapper,
+// not the card itself. The badge text is a real, already-shipped Ascent
+// behavior ("Autosaved" — the same word `itemPanel.js`'s `.notes-status`
+// already uses, issue #136 Phase 2), not an invented claim.
 function buildHeroMock() {
   // Fill widths are a capped set of discrete CSS classes (landing-mock-fill-1
   // through -4), not a per-element inline style — see the "Never set an
@@ -110,18 +119,35 @@ function buildHeroMock() {
         el('span', { className: 'landing-mock-dot' })
       ]),
       el('div', { className: 'landing-mock-body' }, rows)
+    ]),
+    el('span', { className: 'pill-icon landing-mock-badge' }, [
+      createIcon('sparkle', { size: 'xs' }),
+      el('span', { text: 'Autosaved' })
     ])
   ]);
 }
 
+// issue #155 — status-pill badge above the headline (the reference's "NEW ·
+// AI Nodes Clustering ready in beta!" pattern) and a two-tone headline
+// (first phrase solid --ink, second muted, both same weight/size — the
+// reference's mixed-emphasis treatment). Badged feature is AI-assisted
+// import, a real already-shipped capability (see FEATURES below), not an
+// invented "AI-powered" product claim.
 function buildHero() {
   return el('section', { className: 'landing-hero' }, [
     el('div', { className: 'landing-hero-copy' }, [
-      el('h1', { className: 'landing-hero-title', text: 'Engineer your next move.' }),
+      el('span', { className: 'pill-icon landing-hero-badge' }, [
+        createIcon('sparkle', { size: 'xs' }),
+        el('span', { text: 'AI-assisted roadmap import' })
+      ]),
+      el('h1', { className: 'landing-hero-title' }, [
+        el('span', { text: 'Engineer your ' }),
+        el('span', { className: 'landing-hero-title-muted', text: 'next move.' })
+      ]),
       el('p', { className: 'landing-hero-subtitle', text: 'The roadmap tracker for anyone learning, revising, or leveling up. Pick a starting point, track every topic, and always know what’s next.' }),
       el('div', { className: 'landing-hero-actions' }, [
         el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
-        el('a', { className: 'btn btn-secondary btn-lg', href: '#/signin', text: 'Sign in' })
+        el('a', { className: 'btn btn-outline btn-lg', href: '#/signin', text: 'Sign in' })
       ]),
       el('p', { className: 'landing-hero-stat', text: landingProofLine() })
     ]),
@@ -161,11 +187,16 @@ function buildCta() {
 
 // No hardcoded brand-name string here (root CLAUDE.md's brand rule) — the
 // brand mark above already names the product, so the copyright line doesn't
-// repeat it.
+// repeat it. issue #155 — a giant, low-opacity `createBrandWordmark()`
+// bleeds off the bottom edge as decoration (the reference's footer motif) —
+// reuses the same wordmark component every other brand usage in the app
+// does, not a second hardcoded 'Ascent' string, and is `aria-hidden` since
+// it's pure decoration, not a second real heading.
 function buildFooter() {
   return el('footer', { className: 'landing-footer' }, [
     el('span', { className: 'brand' }, createBrandMark()),
-    el('p', { className: 'landing-footer-copy', text: `© ${new Date().getFullYear()} · Engineer your next move.` })
+    el('p', { className: 'landing-footer-copy', text: `© ${new Date().getFullYear()} · Engineer your next move.` }),
+    el('div', { className: 'landing-footer-ghost', 'aria-hidden': 'true' }, [createBrandWordmark()])
   ]);
 }
 

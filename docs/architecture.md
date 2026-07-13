@@ -1906,11 +1906,17 @@ mounted on any real page yet.
   `aria-controls`/`aria-labelledby` cross-references. Not retrofitted onto the existing
   import-roadmap modal — issue #64 deliberately collapsed that modal's two tabs into
   one continuous flow, and reintroducing tabs there would undo that fix.
-- `progressRing.js` — `createProgressRing(pct, { size, strokeWidth })`, an animated SVG
-  circle (`stroke-dashoffset` transition using `--duration-enter`/`--ease-spring`) with
-  an imperative `_setPct()` updater for later phases that need to animate it in place
-  rather than re-creating the node. Track/fill colors reuse `--track-bg`/`--brand`,
-  matching `.progress-track`/`.progress-fill`'s existing linear equivalent.
+- `progressRing.js` — `createProgressRing(pct, { size, strokeWidth, variant })`, an
+  animated SVG circle (`stroke-dashoffset` transition using `--duration-enter`/
+  `--ease-spring`) with an imperative `_setPct()` updater for later phases that need to
+  animate it in place rather than re-creating the node. Track/fill colors reuse
+  `--track-bg`/`--brand`, matching `.progress-track`/`.progress-fill`'s existing linear
+  equivalent. `variant` (issue #155) is `'solid'` (default) or `'dotted'` — the dotted
+  variant renders the track as short evenly-spaced dashes and reads `--brand-deep` for
+  its fill instead of `--brand`; an unrecognized variant throws rather than silently
+  rendering the default. Opt-in per call site, not a global default — see
+  `.claude/rules/ui-styling.md`'s Visual design language section for which call sites
+  use it.
 - `notificationBadge.js` — `createNotificationBadge(count, { max })`. A plain dot when
   `count` is falsy, otherwise the count capped at `"<max>+"` past `max` (default 99) —
   a three-digit exact count stops being legible in a small circular badge.
@@ -3407,7 +3413,7 @@ PDF-generation dependency, per root `CLAUDE.md`'s "no build step, no bundler" co
 `exportBackupCsv` helpers for consistency, though neither is a store-level method — both
 are pure reads over an existing snapshot.
 
-### 2026-07-14 — PR #TBD — Spaced-repetition review reminders, Phase A (issue #134)
+### 2026-07-14 — PR #161 — Spaced-repetition review reminders, Phase A (issue #134)
 
 New pure module `src/core/roadmap/reviewSchedule.js` (`isReviewDue`/`getReviewDueItems`,
 `REVIEW_INTERVAL_DAYS`/`REVIEW_INTERVAL_MS`) computes which completed roadmap topics are
@@ -3419,3 +3425,22 @@ change, since `updateItem()`'s existing cosmetic-check already treats any non-`d
 patch key as structural. `dashboard.js` gained a sixth filter chip (`'REVIEW'`) and a new
 header pill (`.review-due-nav-badge`, `topbar.js`'s actions row, alongside the Daily Todo
 countdown badge) showing the due count and jumping to the `REVIEW` filter on click.
+
+### 2026-07-14 — PR #TBD — Visual design revamp + Material Design 3 token system (issue #155)
+
+Presentation-layer-only recalibration, no new module files. `app.css`'s `:root`/dark
+token blocks gained: a retuned dark-theme `--soft`/`--panel`/`--panel-2`/`--surface-3`
+(navy → neutral teal-black + teal-tinted surfaces), a new `--brand-deep` data-viz teal,
+Material Design 3 elevation (`--elevation-0..5` + `--surface-tint-2..5`, a shadow +
+teal-tint pair), shape (`--radius-none..xl`/`-full`), state-layer
+(`--state-hover/-focus/-pressed/-dragged`), and motion (`--duration-short..extra-long`,
+`--ease-standard*`) token tiers, plus type-scale role comments — added alongside every
+existing token, not replacing any of them, so no existing call site changed behavior
+without an explicit edit. `progressRing.js` gained an opt-in `variant: 'dotted'` gauge
+style; `.btn`/`.filter-chip`/`--chip-radius` moved to `--radius-full`; `.stat-tile`/
+`.feature-card`/`.step-card`/`.landing-mock-card`/`.auth-card-lg` picked up the new
+elevation+surface-tint pairing; `landing.js`/`authMarketingPanel.js` gained new
+icon-leading badges and ambient-glow touches; `chartWrapper.js`/dark-theme `--heat-3`
+now read `--brand-deep`. See `.claude/rules/ui-styling.md`'s new "Visual design
+language" section for the full token/pattern reference and the "Phosphor stays, M3 is
+structural-only" decision this issue made final.

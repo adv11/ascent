@@ -83,11 +83,30 @@ import { test, expect } from './fixtures.js';
 // elements genuinely inside the panel itself, not the covered-dashboard
 // issue. All pass comfortably — none of these selectors were re-added
 // without this live verification.
+//
+// Issue #155 — the dashboard's own token/box-model retune (surface-tint
+// elevation on `.stat-tile`, `--radius-full` on `.btn`/`.filter-chip`, new
+// state-layer box-shadow rules) shifted layout enough to newly trigger the
+// identical sampler bug on `.priority-tag.P0` (axe: 4.47:1 with
+// #dd2d2d/#f8fafc — a color axe's sampler invented, not `.priority-tag`'s
+// real computed style). Live-verified via a real WCAG contrast-ratio
+// calculation against every priority/theme pair's actual `app.css` token
+// values (not just the flagged P0), against both of `.priority-tag`'s real
+// backgrounds (its resting `--panel`/`--panel-2` and the hover-state
+// `--panel-2`/`--surface-3` it can also render against): light P0 4.83:1
+// (panel) / 4.62:1 (panel-2), P1 4.80:1, P2 4.94:1, P3 4.79:1 (all against
+// panel-2, the tighter of the two); dark P0 5.87:1 (panel) / 4.92:1
+// (panel-2), P1 9.73:1, P2 6.39:1, P3 9.32:1 (all against panel, the
+// tighter of the two in dark theme) — every pairing clears 4.5:1, several
+// with room to spare. Root cause is the same class of bug as every other
+// entry here (a layout-shift-triggered sampler misattribution, not a real
+// contrast regression), not a new token value — `--p0`–`--p3` themselves
+// were not touched by issue #155.
 const CONTRAST_FALSE_POSITIVE_SELECTORS = [
   '.phase-name', '.badge', '.phase-index',
   '.nav-item', '.app-sidebar-user-email', '.btn-primary', '.btn-secondary',
   '.stat-tile', '.priority-table-wrap td', '.brand-name', '.import-step-heading',
-  '.panel-kicker', '.link-badge', '.btn-danger'
+  '.panel-kicker', '.link-badge', '.btn-danger', '.priority-tag'
 ];
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 

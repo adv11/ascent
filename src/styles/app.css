@@ -401,11 +401,16 @@
   --surface-3: #173a37;
 
   /* Activity heatmap intensity scale (issue #8), dark-theme stops — see the
-     light-theme definition above for what each level means. */
+     light-theme definition above for what each level means. issue #155 —
+     --heat-3 now reads --brand-deep (was a literal #2dd4bf, the same value
+     as --brand) so the second-highest bucket draws from the same data-viz
+     teal family gauges/charts now use, while --heat-4 stays the brightest
+     stop so the existing "more activity = brighter" ramp against a dark
+     background is unchanged. */
   --heat-0: var(--surface-2);
   --heat-1: #123832;
   --heat-2: #1f5148;
-  --heat-3: #2dd4bf;
+  --heat-3: var(--brand-deep);
   --heat-4: #5eead4;
 }
 
@@ -735,8 +740,18 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    background regardless of the site's own light/dark theme — this panel is
    intentionally always-dark, matching the spec's "dark background with
    brand gradient." */
+/* intentional: issue #155 — a low-opacity radial ambient glow layered under
+   the existing brand gradient (via an extra background-image stop, not a
+   second element) adds the reference's "richer depth" without changing the
+   panel's always-dark brand-gradient identity — same low-alpha
+   radial-gradient technique as the app-wide body glow, just scoped to this
+   panel and reading a fixed white (this panel is fixed-dark regardless of
+   site theme, same as every other color rule here, issue #116) rather than
+   a theme token. */
 .auth-marketing {
-  background: linear-gradient(160deg, var(--brand-700) 0%, var(--brand-600) 55%, var(--brand-500) 100%);
+  background:
+    radial-gradient(700px 420px at 15% 10%, rgba(255, 255, 255, 0.1), transparent 55%),
+    linear-gradient(160deg, var(--brand-700) 0%, var(--brand-600) 55%, var(--brand-500) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -798,13 +813,16 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .auth-marketing-values { display: grid; gap: 22px; list-style: none; padding: 0; margin: 8px 0 0; }
 .auth-marketing-value { display: flex; gap: 16px; align-items: flex-start; }
 /* intentional: fixed white-on-white-alpha, same always-dark panel as above (issue #116) */
+/* issue #155 — border-radius sourced from the M3 shape scale (--radius-md,
+   12px) instead of an untokenized 11px magic number — same visual weight,
+   just audited onto the shared scale. */
 .auth-marketing-value-icon {
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
@@ -844,12 +862,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 .auth-brand { justify-self: start; }
 
+/* issue #155 — --elevation-4 (M3 token alias of --shadow-lg) for
+   consistency with every other glass/floating card's shadow token; same
+   value, no visual change. */
 .auth-card-lg {
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--elevation-4);
   overflow: hidden;
 }
 
@@ -2053,6 +2074,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   gap: 14px;
 }
 
+/* issue #155 — M3 elevation tier 2 (teal surface-tint + matching shadow),
+   promoted to tier 3 on hover, same pairing every other restyled card in
+   this issue uses. */
 .stat-tile {
   display: flex;
   align-items: center;
@@ -2060,11 +2084,11 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--panel);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface-tint-2);
+  box-shadow: var(--elevation-2);
   transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
-.stat-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-tile:hover { transform: translateY(-2px); box-shadow: var(--elevation-3); }
 
 .stat-tile-icon {
   display: inline-flex;
@@ -3690,17 +3714,23 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   padding: 0;
   margin: 0;
 }
+/* issue #155 — M3 elevation tier 1 (a light surface tint + matching
+   shadow), one tier below .feature-card since these are visually the
+   secondary content on this page. */
 .step-card {
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   position: relative;
-  background: var(--panel);
+  background: var(--surface-tint-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-1);
   padding: var(--space-8) var(--space-6) var(--space-6);
+  transition: box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
+.step-card:hover { transform: translateY(-2px); box-shadow: var(--elevation-2); }
 .step-card-number {
   position: absolute;
   top: var(--space-4);
@@ -3727,7 +3757,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .landing-proof { text-align: center; padding: 0 var(--space-6) var(--space-12); }
 .landing-proof-text { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); color: var(--brand-dark); max-width: 52ch; margin: 0 auto; }
 
+/* issue #155 — the "brightest teal-glow moment" the reference reserves for
+   one closing section: an inset radial-gradient layered on top of the
+   ambient body background using --glow-brand-deep at a stronger local
+   opacity than the page-wide glow, plus max-width: none so it fills the
+   full section width rather than being clipped to .landing-cta's own
+   720px content column. position: relative + z-index keeps the actual
+   content above the glow layer. */
 .landing-cta {
+  position: relative;
   text-align: center;
   max-width: 720px;
   margin: 0 auto;
@@ -3737,17 +3775,52 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   align-items: center;
   gap: var(--space-6);
 }
+.landing-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(600px 320px at 50% 40%, var(--glow-brand-deep, transparent), transparent 70%);
+}
 .landing-cta-title { font-family: var(--font-display); font-weight: 800; font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); margin: 0; color: var(--ink); }
 
+/* issue #155 — position: relative + overflow: hidden so the giant
+   .landing-footer-ghost wordmark (below) can bleed off the bottom edge
+   without adding horizontal scroll. */
 .landing-footer {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-8) var(--space-6);
   border-top: 1px solid var(--line);
+  overflow: hidden;
 }
 .landing-footer-copy { font-size: var(--text-sm); color: var(--faint); margin: 0; }
+/* issue #155 — decorative giant low-opacity wordmark backdrop (the
+   reference's footer motif). aria-hidden on the JS side; visually clipped
+   by .landing-footer's overflow:hidden above, never affects layout height
+   since it's absolutely positioned out of flow. */
+.landing-footer-ghost {
+  position: absolute;
+  bottom: -0.35em;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(80px, 18vw, 220px);
+  line-height: 1;
+  color: var(--brand);
+  opacity: 0.06;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+/* .brand-name (brand.js) declares its own font-size/weight for its normal
+   header-mark usage — override both to inherit here so the giant clamp()
+   size above actually takes effect on the wrapped createBrandWordmark(). */
+.landing-footer-ghost .brand-name { font-size: inherit; font-weight: inherit; }
 
 /* ==========================================================================
    Responsive breakpoint scale (issue #36)
@@ -3985,35 +4058,4 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Print/PDF export of a roadmap (issue #133 Part 2) — a dedicated print
-   stylesheet, not a separate route: printRoadmap.js appends a plain
-   `.print-roadmap` snapshot to document.body and toggles `.print-mode` on it
-   just for the duration of window.print(). `.print-include-notes-row` is the
-   small on-screen checkbox in the pre-print modal; everything else here only
-   applies inside an actual print/PDF context. */
-.print-include-notes-row { display: flex; align-items: center; gap: 8px; margin: 16px 0; }
-.print-roadmap { display: none; }
-
-/* intentional: every literal color in this @media print block is fixed,
-   theme-independent print output — a printed page always renders on
-   assumed-white paper/PDF viewer background regardless of the app's active
-   on-screen theme, so none of these should ever read from a --token that
-   could resolve to a dark-theme value. */
-@media print {
-  body.print-mode > *:not(.print-roadmap) { display: none !important; }
-  body.print-mode .print-roadmap {
-    display: block;
-    background: #ffffff; /* intentional: fixed print background, see block comment above */
-    color: #111111; /* intentional: fixed print text color, see block comment above */
-  }
-  .print-roadmap-title { font-size: 22px; margin-bottom: 16px; }
-  .print-phase-title { font-size: 18px; margin: 20px 0 8px; border-bottom: 1px solid #ccc; /* intentional: fixed print divider color */ }
-  .print-section-title { font-size: 14px; margin: 12px 0 4px; color: #444; /* intentional: fixed print text color */ }
-  .print-item-list { list-style: none; margin: 0; padding: 0; }
-  .print-item { margin: 4px 0; page-break-inside: avoid; }
-  .print-item-priority { color: #555; font-size: 12px; margin-left: 4px; /* intentional: fixed print text color */ }
-  .print-item-notes { font-size: 12px; color: #333; margin: 2px 0 2px 24px; white-space: pre-wrap; /* intentional: fixed print text color */ }
-  .print-resource { font-size: 12px; color: #333; margin: 2px 0 2px 24px; /* intentional: fixed print text color */ }
 }

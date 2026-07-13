@@ -40,9 +40,20 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
-const BRAND_FILL_TOP = 'rgba(20, 184, 166, 0.3)';
-const BRAND_FILL_BOTTOM = 'rgba(20, 184, 166, 0)';
-const AVERAGE_LINE_COLOR = '#f97316';
+// issue #155 — the gradient fill under the line chart needs an actual
+// rgba() string (Canvas gradients can't read a CSS custom property
+// directly), but it should still track --brand-deep's live per-theme value
+// rather than a hardcoded literal that never changes with theme — same
+// "no hardcoded literal that can drift from the token" discipline
+// `axisOptions()` below already follows. `hex` is #rrggbb-only (every
+// --brand-deep value in app.css is), which is all this needs.
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function axisOptions() {
   const tickColor = cssVar('--muted', '#5f6e84');
@@ -58,10 +69,14 @@ function axisOptions() {
 export async function createLineChart(canvas, { labels, totals }) {
   const Chart = await loadChartModule();
   const ctx = canvas.getContext('2d');
-  const brandColor = cssVar('--brand', '#0f766e');
+  // issue #155 — dedicated data-viz teal (--brand-deep) instead of --brand,
+  // same token gauges/rings now use for the same reason (a measurably
+  // darker/more-saturated teal reads better as a data-ink color than the
+  // brighter --brand hue, per the reference's pixel-sampled gauge stroke).
+  const brandColor = cssVar('--brand-deep', '#0f766e');
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height || 260);
-  gradient.addColorStop(0, BRAND_FILL_TOP);
-  gradient.addColorStop(1, BRAND_FILL_BOTTOM);
+  gradient.addColorStop(0, hexToRgba(brandColor, 0.3));
+  gradient.addColorStop(1, hexToRgba(brandColor, 0));
 
   const { x, y } = axisOptions();
   return new Chart(ctx, {
@@ -92,7 +107,14 @@ export async function createLineChart(canvas, { labels, totals }) {
 // velocity bars plus a 7-day rolling-average overlay line.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
-  const brandColor = cssVar('--brand', '#0f766e');
+  // issue #155 — same --brand-deep data-viz teal as the line chart above.
+  const brandColor = cssVar('--brand-deep', '#0f766e');
+  // Was a hardcoded '#f97316' literal that never tracked theme — now reads
+  // the live --accent token (already the app's existing "secondary/
+  // comparison" semantic color, e.g. priority P1), which already correctly
+  // differs per theme (#f97316 light / #fb923c dark) the same way every
+  // other chart color here does.
+  const averageLineColor = cssVar('--accent', '#f97316');
   const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
     data: {
@@ -109,8 +131,8 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
           type: 'line',
           label: '7-day avg',
           data: rollingAverage,
-          borderColor: AVERAGE_LINE_COLOR,
-          backgroundColor: AVERAGE_LINE_COLOR,
+          borderColor: averageLineColor,
+          backgroundColor: averageLineColor,
           borderWidth: 2,
           pointRadius: 0,
           tension: 0.3

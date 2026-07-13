@@ -43,4 +43,30 @@ describe('createProgressRing', () => {
     expect(Number(fill.getAttribute('stroke-dashoffset'))).toBeCloseTo(dasharray, 5);
     expect(svg.getAttribute('aria-label')).toBe('0% complete');
   });
+
+  it('defaults to the solid variant: no progress-ring-dotted class, continuous track dasharray', () => {
+    const svg = createProgressRing(50);
+    expect(svg.classList.contains('progress-ring-dotted')).toBe(false);
+    const track = svg.querySelector('.progress-ring-track');
+    expect(track.hasAttribute('stroke-dasharray')).toBe(false);
+  });
+
+  it('variant: "dotted" adds the progress-ring-dotted class and a dashed track, fill still animates via _setPct', () => {
+    const svg = createProgressRing(25, { size: 64, strokeWidth: 6, variant: 'dotted' });
+    expect(svg.classList.contains('progress-ring-dotted')).toBe(true);
+    const track = svg.querySelector('.progress-ring-track');
+    expect(track.getAttribute('stroke-dasharray')).toMatch(/^[\d.]+ [\d.]+$/);
+    expect(track.getAttribute('stroke-linecap')).toBe('round');
+
+    const fill = svg.querySelector('.progress-ring-fill');
+    const dasharray = Number(fill.getAttribute('stroke-dasharray'));
+    svg._setPct(100);
+    expect(Number(fill.getAttribute('stroke-dashoffset'))).toBeCloseTo(0, 5);
+    svg._setPct(0);
+    expect(Number(fill.getAttribute('stroke-dashoffset'))).toBeCloseTo(dasharray, 5);
+  });
+
+  it('throws on an unrecognized variant', () => {
+    expect(() => createProgressRing(0, { variant: 'sparkly' })).toThrow(/unrecognized variant/);
+  });
 });
