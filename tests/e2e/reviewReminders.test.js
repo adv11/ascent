@@ -59,6 +59,12 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
 
     await expect(page.locator('.toast')).toContainText('Marked', { timeout: 5_000 });
     await expect(reviewBadge).toBeHidden({ timeout: 5_000 });
-    await expect(dueRow).toHaveClass(/done/);
+
+    // Marking the item reviewed drops it out of the REVIEW filter's own
+    // criteria (isReviewDue()), so it disappears from this filtered list on
+    // re-render — switch back to the "All" chip to find it and confirm it's
+    // still marked done there.
+    await page.locator('.filter-chip[data-p="ALL"]').click();
+    await expect(page.locator('.check-item').first()).toHaveClass(/done/);
   });
 });
