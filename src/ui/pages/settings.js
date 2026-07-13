@@ -394,6 +394,7 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
   return () => {
     themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
+    topbar._cleanup?.();
     cleanupSections.forEach(section => section._cleanup?.());
   };
 }

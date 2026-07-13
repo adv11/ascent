@@ -22,6 +22,7 @@ import { animateCountUp } from '../../utils/countUp.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { attachTooltip } from '../components/tooltip.js';
 import { createIcon } from '../components/icons.js';
+import { createEmptyState } from '../components/emptyState.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 
@@ -934,10 +935,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     });
 
     if (!visibleCount) {
-      content.append(el('div', { className: 'empty-state' }, [
-        el('div', { className: 'empty-icon' }, [createIcon('search', { size: 'lg' })]),
-        el('p', { text: 'No matching topics. Try another filter or search term.' })
-      ]));
+      content.append(createEmptyState({ icon: 'search', title: 'No matching topics. Try another filter or search term.' }));
     }
 
     const toggleAllBtn = app.querySelector('[data-toggle-all]');
@@ -1166,6 +1164,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   return () => {
     themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
+    topbar._cleanup?.();
     unsubStore();
     unsubDailyTodo?.();
     if (dailyTodoTickTimer) clearInterval(dailyTodoTickTimer);

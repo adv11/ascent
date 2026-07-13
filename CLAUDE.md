@@ -86,7 +86,7 @@ src/ui/components/authShell.js   shared chrome for signIn/signUp — split layou
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button
 src/ui/components/sidebar.js, topbar.js, avatar.js, dropdown.js  app shell (issue #6 Phase 2) — see .claude/rules/ui-styling.md
-src/ui/components/skeleton.js, emptyState.js, tooltip.js, modal.js, tabs.js, notificationBadge.js, commandPalette.js  component library (issue #6 Phase 3), not yet wired into any page; progressRing.js wired into dashboard.js (Phase 4); icons.js  curated named SVG icon set + createIcon(name, { size }) factory for functional/navigational chrome (issue #107) — see .claude/rules/ui-styling.md
+src/ui/components/skeleton.js (wired into progress.js's first chart load), emptyState.js (wired into dashboard.js's no-matching-filter state), commandPalette.js (Cmd/Ctrl+K search wired into topbar.js, nav items only — issue #125), tooltip.js, modal.js, notificationBadge.js  component library (issue #6 Phase 3); tabs.js  built but deliberately still unwired, no current page has a real tab UI to adopt it into (audited issue #125); progressRing.js wired into dashboard.js (Phase 4); icons.js  curated named SVG icon set + createIcon(name, { size }) factory for functional/navigational chrome (issue #107) — see .claude/rules/ui-styling.md
 src/ui/components/dailyTodoPanel.js, dailyTodoGuide.js, addToDailyTodoModal.js  Daily Todos UI — see .claude/rules/roadmap-store.md
 src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resources + notes
 src/ui/components/toast.js       transient toast notifications

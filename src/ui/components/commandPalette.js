@@ -28,11 +28,12 @@ export function fuzzyMatch(query, target) {
 }
 
 // Issue #6 Phase 3.3 — a generic searchable command palette. `items`:
-// [{ id, title, subtitle, onSelect }]. Wiring this up to actually search
-// live roadmap items/sections/phases (as the original spec describes) is
-// Phase 4's job once the dashboard itself is redesigned — this phase is the
-// component library, not the integration; `openCommandPalette` here is the
-// reusable primitive a later phase calls with real data.
+// [{ id, title, subtitle, onSelect }]. Wired into topbar.js (Cmd/Ctrl+K,
+// issue #125) with page-navigation items only; searching live roadmap
+// items/sections/phases (the original spec's fuller ambition) is real
+// feature work for its own follow-up issue, deliberately out of scope there
+// — `openCommandPalette` here stays the reusable primitive any future caller
+// hands its own item list to.
 export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
   const listId = 'command-palette-list';
   const input = el('input', {

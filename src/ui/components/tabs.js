@@ -1,11 +1,13 @@
 import { el } from '../dom.js';
 
 // Issue #6 Phase 3.6 — keyboard-navigable tabs (Left/Right cycle, Home/End
-// jump to first/last), full ARIA tablist/tab/tabpanel roles. A reusable
-// primitive for a later phase to wire up (the settings page, a future modal)
-// — not retrofitted onto the existing single-flow import modal (issue #64
-// deliberately collapsed that modal's own two tabs into one continuous flow;
-// re-introducing tabs there would undo that fix).
+// jump to first/last), full ARIA tablist/tab/tabpanel roles. Audited for a
+// real call site in issue #125 — settings.js's sections are a deliberate
+// single-scroll layout, not a tab UI, and the import modal (issue #64)
+// deliberately collapsed its own two tabs into one continuous flow, so
+// retrofitting either would be a redesign, not an adoption. Kept as a
+// documented, tested primitive for whichever future page/modal genuinely
+// needs real tabs.
 //
 // items: [{ id, label, panel: Node }]
 // Returns the tabs container node; the panel nodes are appended after it as

@@ -251,9 +251,13 @@ which backend applies is resolved per sign-in (not a fixed, once-per-app-load ch
 `roadmapStore.js`'s `adapter` binding is a `let` reassigned via
 `getStorageAdapter(nextUser)` at the top of every `setUser()` call, not a `const` fixed
 once at store creation. `LocalStorageAdapter` is a complete, unit-tested implementation
-of the same contract over its own dedicated keys, but is **not yet wired into
-`roadmapStore.js`** — scaffolding for a later PR (true guest-only local mode, or an
-explicit offline-cache adapter), not forgotten work.
+of the same contract over its own dedicated keys, but is **not wired into
+`roadmapStore.js`** — and, per issue #125's decision, this is now closed as **not
+planned** rather than left as open-ended scaffolding, same precedent as Google Drive
+sync just below: the file stays (it's tested, harmless, and a real "true guest-only local
+mode" feature could still pick it up later), but there is no active plan to wire it in.
+`adapterFactory.js` unconditionally returns `firebaseAdapter` and is expected to keep
+doing so.
 
 **Google Sign-In / Google Drive sync was tried and dropped, not forgotten.** Issue #5
 originally planned a `GoogleDriveAdapter` (part 2) and a full "Sign in with Google" flow

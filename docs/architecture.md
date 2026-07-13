@@ -3258,3 +3258,23 @@ once per guest account, once at least 5 topics are completed, offering to naviga
 `/signup`. `sidebar.js` also grew a small always-on `.app-sidebar-guest-risk` indicator
 (tooltip via `attachTooltip`) next to the "Guest session" label — purely presentational,
 no new store state. See `.claude/rules/auth-security.md` for the full writeup.
+
+### 2026-07-13 — PR #TBD — Unwired components decided: two wired in, one kept as-is, one closed not-planned (issue #125)
+
+Resolved the four dangling "not yet wired into any page" components/adapter left over from
+issue #6 Phase 3 and issue #5. `commandPalette.js` is now wired into `topbar.js` — a search
+icon button plus a Cmd/Ctrl+K shortcut (`bindCommandPaletteShortcut`, cleaned up via the
+existing `topbar._cleanup` → route-cleanup chain, same as every other subscription in this
+app) opens it with a static navigation item list (Dashboard/All roadmaps/Progress/Settings);
+searching live roadmap content is out of scope, left for a follow-up. `skeleton.js` is now
+wired into `progress.js`'s two chart cards, shown until the first Chart.js CDN import
+resolves (`chartWrapper.js`), then swapped for the real `<canvas>` — the only load state in
+the app slow enough to warrant it. `emptyState.js` replaced a hand-rolled equivalent div in
+`dashboard.js`'s "no matching topics" state (identical markup, now going through the shared
+primitive instead of a duplicate). `tabs.js` was audited against every current page and kept
+unwired — no real tab-shaped UI exists to adopt it into without a redesign (settings.js's
+sections are a deliberate single-scroll layout; the import modal deliberately collapsed its
+own tabs in issue #64) — it stays as a documented, tested primitive. `LocalStorageAdapter.js`
+is closed as **not planned**, same precedent as Google Drive sync (#5/#71) — the file stays
+(tested, harmless, a real future guest-only-local-mode feature could still pick it up) but
+`.claude/rules/roadmap-store.md` no longer describes it as open-ended scaffolding.

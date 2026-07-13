@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **The command palette (Cmd/Ctrl+K) is now wired into the app — jump to Dashboard, All roadmaps, Progress, or Settings from anywhere, instead of hunting through the sidebar (issue #125).** `commandPalette.js` was built in issue #6 Phase 3 but never had a real consumer; a search icon in the topbar and the Cmd/Ctrl+K shortcut both open it now, listing the app's four pages. Searching live roadmap content is a bigger follow-up, out of scope here.
+- **A chart-loading skeleton now shows on the Progress page while Chart.js loads for the first time (issue #125).** Previously the two chart cards sat blank until the first-ever Chart.js CDN import resolved — `skeleton.js` (also built in issue #6 Phase 3, never adopted) now fills that gap.
 - **Guests are now warned that their roadmap is local-only and can be silently lost (issue #123).** A guest ("anonymous") session's entire roadmap lives only in this browser's local storage/anonymous Firebase identity — closing the tab, clearing browser data, or switching devices lost it with zero warning anywhere in the app. Fixed with two pieces: a persistent, unobtrusive risk indicator (`.app-sidebar-guest-risk`, `sidebar.js`) next to the existing "Guest session" label, with a tooltip explaining the risk; and a one-time nudge (`confirmDialog`, not a new UI primitive) shown after a guest has completed at least 5 topics, offering to create a real account (or dismiss and keep going) — never shown again once dismissed once, and never shown at all for a signed-in account.
 
 ### Fixed

@@ -2,11 +2,13 @@ import { KEYS } from '../localStorageKeys.js';
 import { StorageAdapter } from './StorageAdapter.js';
 
 // Standalone reference implementation of the storage adapter contract over
-// plain localStorage (issue #5). NOT wired into roadmapStore.js in this PR —
-// roadmapStore already maintains its own local cache (KEYS.ROADMAPS and
-// friends) independently of the remote adapter, and that is left untouched
-// here. This module exists, tested, for a future PR to select (e.g. a true
-// guest-only local mode, or an offline-cache adapter) via adapterFactory.js.
+// plain localStorage (issue #5). NOT wired into roadmapStore.js — closed as
+// not planned (issue #125), same precedent as Google Drive sync (#5/#71
+// part 2/3, see .claude/rules/roadmap-store.md). roadmapStore already
+// maintains its own local cache (KEYS.ROADMAPS and friends) independently of
+// the remote adapter, and that is left untouched here. This module is kept,
+// tested, in case a future guest-only local mode or offline-cache adapter
+// picks it up via adapterFactory.js — there is no active plan to do so.
 //
 // `uid` is accepted for interface conformance but ignored: a single browser
 // profile is one local store, matching how roadmapStore's own local cache

@@ -7,6 +7,7 @@ import { createTopbar } from '../components/topbar.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
 import { createHeatmap } from '../components/heatmap.js';
 import { createLineChart, createBarChart } from '../components/chartWrapper.js';
+import { createSkeletonCard } from '../components/skeleton.js';
 import { openShareModal } from '../components/shareModal.js';
 import { showToast } from '../components/toast.js';
 import { createIcon } from '../components/icons.js';
@@ -313,8 +314,11 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   const priorityTableSlot = el('div', {});
   const projectionSlot = el('div', {});
   const rangeToggleSlot = el('div', {});
-  const lineCanvas = el('canvas', {});
-  const barCanvas = el('canvas', {});
+  const lineCanvas = el('canvas', { className: 'chart-canvas-loading' });
+  const barCanvas = el('canvas', { className: 'chart-canvas-loading' });
+  const lineSkeleton = createSkeletonCard();
+  const barSkeleton = createSkeletonCard();
+  let chartsReady = false;
 
   let latestAnalytics = null;
   let latestEffectiveLog = null;
@@ -345,11 +349,11 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Activity' }), heatmapSlot]),
     el('div', { className: 'progress-card' }, [
       el('h2', { className: 'progress-card-title', text: 'Cumulative progress' }),
-      el('div', { className: 'chart-container' }, [lineCanvas])
+      el('div', { className: 'chart-container' }, [lineSkeleton, lineCanvas])
     ]),
     el('div', { className: 'progress-card' }, [
       el('h2', { className: 'progress-card-title', text: 'Daily velocity' }),
-      el('div', { className: 'chart-container' }, [barCanvas])
+      el('div', { className: 'chart-container' }, [barSkeleton, barCanvas])
     ]),
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Phase breakdown' }), phaseBreakdownSlot]),
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Priority × phase' }), priorityTableSlot]),
@@ -397,6 +401,13 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     }
     lineChart = nextLineChart;
     barChart = nextBarChart;
+    if (!chartsReady) {
+      chartsReady = true;
+      lineSkeleton.hidden = true;
+      barSkeleton.hidden = true;
+      lineCanvas.classList.remove('chart-canvas-loading');
+      barCanvas.classList.remove('chart-canvas-loading');
+    }
   }
 
   function renderCharts(effectiveLog) {
@@ -431,6 +442,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   return () => {
     themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
+    topbar._cleanup?.();
     unsubStore();
     unsubActivityLog();
     lineChart?.destroy();

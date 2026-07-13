@@ -1350,6 +1350,22 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .app-topbar-bell:hover { background: var(--surface-2); }
 .app-topbar-bell .notification-badge-dot { position: absolute; top: 6px; right: 6px; }
+/* Command palette trigger (issue #125) — same unstyled-until-hover 36px
+   treatment as .app-topbar-bell, since it sits among the same icon-only
+   topbar actions. */
+.app-topbar-command-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.app-topbar-command-btn:hover { background: var(--surface-2); }
 .app-topbar-hamburger {
   display: none;
   border: none;
@@ -3114,6 +3130,12 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    intrinsic height of its own to size a CSS Grid/flex row from. */
 .chart-container { position: relative; height: 260px; }
 .chart-container canvas { width: 100% !important; height: 100% !important; }
+/* Issue #125 — a skeleton placeholder for the first Chart.js CDN load only
+   (chartWrapper.js's dynamic import), shown/hidden by progress.js rather
+   than CSS alone since it must disappear the instant the real chart mounts,
+   not on a fixed timer. */
+.chart-container .skeleton-card { position: absolute; inset: 0; height: 100%; }
+.chart-canvas-loading { display: none; }
 
 /* Phase breakdown (B6) — a flat list of horizontal bars, deliberately not
    .phase-card (that class carries expand/collapse chrome this list doesn't
