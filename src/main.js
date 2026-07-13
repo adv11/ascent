@@ -12,6 +12,7 @@ import { renderOnboarding } from './ui/pages/onboarding.js';
 import { renderSettings } from './ui/pages/settings.js';
 import { renderProgress } from './ui/pages/progress.js';
 import { renderLanding } from './ui/pages/landing.js';
+import { renderSharedRoadmapView } from './ui/pages/sharedRoadmapView.js';
 import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
 import { registerServiceWorker } from './services/serviceWorkerRegistration.js';
 import { showToast } from './ui/components/toast.js';
@@ -64,11 +65,18 @@ authApi.onChange(async user => {
 
   const route = getRoute();
   const publicRoutes = ['/', '/signin', '/signup'];
+  // '/shared' carries a query-string shareId (router.js has no param
+  // support — see its 'matchRoute' prefix-match comment), so it's checked
+  // by prefix, not an exact publicRoutes entry. Reachable signed-out *and*
+  // signed-in — showing someone else's shared roadmap must never force a
+  // detour through sign-in.
+  const isSharedRoute = route.startsWith('/shared');
 
   if (!user) {
-    if (!publicRoutes.includes(route)) navigate('/signin', true);
+    if (!publicRoutes.includes(route) && !isSharedRoute) navigate('/signin', true);
     return;
   }
+  if (isSharedRoute) return;
 
   if (!store.getSnapshot().onboardingDone) {
     if (route !== '/onboarding') navigate('/onboarding', true);
@@ -85,6 +93,10 @@ registerRoute('/onboarding', guardApp(renderOnboarding));
 registerRoute('/app', guardApp(renderDashboard));
 registerRoute('/settings', guardApp(renderSettings));
 registerRoute('/progress', guardApp(renderProgress));
+// Wildcard prefix match ('/shared*') — unauthenticated-reachable, not routed
+// through guardApp, since it renders someone else's published snapshot, not
+// the current user's own data (see router.js's matchRoute for the pattern).
+registerRoute('/shared*', () => renderSharedRoadmapView(app));
 // Marketing landing page for signed-out visitors (issue #6 Phase 6); an
 // already-signed-in user is bounced to '/app' here instead of ever rendering
 // it — the authApi.onChange listener above additionally treats '/' as a

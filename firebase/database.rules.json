@@ -50,6 +50,11 @@
               "description": { ".validate": "newData.isString()" },
               "createdAt": { ".validate": "newData.isNumber()" }
             }
+          },
+          "shareIds": {
+            "$index": {
+              ".validate": "newData.isString()"
+            }
           }
         },
         "dailyTodos": {
@@ -88,6 +93,18 @@
         ".read": "false",
         ".write": "auth != null && !data.exists()",
         ".validate": "newData.hasChildren(['type','title','submittedAt']) && newData.child('type').val().matches(/^(bug|feature|feedback)$/) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 120 && newData.child('userId').val() == auth.uid"
+      }
+    },
+    "sharedRoadmaps": {
+      "$shareId": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() ? newData.child('ownerUid').val() == auth.uid : (data.child('ownerUid').val() == auth.uid && newData.val() === null))",
+        ".validate": "newData.hasChildren(['schemaVersion', 'ownerUid', 'templateId', 'title', 'phases', 'items', 'publishedAt'])",
+        "schemaVersion": { ".validate": "newData.isNumber()" },
+        "ownerUid": { ".validate": "newData.isString()" },
+        "templateId": { ".validate": "newData.isString()" },
+        "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "publishedAt": { ".validate": "newData.isNumber()" }
       }
     }
   }

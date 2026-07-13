@@ -183,6 +183,18 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
+
+  // Issue #131 — the public, unauthenticated '#/shared' view is reachable by
+  // anyone with a link, so it needs the same coverage as every other page.
+  // The revoked/not-found state needs no Firebase emulator setup at all
+  // (it's just a shareId that doesn't resolve), unlike the rest of this
+  // file's guest-sign-in-gated tests.
+  test('shared roadmap "revoked" state has zero critical/serious axe violations', async ({ page }) => {
+    await page.goto('/#/shared?id=does-not-exist');
+    await expect(page.locator('.shared-view-state')).toBeVisible({ timeout: 10_000 });
+    const violations = await runAxe(page);
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
 });
 
 // Issue #124 — the axe suite above only ever scanned base-page DOM, never an

@@ -124,7 +124,7 @@ describe('createSidebar — account identity', () => {
     node.querySelector('.app-sidebar-identity').click();
     expect(document.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Settings', 'My reports', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
+    expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Import backup…']);
   });
 
   // Issue #123 — persistent local-only-data risk indicator, guest only.

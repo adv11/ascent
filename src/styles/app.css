@@ -1596,6 +1596,53 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .share-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* Roadmap sharing — published snapshot link (issue #131) */
+.share-roadmap-modal { display: grid; gap: 14px; max-width: 520px; }
+.share-roadmap-modal-copy { color: var(--muted); font-size: var(--text-sm); }
+.share-roadmap-modal-status { font-size: var(--text-sm); color: var(--ink); word-break: break-all; }
+.share-link-list { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0; }
+.share-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.share-link-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
+.shared-view-container { min-height: 100vh; min-height: 100dvh; padding: 32px 20px; max-width: 900px; margin: 0 auto; }
+.shared-view-loading { color: var(--muted); text-align: center; padding: 60px 0; }
+.shared-view-state { display: grid; gap: 12px; justify-items: center; text-align: center; padding: 80px 20px; }
+.shared-view-header { margin-bottom: 24px; }
+.shared-view-subtitle { color: var(--muted); }
+.shared-view-phases { display: grid; gap: 20px; }
+.shared-phase-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 18px 20px;
+}
+.shared-section { margin-top: 12px; }
+.shared-item-list { display: grid; gap: 8px; list-style: none; padding: 0; margin: 8px 0 0; }
+.shared-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.shared-item-status { width: 18px; text-align: center; color: var(--brand); font-weight: 700; }
+.shared-item-title { flex: 1; min-width: 0; }
+.shared-item-done .shared-item-title { color: var(--muted); text-decoration: line-through; }
+.shared-item-resources { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+.shared-resource-link { color: var(--brand); font-size: var(--text-sm); }
+.shared-view-footer { margin-top: 32px; text-align: center; }
+.shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--text-sm); }
+
 @media (max-width: 480px) {
   .share-modal-actions { flex-direction: column; }
   .share-modal-actions .btn { width: 100%; }

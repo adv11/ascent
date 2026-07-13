@@ -3333,3 +3333,25 @@ passes unchanged (1043 → 1059 total repo tests, no existing test modified) —
 `tests/unit/roadmapStoreOnboardingHelpers.test.js` exercises each extracted phase directly
 against the documented account shapes (post-#58, pre-#58-legacy-onboarded,
 pre-#51-identity, brand-new), independently callable for the first time.
+
+### 2026-07-13 — PR #TBD — Roadmap sharing: read-only published snapshot link (issue #131)
+Adds the first public, unauthenticated-reachable data path in this app.
+`src/core/roadmap/shareSchema.js` (pure, `buildRoadmapShareSnapshot()`) builds a frozen
+snapshot (title/phases/items with done/priority/resources, never notes/completedAt) from a
+`roadmapStore` snapshot; `src/services/shareStore.js` is a thin Firebase wrapper
+(`publishRoadmapShare`/`revokeRoadmapShare`/`listMyShares`/`getSharedRoadmap`), same
+"doesn't fit `StorageAdapter`" shape as `feedbackStore.js`. Snapshots live at a new
+top-level `sharedRoadmaps/{shareId}` Firebase path (`crypto.randomUUID()` ids) —
+deliberately not nested under `users/{uid}`, so the read-only sharing feature never needs a
+rule letting one uid read another's data; `firebase/database.rules.json` gives this one path
+`".read": true` plus a narrow create-or-owner-delete-only `".write"` (see
+`.claude/rules/auth-security.md`). The owner's own published-link index lives at the new
+`users/{uid}/meta/shareIds` (string array, same shape as `hiddenTemplateIds`). UI:
+`src/ui/components/shareRoadmapModal.js` ("Share this roadmap…", `sidebar.js`'s account
+menu) generates/copies/lists/revokes links; `src/ui/pages/sharedRoadmapView.js` renders the
+new `#/shared?id=...` route — zero interactive affordances, a clear "this link has been
+revoked" state for a missing/revoked `shareId`. `router.js` gained a small wildcard-prefix
+match (`registerRoute('/shared*', ...)`) rather than real `:param` support, since this is
+the only call site that needs a dynamic segment and the id is carried as a query string on
+the hash. See `.claude/rules/roadmap-store.md`'s "Roadmap sharing" section for the full
+data-model rationale, and `docs/api.md` for the `sharedRoadmaps/{shareId}` schema.

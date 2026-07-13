@@ -109,4 +109,27 @@ describe('router', () => {
     window.location.hash = '';
     expect(getRoute()).toBe('/');
   });
+
+  it('a route registered with a trailing "*" matches any query-string suffix (issue #131)', async () => {
+    const { registerRoute, startRouter } = await freshRouter();
+    const renderFn = vi.fn();
+    registerRoute('/shared*', renderFn);
+    window.location.hash = '#/shared?id=abc123';
+    const stop = await startRouter('/signin');
+    expect(renderFn).toHaveBeenCalledWith('/shared?id=abc123');
+    stop();
+  });
+
+  it('an exact route match still wins over a wildcard pattern', async () => {
+    const { registerRoute, startRouter } = await freshRouter();
+    const exactFn = vi.fn();
+    const wildcardFn = vi.fn();
+    registerRoute('/shared', exactFn);
+    registerRoute('/shared*', wildcardFn);
+    window.location.hash = '#/shared';
+    const stop = await startRouter('/signin');
+    expect(exactFn).toHaveBeenCalledTimes(1);
+    expect(wildcardFn).not.toHaveBeenCalled();
+    stop();
+  });
 });

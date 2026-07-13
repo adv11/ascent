@@ -320,6 +320,25 @@ See `.claude/rules/roadmap-store.md`'s "In-app feedback & bug reporting" section
 | `captureScreenshot` | `src/ui/components/screenshotCapture.js` | `async ({ excludeSelector? }) => { dataUrl: string \| null, omitted: boolean }` | Lazy-loads html2canvas from a pinned jsdelivr version, blurs sensitive regions, resizes until under 500KB (`MAX_SCREENSHOT_BYTES`). |
 | `readUploadedImage` | `src/ui/components/screenshotCapture.js` | `async (file) => { dataUrl: string } \| { error: string }` | Rejects non-images and anything over 2MB (`MAX_UPLOAD_BYTES`) with a friendly error, never a thrown exception. |
 
+## Roadmap sharing — `src/services/shareStore.js`, `src/core/roadmap/shareSchema.js`, `src/ui/pages/sharedRoadmapView.js` (issue #131)
+
+Read-only published snapshot links, backed by a new top-level Firebase path,
+`sharedRoadmaps/{shareId}` — deliberately not nested under `users/{uid}`; see
+`.claude/rules/roadmap-store.md`'s "Roadmap sharing" section and
+`.claude/rules/auth-security.md`'s note on the public `.read` rule for the full rationale.
+
+| Export | Module | Signature | Notes |
+|---|---|---|---|
+| `buildRoadmapShareSnapshot` | `core/roadmap/shareSchema.js` | `(roadmapSnapshot, { uid, title }) => ShareSnapshot` | Pure. Excludes soft-deleted items, `notes`, and `completedAt`; drops any resource whose URL fails `isValidUrl()`. Title capped at `MAX_SHARE_TITLE_LENGTH` (200), falls back to `'My roadmap'` when empty. |
+| `publishRoadmapShare` | `services/shareStore.js` | `async (uid, roadmapSnapshot, title) => shareId: string` | Generates a `crypto.randomUUID()` shareId, writes `sharedRoadmaps/{shareId}` and appends to `users/{uid}/meta/shareIds` in one multi-path `update()`. Always mints a new id — never overwrites an existing snapshot. |
+| `revokeRoadmapShare` | `services/shareStore.js` | `async (uid, shareId) => void` | Deletes `sharedRoadmaps/{shareId}` and drops it from `shareIds` in one multi-path `update()`. No soft-delete/tombstone. |
+| `listMyShares` | `services/shareStore.js` | `async (uid) => ShareSnapshot[]` (each with an `id`) | The signed-in owner's own published links, for the share modal's management list. |
+| `getSharedRoadmap` | `services/shareStore.js` | `async (shareId) => ShareSnapshot \| null` | Unauthenticated-safe one-shot read for the public `#/shared` view. `null` for a revoked/never-existed id. |
+
+`ShareSnapshot` shape (`sharedRoadmaps/{shareId}`): `{ schemaVersion, ownerUid, templateId, title, phases, items: { [itemId]: { title, phase, section, priority, done, resources: [{ label, url }] } }, publishedAt }`.
+
+`src/ui/pages/sharedRoadmapView.js`'s `renderSharedRoadmapView(app)` is the `#/shared?id=...` route's render function (registered via `router.js`'s new wildcard-prefix match, `registerRoute('/shared*', ...)`) — reads the `id` query param off the current hash, fetches the snapshot, and renders either the read-only view or a "this link has been revoked" state.
+
 ## `src/services/firebase.js`
 
 | Export | Signature | Notes |

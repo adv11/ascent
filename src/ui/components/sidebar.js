@@ -9,6 +9,7 @@ import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { exportBackupJson, exportBackupCsv, importBackupFromFile } from '../utils/backupActions.js';
 import { openMyReports } from './myReports.js';
+import { openShareRoadmapModal } from './shareRoadmapModal.js';
 
 // Issue #6 Phase 2.1. Nav list was originally just Dashboard + My Roadmaps —
 // the original spec also listed Resources/Settings, but neither page existed
@@ -51,6 +52,7 @@ function buildAccountMenu({ user, store, identityTrigger, onDeleteAccount }) {
   const dropdownItems = [
     { text: 'Settings', onClick: () => navigate('/settings') },
     { text: 'My reports', onClick: () => openMyReports({ user }) },
+    { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
     { text: 'Import backup…', onClick: () => importInput.click() }

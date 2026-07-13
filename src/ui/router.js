@@ -16,10 +16,23 @@ export function getRoute() {
   return hash.startsWith('/') ? hash : `/${hash}`;
 }
 
+// Exact-match lookup first; falls back to a registered prefix pattern ending
+// in '*' (e.g. '/shared*' matches '/shared?id=abc123') — router.js has no
+// real param support, so a dynamic segment is encoded as a query string on
+// the hash instead (issue #131's `#/shared?id=...` route) rather than
+// building out full `:param` matching for a single call site.
+function matchRoute(route) {
+  if (routes.has(route)) return routes.get(route);
+  for (const [pattern, fn] of routes) {
+    if (pattern.endsWith('*') && route.startsWith(pattern.slice(0, -1))) return fn;
+  }
+  return null;
+}
+
 export async function startRouter(fallback = '/signin') {
   const run = async () => {
     const route = getRoute();
-    const renderFn = routes.get(route) || routes.get(fallback);
+    const renderFn = matchRoute(route) || routes.get(fallback);
     if (currentCleanup) {
       currentCleanup();
       currentCleanup = null;
