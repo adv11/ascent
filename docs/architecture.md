@@ -3302,3 +3302,34 @@ so no follow-up gap to file). Both `router.test.js` and `toast.test.js` reset th
 registry (`vi.resetModules()`) and re-import fresh per test, since both modules hold
 module-level singleton state (`router.js`'s `routes` Map/`currentCleanup`, `toast.js`'s
 shared stack `root` node) that would otherwise leak listeners/DOM references across tests.
+
+### 2026-07-13 — PR #TBD — Split roadmapStore.js's setUser into named onboarding-detection phases (issue #129)
+
+`setUser` was 786-line `createRoadmapStore`'s single worst ESLint complexity offender —
+complexity 56 (5.6x the gate's max of 10, and 4x the next-highest warning anywhere in the
+codebase), 154 lines. Behavior-preserving extraction only, no logic change: the six
+conceptual phases already documented in `.claude/rules/roadmap-store.md`'s onboarding-order
+paragraph are now separate functions instead of one large function body. Most are pure
+module-scope functions taking explicit params and returning explicit results (rather than
+closing over `setUser`'s locals) — `freshStateForNewUid()`, `readOnboardingLocalFallback()`,
+`resolveMetaExtras()`, `fetchRemoteMetaSafely()`, `resolveOnboardingState()` (plus its own
+sub-helpers `fetchLegacyRoadmapSafely()`/`isAlreadyOnboardedLegacy()`/
+`backfillLegacyOnboardingMeta()`), `migrateLegacyBlankTemplateIfNeeded()` (plus
+`fetchStoredBlankRoadmap()`/`resolveBlankMigrationContent()`/
+`persistBlankMigrationToFirebase()`), and the orchestrator
+`determineOnboardingAndActiveRoadmap()`. A `STALE` sentinel (`Symbol('stale')`, exported)
+replaces the old inline `if (isStale()) return;` early-returns at each extracted `await`
+boundary, threaded back up through the chain so `setUser` still aborts correctly when a
+newer `onAuthStateChanged` call has taken over mid-flight — the stale-call-guard discipline
+(`.claude/rules/roadmap-store.md`) is preserved at every boundary, not just the top level.
+The one remaining piece, `loadActiveRoadmap()` (the post-onboarding-determined item/phase
+load), stays a factory closure like the pre-existing `flushOutgoingRoadmap()`/
+`saveSwitchMeta()`, since it delegates straight to `fetchTemplateData`/`resolveRoadmapItems`,
+themselves closures over `adapter`/`uid`/`roadmapCache`. Result: `setUser`'s own complexity
+drops to 13 and its line-count warning disappears entirely (~60 lines); `createRoadmapStore`
+itself drops from 786 to 712 lines (still flagged, not attempted further — a genuine
+factory-function split is out of scope for this issue). `tests/integration/roadmapStore.test.js`
+passes unchanged (1043 → 1059 total repo tests, no existing test modified) — new
+`tests/unit/roadmapStoreOnboardingHelpers.test.js` exercises each extracted phase directly
+against the documented account shapes (post-#58, pre-#58-legacy-onboarded,
+pre-#51-identity, brand-new), independently callable for the first time.

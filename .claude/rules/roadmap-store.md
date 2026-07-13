@@ -284,7 +284,26 @@ content for templates they haven't picked. `roadmapStore.js`'s `setUser(user)` i
 `onboardingDone`/`activeTemplateId`/`startedTemplateIds` — `meta.startedTemplateIds`
 wins if present (issue #58's per-template shape); otherwise it falls back through legacy
 detection (see the multi-roadmap paragraph below) and backfills the new meta shape with
-no forced migration step. Only when `onboardingDone` is false does `main.js` route to
+no forced migration step. **`setUser`'s onboarding-detection order is split into named,
+independently unit-tested phase functions (issue #129 — was complexity 56, now 13):**
+`freshStateForNewUid()` (the uid-transition privacy wipe), `readOnboardingLocalFallback()`
+(local-storage signals read before the remote meta fetch), `fetchRemoteMetaSafely()`,
+`resolveMetaExtras()` (hidden-templates/custom-roadmaps resolution),
+`resolveOnboardingState()` (the startedTemplateIds-present-vs-legacy-migration branch
+described in this paragraph — itself split further into `fetchLegacyRoadmapSafely()`,
+`isAlreadyOnboardedLegacy()`, `backfillLegacyOnboardingMeta()`),
+`migrateLegacyBlankTemplateIfNeeded()` (the retired-'blank'-template migration below,
+split into `fetchStoredBlankRoadmap()`/`resolveBlankMigrationContent()`/
+`persistBlankMigrationToFirebase()`), and `determineOnboardingAndActiveRoadmap()` (the
+orchestrator combining the previous two so `setUser` only checks one `STALE` sentinel and
+one "did a blank migration happen" branch instead of two of each). `setUser` itself is
+now just an orchestrator over these plus `loadActiveRoadmap()` (a factory closure, not
+module-scope, since it delegates to `fetchTemplateData`/`resolveRoadmapItems`). Every
+`await` boundary inside these phase functions still takes and checks the same `isStale()`
+closure `setUser` builds from its own `stateCallId` — see "`setUser`/`switchRoadmap`
+stale-call guard" below; a `STALE` sentinel (`Symbol('stale')`, exported) is what a phase
+function returns to signal "abort, a newer call already took over" up through the chain.
+Only when `onboardingDone` is false does `main.js` route to
 `/onboarding`; picking a card there calls `store.switchRoadmap(templateId)`, which (since
 issue #58) seeds a not-yet-started template or loads an already-started one, marks
 onboarding done, and starts syncing — never destroying any other template's progress.
