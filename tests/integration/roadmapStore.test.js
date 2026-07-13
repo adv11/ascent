@@ -2034,3 +2034,29 @@ describe('setItemDoneInTemplate — issue #56 follow-up', () => {
     expect(dbApi.saveRoadmap).not.toHaveBeenCalledWith('u1', 'piano', expect.anything());
   });
 });
+
+describe('lastReviewedAt — "Mark reviewed" store contract (issue #134)', () => {
+  it('updateItem({ lastReviewedAt }) bumps structuralVersion, removes the item from getReviewDueItems(), and never touches done/completedAt', async () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const now = Date.now();
+    const twentyDaysAgo = now - 20 * 24 * 60 * 60 * 1000;
+
+    store.updateItem(firstId, { done: true });
+    store.updateItem(firstId, { completedAt: twentyDaysAgo });
+    const beforeVersion = store.getSnapshot().structuralVersion;
+
+    const { getReviewDueItems } = await import('../../src/core/roadmap/reviewSchedule.js');
+    expect(getReviewDueItems(store.getSnapshot().items, now).map(i => i.id)).toContain(firstId);
+
+    const ok = store.updateItem(firstId, { lastReviewedAt: now });
+    expect(ok).toBe(true);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.structuralVersion).toBeGreaterThan(beforeVersion);
+    expect(snapshot.items.find(i => i.id === firstId).lastReviewedAt).toBe(now);
+    expect(snapshot.items.find(i => i.id === firstId).done).toBe(true);
+    expect(snapshot.items.find(i => i.id === firstId).completedAt).toBe(twentyDaysAgo);
+    expect(getReviewDueItems(snapshot.items, now).map(i => i.id)).not.toContain(firstId);
+  });
+});
