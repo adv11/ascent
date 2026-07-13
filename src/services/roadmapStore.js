@@ -182,6 +182,276 @@ function migrateLocalRoadmapsShape() {
   }
 }
 
+function readLocalHiddenTemplates() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEYS.HIDDEN_TEMPLATES) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+// Sentinel returned by every onboarding-detection helper below to mean "a
+// newer setUser() call has already taken over — abort without applying this
+// result." Distinct from `null`/`undefined` (both legitimate "no migration
+// needed" results) so callers can't mistake staleness for "nothing to do".
+export const STALE = Symbol('stale');
+
+// setUser() phase 1 — the uid-transition privacy wipe (roadmap-store.md's
+// "Sign-out contract"). Pure: no localStorage access (that's clearLocal(),
+// called separately by the caller) and no dependency on any in-progress
+// store instance, so the fresh-state shape can be asserted on directly in a
+// unit test without constructing a whole store.
+export function freshStateForNewUid() {
+  return {
+    items: buildSeedItems(),
+    activeTemplateId: 'java-backend',
+    templatePhases: PHASES,
+    onboardingDone: null,
+    hiddenTemplateIds: [],
+    customRoadmaps: [],
+    startedTemplateIds: [],
+    roadmapCache: {},
+    pendingCustomSeeds: {},
+    dirty: false,
+    recentFlushedStrs: []
+  };
+}
+
+// setUser() phase 3 — local fallback state read once per sign-in, before the
+// remote meta fetch, so the legacy-detection phase below has every local
+// signal available up front.
+export function readOnboardingLocalFallback() {
+  const localRoadmaps = readLocalRoadmaps();
+  return {
+    localRoadmaps,
+    localOnboardingDone: localStorage.getItem(KEYS.ONBOARDING_DONE) === 'true',
+    localActiveTemplateId: localStorage.getItem(KEYS.TEMPLATE_ID),
+    localStartedTemplateIds: Object.keys(localRoadmaps)
+  };
+}
+
+// setUser() phase 4 — the remote meta fetch, isolated so the try/catch
+// itself doesn't add to setUser's own complexity count.
+async function fetchRemoteMetaSafely(uid, adapter) {
+  try {
+    return await adapter.getMeta(uid);
+  } catch (error) {
+    console.error('Failed to load roadmap meta from Firebase', error);
+    return null;
+  }
+}
+
+// setUser() phase 5 — hidden-templates/custom-roadmaps resolution: remote
+// meta wins when present, otherwise fall back to whatever's stored locally.
+export function resolveMetaExtras(remoteMeta) {
+  return {
+    hiddenTemplateIds: normalizeStringArray(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates(),
+    customRoadmaps: normalizeStringArray(remoteMeta?.customRoadmaps) || readLocalCustomRoadmaps()
+  };
+}
+
+// setUser() phase 6 — the startedTemplateIds-present vs. legacy-migration
+// branch (roadmap-store.md's "Onboarding detection order"), the single
+// biggest source of setUser's original complexity. Pure aside from the
+// adapter calls it's explicitly handed: takes uid/adapter/remoteMeta/
+// localFallback and an isStale() check (still tied to the calling setUser's
+// own stateCallId, since staleness is inherently per-call) and returns
+// either STALE or `{ onboardingDone, activeTemplateId, startedTemplateIds,
+// migratedLegacyItems }` for the caller to assign onto its own state.
+async function fetchLegacyRoadmapSafely(uid, adapter) {
+  try {
+    return await adapter.getLegacyRoadmap(uid);
+  } catch (error) {
+    console.error('Failed to load legacy roadmap from Firebase', error);
+    return null;
+  }
+}
+
+// Pure: whether a pre-issue-#58 (or pre-#51) account should be treated as
+// already onboarded, per every legacy signal available.
+function isAlreadyOnboardedLegacy(remoteMeta, legacyRoadmap, legacyTemplateId, localFallback) {
+  const { localOnboardingDone, localRoadmaps } = localFallback;
+  return !!remoteMeta?.onboardingDone
+    || localOnboardingDone
+    || hasRealProgress(legacyRoadmap?.items)
+    || hasRealProgress(localRoadmaps[legacyTemplateId]?.items);
+}
+
+// Fire-and-forget backfill of the new (issue #58) meta shape for a legacy
+// account that just got detected as already onboarded — copies the legacy
+// roadmap forward (never deleting the old path, a safety net) and writes
+// the new meta fields so this account isn't re-detected as legacy again.
+function backfillLegacyOnboardingMeta({ uid, adapter, legacyRoadmap, legacyTemplateId, startedTemplateIds }) {
+  if (legacyRoadmap) {
+    adapter.saveRoadmap(uid, legacyTemplateId, { ...legacyRoadmap, templateId: legacyTemplateId }).catch(error => {
+      console.error('Failed to migrate legacy roadmap', error);
+    });
+  }
+  adapter.saveMeta(uid, { startedTemplateIds, activeTemplateId: legacyTemplateId, onboardingDone: true }).catch(error => {
+    console.error('Failed to backfill onboarding meta', error);
+  });
+}
+
+export async function resolveOnboardingState({ uid, adapter, remoteMeta, localFallback, isStale }) {
+  if (remoteMeta?.startedTemplateIds?.length) {
+    // Already on the new (issue #58) meta shape — no migration needed.
+    const startedTemplateIds = remoteMeta.startedTemplateIds;
+    return {
+      onboardingDone: true,
+      activeTemplateId: remoteMeta.activeTemplateId || startedTemplateIds[0],
+      startedTemplateIds,
+      migratedLegacyItems: null
+    };
+  }
+
+  // Either a brand-new account, or one that predates issue #58 (and possibly
+  // predates issue #51 too). Check the legacy singular roadmap path once to
+  // decide, and migrate it forward if this account turns out to already be
+  // onboarded.
+  const legacyRoadmap = await fetchLegacyRoadmapSafely(uid, adapter);
+  if (isStale()) return STALE;
+
+  const { localActiveTemplateId, localStartedTemplateIds } = localFallback;
+  const legacyTemplateId = remoteMeta?.templateId || localActiveTemplateId || 'java-backend';
+
+  if (!isAlreadyOnboardedLegacy(remoteMeta, legacyRoadmap, legacyTemplateId, localFallback)) {
+    return { onboardingDone: false, activeTemplateId: null, startedTemplateIds: [], migratedLegacyItems: null };
+  }
+
+  const startedTemplateIds = localStartedTemplateIds.includes(legacyTemplateId)
+    ? localStartedTemplateIds
+    : [...localStartedTemplateIds, legacyTemplateId];
+
+  backfillLegacyOnboardingMeta({ uid, adapter, legacyRoadmap, legacyTemplateId, startedTemplateIds });
+
+  return {
+    onboardingDone: true,
+    activeTemplateId: legacyTemplateId,
+    startedTemplateIds,
+    migratedLegacyItems: legacyRoadmap ? legacyRoadmap.items : null
+  };
+}
+
+// One-time migration for the now-retired 'blank' template (issue #4
+// follow-up, extracted out of setUser as phase 6's continuation) — see
+// roadmap-store.md's "'blank' template retirement" for the full history.
+// Returns STALE, or `null` when no migration is needed, or the resolved
+// `{ activeTemplateId, startedTemplateIds, customRoadmaps, migratedId,
+// migratedItems, migratedPhases }` for the caller to assign/persist.
+async function fetchStoredBlankRoadmap(uid, adapter) {
+  let storedBlank = null;
+  if (uid) {
+    try {
+      storedBlank = await adapter.getRoadmap(uid, 'blank');
+    } catch (error) {
+      console.error('Failed to load blank roadmap for migration', error);
+    }
+  }
+  if (!storedBlank?.items) {
+    const localBlob = readLocalRoadmaps().blank;
+    if (localBlob?.items) storedBlank = localBlob;
+  }
+  return storedBlank;
+}
+
+// Pre-dates PR #60 always persisting `phases` — falls back to blank.js's own
+// fixed skeleton/empty seed for whichever half (items or phases) is missing.
+async function resolveBlankMigrationContent(storedBlank, isStale) {
+  let migratedItems = storedBlank?.items;
+  let migratedPhases = normalizeStringArray(storedBlank?.phases);
+  if (migratedItems && migratedPhases) return { migratedItems, migratedPhases };
+
+  const legacy = await getLegacyBlankTemplateData();
+  if (isStale()) return STALE;
+  return {
+    migratedItems: migratedItems || legacy.baseItems,
+    migratedPhases: migratedPhases || legacy.phases
+  };
+}
+
+// Fire-and-forget persistence of the migrated content to Firebase, mirroring
+// backfillLegacyOnboardingMeta()'s pattern above.
+function persistBlankMigrationToFirebase({ uid, adapter, migratedId, migratedItems, migratedPhases, nextActiveTemplateId, nextStartedTemplateIds, nextCustomRoadmaps }) {
+  if (!uid) return;
+  adapter.saveRoadmap(uid, migratedId, {
+    version: ROADMAP_VERSION,
+    updatedAt: adapter.now(),
+    templateId: migratedId,
+    items: migratedItems,
+    phases: migratedPhases
+  }).catch(error => {
+    console.error('Failed to migrate blank roadmap content', error);
+  });
+  adapter.saveMeta(uid, {
+    activeTemplateId: nextActiveTemplateId,
+    startedTemplateIds: nextStartedTemplateIds,
+    customRoadmaps: nextCustomRoadmaps,
+    onboardingDone: true
+  }).catch(error => {
+    console.error('Failed to save meta after blank-template migration', error);
+  });
+}
+
+export async function migrateLegacyBlankTemplateIfNeeded({ uid, adapter, activeTemplateId, startedTemplateIds, customRoadmaps, isStale }) {
+  if (!(activeTemplateId === 'blank' || startedTemplateIds.includes('blank'))) return null;
+
+  const storedBlank = await fetchStoredBlankRoadmap(uid, adapter);
+  if (isStale()) return STALE;
+
+  const content = await resolveBlankMigrationContent(storedBlank, isStale);
+  if (content === STALE) return STALE;
+  const { migratedItems, migratedPhases } = content;
+
+  const migratedId = genId('croadmap');
+  const nextCustomRoadmaps = [...customRoadmaps, { id: migratedId, title: 'My roadmap', description: '', createdAt: Date.now() }];
+  const nextActiveTemplateId = activeTemplateId === 'blank' ? migratedId : activeTemplateId;
+  const nextStartedTemplateIds = startedTemplateIds.map(id => (id === 'blank' ? migratedId : id));
+
+  persistBlankMigrationToFirebase({ uid, adapter, migratedId, migratedItems, migratedPhases, nextActiveTemplateId, nextStartedTemplateIds, nextCustomRoadmaps });
+
+  return {
+    activeTemplateId: nextActiveTemplateId,
+    startedTemplateIds: nextStartedTemplateIds,
+    customRoadmaps: nextCustomRoadmaps,
+    migratedId,
+    migratedItems,
+    migratedPhases
+  };
+}
+
+// setUser() phase 6, combined — orchestrates resolveOnboardingState() and
+// migrateLegacyBlankTemplateIfNeeded() so setUser itself only has to check
+// one STALE result and one "did a blank migration happen" branch instead of
+// two of each. Returns STALE or `{ onboardingDone, activeTemplateId,
+// startedTemplateIds, customRoadmaps, migratedLegacyItems, blankMigration }`
+// (`blankMigration` is `null` when no migration ran).
+export async function determineOnboardingAndActiveRoadmap({ uid, adapter, remoteMeta, localFallback, customRoadmaps, isStale }) {
+  const base = await resolveOnboardingState({ uid, adapter, remoteMeta, localFallback, isStale });
+  if (base === STALE) return STALE;
+  if (!base.onboardingDone) return { ...base, customRoadmaps, blankMigration: null };
+
+  const blankMigration = await migrateLegacyBlankTemplateIfNeeded({
+    uid,
+    adapter,
+    activeTemplateId: base.activeTemplateId,
+    startedTemplateIds: base.startedTemplateIds,
+    customRoadmaps,
+    isStale
+  });
+  if (blankMigration === STALE) return STALE;
+  if (!blankMigration) return { ...base, customRoadmaps, blankMigration: null };
+
+  return {
+    onboardingDone: true,
+    activeTemplateId: blankMigration.activeTemplateId,
+    startedTemplateIds: blankMigration.startedTemplateIds,
+    customRoadmaps: blankMigration.customRoadmaps,
+    migratedLegacyItems: base.migratedLegacyItems,
+    blankMigration
+  };
+}
+
 // onCompletionToggle(delta) — issue #8: fired once, with +1 or -1, exactly
 // when a done-transition is detected (see completionDelta() above), so
 // main.js can record it into activityLogStore without roadmapStore.js
@@ -296,15 +566,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     if (!onboardingDone) return;
     localStorage.setItem(KEYS.ONBOARDING_DONE, 'true');
     if (activeTemplateId) localStorage.setItem(KEYS.TEMPLATE_ID, activeTemplateId);
-  }
-
-  function readLocalHiddenTemplates() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(KEYS.HIDDEN_TEMPLATES) || '[]');
-      return Array.isArray(raw) ? raw : [];
-    } catch {
-      return [];
-    }
   }
 
   function persistLocalHiddenTemplates() {
@@ -491,11 +752,42 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     return { items: baseItems, phases: basePhases, dirty: false };
   }
 
+  // setUser()'s final phase, once onboardingDone is known true — loads the
+  // active template's items/phases (cache -> Firebase -> local blob -> seed,
+  // see resolveRoadmapItems) and seeds roadmapCache from a just-migrated
+  // legacy roadmap when one exists. Stays a factory closure (like
+  // flushOutgoingRoadmap/saveSwitchMeta below) rather than a pure module
+  // function, since it delegates straight to fetchTemplateData/
+  // resolveRoadmapItems, which are themselves closures over adapter/uid/
+  // roadmapCache.
+  async function loadActiveRoadmap(migratedLegacyItems, isStale) {
+    // Not awaited here — issue #121 item 6: this is a dynamic import() for a
+    // built-in template, which has no dependency on resolveRoadmapItems()'s
+    // own Firebase read below. Handing it the still-pending promise lets the
+    // two run concurrently instead of paying for the import's latency before
+    // the Firebase round trip even starts (see resolveRoadmapItems()'s own
+    // comment for the full reasoning).
+    const templateDataPromise = fetchTemplateData(activeTemplateId);
+
+    if (migratedLegacyItems && !roadmapCache[activeTemplateId]) {
+      const { baseItems, phases } = await templateDataPromise;
+      if (isStale()) return STALE;
+      roadmapCache[activeTemplateId] = { items: mergeWithSeed(migratedLegacyItems, baseItems), phases, dirty: false };
+    }
+
+    const resolved = await resolveRoadmapItems(activeTemplateId, templateDataPromise);
+    if (isStale()) return STALE;
+    return resolved;
+  }
+
   // Determines, once per sign-in, whether this user has already picked a starter
   // template (Issue #51) and which templates they've started (Issue #58). New
   // accounts are routed to /onboarding by main.js; everyone else (including every
   // account that predates the template system) is treated as already onboarded —
-  // see docs/architecture.md for the detection order and the migration this performs.
+  // see roadmap-store.md's "Onboarding detection order" for the detection order
+  // and the migration this performs, and for what each extracted phase function
+  // above (freshStateForNewUid/readOnboardingLocalFallback/resolveMetaExtras/
+  // determineOnboardingAndActiveRoadmap/loadActiveRoadmap) covers.
   async function setUser(nextUser) {
     const nextUid = nextUser?.uid || null;
     const callId = ++stateCallId;
@@ -508,17 +800,18 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       clearTimeout(saveTimer);
       saveTimer = null;
       clearLocal();
-      items = buildSeedItems();
-      activeTemplateId = 'java-backend';
-      templatePhases = PHASES;
-      onboardingDone = null;
-      hiddenTemplateIds = [];
-      customRoadmaps = [];
-      startedTemplateIds = [];
-      roadmapCache = {};
-      pendingCustomSeeds = {};
-      dirty = false;
-      recentFlushedStrs = [];
+      const fresh = freshStateForNewUid();
+      items = fresh.items;
+      activeTemplateId = fresh.activeTemplateId;
+      templatePhases = fresh.templatePhases;
+      onboardingDone = fresh.onboardingDone;
+      hiddenTemplateIds = fresh.hiddenTemplateIds;
+      customRoadmaps = fresh.customRoadmaps;
+      startedTemplateIds = fresh.startedTemplateIds;
+      roadmapCache = fresh.roadmapCache;
+      pendingCustomSeeds = fresh.pendingCustomSeeds;
+      dirty = fresh.dirty;
+      recentFlushedStrs = fresh.recentFlushedStrs;
       structuralVersion += 1;
     }
 
@@ -535,143 +828,31 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       return;
     }
 
-    const localRoadmaps = readLocalRoadmaps();
-    const localOnboardingDone = localStorage.getItem(KEYS.ONBOARDING_DONE) === 'true';
-    const localActiveTemplateId = localStorage.getItem(KEYS.TEMPLATE_ID);
-    const localStartedTemplateIds = Object.keys(localRoadmaps);
-
-    let remoteMeta = null;
-    try {
-      remoteMeta = await adapter.getMeta(uid);
-    } catch (error) {
-      console.error('Failed to load roadmap meta from Firebase', error);
-    }
+    const localFallback = readOnboardingLocalFallback();
+    const remoteMeta = await fetchRemoteMetaSafely(uid, adapter);
 
     // A newer setUser() call (e.g. the very next auth state change) has already
     // taken over — applying this now-stale result would clobber correct state.
     if (isStale()) return;
 
-    hiddenTemplateIds = normalizeStringArray(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates();
+    const metaExtras = resolveMetaExtras(remoteMeta);
+    hiddenTemplateIds = metaExtras.hiddenTemplateIds;
     persistLocalHiddenTemplates();
-    customRoadmaps = normalizeStringArray(remoteMeta?.customRoadmaps) || readLocalCustomRoadmaps();
+    customRoadmaps = metaExtras.customRoadmaps;
     persistLocalCustomRoadmaps();
 
-    // Set only when this call just migrated a legacy roadmap forward — lets the
-    // load step below seed roadmapCache directly from it instead of re-reading
-    // Firebase, which would otherwise race the fire-and-forget saveRoadmap() call.
-    let migratedLegacyItems = null;
+    const onboarding = await determineOnboardingAndActiveRoadmap({ uid, adapter, remoteMeta, localFallback, customRoadmaps, isStale });
+    if (onboarding === STALE) return;
 
-    if (remoteMeta?.startedTemplateIds?.length) {
-      // Already on the new (issue #58) meta shape — no migration needed.
-      onboardingDone = true;
-      startedTemplateIds = remoteMeta.startedTemplateIds;
-      activeTemplateId = remoteMeta.activeTemplateId || startedTemplateIds[0];
-    } else {
-      // Either a brand-new account, or one that predates issue #58 (and possibly
-      // predates issue #51 too). Check the legacy singular roadmap path once to
-      // decide, and migrate it forward if this account turns out to already be
-      // onboarded.
-      let legacyRoadmap = null;
-      try {
-        legacyRoadmap = await adapter.getLegacyRoadmap(uid);
-      } catch (error) {
-        console.error('Failed to load legacy roadmap from Firebase', error);
-      }
-      if (isStale()) return;
-
-      const legacyTemplateId = remoteMeta?.templateId || localActiveTemplateId || 'java-backend';
-      const alreadyOnboarded = !!remoteMeta?.onboardingDone
-        || localOnboardingDone
-        || hasRealProgress(legacyRoadmap?.items)
-        || hasRealProgress(localRoadmaps[legacyTemplateId]?.items);
-
-      if (alreadyOnboarded) {
-        onboardingDone = true;
-        activeTemplateId = legacyTemplateId;
-        startedTemplateIds = localStartedTemplateIds.includes(legacyTemplateId)
-          ? localStartedTemplateIds
-          : [...localStartedTemplateIds, legacyTemplateId];
-
-        if (legacyRoadmap) {
-          migratedLegacyItems = legacyRoadmap.items;
-          // Copy-forward, never delete the old path — it stays as a safety net.
-          adapter.saveRoadmap(uid, legacyTemplateId, { ...legacyRoadmap, templateId: legacyTemplateId }).catch(error => {
-            console.error('Failed to migrate legacy roadmap', error);
-          });
-        }
-        adapter.saveMeta(uid, { startedTemplateIds, activeTemplateId, onboardingDone: true }).catch(error => {
-          console.error('Failed to backfill onboarding meta', error);
-        });
-      } else {
-        onboardingDone = false;
-        activeTemplateId = null;
-        startedTemplateIds = [];
-      }
-    }
-
-    // One-time migration for the now-retired 'blank' template (issue #4
-    // follow-up): once manual CRUD (PR #60) and AI import (this PR) both
-    // existed, 'blank' became a strict subset of "Create your own roadmap" —
-    // fixed Learn/Practice/Build/Review phases versus fully editable ones —
-    // so it's no longer offered in TEMPLATES. Anyone who already started it
-    // keeps their content: migrated forward into a real custom roadmap
-    // instead of losing access. Never deletes the old
-    // users/{uid}/roadmaps/blank node — same never-delete-just-stop-reading
-    // precedent as every other legacy path in this file. Runs before
-    // fetchTemplateData(activeTemplateId) below, which would otherwise be
-    // called with 'blank' — no longer a valid built-in id (removed from
-    // TEMPLATES) or custom id (doesn't match the croadmap- prefix) — and
-    // silently resolve to the wrong (fallback) template content.
-    if (onboardingDone && (activeTemplateId === 'blank' || startedTemplateIds.includes('blank'))) {
-      let storedBlank = null;
-      if (uid) {
-        try {
-          storedBlank = await adapter.getRoadmap(uid, 'blank');
-        } catch (error) {
-          console.error('Failed to load blank roadmap for migration', error);
-        }
-      }
-      if (isStale()) return;
-
-      if (!storedBlank?.items) {
-        const localBlob = readLocalRoadmaps().blank;
-        if (localBlob?.items) storedBlank = localBlob;
-      }
-
-      let migratedItems = storedBlank?.items;
-      let migratedPhases = normalizeStringArray(storedBlank?.phases);
-      if (!migratedItems || !migratedPhases) {
-        // Pre-dates PR #60 always persisting `phases` — fall back to blank.js's
-        // own fixed skeleton/empty seed for whichever half is missing.
-        const legacy = await getLegacyBlankTemplateData();
-        if (isStale()) return;
-        migratedItems = migratedItems || legacy.baseItems;
-        migratedPhases = migratedPhases || legacy.phases;
-      }
-
-      const migratedId = genId('croadmap');
-      customRoadmaps = [...customRoadmaps, { id: migratedId, title: 'My roadmap', description: '', createdAt: Date.now() }];
-      persistLocalCustomRoadmaps();
+    onboardingDone = onboarding.onboardingDone;
+    activeTemplateId = onboarding.activeTemplateId;
+    startedTemplateIds = onboarding.startedTemplateIds;
+    customRoadmaps = onboarding.customRoadmaps;
+    persistLocalCustomRoadmaps();
+    if (onboarding.blankMigration) {
+      const { migratedId, migratedItems, migratedPhases } = onboarding.blankMigration;
       persistLocalRoadmap(migratedId, { dirty: false, items: migratedItems, phases: migratedPhases });
       roadmapCache[migratedId] = { items: migratedItems, phases: migratedPhases, dirty: false };
-
-      if (activeTemplateId === 'blank') activeTemplateId = migratedId;
-      startedTemplateIds = startedTemplateIds.map(id => (id === 'blank' ? migratedId : id));
-
-      if (uid) {
-        adapter.saveRoadmap(uid, migratedId, {
-          version: ROADMAP_VERSION,
-          updatedAt: adapter.now(),
-          templateId: migratedId,
-          items: migratedItems,
-          phases: migratedPhases
-        }).catch(error => {
-          console.error('Failed to migrate blank roadmap content', error);
-        });
-        adapter.saveMeta(uid, { activeTemplateId, startedTemplateIds, customRoadmaps, onboardingDone: true }).catch(error => {
-          console.error('Failed to save meta after blank-template migration', error);
-        });
-      }
     }
 
     persistLocalOnboarding();
@@ -684,22 +865,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       return;
     }
 
-    // Not awaited here — issue #121 item 6: this is a dynamic import() for a
-    // built-in template, which has no dependency on resolveRoadmapItems()'s
-    // own Firebase read below. Handing it the still-pending promise lets the
-    // two run concurrently instead of paying for the import's latency before
-    // the Firebase round trip even starts (see resolveRoadmapItems()'s own
-    // comment for the full reasoning).
-    const templateDataPromise = fetchTemplateData(activeTemplateId);
-
-    if (migratedLegacyItems && !roadmapCache[activeTemplateId]) {
-      const { baseItems, phases } = await templateDataPromise;
-      if (isStale()) return;
-      roadmapCache[activeTemplateId] = { items: mergeWithSeed(migratedLegacyItems, baseItems), phases, dirty: false };
-    }
-
-    const resolved = await resolveRoadmapItems(activeTemplateId, templateDataPromise);
-    if (isStale()) return;
+    const resolved = await loadActiveRoadmap(onboarding.migratedLegacyItems, isStale);
+    if (resolved === STALE) return;
 
     items = resolved.items;
     templatePhases = resolved.phases;
