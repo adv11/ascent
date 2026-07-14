@@ -747,10 +747,11 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    background regardless of the site's own light/dark theme — this panel is
    intentionally always-dark, matching the ZeBeyond direction's near-black
    marketing surface (issue #155) rather than the previous solid brand-teal
-   gradient fill. Two radial teal/cyan glows (fixed literals, not tokens,
-   since this panel never reads the site's own light/dark theme tokens —
-   same reasoning as the rest of this always-dark panel, issue #116) replace
-   the old flat gradient; the diagonal-line texture below is unchanged. */
+   gradient fill. Two radial teal/cyan glows replace the old flat gradient;
+   the diagonal-line texture below is unchanged. */
+/* intentional: fixed literals, not tokens, since this panel never reads the
+   site's own light/dark theme tokens — same reasoning as the rest of this
+   always-dark panel, issue #116. */
 .auth-marketing {
   background:
     radial-gradient(700px 500px at 12% 90%, rgba(45, 212, 191, 0.28), transparent 60%),
