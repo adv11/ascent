@@ -3604,3 +3604,16 @@ is wrapped to also remove the portaled tooltip node so the existing `chart?.dest
 call-site pattern (`progress.js`) stays leak-free with no caller change required. Full
 class/function list and reasoning in `.claude/rules/ui-styling.md`'s "Visual design
 language v2" section.
+
+### 2026-07-14 — PR #TBD — Landing/auth/shell recolor, Phase C of issue #155's v2 redefinition (lime/near-black direction)
+
+Phase C: swapped the ZeBeyond mint-based classes on `landing.js`, `authMarketingPanel.js`,
+and `sidebar.js` (`.eyebrow`, `.text-gradient-brand`, `.tag-chip-accent`, `.icon-tile`,
+`.btn-cta`, `.feature-card-icon`, `.step-card-icon`, `.landing-proof-text`,
+`.nav-item.active`) over to Phase A's `--accent-lime` token family, scoped to
+`:root[data-theme='dark']` only — no structural/markup change, colors only, light theme
+unchanged. `.auth-marketing-eyebrow`'s fixed literal moved from ZeBeyond's `#5eead4` to
+`#f0f941` unconditionally, since that panel is always-dark regardless of site theme.
+Visually verified in both themes against a real dev server (landing full-page, sign-in)
+— screenshots in the PR. No page outside this scope touched; Settings/Progress/modals
+remain Phase D's job.

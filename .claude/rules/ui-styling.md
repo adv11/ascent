@@ -399,3 +399,16 @@ not wired into any real page yet; that's Phase C/D):**
   row (`.chart-legend`, `app.css`), defaulting to the high/medium/low bucket set above.
   Per-bucket dot colors are discrete `.chart-legend-dot-{bucket}` classes, not an
   inline `style` (CSP has no `unsafe-inline` for `style-src`).
+
+**Phase C, shipped — landing/auth/shell recolor.** The ZeBeyond structural classes
+documented in the "ZeBeyond direction" section above (`.eyebrow`, `.text-gradient-brand`,
+`.tag-chip-accent`, `.icon-tile`, `.btn-cta`, plus the landing-only `.feature-card-icon`/
+`.step-card-icon`/`.landing-proof-text` and the sidebar's `.nav-item.active`) now read
+the `--accent-lime`/`--accent-lime-dark`/`--accent-lime-light`/
+`--accent-lime-light-border` family under `:root[data-theme='dark']`, in place of
+`--brand`/`--brand-dark`/`--brand-light`/`--brand-light-border` — colors only, every
+class's structure/markup is unchanged from ZeBeyond. Light theme keeps the mint values
+(no override), consistent with Phase A/B's "no v2 reference material exists in light
+theme" reasoning. `.auth-marketing-eyebrow` (a fixed literal, not a token, since that
+panel is always-dark regardless of site theme) moved from `#5eead4` to `#f0f941`
+directly and unconditionally.

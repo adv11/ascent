@@ -486,6 +486,12 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   color: var(--brand);
 }
 .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); flex-shrink: 0; }
+/* issue #155 v2 Phase C — landing/auth/shell recolor: swap the ZeBeyond mint accent for
+   the v2 lime accent on the specific classes scoped to those three areas (this class is
+   only ever used by landing.js/authMarketingPanel.js — see ui-styling.md). Falls back to
+   --brand in light theme, unchanged (no v2 reference material exists there). */
+:root[data-theme='dark'] .eyebrow { color: var(--accent-lime); }
+:root[data-theme='dark'] .eyebrow-dot { background: var(--accent-lime); }
 
 /* Gradient-filled headline text (brand -> brand-cyan), for one accent
    phrase inside an otherwise plain-color heading — never the whole
@@ -496,6 +502,14 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+/* issue #155 v2 Phase C — landing-only gradient (landing.js's hero title is the sole
+   call site), lime-to-lime-dark instead of mint-to-cyan; falls back to the ZeBeyond
+   gradient in light theme. */
+:root[data-theme='dark'] .text-gradient-brand {
+  background: linear-gradient(90deg, var(--accent-lime) 0%, var(--accent-lime-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 /* Two-tone tag-chip pair (the "EPOP CONCEPT" + "AUTOMOTIVE" chip pattern) —
@@ -519,6 +533,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   color: var(--muted);
 }
 .tag-chip-accent { background: var(--brand-light); border-color: var(--brand-light-border); color: var(--brand-dark); }
+/* issue #155 v2 Phase C — landing-scoped recolor; falls back to mint in light theme. */
+:root[data-theme='dark'] .tag-chip-accent { background: var(--accent-lime-light); border-color: var(--accent-lime-light-border); color: var(--accent-lime-dark); }
 
 /* Small rounded-square icon container for card headers (the icon-topped
    case-study-card pattern) — wraps a createIcon()/createDecorativeIcon()
@@ -535,6 +551,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   border: 1px solid var(--line);
   color: var(--brand);
 }
+/* issue #155 v2 Phase C — landing-scoped recolor; falls back to mint in light theme. */
+:root[data-theme='dark'] .icon-tile { color: var(--accent-lime); }
 
 /* Solid bright pill CTA button, scoped to marketing contexts (landing/auth)
    specifically — deliberately not a change to .btn-primary, which is used
@@ -566,6 +584,10 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* matches .btn-lg's sizing so a .btn-cta.btn-lg sits flush with an adjacent
    .btn-secondary.btn-lg (landing hero actions row) */
 .btn-cta.btn-lg { height: 48px; padding: 0 28px; font-size: var(--text-md); }
+/* issue #155 v2 Phase C — landing/auth-scoped recolor; falls back to mint in light
+   theme. color: var(--soft) already reads correctly against lime (near-black text on
+   a bright fill), the same cross-theme trick the base rule above documents. */
+:root[data-theme='dark'] .btn-cta { background: var(--accent-lime); }
 
 /* Bordered pill container that visually groups adjacent icon-only buttons
    (the reference's search/mail/sign-in icon cluster) — a shared wrapper,
@@ -807,13 +829,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   position: relative;
   overflow: hidden;
 }
-/* intentional: fixed brand-teal color on this panel's own fixed-dark
-   background regardless of site theme (issue #116) — mirrors .eyebrow's
-   layout (imported via the shared class) but can't read the theme-flipping
-   --brand token here, same reasoning as every other fixed color on this
-   panel. */
-.auth-marketing-eyebrow { color: #5eead4; margin: 0 0 var(--space-4); }
-.auth-marketing-eyebrow .eyebrow-dot { background: #5eead4; }
+/* intentional: fixed lime color on this panel's own fixed-dark background
+   regardless of site theme (issue #116) — mirrors .eyebrow's layout (imported via the
+   shared class) but can't read the theme-flipping --brand/--accent-lime tokens here,
+   same reasoning as every other fixed color on this panel. issue #155 v2 Phase C —
+   was the ZeBeyond mint #5eead4; since this panel is always-dark regardless of site
+   theme, it always uses the v2 dark-theme accent (lime), never the light-theme mint
+   fallback other Phase C recolors have. */
+.auth-marketing-eyebrow { color: #f0f941; margin: 0 0 var(--space-4); }
+.auth-marketing-eyebrow .eyebrow-dot { background: #f0f941; }
 /* intentional: subtle repeating diagonal-line texture — fills the panel's empty space
    with a low-opacity design element instead of a flat void, fixed white regardless of
    site theme since .auth-marketing itself is always-dark (issue #116).
@@ -1273,6 +1297,9 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    radius, matching the reference's rounded active-nav-item treatment; same
    brand-tinted background/text, no color change. */
 .nav-item.active { background: var(--brand-light); color: var(--brand-dark); border-radius: var(--chip-radius); }
+/* issue #155 v2 Phase C — shell recolor (sidebar.js); falls back to mint in light
+   theme, unchanged. */
+:root[data-theme='dark'] .nav-item.active { background: var(--accent-lime-light); color: var(--accent-lime-dark); }
 .nav-item-icon { display: inline-flex; flex-shrink: 0; }
 
 .app-sidebar-spacer { flex: 1; }
@@ -3832,6 +3859,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   color: var(--brand-dark);
   margin-bottom: var(--space-5);
 }
+/* issue #155 v2 Phase C — landing-only class, recolored; falls back to mint in light theme. */
+:root[data-theme='dark'] .feature-card-icon { background: var(--accent-lime-light); color: var(--accent-lime-dark); }
 .feature-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); margin: 0 0 var(--space-2); color: var(--ink); }
 .feature-card-text { font-size: var(--text-base); line-height: var(--leading-relaxed); color: var(--muted); margin: 0; }
 
@@ -3875,11 +3904,15 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   color: var(--brand-dark);
   margin-bottom: var(--space-4);
 }
+/* issue #155 v2 Phase C — landing-only class, recolored; falls back to mint in light theme. */
+:root[data-theme='dark'] .step-card-icon { background: var(--accent-lime-light); color: var(--accent-lime-dark); }
 .step-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-md); margin: 0 0 var(--space-2); color: var(--ink); }
 .step-card-text { font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--muted); margin: 0; }
 
 .landing-proof { text-align: center; padding: 0 var(--space-6) var(--space-12); }
 .landing-proof-text { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); color: var(--brand-dark); max-width: 52ch; margin: 0 auto; }
+/* issue #155 v2 Phase C — landing-only, recolored; falls back to mint in light theme. */
+:root[data-theme='dark'] .landing-proof-text { color: var(--accent-lime-dark); }
 
 /* issue #155 (ZeBeyond direction) — same bg-grid-glow treatment as .landing-hero above. */
 .landing-cta {
