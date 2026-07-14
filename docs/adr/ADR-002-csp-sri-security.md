@@ -70,6 +70,7 @@ CSP directives chosen:
 | `font-src` | `https://fonts.gstatic.com` | Google Fonts font files |
 | `connect-src` | `https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com http://127.0.0.1:9099 http://127.0.0.1:9000 ws://127.0.0.1:9000` | Firebase Realtime Database (HTTPS + WebSocket), Auth REST, token refresh, plus the local Auth/Database emulator ports used by `FIREBASE_CONFIGURED=true` E2E runs (`connectAuthEmulator`/`connectDatabaseEmulator` in `firebase.js`) |
 | `img-src` | `'self' data:` | Allows inline SVG data URIs (used by favicon/icons) |
+| `frame-src` | `https://*.firebaseapp.com` | The `apis.google.com` gapi loader (see "apis.google.com allowlist entry" below) opens a hidden cross-tab auth-state iframe against the Firebase project's own `<project-id>.firebaseapp.com` auth domain — wildcarded (matching `connect-src`'s existing `https://*.firebaseio.com` pattern) since each deployment of this codebase has its own project-specific `authDomain` |
 | `frame-ancestors` | `'none'` | Belt-and-suspenders with X-Frame-Options: DENY |
 
 The `127.0.0.1` emulator entries only matter when `window.__USE_FIREBASE_EMULATOR__` is
@@ -172,6 +173,22 @@ internally by the Firebase Auth SDK itself, not by an `import`/`<script>` tag th
 controls directly, so there's no call site to attach a `modulepreload`/`integrity`
 attribute to (the same constraint documented for the Chart.js/jsdelivr entry above,
 for a different reason).
+
+**Follow-up found by re-running a real Lighthouse pass (same day):** allowlisting the
+script alone was not sufficient — once `apis.google.com`'s gapi loader actually runs, it
+opens a hidden iframe against the Firebase project's own `<project-id>.firebaseapp.com`
+auth domain for the same cross-tab persistence purpose, which was blocked by
+`default-src 'self'` (no `frame-src` was set, so `default-src` was the fallback for
+frame loads too) — a second, previously undetected CSP violation, invisible until the
+gapi script itself actually executed. A `frame-src https://*.firebaseapp.com` directive
+was added (see the directive table above) to close this. Verified with a real
+`npx lighthouse` run (not just a manual DevTools console check) before and after: before,
+`inspector-issues` scored 0 with a `frame-ancestors`-in-`<meta>`-tag CSP block reported
+against `switchprep-adv26.firebaseapp.com`; after, `inspector-issues` scores 1 (clean).
+`errors-in-console` still reports a nonzero item, but the only one left is the
+pre-existing, already-documented `frame-ancestors`-in-`<meta>`-tag notice (see the
+"Noted, not actioned" finding in issue #168 and the `frame-ancestors` row above) — a
+browser-spec limitation unrelated to this fix, not a regression.
 
 ## Consequences
 

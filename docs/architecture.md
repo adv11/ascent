@@ -3553,3 +3553,15 @@ allowlist entry" section. No source module changed. Also recorded, decision-only
 unminified/unused-CSS-JS Lighthouse findings from the same run as a known, accepted cost
 of the no-bundler architecture decision — see section 2's stack table above; no bundler
 or minification was implemented.
+
+A real `npx lighthouse` re-run (not just a manual DevTools console spot-check) against
+the fixed page found the `script-src` allowlist entry alone was insufficient: once the
+`apis.google.com` script actually executes, it opens a hidden cross-tab auth-state iframe
+against the Firebase project's own `<project-id>.firebaseapp.com` domain, which
+`default-src 'self'` was blocking (no `frame-src` had been set). Added
+`frame-src https://*.firebaseapp.com` (wildcarded per-project, matching the existing
+`https://*.firebaseio.com` pattern in `connect-src`) — verified `inspector-issues` moves
+from score 0 to score 1 (clean) after this second directive. `errors-in-console` still
+reports the pre-existing, already-documented `frame-ancestors`-in-`<meta>`-tag notice
+(issue #168's own "noted, not actioned" finding, a browser-spec limitation, not a
+regression from this change).
