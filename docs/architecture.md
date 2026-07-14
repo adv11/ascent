@@ -34,6 +34,8 @@ templates + onboarding ✅ — core architecture hardening continues).
 | Playwright | Chromium E2E with Firebase Emulator — real auth flows without hitting production. |
 | No framework (no React, Vue, etc.) | At MVP scale the overhead of a VDOM/reactivity layer exceeds its benefit. The `el()` helper + pub-sub store gives the same mental model at a fraction of the cost. Revisit if component count or state complexity grows past what the store pattern handles cleanly. |
 
+**Known, accepted cost of the no-bundler decision — unminified/unused CSS/JS (decision-only, issue #168, 2026-07-14).** A real Lighthouse run against the post-issue-#137 landing page flagged `unminified-css`, `unminified-javascript`, `unused-css-rules`, and `unused-javascript` — all score 0, ~750ms/~140KB of potential savings each. This is the direct, expected consequence of shipping raw `src/**` files with no build step: nothing minifies `app.css`/the JS module graph, and `app.css` is intentionally one shared stylesheet across every page/theme (see `.claude/rules/ui-styling.md`), so any given page loads CSS rules other pages use. Issue #137's own "Out of scope" section already ruled out introducing a bundler to solve a closely related problem, for the same "no build step" reasoning captured in the stack table above. This is recorded here as the reference measurement for anyone who revisits the no-bundler tradeoff later — no bundler, minifier, or CSS-splitting work was implemented as part of issue #168; that remains a bigger call than a documentation note and would need its own scoped issue (matching how #135 tracks the monetization-model decision at the same milestone).
+
 ---
 
 ## 3. Module-by-module walkthrough
@@ -3537,3 +3539,17 @@ handles fine here) and then triggers the in-app hash-route change client-side, r
 than asking Lighthouse to `page.goto()` a hash URL as the very first navigation in a
 fresh browser context. Shipping `/`-only now rather than continuing to iterate blind on
 CI-only failures with no new local repro to work from.
+
+### 2026-07-14 — PR #TBD — CSP fix for Firebase Auth's internal script load, issue #137 Lighthouse follow-up (issue #168)
+
+`index.html`'s CSP `script-src` gained `https://apis.google.com`, fixing a console error
+(and Lighthouse `errors-in-console`/`inspector-issues` score-0 findings) present on every
+page load: the Firebase Auth SDK internally loads `https://apis.google.com/js/api.js` as
+part of its own cross-tab auth-state/iframe persistence machinery, regardless of whether
+the app calls any Google-OAuth-specific API (this app only uses email/password +
+anonymous auth). Same named-host allowlist pattern already used for `gstatic.com`/
+`cdn.jsdelivr.net` — see `docs/adr/ADR-002-csp-sri-security.md`'s new "`apis.google.com`
+allowlist entry" section. No source module changed. Also recorded, decision-only, the
+unminified/unused-CSS-JS Lighthouse findings from the same run as a known, accepted cost
+of the no-bundler architecture decision — see section 2's stack table above; no bundler
+or minification was implemented.

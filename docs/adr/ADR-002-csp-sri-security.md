@@ -65,7 +65,7 @@ CSP directives chosen:
 | Directive | Value | Reason |
 |---|---|---|
 | `default-src` | `'self'` | Catchall — only same-origin resources allowed by default |
-| `script-src` | `'self' https://www.gstatic.com` | Firebase SDK CDN modules |
+| `script-src` | `'self' https://www.gstatic.com https://cdn.jsdelivr.net https://apis.google.com` | Firebase SDK CDN modules, lazy-loaded Chart.js (see the "CDN loading exceptions" section below), and Firebase Auth's own internal cross-tab/iframe script (see "apis.google.com allowlist entry" below) |
 | `style-src` | `'self' https://fonts.googleapis.com` | Google Fonts CSS |
 | `font-src` | `https://fonts.gstatic.com` | Google Fonts font files |
 | `connect-src` | `https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com http://127.0.0.1:9099 http://127.0.0.1:9000 ws://127.0.0.1:9000` | Firebase Realtime Database (HTTPS + WebSocket), Auth REST, token refresh, plus the local Auth/Database emulator ports used by `FIREBASE_CONFIGURED=true` E2E runs (`connectAuthEmulator`/`connectDatabaseEmulator` in `firebase.js`) |
@@ -153,6 +153,25 @@ oversight: if a stronger guarantee becomes necessary (e.g. Chart.js is used some
 CSP-critical, not just an authenticated user's own analytics view), the fallback is to
 drop lazy-loading and go back to an eager `modulepreload` + SRI tag, accepting the
 extra unconditional network request on every page load.
+
+## `apis.google.com` allowlist entry (added 2026-07-14, issue #168)
+
+A Lighthouse run against the landing page surfaced a CSP violation on every page load:
+`https://apis.google.com/js/api.js?onload=...` was being blocked by `script-src`. Root
+cause: the Firebase Auth SDK (`firebase-auth.js`, loaded by `src/services/firebase.js`)
+internally attempts to load this script as part of its own cross-tab auth-state/iframe
+persistence machinery — this happens unconditionally, regardless of whether the app
+itself ever calls a Google-OAuth-specific API. This app only uses email/password and
+anonymous auth (confirmed via `src/services/firebase.js`), but the SDK's internal
+plumbing still reaches for this domain.
+
+Same allowlist pattern as `gstatic.com`/`jsdelivr.net` above: a specific, named host
+added to `script-src`, not a wildcard or `unsafe-inline`. `https://apis.google.com` was
+added to `index.html`'s CSP meta tag. No SRI hash applies here — this script is loaded
+internally by the Firebase Auth SDK itself, not by an `import`/`<script>` tag this app
+controls directly, so there's no call site to attach a `modulepreload`/`integrity`
+attribute to (the same constraint documented for the Chart.js/jsdelivr entry above,
+for a different reason).
 
 ## Consequences
 
