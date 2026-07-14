@@ -3470,3 +3470,24 @@ silently failed to wire up a working cleanup wouldn't be caught by `router.js`'s
 (which only ever register plain `vi.fn()` renderers). Phases 2-4 of issue #137 (resource
 hints/caching headers, a CI Lighthouse budget, and a network-throttling dimension for
 `.claude/skills/verify-changes/`) are tracked separately and not part of this PR.
+
+### 2026-07-14 — PR #TBD — Resource-loading hints and caching headers, Phase 2 of network-speed perf (issue #137)
+
+Two independent, small pieces, both following Phase 1 (lazy per-route loading, above).
+(1) `firebase.json`'s hosting `headers` array gains a rule for `/public/**` — the same
+`Cache-Control: public, max-age=31536000, immutable` that `/src/**` and `**/*.css`
+already had — since `public/`'s icons/`manifest.json`/`og-image.png` are exactly as
+content-stable and were previously falling through to Firebase Hosting's own default
+caching instead of a deliberate one. (2) `main.js` gained `preloadDashboardModule()`, a
+one-shot (idempotent) helper appending a `<link rel="modulepreload" href="…/ui/pages/
+dashboard.js">` to `document.head`, called from `authApi.onChange`'s handler at the exact
+point it decides to redirect an already-onboarded, just-authenticated user to `/app` —
+`dashboard.js` is the single most-visited authenticated route, so Phase 1's "never fetch
+it eagerly" tradeoff would otherwise become "always fetch it with a visible extra
+round-trip on every sign-in" with no mitigation. A user who bookmarks directly to `/app`
+never triggers this call site — that route's own lazy `import()` (Phase 1) is already
+the earliest possible fetch, so there's nothing to warm ahead of it there. The existing 3
+Firebase-SDK `modulepreload` tags in `index.html` were re-checked against Phase 1's
+changes and remain the correct, unchanged set. `tests/unit/main.test.js` gained a second
+test asserting the hint is appended exactly once (not duplicated on a second auth-state
+resolution, e.g. a token refresh) and only once the redirect condition is actually met.

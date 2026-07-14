@@ -67,6 +67,25 @@ function lazyGuard(loadModule, renderKey) {
   });
 }
 
+let dashboardPreloaded = false;
+// dashboard.js is the single most-visited authenticated route (issue #137
+// Phase 2) — once we know a just-resolved sign-in is about to redirect to
+// '/app', start fetching/compiling its module graph via a <link
+// rel="modulepreload"> hint a beat early, rather than waiting for the
+// dynamic import() inside the '/app' route's own lazyGuard() to kick it off
+// only once the router actually runs the route. Idempotent (a second call
+// is a no-op). A user who bookmarks straight to '/app' never hits this call
+// site at all — that path's own lazy import() is already the earliest
+// possible fetch, so there's nothing to warm ahead of it.
+function preloadDashboardModule() {
+  if (dashboardPreloaded) return;
+  dashboardPreloaded = true;
+  const link = document.createElement('link');
+  link.rel = 'modulepreload';
+  link.href = new URL('./ui/pages/dashboard.js', import.meta.url).href;
+  document.head.appendChild(link);
+}
+
 // Awaits setUser so the onboarding-needed decision below always sees this
 // sign-in's resolved state (Issue #51) — never a stale value from the previous user.
 authApi.onChange(async user => {
@@ -94,6 +113,7 @@ authApi.onChange(async user => {
     return;
   }
   if (publicRoutes.includes(route) || route === '/onboarding') {
+    preloadDashboardModule();
     navigate('/app', true);
   }
 });
