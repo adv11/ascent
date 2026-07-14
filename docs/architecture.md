@@ -3407,7 +3407,7 @@ PDF-generation dependency, per root `CLAUDE.md`'s "no build step, no bundler" co
 `exportBackupCsv` helpers for consistency, though neither is a store-level method — both
 are pure reads over an existing snapshot.
 
-### 2026-07-14 — PR #TBD — Spaced-repetition review reminders, Phase A (issue #134)
+### 2026-07-14 — PR #161 — Spaced-repetition review reminders, Phase A (issue #134)
 
 New pure module `src/core/roadmap/reviewSchedule.js` (`isReviewDue`/`getReviewDueItems`,
 `REVIEW_INTERVAL_DAYS`/`REVIEW_INTERVAL_MS`) computes which completed roadmap topics are
@@ -3419,3 +3419,28 @@ change, since `updateItem()`'s existing cosmetic-check already treats any non-`d
 patch key as structural. `dashboard.js` gained a sixth filter chip (`'REVIEW'`) and a new
 header pill (`.review-due-nav-badge`, `topbar.js`'s actions row, alongside the Daily Todo
 countdown badge) showing the due count and jumping to the `REVIEW` filter on click.
+
+### 2026-07-14 — PR #162 — ZeBeyond-inspired visual revamp, replacing the earlier Neura/M3 direction (issue #155)
+
+Presentation-layer-only, scoped to the landing page, auth screens, and the dashboard's
+core shell (sidebar/topbar) — settings/progress/modals are a planned fast-follow, not
+touched here. Replaces this issue's earlier "Neura-style"/Material Design 3 direction
+(app.css elevation/shape/state-layer tokens, `progressRing.js`'s `variant: 'dotted'`
+gauge, `chartWrapper.js`'s `--brand-deep` read), which never merged and has been fully
+reverted rather than retuned, per an explicit decision to replace rather than extend it
+once new reference material (a Dribbble "ZeBeyond" case-study/marketing site) came in.
+
+`app.css`'s dark-theme `--soft`/`--panel`/`--panel-2`/`--surface-3`/`--line`/
+`--line-strong` move from a navy-tinted dark to a neutral near-black scale, matching the
+reference's page/card backgrounds; the existing mint/teal `--brand`/`--brand-dark` are
+kept as-is since they already matched the reference closely. New shared classes:
+`.eyebrow` (uppercase kicker label), `.text-gradient-brand` (gradient headline accent
+text), `.tag-chip`/`.tag-chip-accent` (two-tone tag-chip pair on the existing chip
+box-model scale), `.icon-tile`, `.btn-cta` (a bright pill CTA button scoped to
+marketing contexts, not a change to `.btn-primary`), a floating-pill treatment folded
+into `.landing-nav` directly, `.icon-btn-group` (groups the topbar's search/
+notification/theme-toggle buttons in a bordered pill), and `.bg-grid-glow` (a decorative
+diagonal-grid + radial-glow layer behind the landing hero/CTA and the auth marketing
+panel, replacing the panel's old solid brand-gradient fill). The sidebar's active nav
+item becomes pill-shaped. See `.claude/rules/ui-styling.md`'s "Visual design language"
+section for the full token/class reference.

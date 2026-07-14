@@ -85,7 +85,7 @@ function buildNav() {
     el('nav', { className: 'landing-nav-links', 'aria-label': 'Page sections' }, [featuresLink, stepsLink]),
     el('div', { className: 'landing-nav-actions' }, [
       el('a', { className: 'btn btn-ghost', href: '#/signin', text: 'Sign in' }),
-      el('a', { className: 'btn btn-primary', href: '#/signup', text: 'Start for free' })
+      el('a', { className: 'btn-cta', href: '#/signup', text: 'Start for free' })
     ])
   ]);
 }
@@ -116,11 +116,20 @@ function buildHeroMock() {
 
 function buildHero() {
   return el('section', { className: 'landing-hero' }, [
+    el('div', { className: 'bg-grid-glow', 'aria-hidden': 'true' }),
     el('div', { className: 'landing-hero-copy' }, [
-      el('h1', { className: 'landing-hero-title', text: 'Engineer your next move.' }),
+      el('p', { className: 'eyebrow landing-hero-eyebrow' }, [
+        el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
+        'Your learning roadmap'
+      ]),
+      el('h1', { className: 'landing-hero-title' }, [
+        'Engineer your ',
+        el('span', { className: 'text-gradient-brand', text: 'next move' }),
+        '.'
+      ]),
       el('p', { className: 'landing-hero-subtitle', text: 'The roadmap tracker for anyone learning, revising, or leveling up. Pick a starting point, track every topic, and always know what’s next.' }),
       el('div', { className: 'landing-hero-actions' }, [
-        el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
+        el('a', { className: 'btn-cta btn-lg', href: '#/signup', text: 'Start for free' }),
         el('a', { className: 'btn btn-secondary btn-lg', href: '#/signin', text: 'Sign in' })
       ]),
       el('p', { className: 'landing-hero-stat', text: landingProofLine() })
@@ -129,8 +138,16 @@ function buildHero() {
   ]);
 }
 
+function buildSectionEyebrow(label) {
+  return el('p', { className: 'eyebrow landing-section-eyebrow' }, [
+    el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
+    label
+  ]);
+}
+
 function buildFeatures() {
   return el('section', { className: 'landing-features', id: 'landing-features' }, [
+    buildSectionEyebrow('Get started'),
     el('h2', { className: 'landing-section-title', text: 'Two ways to start' }),
     el('div', { className: 'landing-feature-grid' }, FEATURES.map(f => el('div', { className: 'feature-card' }, [
       el('span', { className: 'feature-card-icon', 'aria-hidden': 'true' }, [f.icon()]),
@@ -142,6 +159,7 @@ function buildFeatures() {
 
 function buildSteps() {
   return el('section', { className: 'landing-steps', id: 'landing-steps' }, [
+    buildSectionEyebrow('The process'),
     el('h2', { className: 'landing-section-title', text: 'How it works' }),
     el('ol', { className: 'landing-steps-list' }, STEPS.map((s, i) => el('li', { className: 'step-card' }, [
       el('span', { className: 'step-card-number', text: String(i + 1) }),
@@ -154,8 +172,9 @@ function buildSteps() {
 
 function buildCta() {
   return el('section', { className: 'landing-cta' }, [
+    el('div', { className: 'bg-grid-glow', 'aria-hidden': 'true' }),
     el('h2', { className: 'landing-cta-title', text: 'Ready to engineer your next move?' }),
-    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' })
+    el('a', { className: 'btn-cta btn-lg', href: '#/signup', text: 'Start for free' })
   ]);
 }
 

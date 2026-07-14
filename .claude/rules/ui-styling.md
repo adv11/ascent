@@ -165,3 +165,114 @@ not just each in isolation.
 **`--accent-2` is reserved for AI-assisted affordances specifically, not general "second brand color" use (issue #136 Phase 1).** A live screenshot audit found brand teal (`--brand`/`--brand-light`) doing too many jobs at once — the "AI-powered" create card/badge, "this is selected" (`.template-card-current`), and a resource-count pill all drew from the identical hue, so none of them read as visually distinct meanings. `--accent-2`/`--accent-2-dark`/`--accent-2-light`/`--accent-2-light-border` (a violet/indigo family, both themes WCAG-verified ≥5.9:1 for every text pairing) is the fix — used today by `.template-card-create`/`.template-card-ai-badge`. Don't reach for it as a generic "second color" for anything that isn't AI-related; `--accent` (orange) remains the token for priority/daily-todo/"not brand teal" uses that predate this. The ambient `--glow-accent` corner-gradient token also now resolves to this violet family (was orange, screenshotted as a stray, unexplained clash) — recolor both theme blocks together if you ever retune it. A resource count or other pure-metadata pill should default to a neutral gray (`--muted`/`--panel-2`/`--line`, see `.resource-count`), not a token from either accent family — metadata isn't a status and doesn't need its own hue.
 
 **Re-enabling `color-contrast` immediately caught a real, previously-undetected bug, not just the two already known ones (issue #116).** `.badge.P0`–`.badge.P3` and `.filter-chip[data-p="…"].active` set fixed white text on `--p0`–`--p3` — correct in light theme, where those tokens are dark/saturated, but dark theme's `--p0`–`--p3` are light pastel values (tuned for *visibility as borders/dots* against the dark panel, not for hosting white text), so white-on-them fails WCAG contrast (`.badge.P1` measured 1.66:1 against `#fbbf24` in CI; the other three priorities have the identical gap by the same luminance math, just untested by axe because the visible dashboard state only happened to render P1). Fixed with a `:root[data-theme='dark']` override on both selectors switching to `var(--soft)` (near-black) text, which reads >6:1 against all four dark-theme priority tokens. **The lesson for any future token whose light- and dark-theme values differ in more than just lightness direction:** don't assume a text/background pairing that's contrast-safe in one theme is automatically safe in the other just because the same CSS rule "looks" theme-aware (it reads a token, not a literal) — a token can still fail contrast in exactly one theme if that theme's value was tuned for a different purpose (border/accent visibility) than the pairing assumes (text legibility). Verify both themes' *token values*, not just whether the rule uses a token.
+
+## Visual design language (issue #155, ZeBeyond direction)
+
+Issue #155 originally shipped (unmerged) a "Neura-style" dark-teal + Material Design 3
+elevation/shape/state-layer system — that direction was fully reverted, not retuned,
+after new reference material came in (a Dribbble "ZeBeyond" marketing site) and the
+call was made to replace rather than extend it. If you find a stray reference to
+`--elevation-*`/`--surface-tint-*`/`--state-hover` etc. anywhere, it's leftover from
+that abandoned direction and should be removed, not extended.
+
+**Dark theme moved from navy-tinted to neutral near-black.** `--soft`/`--panel`/
+`--panel-2`/`--surface-3`/`--line`/`--line-strong` (`:root[data-theme='dark']`,
+`app.css`) were retuned from a scale with a visible blue undertone
+(`#0a0f1a`/`#121a2b`/`#182238`/`#1f2b42`/`#253147`/`#33415c`) to a neutral scale with
+none (`#0a0a0a`/`#141414`/`#191919`/`#1f1f1f`/`#262626`/`#333333`), matching the
+reference's page/card backgrounds. `--brand`/`--brand-dark` (mint/teal) were kept
+unchanged — they already matched the reference closely, so no retune was needed there.
+Every real text/background pairing against the new values was re-verified with a
+relative-luminance calculation before landing on them (the existing issue #116/#136
+discipline): `--ink` clears ~14-17:1, `--muted` ~6.7-7.6:1, `--faint` ~5.1-5.5:1,
+`--brand` ~9.9-10.6:1, `--brand-dark` ~12.4-13.4:1 against `--soft`/`--panel`/`--panel-2`
+— see the retuned tokens' own code comments in `app.css` for the exact per-pairing
+figures. `--track-bg`/`--emphasis-text`/`--surface-glass`/`--border-glass` were updated
+alongside these to stay in sync (each previously derived from or paired with one of the
+retuned navy values).
+
+**New shared classes, all in `app.css`:**
+- **`.eyebrow`** — an uppercase, letter-spaced kicker label (the reference's "PLANS",
+  "CASE STUDIES", "WHY CHOOSE US" pattern), reading `--brand` for color and
+  `--tracking-caps` for letter-spacing. Pair with a leading `.eyebrow-dot` (a small
+  filled circle) when the label needs a visual anchor. Used above the landing hero
+  title and each landing section title (`landing.js`'s `buildSectionEyebrow()`), and
+  above the auth marketing panel's headline. Generalizes what used to be several ad hoc
+  uppercase-label rules (`.current-roadmap-badge`, `.toolbar-label`, `.panel-kicker`)
+  into one reusable class — those existing call sites are unchanged, this is additive.
+- **`.text-gradient-brand`** — a `background-clip: text` gradient (`--brand` →
+  `--brand-cyan`, a new token formalizing the literal `.brand-mark`'s gradient already
+  used) for **one accent phrase inside a heading**, never the whole heading — a fully
+  gradient-filled heading can't be evaluated by contrast tooling against a background,
+  since there's no single foreground color to check. `landing.js`'s hero title
+  ("Engineer your **next move**.") is the only current call site.
+- **`.tag-chip` / `.tag-chip-accent`** — a two-tone tag-chip pair (the reference's
+  "EPOP CONCEPT" + "AUTOMOTIVE" chip pattern), built on the same
+  `--chip-height`/`--chip-padding-x`/`--chip-radius` scale `.badge`/`.resource-count`
+  already use so a tag chip is pixel-identical in height to every other small pill in
+  the app — only the neutral (`.tag-chip`, `--panel-2`/`--line`/`--muted`) vs. accent
+  (`.tag-chip-accent`, `--brand-light`/`--brand-light-border`/`--brand-dark`) color
+  pairing is new. Not currently used on the landing feature/step cards — they don't
+  have a real second category to show, and inventing one would be a fabricated
+  taxonomy; reach for this class only where a genuine category/type label exists.
+- **`.icon-tile`** — a 44×44px rounded-square icon container (`--panel-2` background,
+  `--line` border, `--brand` icon color) for card headers. Not yet adopted by
+  `.feature-card-icon`/`.step-card-icon` (their existing `--brand-light` circular/
+  rounded treatment already reads fine against the new near-black cards) — reach for
+  `.icon-tile` on a genuinely new icon-topped card rather than retrofitting working
+  cards for its own sake.
+- **`.btn-cta`** — a solid bright pill button (`border-radius: var(--chip-radius)`,
+  `background: var(--brand)`) for marketing CTAs specifically (landing nav/hero/CTA
+  section, both "Start for free" actions). Deliberately a **new class, not a change to
+  `.btn-primary`** — `.btn-primary` is used app-wide (dashboard, settings, forms) and
+  reshaping it was out of this pass's scope (landing/auth/dashboard shell only).
+  `color: var(--soft)` is a deliberate cross-theme trick, not an oversight: light
+  theme's `--soft` is a light near-white (reads correctly on light theme's dark-teal
+  `--brand`), dark theme's `--soft` is near-black (reads correctly on dark theme's
+  bright-mint `--brand`) — the same token resolves to a readable text color against
+  `--brand` in both themes without a separate per-theme override. Add `.btn-lg` for the
+  same 48px height as an adjacent `.btn-secondary.btn-lg`.
+- **`.icon-btn-group`** — a bordered pill container that visually groups adjacent
+  icon-only buttons (the reference's search/mail/sign-in cluster). `topbar.js` wraps
+  its search/notification/theme-toggle buttons in one; this is a **grouping wrapper
+  only**, not a reimplementation — every wrapped button keeps its own existing
+  markup/behavior/cleanup.
+- **`.bg-grid-glow`** — a decorative diagonal-grid + radial brand-glow background
+  layer (the reference's faint grid-line texture behind hero/CTA sections), meant as
+  an absolutely-positioned child of a `position: relative; overflow: hidden` section
+  (`landing.js`'s hero and CTA sections; the auth marketing panel's existing
+  `.auth-marketing-bg-pattern` is a closely related, pre-existing sibling pattern, not
+  replaced by this). Its diagonal lines read from `--ink` via `color-mix(in srgb,
+  var(--ink) 6%, transparent)` rather than a fixed white/black literal, so they stay
+  faint-but-visible in both themes without a separate dark-theme override — this
+  matters because, unlike `.auth-marketing-bg-pattern` (whose panel is *always* dark
+  regardless of site theme, issue #116), `.landing-hero`/`.landing-cta` genuinely flip
+  with the site's own light/dark toggle. The radial glow reuses `--glow-brand`, which
+  already flips per theme on its own.
+
+**The auth marketing panel's background changed from a solid brand-gradient fill to a
+near-black base with two radial teal/cyan glows**, matching the reference's dark
+marketing-panel treatment instead of a flat color fill. Still a fixed-dark panel
+regardless of site theme (unchanged reasoning from issue #116 — see the comment above
+`.auth-marketing` in `app.css`), so the new radial-glow colors are literals with
+`/* intentional: ... */` comments, same as every other fixed color already on this
+panel. `.auth-marketing-eyebrow` is a scoped override of `.eyebrow`'s color (a fixed
+`#5eead4`, not the theme-flipping `--brand` token) for the same always-dark reason.
+
+**The sidebar's active nav item is pill-shaped, not the standard rect radius.**
+`.nav-item.active` (`app.css`) gained `border-radius: var(--chip-radius)` on top of its
+existing `--brand-light` background/`--brand-dark` text — no color change, matching the
+reference's rounded active-nav-item treatment.
+
+**No new font was introduced.** `--font-display: 'Space Grotesk'` (already in place) is
+a close-enough match to the reference's display type and swapping fonts would have
+meant self-hosting a new webfont or updating the CSP's `font-src` for no clear visual
+gain — out of scope for this pass. No custom illustration assets were added either;
+every icon still goes through `createIcon()`/`createDecorativeIcon()` per the existing
+icon-system rules above — `.icon-tile`/`.tag-chip` are wrappers around those, not a new
+icon vocabulary.
+
+**Scope: landing page, auth screens, and the dashboard's core shell (sidebar/topbar)
+only.** Settings, Progress, and every modal are unchanged this pass and are a planned
+fast-follow — don't assume a class documented here has been applied everywhere in the
+app just because it exists in `app.css`.
