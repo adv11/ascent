@@ -225,28 +225,66 @@
   /* issue #155 (ZeBeyond direction) — retuned from a navy-tinted dark
      (#0a0f1a/#121a2b/#182238/#253147, a real blue undertone) to a neutral
      near-black scale matching the reference's page/card backgrounds, which
-     pixel-sample as R≈G≈B with no blue cast. Every real text/background
-     pairing was re-verified with a relative-luminance calculation before
-     this change (issue #116/#136 precedent): --ink/--muted/--faint/--brand/
-     --brand-dark all clear 4.5:1+ against --soft/--panel/--panel-2, several
-     by a wide margin (--ink ~14-17:1, --muted ~7:1, --faint ~5.1-5.5:1,
-     --brand ~10-11:1, --brand-dark ~12-13:1) — see the app's own contrast
-     check script output referenced in ui-styling.md's "Visual design
-     language" section for the exact figures per pairing.
-     --soft: #0a0f1a -> #0a0a0a
-     --panel: #121a2b -> #141414
-     --panel-2: #182238 -> #191919
-     --line: #253147 -> #262626 (a neutral hairline border, not blue-tinted)
-     --line-strong: #33415c -> #333333 */
-  --soft: #0a0a0a;
-  --panel: #141414;
-  --panel-2: #191919;
-  --line: #262626;
-  --line-strong: #333333;
+     pixel-sample as R≈G≈B with no blue cast.
+     issue #155 v2 (lime/near-black redefinition, Phase A) — tightened one
+     step further to the exact #080808 base named in the new reference's
+     branding board, with --panel/--panel-2/--surface-3/--line/--line-strong
+     stepped down proportionally to preserve the same relative card/hairline
+     separation the ZeBeyond scale had. Every real text/background pairing
+     was re-verified with a relative-luminance calculation against these
+     tighter values before landing on them (issue #116/#136/ZeBeyond
+     precedent): --ink ~15-17:1, --muted ~6.9-7.7:1, --faint ~5.0-5.6:1,
+     --brand ~9.6-10.8:1, --brand-dark ~12.1-13.5:1 against
+     --soft/--panel/--panel-2 — all still comfortably above WCAG AA's 4.5:1,
+     several by a wide margin. --line/--line-strong are hairline borders, not
+     body text, so they're checked for visual separation from --panel/
+     --panel-2 rather than a text-contrast ratio, same discipline as every
+     other border token in this file.
+     --soft: #0a0a0a -> #080808 (exact reference hex)
+     --panel: #141414 -> #121212
+     --panel-2: #191919 -> #171717
+     --line: #262626 -> #242424
+     --line-strong: #333333 -> #303030 */
+  --soft: #080808;
+  --panel: #121212;
+  --panel-2: #171717;
+  --line: #242424;
+  --line-strong: #303030;
   --brand: #2dd4bf;
   --brand-dark: #5eead4;
   --brand-light: #123832;
   --brand-light-border: #1f5148;
+  /* issue #155 v2 (Phase A) — the reference's single accent, a bright
+     lime/chartreuse (#F0F941, hex-exact from the branding board), replacing
+     mint/teal in the *reference's* dashboard UI. Deliberately added as a
+     parallel family (`--accent-lime*`), not a --brand/--brand-dark retune in
+     place: --brand-dark alone is already read by ~20 unrelated call sites
+     across dashboard/settings/progress (toasts, links, tab underlines, stat
+     numbers, success messages) that Phase A/B/C don't touch and haven't been
+     given a real design pass yet (Phase D's job) — some of those (e.g.
+     `.toast-success`'s white-on-`--brand-dark` solid fill) would silently
+     break contrast if `--brand-dark` became lime, since white text on lime
+     fails badly (the issue's own callout: lime hosts near-black text, not
+     white). Phase B/C/D consume `--accent-lime*` explicitly wherever the new
+     spec calls for it, verifying each surface as they go, rather than one
+     blanket global swap. `--accent-lime-dark` is a ~18%-deepened lime (for
+     headroom, not a contrast requirement — raw #F0F941 already clears
+     15-17:1 against every dark-theme surface). `--accent-lime-light`/
+     `--accent-lime-light-border` are a dark-desaturated lime tint (mirroring
+     how --brand-light/--brand-light-border are *dark* muted tints in dark
+     theme, not light pastels) for subtle chip/pill fills. Text-on-solid-lime
+     reuses the existing `--brand`-on-`--soft` cross-theme trick (`color:
+     var(--soft)`, already near-black in dark theme) rather than a new ink
+     token. Live-verified: --accent-lime ~15.4-17.5:1 against
+     --soft/--panel/--panel-2; --accent-lime-dark ~11.4-11.9:1 against
+     --panel/--panel-2; --accent-lime on --accent-lime-light ~14:1. Only
+     defined in dark theme — the v2 reference is a dark analytics dashboard
+     with no light-theme counterpart; light theme keeps --brand teal
+     unchanged. */
+  --accent-lime: #f0f941;
+  --accent-lime-dark: #cdd707;
+  --accent-lime-light: #22230b;
+  --accent-lime-light-border: #404215;
   --accent: #fb923c;
   /* issue #136 Phase 1 — dark-theme secondary accent, same violet family as
      light theme, lightened the same way --brand/--brand-dark flip for a dark
@@ -273,11 +311,14 @@
      neutral retune (#33415c -> #333333) to stay in sync. */
   --track-bg: #333333;
   --emphasis-bg: #e7ecf5;
-  /* issue #155 — updated alongside --soft's neutral retune. */
-  --emphasis-text: #0a0a0a;
-  /* issue #155 — updated alongside --panel's neutral retune (was rgba(18, 26, 43, .88), a navy-tinted alpha). */
-  --surface-glass: rgba(20, 20, 20, 0.88);
-  --border-glass: rgba(51, 51, 51, 0.8);
+  /* issue #155 — updated alongside --soft's neutral retune.
+     issue #155 v2 (Phase A) — updated alongside --soft's #080808 tightening. */
+  --emphasis-text: #080808;
+  /* issue #155 — updated alongside --panel's neutral retune (was rgba(18, 26, 43, .88), a navy-tinted alpha).
+     issue #155 v2 (Phase A) — updated alongside --panel/--line-strong's #080808-based tightening
+     (rgba(20,20,20,.88) -> rgba(18,18,18,.88) matching --panel #121212; rgba(51,51,51,.8) -> rgba(48,48,48,.8) matching --line-strong #303030). */
+  --surface-glass: rgba(18, 18, 18, 0.88);
+  --border-glass: rgba(48, 48, 48, 0.8);
   --glow-brand: rgba(45, 212, 191, 0.1);
   /* issue #136 Phase 1 — dark-theme counterpart of the recolor above, same
      violet --accent-2 family in place of orange. */
@@ -297,8 +338,10 @@
   --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55), 0 8px 16px rgba(0, 0, 0, 0.32);
   --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(0, 0, 0, 0.36);
   --shadow-brand: 0 8px 24px rgba(45, 212, 191, 0.28);
-  /* issue #155 — retuned alongside --panel/--panel-2's neutral retune (was #1f2b42). */
-  --surface-3: #1f1f1f;
+  /* issue #155 — retuned alongside --panel/--panel-2's neutral retune (was #1f2b42).
+     issue #155 v2 (Phase A) — stepped down again alongside --panel/--panel-2's
+     #080808-based tightening (#1f1f1f -> #1c1c1c). */
+  --surface-3: #1c1c1c;
 
   /* Activity heatmap intensity scale (issue #8), dark-theme stops — see the
      light-theme definition above for what each level means. */

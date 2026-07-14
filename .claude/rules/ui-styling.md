@@ -276,3 +276,88 @@ icon vocabulary.
 only.** Settings, Progress, and every modal are unchanged this pass and are a planned
 fast-follow — don't assume a class documented here has been applied everywhere in the
 app just because it exists in `app.css`.
+
+### Visual design language v2 (issue #155 redefinition — lime/near-black direction)
+
+Issue #155 was reopened with a second redefinition: the ZeBeyond mint/near-black
+direction above is superseded (not extended) by a new reference — a dark
+analytics-dashboard screenshot set with a bright lime accent — and this pass is scoped
+far wider than ZeBeyond's landing/auth/shell: every page and every modal in the app.
+See issue #155's redefinition comment for the full spec (reference breakdown, phased
+implementation plan, open decisions). Landing in 5 phases, each its own PR: A (token
+layer, below) → B (shared component classes) → C (landing/auth/shell recolor) → D
+(Settings/Progress/every modal — first real pass) → E (full verification).
+
+**Palette:** near-black `#080808` (a further neutral retune of the
+`--soft`/`--panel` scale — Phase A tightened the ZeBeyond scale one more step to this
+exact reference hex, it was not a new hue direction), mid-gray `#4E4E4E`, light-gray
+`#D4D4D4`, pure white `#FFFFFF`, and a new accent — **`#F0F941`, a bright
+lime/chartreuse**. The mid-gray/light-gray/white swatches from the reference's
+branding board map conceptually to this app's existing `--muted`/`--faint`/`--ink`
+text tiers (already contrast-verified, issue #116/#136 precedent) rather than being
+adopted as literal hex replacements — `#4E4E4E` on `#080808` measures only 2.41:1,
+which fails WCAG AA for text entirely, so it cannot be used as a literal token value
+here even though it's what the reference specimen shows.
+
+**Accent-token decision (Phase A, shipped):** a **parallel `--accent-lime` token
+family** was added (`--accent-lime: #f0f941`, `--accent-lime-dark: #cdd707`,
+`--accent-lime-light: #22230b`, `--accent-lime-light-border: #404215`, all
+`:root[data-theme='dark']` only), **not** a `--brand`/`--brand-dark`/`--brand-light`/
+`--brand-light-border` retune in place. Reasoning: `--brand-dark` alone is read by
+~20 call sites across dashboard/settings/progress (toasts, links, tab underlines, stat
+numbers, success messages) that Phase A/B/C don't touch and haven't had a real v2
+design pass yet (Phase D's job) — retuning it globally now would silently change
+surfaces outside this pass's scope, and at least one (`.toast-success`'s white text on
+a solid `--brand-dark` fill) would break contrast outright, since lime cannot host
+white text (see the next paragraph). Phases B/C/D consume `--accent-lime*` explicitly
+wherever the new spec calls for it, verifying each surface as they're built, rather
+than one blanket global swap. Light theme keeps `--brand` teal unchanged — no
+light-theme reference material exists for this direction.
+
+**Live-verified WCAG contrast (relative-luminance calculation, same discipline as
+every other token in this file):** `--accent-lime` (`#f0f941`) measures 17.48:1
+against `--soft` (`#080808`), 16.08:1 against `--panel` (`#121212`), and 15.35:1
+against `--panel-2` (`#171717`) — comfortably passing in both directions (lime
+foreground on near-black, or near-black foreground on a solid lime fill). Near-black
+text on a solid `--accent-lime` fill reuses the existing `--brand`-on-`--soft`
+cross-theme trick (`color: var(--soft)`, already near-black in dark theme) rather than
+introducing a redundant "ink" token — no new token needed for that role.
+`--accent-lime-dark` (`#cdd707`, a ~18%-deepened lime for headroom, not a contrast
+requirement) measures 11.88:1 against `--panel` and 11.37:1 against `--panel-2`, for
+use as accent text directly on a card background. `--accent-lime-light`/
+`--accent-lime-light-border` (`#22230b`/`#404215`) are a dark-desaturated lime tint for
+subtle chip/pill fills, mirroring how `--brand-light`/`--brand-light-border` are
+already *dark* muted tints in dark theme (not light pastels) — `--accent-lime` on
+`--accent-lime-light` measures 13.96:1. As flagged in the issue: a raw `#F0F941` is a
+known-hard color for white text — it is never paired with white; every text-on-lime
+pairing above uses near-black instead.
+
+**Typography.** Kept the zero-new-font recommendation: `--font-display: 'Space
+Grotesk'` is unchanged. It's already a geometric grotesk in the same family as the
+reference's "Zona Pro" specimen, and self-hosting a new webfont (or updating the CSP's
+`font-src`) for this pass wasn't judged worth it — consistent with how ZeBeyond scoped
+the identical decision. Any bolder-weight retuning on headings/stat numbers is Phase
+C/D's job (component work), not Phase A's (tokens only).
+
+**Retuned near-black scale (Phase A, dark theme only):** `--soft` `#0a0a0a` → `#080808`
+(the reference's exact base hex), `--panel` `#141414` → `#121212`, `--panel-2`
+`#191919` → `#171717`, `--surface-3` `#1f1f1f` → `#1c1c1c`, `--line` `#262626` →
+`#242424`, `--line-strong` `#333333` → `#303030` — each stepped down proportionally to
+preserve the same relative card/hairline separation the ZeBeyond scale had, not
+rebuilt from scratch. `--emphasis-text`/`--surface-glass`/`--border-glass` (derived
+from `--soft`/`--panel`/`--line-strong`) were updated alongside to stay in sync, same
+as they were during the ZeBeyond retune. Every existing text/background pairing
+(`--ink`/`--muted`/`--faint`/`--brand`/`--brand-dark`) was re-verified against these
+tighter values and still clears WCAG AA by a wide margin (`--ink` ~15-17:1, `--muted`
+~6.9-7.7:1, `--faint` ~5.0-5.6:1, `--brand` ~9.6-10.8:1, `--brand-dark` ~12.1-13.5:1)
+— see the retuned tokens' own code comments in `app.css` for the exact per-pairing
+figures.
+
+**New structural patterns:** not yet built — Phase A is tokens only, no component
+wiring. Phase B will add and document here: the `.stat-tile` KPI card (corner
+arrow-badge + hero-highlight variant), the `.filter-chip-counted` pill (an embedded
+count sub-badge on top of the existing `.filter-chip` base), the multi-color
+value-bucketed bar chart series + custom tooltip in `chartWrapper.js`, and the shared
+`.card-arrow-badge` corner affordance used by both stat tiles and person/customer-style
+cards — each with its real class name(s) and file location once shipped, the same
+level of detail the ZeBeyond section above gives its own classes.
