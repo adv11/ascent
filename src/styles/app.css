@@ -2236,7 +2236,16 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    the optional mini progress bar (Items complete tile) below the number, mirroring
    the spacing .stat-tile-bar already used for the same visual role. */
 .kpi-tile-total { font-size: var(--text-md); color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.kpi-tile-hero .kpi-tile-total { color: var(--soft); opacity: 0.75; }
+/* issue #155 v2 Phase D1 follow-up — CI's real Firebase-emulator-backed axe run caught
+   a contrast bug this environment's local verification couldn't (no emulator access):
+   `opacity: 0.75` on top of `color: var(--soft)` measured only 3.6:1 in light theme,
+   where `.kpi-tile-hero` falls back to `--brand` teal (not lime) — near-white at 75%
+   opacity over a mid-saturation teal doesn't have the same headroom near-black-at-75%
+   has over bright lime. Fixed by dropping the opacity dim entirely and reusing the
+   already-verified full-opacity --soft-on-accent pairing every other hero-tile text
+   element uses: 5.09:1 in light theme (--soft on --brand), 17.48:1 in dark theme
+   (--soft on --accent-lime). */
+.kpi-tile-hero .kpi-tile-total { color: var(--soft); }
 .kpi-tile-bar { margin-top: 2px; }
 
 /* The reference's "exactly one hero-highlighted tile per screen" pattern (issue #155 v2
