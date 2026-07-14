@@ -426,5 +426,15 @@ override so the progress bar reads correctly against the solid accent fill inste
 its default teal-on-dark styling. `dashboard.js`'s own `.stat-tile` strip is a
 different page and is untouched. **Deliberately scoped to just this one stat strip**,
 not `settings.js` or any of the ~12 modals the issue's Phase D also names — those are
-tracked as a separate Phase D2 given the real size of a genuine first design pass
+tracked as separate follow-up phases given the real size of a genuine first design pass
 across that many surfaces (see tracker issue #11's row for #155).
+
+**Phase D2, shipped — Settings page.** `.settings-verified` (`app.css`) — the only
+accent-colored class unique to `settings.js`, every other class on that page is neutral
+gray/ink — now reads `--accent-lime-dark` in dark theme, falling back to mint in light
+theme, the same scoped-override pattern Phase C used for landing/auth/shell. No other
+change was needed on this page: its cards/rows already read the Phase A near-black
+scale automatically via tokens (no page-specific token overrides exist), and its
+remaining classes are neutral, not accent-colored. **Deliberately scoped to just this
+one class** — the ~12 modals the issue's Phase D also names are tracked as a further
+Phase D3, not this PR (see tracker issue #11's row for #155).

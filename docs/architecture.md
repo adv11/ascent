@@ -3632,3 +3632,13 @@ guest session in both themes. Deliberately scoped to only this one stat strip �
 issue's Phase D also names `settings.js` and ~12 modals, which are large enough to
 warrant a separate Phase D2 rather than one oversized PR; tracker issue #11 reflects
 this split.
+
+### 2026-07-14 — PR #TBD — Settings page recolor, Phase D2 of issue #155's v2 redefinition (lime/near-black direction)
+
+Phase D2: `.settings-verified` (`app.css`) — the sole accent-colored class unique to
+`settings.js` — recolored to `--accent-lime-dark` in dark theme, falling back to mint
+in light theme, same scoped-override pattern Phase C used. No other change needed on
+this page (its cards/rows already read Phase A's near-black scale via tokens; every
+other class is neutral gray/ink). Deliberately scoped to just this one class — the
+~12 modals the issue's Phase D also names are tracked as a further Phase D3, not this
+PR; tracker issue #11 reflects the split.
