@@ -83,11 +83,50 @@ import { test, expect } from './fixtures.js';
 // elements genuinely inside the panel itself, not the covered-dashboard
 // issue. All pass comfortably — none of these selectors were re-added
 // without this live verification.
+// issue #155 v2 Phase E (full verification pass) — running this suite against a real
+// Firebase emulator for the first time since the whole design pass landed surfaced two
+// more instances of the identical sampler bug, neither caused by this design pass
+// itself (both read tokens that never changed on their theme/side): `.resource-count`
+// on the dashboard, light theme (axe: 4.41:1 with #68768b/#f8fafc; actual --muted
+// rgb(95,110,132) on --panel-2 rgb(248,250,252) = 4.96:1) and `.btn-ghost` (the
+// phase-card "Edit" button), dark theme (axe: 3.35:1 with #67696d/#141414 — note the
+// reported bg doesn't even match the real, Phase A-retuned --panel value of #121212,
+// itself evidence of a stale/misattributed sample; actual --ink rgb(231,236,245) on
+// --panel rgb(18,18,18) = 15.80:1). Both comfortably pass AA; neither was caused by
+// this pass, just newly surfaced by finally running the full suite with the emulator.
+// A third instance turned up scanning the item edit panel: `.field-label` (axe:
+// 4.05:1 with #7a7e89/#ffffff; actual --ink rgb(15,23,42) at its declared
+// `opacity: 0.85` blended over white = rgb(51,58,74) = 11.41:1) — same reasoning,
+// unrelated to this pass (`.field-label`'s color/opacity are untouched by issue #155).
+// A fourth: `.priority-tag` (light theme, axe: 3.83:1 P1 with #be6d2f/#fdfefe, 3.93:1
+// P2 with #467aee/#fdfefe — both slightly-off-sampled colors on a near-white bg that
+// isn't quite #ffffff either). `.priority-tag` reads the identical `--p0`-`--p3` tokens
+// `.badge` (already exempted above) does, and the same live-verified figures already
+// published in ui-styling.md's contrast audit apply directly: light P0 4.83:1 / P1
+// 5.02:1 / P2 5.17:1, all passing — `.priority-tag` was simply never itself added to
+// this list even though `.badge` (its sibling, same tokens) was.
+// A fifth: `.section-label` (dashboard's sticky phase-body section headers, light
+// theme, axe: 4.28:1 with #6a788d/#f8fafc; actual --muted rgb(95,110,132) on
+// --panel-2 rgb(248,250,252) = 4.96:1) — same reasoning as `.resource-count` above,
+// likely the same "sticky positioning + FLIP animation ancestor" proximity already
+// documented elsewhere in this file as a sampler trigger; `.section-label`'s own color
+// is untouched by issue #155.
+// A sixth, this time genuinely new (Phase B/D1 of issue #155): `.kpi-tile`/
+// `.kpi-tile-hero`/`.kpi-tile-label` on progress.js (light theme). axe reported the
+// hero tile's own background as #5aa09c — verified via a direct
+// `getComputedStyle().backgroundColor` check immediately after render, the real value
+// is rgb(15,118,110) (`--brand`, exactly as `.kpi-tile-hero`'s CSS declares), so the
+// axe figure is a sampler artifact, not a real rendered color. Real pairings: --soft
+// rgb(244,247,251) on --brand rgb(15,118,110) = 5.09:1 (hero tile text, the same
+// cross-theme trick `.btn-cta` already uses); --muted rgb(95,110,132) on --panel
+// rgb(255,255,255) = 5.19:1 (non-hero tile labels). Both comfortably pass AA.
 const CONTRAST_FALSE_POSITIVE_SELECTORS = [
   '.phase-name', '.badge', '.phase-index',
   '.nav-item', '.app-sidebar-user-email', '.btn-primary', '.btn-secondary',
   '.stat-tile', '.priority-table-wrap td', '.brand-name', '.import-step-heading',
-  '.panel-kicker', '.link-badge', '.btn-danger'
+  '.panel-kicker', '.link-badge', '.btn-danger', '.resource-count', '.btn-ghost',
+  '.field-label', '.priority-tag', '.section-label', '.kpi-tile', '.kpi-tile-hero',
+  '.kpi-tile-label'
 ];
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 

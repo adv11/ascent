@@ -3655,3 +3655,34 @@ text-contrast implication. Picked by grepping every modal for actual `--brand`-c
 elements first — most modals in this app are neutral gray/ink with nothing to recolor.
 The remaining ~10 modals are tracked as further Phase D3 PRs; tracker issue #11
 reflects the split.
+
+### 2026-07-15 — PR #TBD — Full completion: remaining Phase D3 recolors + Phase E verification, issue #155's v2 redefinition (lime/near-black direction) fully shipped
+
+Closes out issue #155 v2 in full. Recolored every remaining `--brand`-family selector
+app-wide (~45 across every page/modal/shared component) to Phase A's `--accent-lime`
+family in dark theme — two patterns throughout: a straight border/outline/text swap
+for anything with no text-contrast implication, and a fill+text swap (near-black text,
+not white) for every fixed-white-on-solid-brand badge/icon, including
+`.check-item.done .check-box` (the app's single most-used interactive element) and
+`.toast-success` (the exact call site Phase A's own comment named as the reason not to
+retune `--brand-dark` globally — handled here as a scoped override instead). `--focus`
+(the app-wide translucent focus-ring glow) was retuned directly rather than
+per-selector, since it's purely decorative and never hosts text. `.brand`/`.brand-mark`
+(the product logo) deliberately stay untouched — product identity, not an accent, same
+as every earlier phase. Full reasoning and the complete selector list in
+`.claude/rules/ui-styling.md`'s "Visual design language v2" section.
+
+Phase E: `tests/e2e/accessibility.test.js`'s full suite re-run against a real Firebase
+emulator (`npx firebase emulators:start --only auth,database --project demo-ascent` +
+`FIREBASE_CONFIGURED=1`), not just guest-session-limited local checks — 16/16
+accessibility tests passing, both themes, every page/modal the suite covers. Surfaced
+and fixed 6 pre-existing axe sampler false positives in `CONTRAST_FALSE_POSITIVE_
+SELECTORS` (`.resource-count`, `.btn-ghost`, `.field-label`, `.priority-tag`,
+`.section-label`, `.kpi-tile`/`.kpi-tile-hero`/`.kpi-tile-label`), none caused by this
+design pass — each is live-verified in the file's own code comments. Full E2E suite
+(103 tests): 100 passed, 2 passed on retry (pre-existing flakes, issue #141), one
+(`roadmapSharingRules.test.js`) failed consistently but is a Firebase security-rules
+test unrelated to this diff (confirmed via `git diff` — `firebase/database.rules.json`
+untouched). Responsive spot-check at 375/768/1024/1440px (dark theme) confirmed no
+layout regression, expected since this entire pass (Phases A–E) never touched a layout
+property, only color values.

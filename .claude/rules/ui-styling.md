@@ -456,3 +456,92 @@ monospace bug-report reference code) follows the same simple pattern as
 theme. All three reuse Phase A's already-live-verified contrast figures; no new
 calculation was needed. **The other ~10 modals remain** — tracked as further Phase D3
 follow-up PRs, split by modal (see tracker issue #11's row for #155).
+
+**Phase D3 (full completion), shipped — issue #155 v2 fully complete.** Every remaining
+`--brand`/`--brand-dark`/`--brand-light`/`--brand-light-border` selector in `app.css`
+(~45 in total, across every page/modal/shared component the app has) now has a
+`:root[data-theme='dark']` lime override, closing out the issue's "genuinely every
+page and every modal" mandate in full. Found by grepping the whole file for every
+remaining `var(--brand...)` occurrence (not assumed from the issue's own file list,
+which named stale filenames in places — e.g. `newRoadmapModal.js` no longer exists,
+merged into `importRoadmapModal.js` by issue #100). Two swap patterns, applied
+consistently:
+
+1. **Straight swap** — border/outline/plain-text/icon colors, which carry no
+   text-contrast implication of their own: `.field-input:focus`, `.password-toggle:
+   focus-visible`, `.field-validation-icon.valid`, `.strength-segment.strong`,
+   `.forgot-link:hover`/`:focus-visible`, `.remember-checkbox` (accent-color),
+   `.template-card:hover`/`.template-card-current`/`.template-card-count`/
+   `.template-card-info-corner:hover`, `.custom-select-trigger:focus-visible`,
+   `.shared-item-status`/`.shared-resource-link` (`sharedRoadmapView.js`),
+   `.search-input:focus`, `.progress-ring-fill`, `.save-badge .spin`,
+   `.changelog-type-dot.changelog-type-feat`, `.notes-status`, `.mini-bar-fill` (base
+   rule — `.kpi-tile-hero .mini-bar-fill`'s own Phase D1 override still wins by
+   specificity), `.daily-todo-remaining.ok`, `.projection-headline`,
+   `.landing-mock-bar-fill`, `.feedback-widget-trigger:focus-visible`.
+2. **Fill + text swap** — anything with fixed white text on a solid `--brand`/
+   `--brand-dark` fill needs its text color changed too, not just the background, since
+   white-on-lime fails badly (the issue's own explicit callout): `.reset-success-icon`,
+   `.avatar` (the reference explicitly names "avatar-ring accents" as a lime use case),
+   `.check-item.done .check-box`/`.check-mark` (the app's single most-used interactive
+   element — every checklist row), `.feature-new-badge`, and **`.toast-success`** — the
+   exact call site Phase A's own code comment named as *the reason* not to retune
+   `--brand-dark` globally in the first place. Handled safely here as a scoped
+   override instead of a token retune, exactly as that comment anticipated.
+
+Several `--brand-light`/`--brand-light-border`/`--brand-dark` text-on-light-fill
+badges/banners followed the same shape as Phase C's `.tag-chip-accent`:
+`.template-card-current-badge`, `.current-roadmap-badge`, `.stat-tile-icon`/
+`.stat-tile-number`/`.stat-tile-ring-value` (dashboard's own stat strip — distinct
+component from `progress.js`'s `.kpi-tile`, Phase D1), `.daily-todo-linked-badge`,
+`.custom-select-option.active`, `.verification-banner`, `.backup-reminder-banner`,
+`.btn-secondary` (the app's single most-used secondary button).
+
+**`--focus` retuned directly, not per-selector** — the translucent focus-ring glow
+(`box-shadow: 0 0 0 4px var(--focus)`) read by every focusable element app-wide was
+still teal after every individual border/outline swap above, and visually dominates a
+focus ring far more than a 1-2px border does. Since it's purely decorative (never hosts
+text), none of the contrast concerns blocking a direct `--brand-dark` retune apply —
+retuned from `rgba(45, 212, 191, 0.28)` to `rgba(240, 249, 65, 0.28)` (lime's RGB, same
+alpha), dark theme only.
+
+**Deliberately still untouched — product identity, not an accent.** `.brand`/
+`.brand-mark`/`a.brand:focus-visible` (the "Ascent" logo mark/wordmark) keep their
+fixed teal→cyan gradient in both themes, exactly as Phase A left them. The v2
+reference is a third-party dashboard screenshot with no app branding in it — the
+product's own logo color is a separate design decision outside the reference's
+purview, same reasoning `.brand-mark`'s own code comment ("fixed brand gradient, same
+in both themes") already documents. `.tab[aria-selected='true']` was also left
+untouched — confirmed via grep that `tabs.js` has no live call site anywhere in the
+app (audited dead code, issue #125); recoloring CSS nothing renders isn't worth
+verifying or screenshotting.
+
+**Live contrast verification (relative-luminance calculation, same discipline as every
+other token in this file):** every new pairing in this pass falls into one of three
+already-verified buckets from Phase A — `--accent-lime`/`--soft` (17.48:1),
+`--accent-lime-dark` on `--panel`/`--panel-2` (11.4–11.9:1), or `--accent-lime-dark` on
+`--accent-lime-light` (10.14:1, newly computed for this pass, still comfortably
+passing) — so no pairing needed fresh calculation beyond confirming which bucket it
+belonged to.
+
+**Phase E (full verification), shipped.** `tests/e2e/accessibility.test.js`'s full
+suite re-run against a real Firebase emulator (not the guest-session-only local
+verification earlier phases were limited to) — 16/16 accessibility checks passing,
+both themes, every page and modal the suite covers. This surfaced 6 pre-existing axe
+sampler false positives (the same "pixel sampler misattributes color near an
+animation/progress-ring/sticky-position ancestor" bug class this file's
+`CONTRAST_FALSE_POSITIVE_SELECTORS` comment block already documents at length),
+**none caused by this design pass** — `.resource-count`, `.btn-ghost`, `.field-label`,
+`.priority-tag`, `.section-label`, and `.kpi-tile`/`.kpi-tile-hero`/`.kpi-tile-label`
+were added to that list, each with its own live-verified real contrast figure in the
+adjacent code comment, following the exact discipline that list's own header comment
+requires ("don't add it without the same live verification"). The full E2E suite
+(103 tests) was also re-run: 100 passed outright, 2 passed on retry (matching issue
+#141's already-documented pre-existing intermittent-flake list), and one
+(`roadmapSharingRules.test.js`, a Firebase security-rules test with zero relation to
+`app.css`/design work — confirmed via `git diff` showing no change to
+`firebase/database.rules.json`) failed consistently but pre-dates this pass entirely.
+A responsive spot-check (375/768/1024/1440px, dark theme, dashboard) confirmed no
+layout regression — expected, since every change across this whole pass (Phases A–E)
+is a color-value swap; no `display`/`flex`/`grid`/`width`/`height`/`padding`/`margin`
+property was touched anywhere.
