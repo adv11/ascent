@@ -5,12 +5,6 @@ import { createActivityLogStore } from './services/activityLogStore.js';
 import { initTheme } from './services/theme.js';
 import { migrateLocalStorageKeys } from './services/migration.js';
 import { startRouter, registerRoute, navigate, getRoute } from './ui/router.js';
-import { renderSignIn } from './ui/pages/signIn.js';
-import { renderSignUp } from './ui/pages/signUp.js';
-import { renderDashboard } from './ui/pages/dashboard.js';
-import { renderOnboarding } from './ui/pages/onboarding.js';
-import { renderSettings } from './ui/pages/settings.js';
-import { renderProgress } from './ui/pages/progress.js';
 import { renderLanding } from './ui/pages/landing.js';
 import { renderSharedRoadmapView } from './ui/pages/sharedRoadmapView.js';
 import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
@@ -51,13 +45,26 @@ const feedbackWidget = createFeedbackWidget({ user: null });
 document.body.appendChild(feedbackWidget);
 
 function guardApp(renderFn) {
-  return ctx => {
+  return async ctx => {
     if (routeCleanup) {
       routeCleanup();
       routeCleanup = null;
     }
-    routeCleanup = renderFn(app, { ...ctx, user: currentUser, store, dailyTodoStore, activityLogStore }) || null;
+    routeCleanup = (await renderFn(app, { ...ctx, user: currentUser, store, dailyTodoStore, activityLogStore })) || null;
   };
+}
+
+// Wraps a route's render function behind a dynamic import() so a signed-out
+// visitor's initial page load only fetches the page module(s) their current
+// route actually needs (issue #137) — same lazy-load technique
+// chartWrapper.js already uses for Chart.js, applied to the app's own page
+// modules instead of a third-party one. loadModule() is only invoked the
+// first time the route is actually navigated to.
+function lazyGuard(loadModule, renderKey) {
+  return guardApp(async (...args) => {
+    const module = await loadModule();
+    return module[renderKey](...args);
+  });
 }
 
 // Awaits setUser so the onboarding-needed decision below always sees this
@@ -91,12 +98,12 @@ authApi.onChange(async user => {
   }
 });
 
-registerRoute('/signin', guardApp(renderSignIn));
-registerRoute('/signup', guardApp(renderSignUp));
-registerRoute('/onboarding', guardApp(renderOnboarding));
-registerRoute('/app', guardApp(renderDashboard));
-registerRoute('/settings', guardApp(renderSettings));
-registerRoute('/progress', guardApp(renderProgress));
+registerRoute('/signin', lazyGuard(() => import('./ui/pages/signIn.js'), 'renderSignIn'));
+registerRoute('/signup', lazyGuard(() => import('./ui/pages/signUp.js'), 'renderSignUp'));
+registerRoute('/onboarding', lazyGuard(() => import('./ui/pages/onboarding.js'), 'renderOnboarding'));
+registerRoute('/app', lazyGuard(() => import('./ui/pages/dashboard.js'), 'renderDashboard'));
+registerRoute('/settings', lazyGuard(() => import('./ui/pages/settings.js'), 'renderSettings'));
+registerRoute('/progress', lazyGuard(() => import('./ui/pages/progress.js'), 'renderProgress'));
 // Wildcard prefix match ('/shared*') — unauthenticated-reachable, not routed
 // through guardApp, since it renders someone else's published snapshot, not
 // the current user's own data (see router.js's matchRoute for the pattern).
