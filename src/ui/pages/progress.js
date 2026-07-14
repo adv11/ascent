@@ -129,15 +129,26 @@ function renderRangeChips(active, onChange) {
     })));
 }
 
-function renderStatTile({ icon, value, total, label, bar }) {
-  return el('div', { className: 'stat-tile' }, [
-    el('span', { className: 'stat-tile-icon' }, [createIcon(icon, { size: 'sm' })]),
-    el('div', {}, [
-      el('div', { className: 'stat-tile-value' }, [value, total].filter(Boolean)),
-      el('span', { className: 'stat-tile-label', text: label }),
-      bar ? el('div', { className: 'stat-tile-bar' }, [bar]) : null
-    ].filter(Boolean))
-  ]);
+// issue #155 v2 Phase D1 — Progress page's stat strip moved from `.stat-tile` (the
+// horizontal icon-left/number-right row, issue #6 Phase 4.1, still used by dashboard.js
+// and left alone there) to Phase B's `.kpi-tile` (the v2 reference's vertical KPI
+// card). `hero: true` marks the single solid-filled tile per the reference's "exactly
+// one hero-highlighted tile" pattern — "Items complete" is the one that matters most
+// on this page, mirroring the reasoning the issue itself asked for. No fabricated
+// "+N% vs last month" delta caption is added — this app doesn't track a comparable
+// prior-period figure for any of these four stats, and inventing one would violate the
+// "no fabricated data" discipline this codebase otherwise holds to (see AI-import's
+// own error-message conventions in .claude/rules/content-style.md for the same
+// principle applied to copy). `bar`, where present, renders below the number instead.
+function renderStatTile({ icon, value, total, label, bar, hero }) {
+  return el('div', { className: `kpi-tile${hero ? ' kpi-tile-hero' : ''}` }, [
+    el('div', { className: 'kpi-tile-head' }, [
+      el('span', { className: 'kpi-tile-label', text: label }),
+      el('span', { className: 'card-arrow-badge' }, [createIcon(icon, { size: 'xs' })])
+    ]),
+    el('div', { className: 'kpi-tile-number' }, [value, total].filter(Boolean)),
+    bar ? el('div', { className: 'kpi-tile-bar' }, [bar]) : null
+  ].filter(Boolean));
 }
 
 // `animate` is only true on this page's very first render — CountUp resumes
@@ -148,10 +159,10 @@ function renderStatTile({ icon, value, total, label, bar }) {
 function renderStatCards(analytics, animate) {
   const { overview, streaks, velocity } = analytics;
 
-  const doneValue = el('span', { className: 'stat-tile-number', text: '0' });
-  const currentValue = el('span', { className: 'stat-tile-number', text: '0' });
-  const longestValue = el('span', { className: 'stat-tile-number', text: '0' });
-  const velocityValue = el('span', { className: 'stat-tile-number', text: velocity.toFixed(1) });
+  const doneValue = el('span', { text: '0' });
+  const currentValue = el('span', { text: '0' });
+  const longestValue = el('span', { text: '0' });
+  const velocityValue = el('span', { text: velocity.toFixed(1) });
 
   if (animate) {
     animateCountUp(doneValue, overview.done);
@@ -167,26 +178,27 @@ function renderStatCards(analytics, animate) {
     renderStatTile({
       icon: 'check',
       value: doneValue,
-      total: el('span', { className: 'stat-tile-total', text: `/ ${overview.total}` }),
+      total: el('span', { className: 'kpi-tile-total', text: `/ ${overview.total}` }),
       label: 'Items complete',
-      bar: renderMiniBar(overview.pct)
+      bar: renderMiniBar(overview.pct),
+      hero: true
     }),
     renderStatTile({
       icon: 'flame',
       value: currentValue,
-      total: el('span', { className: 'stat-tile-total', text: streaks.current === 1 ? 'day' : 'days' }),
+      total: el('span', { className: 'kpi-tile-total', text: streaks.current === 1 ? 'day' : 'days' }),
       label: 'Current streak'
     }),
     renderStatTile({
       icon: 'sparkle',
       value: longestValue,
-      total: el('span', { className: 'stat-tile-total', text: streaks.longest === 1 ? 'day' : 'days' }),
+      total: el('span', { className: 'kpi-tile-total', text: streaks.longest === 1 ? 'day' : 'days' }),
       label: 'Longest streak'
     }),
     renderStatTile({
       icon: 'trendingUp',
       value: velocityValue,
-      total: el('span', { className: 'stat-tile-total', text: '/ day' }),
+      total: el('span', { className: 'kpi-tile-total', text: '/ day' }),
       label: '7-day velocity'
     })
   ]);

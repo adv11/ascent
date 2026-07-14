@@ -3617,3 +3617,18 @@ unchanged. `.auth-marketing-eyebrow`'s fixed literal moved from ZeBeyond's `#5ee
 Visually verified in both themes against a real dev server (landing full-page, sign-in)
 — screenshots in the PR. No page outside this scope touched; Settings/Progress/modals
 remain Phase D's job.
+
+### 2026-07-14 — PR #TBD — Progress page stat strip on the new KPI tile component, Phase D1 of issue #155's v2 redefinition (lime/near-black direction)
+
+Phase D1: `progress.js`'s `renderStatTile()`/`renderStatCards()` rebuilt on Phase B's
+`.kpi-tile`/`.kpi-tile-hero` component in place of the older `.stat-tile` row —
+`dashboard.js`'s own `.stat-tile` strip is a different page/component and untouched.
+"Items complete" is the hero-highlighted tile. New CSS: `.kpi-tile-total` (inline
+caption after the number) and `.mini-bar-fill`/`.mini-bar-track` overrides scoped to
+`.kpi-tile-hero` so the existing progress-bar SVG reads correctly against a solid
+accent fill. `tests/unit/progress.test.js`'s stat-tile-count assertion updated to match
+(`.kpi-tile`/`.kpi-tile-hero` selectors). Visually verified against a real dev server +
+guest session in both themes. Deliberately scoped to only this one stat strip — the
+issue's Phase D also names `settings.js` and ~12 modals, which are large enough to
+warrant a separate Phase D2 rather than one oversized PR; tracker issue #11 reflects
+this split.

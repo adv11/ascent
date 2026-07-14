@@ -412,3 +412,19 @@ class's structure/markup is unchanged from ZeBeyond. Light theme keeps the mint 
 theme" reasoning. `.auth-marketing-eyebrow` (a fixed literal, not a token, since that
 panel is always-dark regardless of site theme) moved from `#5eead4` to `#f0f941`
 directly and unconditionally.
+
+**Phase D1, shipped — Progress page's stat strip.** `progress.js`'s `renderStatTile()`
+now builds Phase B's `.kpi-tile`/`.kpi-tile-hero` markup instead of `.stat-tile` —
+`.kpi-tile-head` (label + `.card-arrow-badge` icon), `.kpi-tile-number` (the value plus
+a small `.kpi-tile-total` caption, e.g. "128 `/ 484`"), and an optional `.kpi-tile-bar`
+(the existing mini progress-bar SVG, only on the "Items complete" tile). "Items
+complete" is the one `hero: true` tile — the single stat that matters most on this
+page, per the reference's "exactly one hero-highlighted tile" rule. New CSS:
+`.kpi-tile-total` (a muted inline caption, with a `.kpi-tile-hero` override reading
+`--soft` at reduced opacity) and a `.kpi-tile-hero .mini-bar-fill`/`.mini-bar-track`
+override so the progress bar reads correctly against the solid accent fill instead of
+its default teal-on-dark styling. `dashboard.js`'s own `.stat-tile` strip is a
+different page and is untouched. **Deliberately scoped to just this one stat strip**,
+not `settings.js` or any of the ~12 modals the issue's Phase D also names — those are
+tracked as a separate Phase D2 given the real size of a genuine first design pass
+across that many surfaces (see tracker issue #11's row for #155).

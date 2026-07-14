@@ -64,9 +64,10 @@ describe('renderProgress — basic mount', () => {
     expect(app.querySelector('.stat-strip')).not.toBeNull();
   });
 
-  it('renders 4 stat tiles', async () => {
+  it('renders 4 kpi tiles, one hero-highlighted', async () => {
     const { app } = await freshProgress(user);
-    expect(app.querySelectorAll('.stat-tile')).toHaveLength(4);
+    expect(app.querySelectorAll('.kpi-tile')).toHaveLength(4);
+    expect(app.querySelectorAll('.kpi-tile-hero')).toHaveLength(1);
   });
 
   it('renders the heatmap with role=img and an aria-label', async () => {

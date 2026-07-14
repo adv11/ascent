@@ -2228,8 +2228,25 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .kpi-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .kpi-tile-label { font-size: var(--text-sm); font-weight: 700; color: var(--muted); }
-.kpi-tile-number { font-size: var(--text-3xl); font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
+.kpi-tile-number { display: flex; align-items: baseline; gap: 4px; font-size: var(--text-3xl); font-weight: 900; color: var(--ink); font-variant-numeric: tabular-nums; }
 .kpi-tile-delta { font-size: var(--text-xs); color: var(--muted); font-weight: 600; }
+/* issue #155 v2 Phase D1 — progress.js's stat strip: a smaller inline caption after
+   the number (e.g. "/ 200", "days"), reusing .kpi-tile-number's flex row via a
+   trailing span rather than adding a second wrapper element. .kpi-tile-bar positions
+   the optional mini progress bar (Items complete tile) below the number, mirroring
+   the spacing .stat-tile-bar already used for the same visual role. */
+.kpi-tile-total { font-size: var(--text-md); color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* issue #155 v2 Phase D1 follow-up — CI's real Firebase-emulator-backed axe run caught
+   a contrast bug this environment's local verification couldn't (no emulator access):
+   `opacity: 0.75` on top of `color: var(--soft)` measured only 3.6:1 in light theme,
+   where `.kpi-tile-hero` falls back to `--brand` teal (not lime) — near-white at 75%
+   opacity over a mid-saturation teal doesn't have the same headroom near-black-at-75%
+   has over bright lime. Fixed by dropping the opacity dim entirely and reusing the
+   already-verified full-opacity --soft-on-accent pairing every other hero-tile text
+   element uses: 5.09:1 in light theme (--soft on --brand), 17.48:1 in dark theme
+   (--soft on --accent-lime). */
+.kpi-tile-hero .kpi-tile-total { color: var(--soft); }
+.kpi-tile-bar { margin-top: 2px; }
 
 /* The reference's "exactly one hero-highlighted tile per screen" pattern (issue #155 v2
    redefinition comment) — a single solid-filled tile among otherwise-dark siblings.
@@ -3682,6 +3699,13 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .mini-bar { width: 100%; height: 8px; display: block; }
 .mini-bar-track { fill: var(--track-bg); }
 .mini-bar-fill { fill: var(--brand); }
+/* issue #155 v2 Phase D1 — progress.js's "Items complete" kpi-tile-hero: a teal fill
+   on top of the tile's own solid accent background would clash/low-contrast, same
+   reasoning as .card-arrow-badge's hero override above. */
+.kpi-tile-hero .mini-bar-fill { fill: var(--soft); }
+/* intentional: matches .kpi-tile-hero .card-arrow-badge's black-tint-on-solid-accent
+   treatment above (issue #155 v2 Phase D1). */
+.kpi-tile-hero .mini-bar-track { fill: rgba(0, 0, 0, 0.14); }
 .stat-tile-bar { margin-top: 6px; }
 
 /* Priority x phase table (B7) */
