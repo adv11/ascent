@@ -475,11 +475,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const doneStat = el('span', { className: 'stat-tile-number', text: '0' });
   const doneStatTotal = el('span', { className: 'stat-tile-total', text: '/ 0' });
   const percentStat = el('span', { className: 'stat-tile-number', text: '0' });
-  // issue #155 — the dotted-track variant on the dashboard's one headline
-  // gauge (the reference's dotted-arc ring); every other per-item ring in
-  // this app keeps the continuous-stroke default — see .claude/rules/
-  // ui-styling.md's Visual design language section.
-  const percentRing = createProgressRing(0, { size: 64, strokeWidth: 6, variant: 'dotted' });
+  const percentRing = createProgressRing(0, { size: 64, strokeWidth: 6 });
   const roadmapMetaRow = el('p', { className: 'roadmap-meta-row', text: '' });
   const filterContainer = el('div', { className: 'filter-row' });
   const searchInput = el('input', { className: 'search-input', placeholder: 'Search topics…', value: searchQuery });

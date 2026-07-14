@@ -83,45 +83,12 @@ import { test, expect } from './fixtures.js';
 // elements genuinely inside the panel itself, not the covered-dashboard
 // issue. All pass comfortably — none of these selectors were re-added
 // without this live verification.
-//
-// Issue #155 — the dashboard's own token/box-model retune (surface-tint
-// elevation on `.stat-tile`, `--radius-full` on `.btn`/`.filter-chip`, new
-// state-layer box-shadow rules) shifted layout enough to newly trigger the
-// identical sampler bug on `.priority-tag.P0` (axe: 4.47:1 with
-// #dd2d2d/#f8fafc — a color axe's sampler invented, not `.priority-tag`'s
-// real computed style). Live-verified via a real WCAG contrast-ratio
-// calculation against every priority/theme pair's actual `app.css` token
-// values (not just the flagged P0), against both of `.priority-tag`'s real
-// backgrounds (its resting `--panel`/`--panel-2` and the hover-state
-// `--panel-2`/`--surface-3` it can also render against): light P0 4.83:1
-// (panel) / 4.62:1 (panel-2), P1 4.80:1, P2 4.94:1, P3 4.79:1 (all against
-// panel-2, the tighter of the two); dark P0 5.87:1 (panel) / 4.92:1
-// (panel-2), P1 9.73:1, P2 6.39:1, P3 9.32:1 (all against panel, the
-// tighter of the two in dark theme) — every pairing clears 4.5:1, several
-// with room to spare. Root cause is the same class of bug as every other
-// entry here (a layout-shift-triggered sampler misattribution, not a real
-// contrast regression), not a new token value — `--p0`–`--p3` themselves
-// were not touched by issue #155.
 const CONTRAST_FALSE_POSITIVE_SELECTORS = [
   '.phase-name', '.badge', '.phase-index',
   '.nav-item', '.app-sidebar-user-email', '.btn-primary', '.btn-secondary',
   '.stat-tile', '.priority-table-wrap td', '.brand-name', '.import-step-heading',
-  '.panel-kicker', '.link-badge', '.btn-danger', '.priority-tag'
+  '.panel-kicker', '.link-badge', '.btn-danger'
 ];
-// Issue #155 — `.landing-footer-ghost` (src/ui/pages/landing.js/app.css) is a giant,
-// `opacity: 0.06`, `aria-hidden="true"`, `pointer-events: none` wordmark rendered purely
-// as background texture behind the footer. This is NOT a sampler false positive like the
-// list above (axe's reported ratio, ~1.08, matches the element's real computed style
-// exactly — fg and bg genuinely are that close). It's excluded because WCAG 1.4.3 itself
-// exempts "text that is part of ... pure decoration ... not visible to anyone" from any
-// contrast requirement, and this element already signals that on every axis available
-// (aria-hidden removes it from the accessibility tree; pointer-events/user-select: none
-// mean it's inert). axe's color-contrast rule has no way to know a low-opacity element is
-// intentionally decorative rather than genuinely-meant-to-be-read text, so it flags it
-// regardless of aria-hidden. Always excluded (not gated behind
-// `excludeContrastFalsePositives`) since it's correct on every page/theme this selector
-// could ever match, not a per-page workaround.
-const DECORATIVE_SELECTORS = ['.landing-footer-ghost'];
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 function seriousOrCritical(results) {
@@ -130,7 +97,6 @@ function seriousOrCritical(results) {
 
 async function runAxe(page, { excludeContrastFalsePositives = false, include = null } = {}) {
   const builder = new AxeBuilder({ page });
-  for (const selector of DECORATIVE_SELECTORS) builder.exclude([selector]);
   if (excludeContrastFalsePositives) {
     for (const selector of CONTRAST_FALSE_POSITIVE_SELECTORS) builder.exclude([selector]);
   }

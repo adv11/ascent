@@ -42,14 +42,22 @@ export function createTopbar({ breadcrumb, user, syncPill, themeToggleBtn, daily
     onClick: openPalette
   }, [createIcon('search', { size: 'sm' })]);
 
+  // issue #155 (ZeBeyond direction) — the three icon-only actions (search,
+  // notifications, theme) grouped in a bordered pill container, matching the
+  // reference's icon-button cluster. Grouping only, not a reimplementation —
+  // each button keeps its own existing markup/behavior.
+  const iconGroup = el('div', { className: 'icon-btn-group' }, [
+    commandPaletteBtn,
+    notificationBell,
+    themeToggleBtn
+  ]);
+
   const actions = el('div', { className: 'app-topbar-actions' }, [
     reviewDueBadge,
     dailyTodoNavBadge,
     syncPill,
     user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
-    commandPaletteBtn,
-    notificationBell,
-    themeToggleBtn
+    iconGroup
   ].filter(Boolean));
 
   const node = el('header', { className: 'app-topbar' }, [

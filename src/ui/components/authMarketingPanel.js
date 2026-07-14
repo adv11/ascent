@@ -54,6 +54,10 @@ export function createAuthMarketingPanel() {
     el('div', { className: 'auth-marketing-inner' }, [
       el('span', { className: 'brand auth-marketing-brand' }, createBrandMark()),
       el('div', { className: 'auth-marketing-content' }, [
+        el('p', { className: 'eyebrow auth-marketing-eyebrow' }, [
+          el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
+          'Engineer your next move'
+        ]),
         el('h2', { className: 'auth-marketing-headline', text: 'Engineer your next move.' }),
         el('p', { className: 'auth-marketing-subhead', text: 'The roadmap tracker for anyone learning, revising, or leveling up — pick a starting point, track every topic, and always know what’s next.' }),
         el('ul', { className: 'auth-marketing-values' }, VALUE_PROPS.map(v => el('li', { className: 'auth-marketing-value' }, [
