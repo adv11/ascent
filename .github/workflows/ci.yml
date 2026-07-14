@@ -129,21 +129,17 @@ jobs:
       - name: Resolve Chromium executable path
         id: chrome-path
         run: echo "path=$(node -e "console.log(require('playwright-core').chromium.executablePath())")" >> "$GITHUB_OUTPUT"
-      - name: Start dev servers (one per URL — python's http.server is single-threaded and stalls on a second run reusing the same server)
+      - name: Start dev server
+        run: npm run dev &
+      - name: Wait for dev server
         run: |
-          python3 -m http.server 4173 &
-          python3 -m http.server 4174 &
-      - name: Wait for dev servers
-        run: |
-          for port in 4173 4174; do
-            for i in {1..30}; do
-              curl -sf "http://localhost:$port/" && echo "Dev server on $port ready" && break
-              echo "Waiting on $port... ($i/30)"
-              sleep 1
-            done
-            curl -sf "http://localhost:$port/" || { echo "❌ Dev server on $port failed to start within 30s"; exit 1; }
+          for i in {1..30}; do
+            curl -sf http://localhost:4173/ && echo "Dev server ready" && break
+            echo "Waiting... ($i/30)"
+            sleep 1
           done
-      - name: Run Lighthouse CI against landing + sign-in pages
+          curl -sf http://localhost:4173/ || { echo "❌ Dev server failed to start within 30s"; exit 1; }
+      - name: Run Lighthouse CI against the landing page
         uses: treosh/lighthouse-ci-action@v11
         env:
           CHROME_PATH: ${{ steps.chrome-path.outputs.path }}
@@ -151,7 +147,6 @@ jobs:
           configPath: ./lighthouserc.json
           urls: |
             http://localhost:4173/
-            http://localhost:4174/#/signin
           uploadArtifacts: true
           temporaryPublicStorage: true
 

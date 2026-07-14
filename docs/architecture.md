@@ -3495,22 +3495,45 @@ resolution, e.g. a token refresh) and only once the redirect condition is actual
 ### 2026-07-14 — PR #TBD — CI performance budget via Lighthouse CI, Phase 3 of network-speed perf, closing out issue #137
 
 New `lighthouse` job in `.github/workflows/ci.yml`, running on every PR alongside
-`lint`/`security`/`test-unit`/`test-e2e`: `npx @lhci/cli autorun` against a local
-`npm run dev` server, targeting `/` and `/#/signin` (the two signed-out-reachable pages
-Phase 1's lazy-loading targeted). Config lives in new root `lighthouserc.json`
-(`collect`/`assert`/`upload` sections, the standard `@lhci/cli` shape) rather than inline
-in the workflow YAML, so the same config can be run locally (`npx @lhci/cli autorun`)
-during development without touching CI. Thresholds — `interactive` ≤ 9000ms,
-`total-blocking-time` ≤ 600ms, `resource-summary:script:size` ≤ ~880KB (all three
-`error`-level, fail the job), `resource-summary:total:size` ≤ ~1.1MB (`warn`-level) and
-`categories:performance` ≥ 0.5 — were derived from a real Lighthouse run against the
-post-Phase-1/2 landing page (6.0s TTI, 0ms TBT, 637KB script weight, 0.65 performance
-score, default Lighthouse mobile-simulated throttling), each with headroom added for
-CI-runner variance, per the issue's explicit instruction to set initial thresholds from
-a real measurement rather than an arbitrary number. `upload.target:
-temporary-public-storage` gives each run a shareable report URL in the job log without
-needing a hosted LHCI server. This job is **not yet a required check** in GitHub branch
-protection — unlike `test-unit`/`test-e2e` (issue #30's precedent the issue asked this
-job to follow), flipping that on is a repo-settings change outside this PR's diff and is
-called out separately for the repo owner to action once this job's own results look
-stable across a few real PRs.
+`lint`/`security`/`test-unit`/`test-e2e`: `treosh/lighthouse-ci-action` against a local
+`npm run dev` server, targeting `/` (the landing page, signed-out-reachable, Phase 1's
+lazy-loading main target). Config lives in new root `lighthouserc.json`
+(`collect`/`assert`/`upload` sections, the standard `@lhci/cli` shape the action wraps)
+rather than inline in the workflow YAML, so the same config can be run locally
+(`npx @lhci/cli autorun`, with a server already running on port 4173) during development
+without touching CI. Thresholds — `interactive` ≤ 9000ms, `total-blocking-time` ≤ 600ms,
+`resource-summary:script:size` ≤ ~880KB (all three `error`-level, fail the job),
+`resource-summary:total:size` ≤ ~1.1MB (`warn`-level) and `categories:performance` ≥ 0.5
+— were derived from a real Lighthouse run against the post-Phase-1/2 landing page (6.0s
+TTI, 0ms TBT, 637KB script weight, 0.65 performance score, default Lighthouse
+mobile-simulated throttling), each with headroom added for CI-runner variance, per the
+issue's explicit instruction to set initial thresholds from a real measurement rather
+than an arbitrary number. `upload.target: temporary-public-storage` gives each run a
+shareable report URL in the job log without needing a hosted LHCI server. This job is
+**not yet a required check** in GitHub branch protection — unlike `test-unit`/`test-e2e`
+(issue #30's precedent the issue asked this job to follow), flipping that on is a
+repo-settings change outside this PR's diff and is called out separately for the repo
+owner to action once this job's own results look stable across a few real PRs.
+
+**The sign-in page (`/#/signin`) is a known, deliberate gap, not silently dropped.** The
+issue's own scope asked for both signed-out-reachable pages. `/#/signin` consistently
+failed Lighthouse's `NO_FCP` ("page did not paint any content") check in this exact CI
+environment across multiple independent fix attempts — a Chromium-binary mismatch fix
+(pinning `CHROME_PATH` to the same `playwright install --with-deps chromium` binary
+`test-e2e` already verifies works reliably here), a navigation-timeout-headroom fix
+(`maxWaitForFcp`/`maxWaitForLoad` raised from Lighthouse's defaults to 60s/90s), and a
+dev-server-isolation fix (a dedicated `python3 -m http.server` per URL, ruling out
+single-threaded-server connection contention between back-to-back runs) — none changed
+the outcome: `/` passes reliably and quickly (~12-13s) on every run, while `/#/signin`
+never once painted, consistently timing out right at whatever ceiling was configured.
+`/#/signin` renders correctly, quickly, and repeatably in every local test (direct
+`lighthouse` CLI, `@lhci/cli autorun`, individually and back-to-back with `/`), which
+rules out an actual app bug in the sign-in page or its dynamic-import path (issue #137
+Phase 1) — the failure is specific to Lighthouse's default "navigation" mode driving a
+**first-ever, hash-fragment-only URL** in this particular CI browser/environment
+combination. The most likely real fix — not yet attempted, tracked in issue #168 — is an
+LHCI `puppeteerScript`/user-flow that navigates to `/` first (a URL Lighthouse already
+handles fine here) and then triggers the in-app hash-route change client-side, rather
+than asking Lighthouse to `page.goto()` a hash URL as the very first navigation in a
+fresh browser context. Shipping `/`-only now rather than continuing to iterate blind on
+CI-only failures with no new local repro to work from.
