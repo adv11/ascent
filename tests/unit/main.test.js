@@ -74,4 +74,27 @@ describe('main.js lazy route registration (issue #137)', () => {
     await vi.waitFor(() => expect(renderDashboard).toHaveBeenCalled());
     expect(signInCleanup).toHaveBeenCalled();
   });
+
+  it('modulepreloads dashboard.js once auth resolves and a redirect to /app is about to happen (issue #137 Phase 2)', async () => {
+    const { authApi } = await import('../../src/services/firebase.js');
+    window.location.hash = '#/signin';
+    await import('../../src/main.js');
+    await vi.waitFor(() => expect(renderSignIn).toHaveBeenCalled());
+
+    expect(document.head.querySelector('link[rel="modulepreload"][href*="dashboard.js"]')).toBeNull();
+
+    // Simulate a resolved, already-onboarded sign-in on a public route —
+    // the exact condition main.js's authApi.onChange uses to redirect to
+    // '/app'.
+    const onAuthChange = authApi.onChange.mock.calls[0][0];
+    await onAuthChange({ uid: 'test-uid' });
+
+    const preloadLink = document.head.querySelector('link[rel="modulepreload"][href*="dashboard.js"]');
+    expect(preloadLink).not.toBeNull();
+
+    // A second resolution (e.g. a token refresh) must not append a
+    // duplicate hint.
+    await onAuthChange({ uid: 'test-uid' });
+    expect(document.head.querySelectorAll('link[rel="modulepreload"][href*="dashboard.js"]')).toHaveLength(1);
+  });
 });
