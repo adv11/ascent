@@ -545,3 +545,32 @@ A responsive spot-check (375/768/1024/1440px, dark theme, dashboard) confirmed n
 layout regression — expected, since every change across this whole pass (Phases A–E)
 is a color-value swap; no `display`/`flex`/`grid`/`width`/`height`/`padding`/`margin`
 property was touched anywhere.
+
+## Branded print/PDF export (issue #160)
+
+**A repeating print header/footer uses `position: fixed`, not a CSS `@page` margin
+box.** `@page`'s `@top-center`/`@bottom-center` margin-box syntax is the
+spec-sanctioned way to put content in a page margin, but real browser support for
+putting arbitrary DOM content (a logo + wordmark, not just page-number counters) into
+one is inconsistent enough across engines that it isn't a reliable cross-browser
+choice today. `printRoadmap.js`'s `.print-page-header`/`.print-page-footer` are
+ordinary `position: fixed` elements (`top: 0`/`bottom: 0`) inside `.print-roadmap` —
+confirmed empirically (not assumed) to repeat on every physical page in Chromium via
+a real 47-page multi-phase `page.pdf()` render (`Ascent`/tagline/`ascent-app.com`
+text all present on the first, middle, and last page). `.print-roadmap`'s own
+`padding: 64px 0 56px` reserves space so the fixed header/footer never overlaps the
+first page's content. If you add or resize either fixed band, keep that padding in
+sync so nothing renders underneath it on page 1.
+
+**Every color in the print stylesheet is a fixed literal, not a `--p0`-`--p3` token
+read — even though the hues are meant to visually match the on-screen priority
+system.** A printed page is always white paper regardless of the app's active
+on-screen theme (the existing issue #133 rule, unchanged), so `.print-phase-P0`-`P3`
+and `.print-priority-badge.print-priority-P0`-`P3` hardcode the *light-theme*
+`--p0`-`--p3` hex values (`#dc2626`/`#b45309`/`#2563eb`/`#15803d`) as literals — never
+the dark-theme values those same custom properties resolve to when the site theme is
+dark. Each pairing (white text on a solid accent fill for the badges, accent-colored
+left border against white for the phase card) was verified against actual white
+paper specifically, not the dark-theme panel background the hue is visually copied
+from — see the block comment above the print media query in `app.css` for the exact
+contrast figures.
