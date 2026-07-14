@@ -3444,3 +3444,29 @@ diagonal-grid + radial-glow layer behind the landing hero/CTA and the auth marke
 panel, replacing the panel's old solid brand-gradient fill). The sidebar's active nav
 item becomes pill-shaped. See `.claude/rules/ui-styling.md`'s "Visual design language"
 section for the full token/class reference.
+
+### 2026-07-14 — PR #TBD — Lazy per-route code loading, Phase 1 of network-speed perf (issue #137)
+
+`main.js` previously imported every page module (`signIn.js`/`signUp.js`/`dashboard.js`/
+`onboarding.js`/`settings.js`/`progress.js`) statically at the top of the file, evaluated
+before the router ever decided which route was active — a signed-out visitor loading the
+landing page (`/`) ended up fetching nearly the entire authenticated app's transitive
+import graph (`roadmapStore.js`/`dailyTodoStore.js`/`activityLogStore.js`, every storage
+adapter, `firebase.js`, all template data, most of `src/ui/components/`) despite never
+needing any of it. Those six page modules are now behind a dynamic `import()` resolved
+inside each route's registration, the same lazy-load technique `chartWrapper.js` (issue
+#8) already uses for Chart.js — `main.js`'s `guardApp()` wrapper became `async` and a new
+`lazyGuard(loadModule, renderKey)` helper does `await loadModule()` then calls the
+resolved module's named export. No change to `router.js` itself — `startRouter()` already
+`await`s whatever a route's render function returns. `landing.js` and
+`sharedRoadmapView.js` (the two signed-out-reachable pages) are unchanged/still eager,
+since they're each already reasonably self-contained and are exactly the modules a
+signed-out visitor does need. A static import-graph count (`main.js`'s own transitively
+statically-reachable `.js` file count) confirms the reduction: 116 → 46. `tests/unit/main.test.js`
+is new — it mocks every dependency `main.js` imports and confirms a lazy route's dynamic
+`import()` resolves to the real render function (not just a stub) and that the previous
+route's returned cleanup still runs on navigation, since a dynamic-import-based route that
+silently failed to wire up a working cleanup wouldn't be caught by `router.js`'s own tests
+(which only ever register plain `vi.fn()` renderers). Phases 2-4 of issue #137 (resource
+hints/caching headers, a CI Lighthouse budget, and a network-throttling dimension for
+`.claude/skills/verify-changes/`) are tracked separately and not part of this PR.
