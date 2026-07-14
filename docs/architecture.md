@@ -3565,3 +3565,21 @@ from score 0 to score 1 (clean) after this second directive. `errors-in-console`
 reports the pre-existing, already-documented `frame-ancestors`-in-`<meta>`-tag notice
 (issue #168's own "noted, not actioned" finding, a browser-spec limitation, not a
 regression from this change).
+
+### 2026-07-14 — PR #TBD — Design token retune, Phase A of issue #155's v2 redefinition (lime/near-black direction)
+
+Issue #155's ZeBeyond pass (PR #162, entry above) shipped and closed, then was reopened
+same-day with new reference material scoped to a 5-phase, whole-app pass. This is Phase
+A: token layer only, `src/styles/app.css`'s `:root[data-theme='dark']` block. Two
+changes: (1) the near-black scale tightened one more step
+(`--soft`/`--panel`/`--panel-2`/`--surface-3`/`--line`/`--line-strong`, plus the
+derived `--emphasis-text`/`--surface-glass`/`--border-glass`) to the reference's exact
+`#080808` base; (2) a new parallel `--accent-lime`/`--accent-lime-dark`/
+`--accent-lime-light`/`--accent-lime-light-border` token family was added rather than
+retuning `--brand`/`--brand-dark` in place, since `--brand-dark` alone is read by ~20
+call sites outside this pass's current scope (Phase D territory) and at least one
+(`.toast-success`'s white-on-solid-fill) would break contrast if it became lime. No
+component wired to the new tokens yet — that's Phase B onward. Every value
+live-verified for WCAG contrast; full writeup and the retune-vs-parallel-family
+decision rationale in `.claude/rules/ui-styling.md`'s "Visual design language v2"
+section.
