@@ -124,8 +124,25 @@ jobs:
       - run: npm ci
       - name: Write Firebase config (dummy, app just needs to boot to render '/')
         run: cp src/services/firebase.config.example.js src/services/firebase.config.js
+      - name: Start dev server
+        run: npm run dev &
+      - name: Wait for dev server
+        run: |
+          for i in {1..30}; do
+            curl -sf http://localhost:4173/ && echo "Dev server ready" && break
+            echo "Waiting... ($i/30)"
+            sleep 1
+          done
+          curl -sf http://localhost:4173/ || { echo "❌ Dev server failed to start within 30s"; exit 1; }
       - name: Run Lighthouse CI against landing + sign-in pages
-        run: npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: ./lighthouserc.json
+          urls: |
+            http://localhost:4173/
+            http://localhost:4173/#/signin
+          uploadArtifacts: true
+          temporaryPublicStorage: true
 
   # ── Job 6: PR checklist enforcement ───────────────────────────────────────
   pr-checklist:

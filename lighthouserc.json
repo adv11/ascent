@@ -2,9 +2,6 @@
   "ci": {
     "collect": {
       "numberOfRuns": 1,
-      "startServerCommand": "npm run dev",
-      "startServerReadyPattern": "Serving HTTP",
-      "startServerReadyTimeout": 30000,
       "url": [
         "http://localhost:4173/",
         "http://localhost:4173/#/signin"
