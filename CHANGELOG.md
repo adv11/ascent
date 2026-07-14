@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Reverted ~305 lines of unrelated Material Design 3 / dark-teal token work that got accidentally bundled into PR #161's `src/styles/app.css` diff (issue #134).** That content belonged to a separate, unmerged design initiative (issue #155) and was almost certainly picked up by a bad rebase/merge — none of it was referenced by #161's actual spaced-repetition feature. Restored `app.css` to its exact pre-#161 state; re-added the one legitimate rule from that same diff hunk (`.review-due-nav-badge`, the header pill for topics due for review) that the wholesale revert would otherwise have dropped along with the accidental content.
+
 ### Added
 - **Spaced-repetition review reminders — Phase A, fixed-interval (issue #134).** A completed topic left unchecked for 14 days now surfaces as "due for review": a new "Review due" filter chip and a header pill (next to the Daily Todo countdown badge) show how many topics qualify, each with a "Mark reviewed" action that resets its own review clock without touching its `done` state. This is a simple fixed-interval reminder, not a full spaced-repetition algorithm (no per-item ease factors or growing intervals) — see `.claude/rules/roadmap-store.md` for the scope note.
 
