@@ -113,7 +113,21 @@ jobs:
           name: playwright-report
           path: playwright-report/
 
-  # ── Job 5: PR checklist enforcement ───────────────────────────────────────
+  # ── Job 5: Lighthouse CI performance budget (issue #137 Phase 3) ─────────
+  lighthouse:
+    name: Lighthouse CI (perf budget)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Write Firebase config (dummy, app just needs to boot to render '/')
+        run: cp src/services/firebase.config.example.js src/services/firebase.config.js
+      - name: Run Lighthouse CI against landing + sign-in pages
+        run: npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json
+
+  # ── Job 6: PR checklist enforcement ───────────────────────────────────────
   pr-checklist:
     name: PR description check
     runs-on: ubuntu-latest

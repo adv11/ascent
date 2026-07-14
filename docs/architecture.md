@@ -3491,3 +3491,26 @@ Firebase-SDK `modulepreload` tags in `index.html` were re-checked against Phase 
 changes and remain the correct, unchanged set. `tests/unit/main.test.js` gained a second
 test asserting the hint is appended exactly once (not duplicated on a second auth-state
 resolution, e.g. a token refresh) and only once the redirect condition is actually met.
+
+### 2026-07-14 — PR #TBD — CI performance budget via Lighthouse CI, Phase 3 of network-speed perf, closing out issue #137
+
+New `lighthouse` job in `.github/workflows/ci.yml`, running on every PR alongside
+`lint`/`security`/`test-unit`/`test-e2e`: `npx @lhci/cli autorun` against a local
+`npm run dev` server, targeting `/` and `/#/signin` (the two signed-out-reachable pages
+Phase 1's lazy-loading targeted). Config lives in new root `lighthouserc.json`
+(`collect`/`assert`/`upload` sections, the standard `@lhci/cli` shape) rather than inline
+in the workflow YAML, so the same config can be run locally (`npx @lhci/cli autorun`)
+during development without touching CI. Thresholds — `interactive` ≤ 9000ms,
+`total-blocking-time` ≤ 600ms, `resource-summary:script:size` ≤ ~880KB (all three
+`error`-level, fail the job), `resource-summary:total:size` ≤ ~1.1MB (`warn`-level) and
+`categories:performance` ≥ 0.5 — were derived from a real Lighthouse run against the
+post-Phase-1/2 landing page (6.0s TTI, 0ms TBT, 637KB script weight, 0.65 performance
+score, default Lighthouse mobile-simulated throttling), each with headroom added for
+CI-runner variance, per the issue's explicit instruction to set initial thresholds from
+a real measurement rather than an arbitrary number. `upload.target:
+temporary-public-storage` gives each run a shareable report URL in the job log without
+needing a hosted LHCI server. This job is **not yet a required check** in GitHub branch
+protection — unlike `test-unit`/`test-e2e` (issue #30's precedent the issue asked this
+job to follow), flipping that on is a repo-settings change outside this PR's diff and is
+called out separately for the repo owner to action once this job's own results look
+stable across a few real PRs.
