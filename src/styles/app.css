@@ -3476,6 +3476,8 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .settings-row-value { color: var(--muted); font-size: var(--text-sm); margin-right: auto; }
 .settings-row-hint { color: var(--muted); font-size: 12px; margin: 0; }
 .settings-verified { color: var(--brand-dark); font-weight: 700; }
+/* issue #155 v2 Phase D2 — settings-only class, recolored; falls back to mint in light theme. */
+:root[data-theme='dark'] .settings-verified { color: var(--accent-lime-dark); }
 .settings-unverified { color: var(--p1); font-weight: 700; }
 
 .settings-select { max-width: 200px; }
