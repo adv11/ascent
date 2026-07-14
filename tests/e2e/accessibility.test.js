@@ -108,6 +108,20 @@ const CONTRAST_FALSE_POSITIVE_SELECTORS = [
   '.stat-tile', '.priority-table-wrap td', '.brand-name', '.import-step-heading',
   '.panel-kicker', '.link-badge', '.btn-danger', '.priority-tag'
 ];
+// Issue #155 — `.landing-footer-ghost` (src/ui/pages/landing.js/app.css) is a giant,
+// `opacity: 0.06`, `aria-hidden="true"`, `pointer-events: none` wordmark rendered purely
+// as background texture behind the footer. This is NOT a sampler false positive like the
+// list above (axe's reported ratio, ~1.08, matches the element's real computed style
+// exactly — fg and bg genuinely are that close). It's excluded because WCAG 1.4.3 itself
+// exempts "text that is part of ... pure decoration ... not visible to anyone" from any
+// contrast requirement, and this element already signals that on every axis available
+// (aria-hidden removes it from the accessibility tree; pointer-events/user-select: none
+// mean it's inert). axe's color-contrast rule has no way to know a low-opacity element is
+// intentionally decorative rather than genuinely-meant-to-be-read text, so it flags it
+// regardless of aria-hidden. Always excluded (not gated behind
+// `excludeContrastFalsePositives`) since it's correct on every page/theme this selector
+// could ever match, not a per-page workaround.
+const DECORATIVE_SELECTORS = ['.landing-footer-ghost'];
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 function seriousOrCritical(results) {
@@ -116,6 +130,7 @@ function seriousOrCritical(results) {
 
 async function runAxe(page, { excludeContrastFalsePositives = false, include = null } = {}) {
   const builder = new AxeBuilder({ page });
+  for (const selector of DECORATIVE_SELECTORS) builder.exclude([selector]);
   if (excludeContrastFalsePositives) {
     for (const selector of CONTRAST_FALSE_POSITIVE_SELECTORS) builder.exclude([selector]);
   }
