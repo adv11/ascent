@@ -3642,3 +3642,16 @@ this page (its cards/rows already read Phase A's near-black scale via tokens; ev
 other class is neutral gray/ink). Deliberately scoped to just this one class — the
 ~12 modals the issue's Phase D also names are tracked as a further Phase D3, not this
 PR; tracker issue #11 reflects the split.
+
+### 2026-07-15 — PR #TBD — First modal recolors (importRoadmapModal + feedbackModal), Phase D3 part 1 of issue #155's v2 redefinition (lime/near-black direction)
+
+Phase D3 part 1: `.import-step-badge` (`importRoadmapModal.js`'s numbered step circles)
+and `.feedback-type-card`/`.feedback-reference` (`feedbackModal.js`) recolored to Phase
+A's `--accent-lime` family in dark theme, mint fallback in light. `.import-step-badge`
+required swapping its text color alongside its fill (`var(--soft)`, not the base rule's
+fixed white) since white-on-lime fails contrast — the only one of the three needing
+that treatment, since the other two are border/outline-only recolors with no
+text-contrast implication. Picked by grepping every modal for actual `--brand`-colored
+elements first — most modals in this app are neutral gray/ink with nothing to recolor.
+The remaining ~10 modals are tracked as further Phase D3 PRs; tracker issue #11
+reflects the split.

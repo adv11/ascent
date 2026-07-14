@@ -438,3 +438,21 @@ scale automatically via tokens (no page-specific token overrides exist), and its
 remaining classes are neutral, not accent-colored. **Deliberately scoped to just this
 one class** — the ~12 modals the issue's Phase D also names are tracked as a further
 Phase D3, not this PR (see tracker issue #11's row for #155).
+
+**Phase D3 (part 1), shipped — importRoadmapModal.js + feedbackModal.js.** Two of the
+~12 modals in scope, picked for having a genuine `--brand`-colored element to recolor
+(most modals in this app are neutral gray/ink with no accent color at all — grepped
+before touching any file, not assumed). `.import-step-badge` (the numbered "1"–"6"
+circle badges on the "Create your own roadmap" modal) is a fixed white-text-on-solid-
+`--brand` badge — its dark-theme override swaps **both** the fill (`--accent-lime`)
+*and* the text color (`var(--soft)`, near-black, not the base rule's fixed white),
+since white text on lime fails badly (the issue's own explicit callout). This is
+different from every border/outline-only recolor elsewhere in this pass
+(`.feedback-type-card:hover`/`:focus-visible`, also shipped here) — those carry no
+text-contrast requirement of their own, so a straight `border-color`/`outline-color`
+token swap was safe without touching any text color. `.feedback-reference` (the
+monospace bug-report reference code) follows the same simple pattern as
+`.settings-verified` in Phase D2 — `--accent-lime-dark` text, mint fallback in light
+theme. All three reuse Phase A's already-live-verified contrast figures; no new
+calculation was needed. **The other ~10 modals remain** — tracked as further Phase D3
+follow-up PRs, split by modal (see tracker issue #11's row for #155).

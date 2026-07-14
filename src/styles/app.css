@@ -1939,6 +1939,13 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   font-size: 12px;
   font-weight: 800;
 }
+/* issue #155 v2 Phase D3 — modal-scoped recolor. Unlike every other Phase C/D2 recolor,
+   this one must also swap its *text* color, not just its background: white text (the
+   base rule above) fails badly on solid lime (the issue's own explicit callout — lime
+   hosts near-black text, never white), so dark theme reads `var(--soft)` here instead
+   of the fixed white the light-theme/pre-v2 rule above uses. Falls back to the
+   original brand+white pairing in light theme. */
+:root[data-theme='dark'] .import-step-badge { background: var(--accent-lime); color: var(--soft); }
 .field-hint { font-size: 12px; color: var(--muted); margin-top: -4px; }
 .import-options { display: grid; gap: 14px; padding: 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); }
 .import-option-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -4117,6 +4124,11 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 }
 .feedback-type-card:hover { border-color: var(--brand); transform: translateY(-1px); }
 .feedback-type-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* issue #155 v2 Phase D3 — modal-scoped recolor; border/outline colors carry no
+   text-contrast requirement of their own, so a straight token swap is safe here
+   (unlike .import-step-badge above). Falls back to mint in light theme. */
+:root[data-theme='dark'] .feedback-type-card:hover { border-color: var(--accent-lime); }
+:root[data-theme='dark'] .feedback-type-card:focus-visible { outline-color: var(--accent-lime); }
 .feedback-type-emoji { font-size: var(--text-2xl); }
 
 .feedback-form { display: flex; flex-direction: column; gap: 16px; }
@@ -4147,6 +4159,8 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .feedback-success { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 12px 0; }
 .feedback-success-icon { font-size: var(--text-4xl); }
 .feedback-reference { font-family: var(--mono); font-weight: 700; color: var(--brand-dark); }
+/* issue #155 v2 Phase D3 — modal-scoped recolor; falls back to mint in light theme. */
+:root[data-theme='dark'] .feedback-reference { color: var(--accent-lime-dark); }
 
 .my-reports-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
 .my-report-row { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
