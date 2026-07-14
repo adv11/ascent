@@ -8,7 +8,10 @@
       "url": [
         "http://localhost:4173/",
         "http://localhost:4173/#/signin"
-      ]
+      ],
+      "settings": {
+        "chromeFlags": "--no-sandbox --headless=new --disable-gpu --disable-dev-shm-usage"
+      }
     },
     "assert": {
       "assertions": {
