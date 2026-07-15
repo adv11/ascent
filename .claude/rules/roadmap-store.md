@@ -1131,7 +1131,7 @@ page. `renderItemRow()`'s "Mark reviewed" button only renders on a currently rev
 row, following the same `data-action`/`e.stopPropagation()` click-guard convention as
 every other nested row control. A `done` toggle (`patchDoneStates()`'s fast path, not just
 the full `render()`) also refreshes the header pill, since checking/unchecking an item
-can flip it in or out of review-due state via `completedAt` alone.
+can flip it in or out of review-due state via `completedAt` alone. **This feature had no in-UI explanation of what "Review due" means until a follow-up fix** — unlike Daily Todos/"Build your own roadmap" (both have an ℹ guide modal), the `REVIEW` chip and header pill were undiscoverable, real feedback found live. Fixed with `attachTooltip()` on the chip (hover/focus, explaining the 14-day/"Mark reviewed" mechanic) and a fuller native `title` on the header pill — no new guide modal, since the explanation is one sentence and doesn't warrant `buildYourOwnGuide.js`'s heavier pattern. If this feature ever grows real configurability (a user-adjustable interval, etc.), promote it to a proper guide modal at that point rather than stretching the tooltip.
 
 **Lightweight time tracking — `item.timeSpentSeconds`, a plain cumulative counter, not a
 Pomodoro/focus-enforcement feature (issue #180).** Both a roadmap topic and a Daily Todo

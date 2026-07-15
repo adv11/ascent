@@ -198,7 +198,7 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
     const { total, done } = priorityCounts(items, p);
     const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Resources' : p === 'REVIEW' ? 'Review due' : p;
     const isActive = activeFilter === p;
-    return el('button', {
+    const chip = el('button', {
       type: 'button',
       className: `filter-chip ${isActive ? 'active' : ''}`,
       dataset: { p },
@@ -234,6 +234,10 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
         }
       }, [createIcon('close', { size: 'xs' })]) : null
     ].filter(Boolean));
+    if (p === 'REVIEW') {
+      attachTooltip(chip, 'Topics you complete reappear here 14 days later, as a reminder to revisit them. Click "Mark reviewed" on a topic to reset its clock.');
+    }
+    return chip;
   });
 }
 
@@ -1064,7 +1068,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const reviewDueBadge = el('button', {
     type: 'button',
     className: 'review-due-nav-badge',
-    title: 'Topics due for review',
+    title: 'Topics you completed 14+ days ago, due for a review.',
     hidden: true,
     onClick: () => {
       activeFilter = 'REVIEW';
