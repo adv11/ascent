@@ -225,6 +225,23 @@ export function createDailyTodoStore() {
     queueSave();
   }
 
+  // Adds elapsed session seconds to a todo's cumulative timeSpentSeconds
+  // (issue #180) — mirrors roadmapStore.updateItem's patch-and-persist
+  // shape, but as a dedicated adder rather than a generic patch function
+  // since a running timer's session is local-only UI state (dailyTodoPanel.js)
+  // and only ever wants to add elapsed time, never overwrite the total.
+  // Returns false (mutating nothing) for a missing todo or a non-positive
+  // seconds value, same "callers must check the return value" convention as
+  // addTodo/removeTodo.
+  function addTimeSpent(id, seconds) {
+    const todo = items[id];
+    if (!todo || !Number.isFinite(seconds) || seconds <= 0) return false;
+    const current = Number.isFinite(todo.timeSpentSeconds) ? todo.timeSpentSeconds : 0;
+    items[id] = { ...todo, timeSpentSeconds: current + Math.floor(seconds) };
+    queueSave();
+    return true;
+  }
+
   // Permanently removes a todo — unlike the roadmap's soft-delete pattern,
   // done/missed todos have no "undo" affordance and no bearing on
   // MAX_ACTIVE_TODOS, so there's no reason to keep them around forever once
@@ -248,6 +265,7 @@ export function createDailyTodoStore() {
     removeTodo,
     addTodo,
     setDone,
+    addTimeSpent,
     flush
   };
 }

@@ -64,9 +64,9 @@ describe('renderProgress — basic mount', () => {
     expect(app.querySelector('.stat-strip')).not.toBeNull();
   });
 
-  it('renders 4 kpi tiles, one hero-highlighted', async () => {
+  it('renders 5 kpi tiles, one hero-highlighted', async () => {
     const { app } = await freshProgress(user);
-    expect(app.querySelectorAll('.kpi-tile')).toHaveLength(4);
+    expect(app.querySelectorAll('.kpi-tile')).toHaveLength(5);
     expect(app.querySelectorAll('.kpi-tile-hero')).toHaveLength(1);
   });
 

@@ -9,11 +9,14 @@ import { MAX_TODO_TITLE_LENGTH, MAX_ACTIVE_TODOS, DURATION_PRESETS, MIN_DURATION
 import { getTemplate } from '../../data/templates/index.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { remindersEnabled, enableReminders, disableReminders } from '../../services/reminderScheduler.js';
+import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
 
 const CUSTOM_VALUE = 'custom';
 const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms || DURATION_PRESETS[0].ms;
 // 30s resolution is enough for hour/minute-granularity countdown text.
 const TICK_MS = 30000;
+// 1s resolution for a running per-todo timer's live display (issue #180).
+const TIMER_TICK_MS = 1000;
 
 // Resolves a templateId to a display name for the confirm dialog/toast/row
 // label — built-in templates come from the registry, a custom roadmap's
@@ -197,6 +200,50 @@ export function createDailyTodoPanel(store, roadmapStore) {
     }
   }
 
+  // Issue #180 — per-todo lightweight timer. Local-only UI state (id ->
+  // session startedAt, epoch ms), same "never synced across devices, only
+  // the stopped result is" reasoning as itemPanel.js's own timer. A single
+  // shared 1s tick only runs while at least one timer is active, and it
+  // updates each running row's display span directly (by id) rather than
+  // re-running the full render() — the countdown tick above already handles
+  // periodic full re-renders every 30s.
+  const runningTimers = {};
+  let timerTickTimer = null;
+
+  function ensureTimerTick() {
+    const anyRunning = Object.keys(runningTimers).length > 0;
+    if (anyRunning && !timerTickTimer) {
+      timerTickTimer = setInterval(updateRunningDisplays, TIMER_TICK_MS);
+    } else if (!anyRunning && timerTickTimer) {
+      clearInterval(timerTickTimer);
+      timerTickTimer = null;
+    }
+  }
+
+  function updateRunningDisplays() {
+    const todos = store.getSnapshot().todos;
+    Object.entries(runningTimers).forEach(([id, startedAt]) => {
+      const todo = todos.find(t => t.id === id);
+      const display = activeList.querySelector(`[data-timer-display="${id}"]`);
+      if (!todo || !display) return;
+      const total = (todo.timeSpentSeconds || 0) + computeElapsedSeconds(startedAt);
+      display.textContent = formatTimeSpent(total);
+    });
+  }
+
+  function handleToggleTimer(todo) {
+    if (runningTimers[todo.id] != null) {
+      const elapsed = computeElapsedSeconds(runningTimers[todo.id]);
+      delete runningTimers[todo.id];
+      ensureTimerTick();
+      store.addTimeSpent(todo.id, elapsed);
+      return;
+    }
+    runningTimers[todo.id] = Date.now();
+    ensureTimerTick();
+    render();
+  }
+
   function renderRow(todo, now) {
     const ms = remainingMs(todo, now);
     const band = todo.done ? null : remainingBand(ms);
@@ -226,6 +273,19 @@ export function createDailyTodoPanel(store, roadmapStore) {
       // row's status text flush against the same edge regardless of title
       // length or done state.
       el('span', { className: `daily-todo-remaining ${todo.done ? 'done' : band}`, text: todo.done ? 'Done' : formatRemaining(ms) }),
+      // Time tracking (issue #180) — Start/pause only makes sense for a
+      // still-active, not-yet-done todo; a done or missed row shows its
+      // accumulated total read-only, matching itemPanel.js's "total always
+      // visible" treatment.
+      el('span', { className: 'daily-todo-time-spent', 'data-timer-display': todo.id, text: formatTimeSpent(todo.timeSpentSeconds || 0) }),
+      !todo.done ? el('button', {
+        type: 'button',
+        className: `daily-todo-timer-btn ${runningTimers[todo.id] != null ? 'active' : ''}`,
+        'data-action': 'timer',
+        'aria-label': runningTimers[todo.id] != null ? `Pause timer for "${todo.title}"` : `Start timer for "${todo.title}"`,
+        title: runningTimers[todo.id] != null ? 'Pause timer' : 'Start timer',
+        onClick: () => handleToggleTimer(todo)
+      }, [createIcon(runningTimers[todo.id] != null ? 'pause' : 'play', { size: 'xs' })]) : null,
       el('button', {
         type: 'button',
         className: 'daily-todo-delete',
@@ -345,8 +405,15 @@ export function createDailyTodoPanel(store, roadmapStore) {
   applyReminderState();
 
   node._cleanup = () => {
+    // A running timer must never keep ticking against an unmounted panel —
+    // flush each one's elapsed session before tearing down, same reasoning
+    // as itemPanel.js's own close()-time flush.
+    Object.entries(runningTimers).forEach(([id, startedAt]) => {
+      store.addTimeSpent(id, computeElapsedSeconds(startedAt));
+    });
     unsubStore();
     clearInterval(tickTimer);
+    clearInterval(timerTickTimer);
     durationSelect._cleanup?.();
   };
 

@@ -17,6 +17,7 @@ import { animateCountUp } from '../../utils/countUp.js';
 import { computeAnalytics, buildEffectiveActivityLog } from '../../core/analytics/analyticsEngine.js';
 import { dateKey, previousDateKey, parseDateKey, MONTH_ABBR } from '../../core/analytics/dateKey.js';
 import { KEYS } from '../../services/localStorageKeys.js';
+import { formatTimeSpent } from '../../core/time/timeTracking.js';
 
 const RANGE_OPTIONS = [
   { value: 'week', label: 'This Week', days: 7 },
@@ -157,7 +158,7 @@ function renderStatTile({ icon, value, total, label, bar, hero, caption }) {
 // store-driven re-render would restart the count from wherever it last
 // landed instead of just holding steady, same "animate once" guard
 // dashboard.js's own stat strip already uses.
-function renderStatCards(analytics, animate) {
+function renderStatCards(analytics, animate, timeSpentSeconds) {
   const { overview, streaks, velocity, streakFreezesAvailable } = analytics;
 
   const doneValue = el('span', { text: '0' });
@@ -204,6 +205,11 @@ function renderStatCards(analytics, animate) {
       value: velocityValue,
       total: el('span', { className: 'kpi-tile-total', text: '/ day' }),
       label: '7-day velocity'
+    }),
+    renderStatTile({
+      icon: 'timer',
+      value: el('span', { text: formatTimeSpent(timeSpentSeconds) }),
+      label: 'Time tracked'
     })
   ]);
 }
@@ -439,7 +445,14 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     latestAnalytics = analytics;
     latestEffectiveLog = buildEffectiveActivityLog(items, entries);
 
-    statStripSlot.replaceChildren(renderStatCards(analytics, !hasAnimatedStats));
+    // Issue #180 — total time tracked on this roadmap's topics plus every
+    // Daily Todo (Daily Todos are user-global, not per-roadmap, but there's
+    // no separate "Daily Todos progress" page for a second total to live
+    // on). Summed fresh on every render rather than cached — cheap even at
+    // the item-count cap (800) and the daily-todo cap (20 active).
+    const roadmapSeconds = Object.values(items).reduce((sum, item) => sum + (item.timeSpentSeconds || 0), 0);
+    const todoSeconds = (dailyTodoStore?.getSnapshot().todos || []).reduce((sum, todo) => sum + (todo.timeSpentSeconds || 0), 0);
+    statStripSlot.replaceChildren(renderStatCards(analytics, !hasAnimatedStats, roadmapSeconds + todoSeconds));
     hasAnimatedStats = true;
     heatmapSlot.replaceChildren(createHeatmap(analytics.heatmapData));
     phaseBreakdownSlot.replaceChildren(renderPhaseBreakdownList(analytics.phaseBreakdown, analytics.priorityBreakdown));

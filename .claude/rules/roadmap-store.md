@@ -1133,6 +1133,36 @@ every other nested row control. A `done` toggle (`patchDoneStates()`'s fast path
 the full `render()`) also refreshes the header pill, since checking/unchecking an item
 can flip it in or out of review-due state via `completedAt` alone.
 
+**Lightweight time tracking — `item.timeSpentSeconds`, a plain cumulative counter, not a
+Pomodoro/focus-enforcement feature (issue #180).** Both a roadmap topic and a Daily Todo
+gained an optional `timeSpentSeconds: number` field (missing/`undefined` both mean "never
+tracked" — same backward-compat convention as `notes`/`lastReviewedAt`) recording total
+elapsed time a start/pause control (`itemPanel.js`'s "Time tracked" field;
+`dailyTodoPanel.js`'s per-row timer button) has accumulated. `src/core/time/timeTracking.js`
+is the pure math module (`computeElapsedSeconds`/`accumulateElapsed`/`formatTimeSpent`) —
+no DOM/store access, mirroring `reviewSchedule.js`'s "pure computation, UI wires it up"
+split above. **A running timer's session start (`runningSince`/`startedAt`) is
+deliberately local-only UI state, never written to the store or synced live across
+devices/tabs** — matching Daily Todos' own live countdown precedent (device-locally
+computed from a stored `expiresAt`, not pushed device-to-device) and the issue's explicit
+scoping. Only the *stopped* result (the new cumulative total) is persisted, through the
+exact same per-item patch mechanism every other field already uses: `itemPanel.js` calls
+`onSave({ timeSpentSeconds })` (→ `roadmapStore.updateItem()`, same path as `notes`/
+`lastReviewedAt` — no store change was needed there, since `updateItem()`'s cosmetic-check
+already treats any non-`done` patch key as structural) on pause and again on panel close if
+a session is still running (mirroring the notes-autosave-flush-on-close pattern immediately
+above it in that file); `dailyTodoPanel.js` calls a new, dedicated
+`dailyTodoStore.addTimeSpent(id, seconds)` — an *adder*, not a generic patch function like
+`updateItem()`, since a todo timer only ever wants to add elapsed seconds, never overwrite
+the total, and the panel's `node._cleanup` flushes any still-running per-todo timer before
+unmount for the same "never silently drop a session" reason. Never build a "resume where
+you left off across devices" feature on top of this without a new design — the running
+state genuinely does not exist anywhere the store or Firebase can see it. `/progress`
+sums `timeSpentSeconds` across the active roadmap's `items` and every Daily Todo into a
+5th `.kpi-tile` stat (`progress.js`'s `renderStatCards()`) — computed fresh on every
+render, not cached, since even the item-count cap (800) and todo cap (20 active) make
+that cheap.
+
 **`activityLogStore.js` and the `onCompletionToggle` hook (issue #8, part 1 — data layer
 only, no UI yet).** A fourth store alongside `roadmapStore.js`/`dailyTodoStore.js`
 (`src/services/activityLogStore.js`), same Store pattern precedent as `dailyTodoStore.js`

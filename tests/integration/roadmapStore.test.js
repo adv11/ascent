@@ -224,6 +224,51 @@ describe('completedAt (issue #18)', () => {
   });
 });
 
+describe('timeSpentSeconds (issue #180) — persists through updateItem like any other field', () => {
+  it('accepts a timeSpentSeconds patch and stores it on the item', () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    expect(store.updateItem(firstId, { timeSpentSeconds: 90 })).toBe(true);
+    expect(store.getSnapshot().allItems[firstId].timeSpentSeconds).toBe(90);
+  });
+
+  it('overwrites (not adds to) the prior value — callers own the accumulation math', () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    store.updateItem(firstId, { timeSpentSeconds: 60 });
+    store.updateItem(firstId, { timeSpentSeconds: 60 + 45 });
+
+    expect(store.getSnapshot().allItems[firstId].timeSpentSeconds).toBe(105);
+  });
+
+  it('is not cosmetic — a timeSpentSeconds-only patch bumps structuralVersion', () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const initial = store.getSnapshot().structuralVersion;
+
+    store.updateItem(firstId, { timeSpentSeconds: 90 });
+
+    expect(store.getSnapshot().structuralVersion).toBe(initial + 1);
+  });
+
+  it('persists through the same debounced save path as every other item field', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'u1' });
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    vi.useFakeTimers();
+    store.updateItem(firstId, { timeSpentSeconds: 120 });
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(dbApi.saveRoadmap).toHaveBeenCalled();
+    const lastPayload = dbApi.saveRoadmap.mock.calls.at(-1)[2];
+    expect(lastPayload.items[firstId].timeSpentSeconds).toBe(120);
+    vi.useRealTimers();
+  });
+});
+
 // onCompletionToggle (issue #8) — the injected hook main.js wires to
 // activityLogStore.recordCompletion/recordUncompletion. Fires exactly once
 // per genuine done-transition, from updateItem() directly and, indirectly,

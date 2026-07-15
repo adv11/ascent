@@ -3732,3 +3732,20 @@ tier requires webhook-receiving server-side compute this app doesn't have today.
 No decision is finalized — this only ensures the open question is tracked with an
 artifact instead of silently deferred. Added an "Open product decisions" pointer
 section above so this isn't the only place the question is recorded.
+
+### 2026-07-15 — Issue #180 — Lightweight time tracking per topic / Daily Todo
+
+New pure module `src/core/time/timeTracking.js` (`computeElapsedSeconds`/
+`accumulateElapsed`/`formatTimeSpent`, no DOM/store access) backs a start/pause timer
+control added to `itemPanel.js` (roadmap topics) and `dailyTodoPanel.js` (Daily Todos).
+Both persist a new `timeSpentSeconds: number` item/todo field through the exact same
+per-item patch mechanism every other field already uses — `roadmapStore.updateItem()`
+(via `itemPanel.js`'s existing `onSave`) for topics, and a new dedicated
+`dailyTodoStore.addTimeSpent(id, seconds)` adder for todos, since a running timer only
+ever wants to add elapsed seconds, never overwrite the total. No new storage backend or
+Firebase schema change beyond the one new field. A running timer's session start is
+deliberately local-only UI state (never synced live across devices), matching Daily
+Todos' own device-local live-countdown precedent — only the stopped, accumulated result
+syncs. `/progress` gained a 5th stat tile summing time across the active roadmap and
+every Daily Todo. See `.claude/rules/roadmap-store.md`'s "Lightweight time tracking"
+section for the full design writeup.

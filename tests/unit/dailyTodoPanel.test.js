@@ -34,6 +34,14 @@ function createFakeStore(initialTodos = []) {
     removeTodo(id) {
       todos = todos.filter(t => t.id !== id);
       notify();
+    },
+    addTimeSpent(id, seconds) {
+      const todo = todos.find(t => t.id === id);
+      if (!todo || !Number.isFinite(seconds) || seconds <= 0) return false;
+      const current = todo.timeSpentSeconds || 0;
+      todos = todos.map(t => (t.id === id ? { ...t, timeSpentSeconds: current + Math.floor(seconds) } : t));
+      notify();
+      return true;
     }
   };
 }
@@ -423,5 +431,71 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
       expect(node.querySelector('.daily-todo-count-badge').textContent).toBe('2 active');
       node._cleanup();
     });
+  });
+});
+
+describe('createDailyTodoPanel — time tracking (issue #180)', () => {
+  it('shows "0s" for a fresh todo and a timer button on an active row', () => {
+    const store = createFakeStore();
+    const node = createDailyTodoPanel(store);
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+
+    expect(node.querySelector('.daily-todo-time-spent').textContent).toBe('0s');
+    expect(node.querySelector('.daily-todo-timer-btn')).not.toBeNull();
+    node._cleanup();
+  });
+
+  it('starting the timer marks the button active', () => {
+    const store = createFakeStore();
+    const node = createDailyTodoPanel(store);
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+
+    node.querySelector('.daily-todo-timer-btn').click();
+    expect(node.querySelector('.daily-todo-timer-btn').classList.contains('active')).toBe(true);
+    node._cleanup();
+  });
+
+  it('start -> pause calls store.addTimeSpent with the elapsed seconds', () => {
+    const store = createFakeStore();
+    const addTimeSpentSpy = vi.spyOn(store, 'addTimeSpent');
+    const node = createDailyTodoPanel(store);
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+    const id = store.getSnapshot().todos[0].id;
+
+    node.querySelector('.daily-todo-timer-btn').click();
+    vi.setSystemTime(Date.now() + 30000);
+    node.querySelector('.daily-todo-timer-btn').click();
+
+    expect(addTimeSpentSpy).toHaveBeenCalledWith(id, 30);
+    expect(node.querySelector('.daily-todo-time-spent').textContent).toBe('30s');
+    node._cleanup();
+  });
+
+  it('a completed (done) todo shows its total read-only, with no timer button', () => {
+    const store = createFakeStore();
+    const node = createDailyTodoPanel(store);
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+    const id = store.getSnapshot().todos[0].id;
+    store.addTimeSpent(id, 90);
+    store.setDone(id, true);
+
+    const row = node.querySelector(`[data-id="${id}"]`);
+    expect(row.querySelector('.daily-todo-time-spent').textContent).toBe('1m');
+    expect(row.querySelector('.daily-todo-timer-btn')).toBeNull();
+    node._cleanup();
+  });
+
+  it('unmounting the panel while a timer is running flushes the elapsed session', () => {
+    const store = createFakeStore();
+    const addTimeSpentSpy = vi.spyOn(store, 'addTimeSpent');
+    const node = createDailyTodoPanel(store);
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+    const id = store.getSnapshot().todos[0].id;
+
+    node.querySelector('.daily-todo-timer-btn').click();
+    vi.setSystemTime(Date.now() + 45000);
+    node._cleanup();
+
+    expect(addTimeSpentSpy).toHaveBeenCalledWith(id, 45);
   });
 });

@@ -207,3 +207,76 @@ describe('itemPanel — unique resource aria-labels (issue #124)', () => {
     expect(urlInput.getAttribute('aria-label')).toBe('Resource 1 URL');
   });
 });
+
+describe('itemPanel — time tracking (issue #180)', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows "0s" for an item with no timeSpentSeconds yet', () => {
+    openItemPanel({ item: baseItem });
+    expect(getPanel().querySelector('.timer-display').textContent).toBe('0s');
+  });
+
+  it('shows the formatted existing total', () => {
+    openItemPanel({ item: { ...baseItem, timeSpentSeconds: 125 } });
+    expect(getPanel().querySelector('.timer-display').textContent).toBe('2m');
+  });
+
+  it('starting the timer swaps the button to a "Pause" state', () => {
+    openItemPanel({ item: baseItem });
+    const btn = getPanel().querySelector('.timer-toggle-btn');
+    btn.click();
+    expect(btn.classList.contains('active')).toBe(true);
+    expect(btn.getAttribute('aria-label')).toBe('Pause timer');
+  });
+
+  it('start -> pause calls onSave with the accumulated timeSpentSeconds', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    const onSave = vi.fn();
+    openItemPanel({ item: baseItem, onSave });
+    const btn = getPanel().querySelector('.timer-toggle-btn');
+
+    btn.click();
+    vi.setSystemTime(30000);
+    btn.click();
+
+    expect(onSave).toHaveBeenCalledWith({ timeSpentSeconds: 30 });
+    expect(btn.classList.contains('active')).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('a second start/pause session adds to the running total instead of overwriting it', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    const onSave = vi.fn();
+    openItemPanel({ item: baseItem, onSave });
+    const btn = getPanel().querySelector('.timer-toggle-btn');
+
+    btn.click();
+    vi.setSystemTime(20000);
+    btn.click();
+    vi.setSystemTime(50000);
+    btn.click();
+    vi.setSystemTime(70000);
+    btn.click();
+
+    expect(onSave).toHaveBeenLastCalledWith({ timeSpentSeconds: 40 });
+    vi.useRealTimers();
+  });
+
+  it('closing the panel while the timer is running flushes the elapsed session', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    const onSave = vi.fn();
+    openItemPanel({ item: baseItem, onSave });
+    getPanel().querySelector('.timer-toggle-btn').click();
+    vi.setSystemTime(15000);
+
+    document.querySelector('.item-panel .panel-footer button.btn-ghost').click();
+
+    expect(onSave).toHaveBeenCalledWith({ timeSpentSeconds: 15 });
+    vi.useRealTimers();
+  });
+});

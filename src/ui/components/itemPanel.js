@@ -5,12 +5,15 @@ import { createDecorativeIcon } from './decorativeIcon.js';
 import { createSelect } from './select.js';
 import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../core/roadmap/limits.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
+import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
 
 // Issue #15 — plain-string notes field, capped at 5000 chars (enforced both
 // here via the textarea's native maxlength and in roadmapStore/schema docs).
 const NOTES_MAX_LENGTH = 5000;
 const NOTES_AUTOSAVE_DEBOUNCE_MS = 800;
 const NOTES_SAVED_INDICATOR_MS = 1500;
+// Issue #180 — live elapsed-time display tick while a timer is running.
+const TIMER_TICK_MS = 1000;
 
 export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   const overlay = el('div', { className: 'panel-overlay', onClick: e => { if (e.target === overlay) close(); } });
@@ -38,6 +41,59 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
 
   let resources = [...(item.resources || [])];
   let notesSaveTimer = null;
+
+  // Issue #180 — lightweight time tracking. `timeSpentSeconds` is the
+  // persisted cumulative total (patched via the same `onSave` → updateItem()
+  // path every other field uses); `runningSince` is local-only UI state (a
+  // running timer never syncs across devices/tabs, only the stopped result
+  // does — see the issue's own scoping). Pausing/stopping folds the current
+  // session into `timeSpentSeconds` exactly once and persists immediately,
+  // rather than waiting for the notes autosave debounce.
+  let timeSpentSeconds = Number.isFinite(item.timeSpentSeconds) ? item.timeSpentSeconds : 0;
+  let runningSince = null;
+  let timerTickTimer = null;
+
+  const timerToggleBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-ghost btn-icon timer-toggle-btn',
+    'aria-label': 'Start timer',
+    title: 'Start timer'
+  }, [createIcon('play', { size: 'xs' })]);
+  const timerDisplay = el('span', { className: 'timer-display', text: formatTimeSpent(timeSpentSeconds) });
+
+  function renderTimerDisplay() {
+    const total = runningSince !== null ? timeSpentSeconds + computeElapsedSeconds(runningSince) : timeSpentSeconds;
+    timerDisplay.textContent = formatTimeSpent(total);
+  }
+
+  function stopTimer() {
+    if (runningSince === null) return;
+    timeSpentSeconds += computeElapsedSeconds(runningSince);
+    runningSince = null;
+    clearInterval(timerTickTimer);
+    timerTickTimer = null;
+    renderTimerDisplay();
+    onSave?.({ timeSpentSeconds });
+  }
+
+  function toggleTimer() {
+    if (runningSince !== null) {
+      stopTimer();
+      timerToggleBtn.replaceChildren(createIcon('play', { size: 'xs' }));
+      timerToggleBtn.setAttribute('aria-label', 'Start timer');
+      timerToggleBtn.title = 'Start timer';
+      timerToggleBtn.classList.remove('active');
+      return;
+    }
+    runningSince = Date.now();
+    timerTickTimer = setInterval(renderTimerDisplay, TIMER_TICK_MS);
+    timerToggleBtn.replaceChildren(createIcon('pause', { size: 'xs' }));
+    timerToggleBtn.setAttribute('aria-label', 'Pause timer');
+    timerToggleBtn.title = 'Pause timer';
+    timerToggleBtn.classList.add('active');
+  }
+
+  timerToggleBtn.addEventListener('click', toggleTimer);
 
   function updateNotesCounter() {
     const len = notesTextarea.value.length;
@@ -134,6 +190,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   }
 
   function close() {
+    // A running timer must never keep ticking against an unmounted panel —
+    // fold its elapsed session into the total and persist, same reasoning
+    // as the notes-autosave flush just below.
+    if (runningSince !== null) stopTimer();
     // Flush a pending notes autosave immediately rather than letting the
     // debounce timer close over an unmounted panel — an edit made just
     // before closing must never be silently dropped.
@@ -191,6 +251,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
       el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Priority' }),
         prioritySelect
+      ]),
+      el('div', { className: 'field' }, [
+        el('span', { className: 'field-label', text: 'Time tracked' }),
+        el('div', { className: 'timer-row' }, [timerToggleBtn, timerDisplay])
       ]),
       el('div', { className: 'field' }, [
         el('div', { className: 'field-label-row' }, [

@@ -59,9 +59,19 @@ Returns a store instance with the following methods.
                                     // on a review-due topic. Missing/null both mean "never reviewed
                                     // since completion" (backward compat, same as notes). See
                                     // core/roadmap/reviewSchedule.js's isReviewDue()/getReviewDueItems().
+  timeSpentSeconds?: number,  // issue #180 — cumulative elapsed time from itemPanel.js's start/pause
+                               // timer. Missing/undefined means "never tracked" (backward compat, same
+                               // as notes). Patched via the same updateItem()/onSave path as every other
+                               // field — see core/time/timeTracking.js for the pure elapsed-time math.
+                               // A running timer's own session state is local-only UI state, never
+                               // persisted or synced live.
   createdAt: number, updatedAt?: number,
 }
 ```
+
+A Daily Todo (`createDailyTodoStore()`, below) gets the identical `timeSpentSeconds?: number`
+field, accumulated via a dedicated `addTimeSpent(id, seconds)` adder rather than a generic
+patch function — see `.claude/rules/roadmap-store.md`'s "Lightweight time tracking" section.
 
 ### Snapshot shape
 

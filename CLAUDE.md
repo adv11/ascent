@@ -96,6 +96,7 @@ src/ui/components/buildYourOwnGuide.js, newRoadmapModal.js, importRoadmapModal.j
 src/ui/components/feedbackWidget.js, feedbackModal.js, feedbackForm.js, screenshotCapture.js, myReports.js  in-app feedback & bug reporting (issue #9) — see .claude/rules/roadmap-store.md; src/services/feedbackStore.js, feedbackRateLimit.js, src/core/feedback/  Firebase write + rate limit + pure schema/metadata
 src/data/importPrompt.js, src/core/roadmap/importValidator.js, schemaAdapter.js, limits.js  AI-import prompt + pure validator/adapter/caps — see .claude/rules/roadmap-store.md
 src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/duration caps — see .claude/rules/roadmap-store.md
+src/core/time/timeTracking.js        pure start/pause elapsed-time math (issue #180), no DOM/store access — see .claude/rules/roadmap-store.md
 src/ui/utils/dailyTodo.js, customRoadmapIcon.js, fieldValidation.js, buttonLoading.js  pure/DOM helpers, no Firebase dependency; signOut.js  confirmAndSignOut(), the one shared sign-out entry point — see .claude/rules/auth-security.md; svg.js  shared svgEl()/svgIcon() SVG-builder helpers (issue #107); src/utils/countUp.js  pure requestAnimationFrame count-up helper
 src/styles/app.css            the entire design system (tokens, components, both themes) — see .claude/rules/ui-styling.md
 docs/architecture.md          living architecture guide + Build Log (canonical deep-dive doc)

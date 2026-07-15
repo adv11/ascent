@@ -3308,6 +3308,31 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 .notes-status.show { opacity: 1; }
 .notes-status.error { color: var(--status-warn-text); }
 
+/* Issue #180 — timer start/pause control + running total, itemPanel.js and
+   dailyTodoPanel.js. */
+.timer-row { display: flex; align-items: center; gap: 8px; }
+.timer-toggle-btn.active { color: var(--brand); }
+:root[data-theme='dark'] .timer-toggle-btn.active { color: var(--accent-lime); }
+.timer-display { font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--muted); }
+.daily-todo-timer-btn {
+  border: none;
+  background: none;
+  padding: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+}
+.daily-todo-timer-btn:hover, .daily-todo-timer-btn.active { color: var(--brand); }
+:root[data-theme='dark'] .daily-todo-timer-btn:hover,
+:root[data-theme='dark'] .daily-todo-timer-btn.active { color: var(--accent-lime); }
+.daily-todo-time-spent {
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
 .resource-list { display: grid; gap: 10px; }
 .resource-card {
   display: grid;
