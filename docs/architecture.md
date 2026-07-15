@@ -3768,3 +3768,30 @@ call into this on every snapshot — no new store field, no new subscription. Ne
 celebration opens automatically. See `.claude/rules/roadmap-store.md`'s "Phase/roadmap
 completion celebration" section and `.claude/rules/ui-styling.md`'s "fixed-overlay,
 self-removing CSS animation burst" section for the full design writeup.
+
+### 2026-07-16 — Issue #122 — Server-side data caps for Firebase database rules
+
+`firebase/database.rules.json` previously enforced almost none of this app's own
+client-side data caps server-side — a roadmap item's title/notes/resource fields had no
+`.validate` rule at all, `meta.customRoadmaps` had no length or array-size cap, and
+`activityLog`/`reports.screenshotB64` were similarly unbounded, meaning a raw REST write
+against a user's own uid-scoped path could bypass every cap the app's own UI enforces.
+Added matching `.validate` rules: `items/{itemId}.title`/`.notes`/`.resources.{i}.label`/
+`.url` under both `roadmap` and `roadmaps/{templateId}`; `meta.customRoadmaps.{index}`'s
+`title`/`description` plus an array-size cap via the same `$index.matches(...)`
+index-whitelist idiom `favoriteRoadmapIds` (issue #177) already established (RTDB rules
+still can't reliably call `numChildren()`); `activityLog.$date` key-shape + value-range
+validation; and a size cap on the top-level `reports/{reportId}.screenshotB64`. Two caps
+remain deliberately client-side only (a per-roadmap item count, and feedback-report rate
+limiting) — Realtime Database rules structurally cannot express either without a Cloud
+Function. New `src/core/roadmap/limits.js` constants (`MAX_CUSTOM_ROADMAP_TITLE_LENGTH`/
+`MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH`) back a clamp (not reject) in
+`roadmapStore.js`'s `createCustomRoadmap()`, so a legitimate write can never exceed its
+own new server-side cap. New `tests/e2e/dataCapRules.test.js` rules-emulator suite
+(same pattern as `roadmapSharingRules.test.js`) asserts each cap actually rejects an
+oversized write and still accepts a compliant one — verified against a real local
+Firebase emulator during development, not just assumed to parse (a `.validate` rule that
+fails to parse silently serves the emulator's permissive default for the *entire*
+namespace, the same trap `favoriteRoadmapIds`' rule already found and documented). See
+`.claude/rules/auth-security.md`'s "Server-side data caps" section for the full
+per-field cap list and reasoning.

@@ -2,7 +2,7 @@ import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
 import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../data/templates/index.js';
 import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
-import { MAX_TITLE_LENGTH, isValidResource, isValidTags, MAX_FAVORITE_ROADMAPS } from '../core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, isValidResource, isValidTags, MAX_FAVORITE_ROADMAPS, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH } from '../core/roadmap/limits.js';
 
 export { MAX_FAVORITE_ROADMAPS };
 
@@ -1110,13 +1110,19 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // populated with the imported content (see schemaAdapter.js for the shape
   // producing them). Either way it's the exact same activation path.
   async function createCustomRoadmap({ title, description, phases: seedPhases, items: seedItems }) {
-    const trimmedTitle = (title || '').trim();
+    // Clamped, not rejected — matching firebase/database.rules.json's
+    // meta.customRoadmaps server-side length caps (issue #122) means a
+    // write can never exceed them, without introducing a new "title too
+    // long" error path for what would in practice always be an
+    // AI-generated title, never something the user typed and would expect
+    // rejected outright.
+    const trimmedTitle = (title || '').trim().slice(0, MAX_CUSTOM_ROADMAP_TITLE_LENGTH);
     if (!trimmedTitle) throw new Error('Title is required');
     const id = genId('croadmap');
     if (seedPhases || seedItems) {
       pendingCustomSeeds[id] = { phases: seedPhases || [], items: seedItems || {} };
     }
-    const meta = { id, title: trimmedTitle, description: (description || '').trim(), createdAt: Date.now() };
+    const meta = { id, title: trimmedTitle, description: (description || '').trim().slice(0, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH), createdAt: Date.now() };
     customRoadmaps = [...customRoadmaps, meta];
     persistLocalCustomRoadmaps();
     // customRoadmaps is folded into switchRoadmap's own single meta write

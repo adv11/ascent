@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createRoadmapStore, applyRemoteSnapshot } from '../../src/services/roadmapStore.js';
 import { buildSeedItems } from '../../src/data/roadmap.js';
 import { dbApi, getStorageAdapter } from '../../src/services/storage/adapterFactory.js';
-import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../src/core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH } from '../../src/core/roadmap/limits.js';
 
 // Mocks the adapter roadmapStore.js gets from getStorageAdapter() (issue #5) —
 // still named/shaped like the old `dbApi` fake so the 60+ tests below that
@@ -1507,6 +1507,25 @@ describe('custom roadmaps — creation and identity (issue #4)', () => {
 
     await expect(store.createCustomRoadmap({ title: '   ' })).rejects.toThrow();
     expect(store.getSnapshot().customRoadmaps).toBe(before);
+  });
+
+  // Issue #122 — firebase/database.rules.json now caps meta.customRoadmaps'
+  // title/description server-side; this clamp (not a rejection) guarantees
+  // createCustomRoadmap() can never produce a write that new rule rejects,
+  // since a custom roadmap's title/description usually comes from
+  // AI-generated import content rather than something a user typed.
+  it('createCustomRoadmap clamps an oversized title/description to the server-side rule caps', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'creator-user-clamp' });
+
+    const id = await store.createCustomRoadmap({
+      title: 'a'.repeat(MAX_CUSTOM_ROADMAP_TITLE_LENGTH + 50),
+      description: 'b'.repeat(MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH + 50)
+    });
+
+    const meta = store.getSnapshot().customRoadmaps.find(r => r.id === id);
+    expect(meta.title).toHaveLength(MAX_CUSTOM_ROADMAP_TITLE_LENGTH);
+    expect(meta.description).toHaveLength(MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH);
   });
 
   it('a previously created custom roadmap is loaded back (not re-seeded) from Firebase meta on the next sign-in', async () => {

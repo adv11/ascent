@@ -21,6 +21,16 @@ export const MAX_FAVORITE_ROADMAPS = 3;
 export const MAX_TAG_LENGTH = 30;
 export const MAX_TAGS_PER_ITEM = 5;
 
+// Issue #122 — server-side rules cap a custom roadmap's title/description at
+// these same lengths (firebase/database.rules.json's meta.customRoadmaps
+// rule); createCustomRoadmap() clamps to them here so a write can never
+// exceed what the rule allows. MAX_CUSTOM_ROADMAP_TITLE_LENGTH matches
+// MAX_TITLE_LENGTH deliberately (a roadmap's own title has no reason to
+// allow more than a single topic's title does), not re-declared as a
+// separate identical constant.
+export const MAX_CUSTOM_ROADMAP_TITLE_LENGTH = MAX_TITLE_LENGTH;
+export const MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH = 1000;
+
 export function isValidResource(resource) {
   return !!resource
     && typeof resource.label === 'string' && resource.label.length <= MAX_RESOURCE_LABEL_LENGTH
