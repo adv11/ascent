@@ -3,7 +3,7 @@ import { confirmDialog } from './confirmDialog.js';
 import { createIcon } from './icons.js';
 import { createDecorativeIcon } from './decorativeIcon.js';
 import { createSelect } from './select.js';
-import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, MAX_TAG_LENGTH, MAX_TAGS_PER_ITEM } from '../../core/roadmap/limits.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
 
@@ -28,6 +28,17 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   const labelInput = el('input', { className: 'field-input', placeholder: 'Resource label (e.g. YouTube tutorial)' });
   const urlInput = el('input', { className: 'field-input', placeholder: 'https://...', type: 'url' });
   const formError = el('p', { className: 'form-error', text: '' });
+
+  // Issue #182 — freeform pattern/concept tags, comma-separated in one text
+  // input (same lightweight shape as the resource form's plain inputs,
+  // rather than a bespoke chip-entry widget). Cleaned/capped on Save, same
+  // convention as `cleanResources` below.
+  const tagsInput = el('input', {
+    className: 'field-input',
+    placeholder: 'e.g. two-pointer, sliding-window',
+    value: (item.tags || []).join(', ')
+  });
+  const tagsHint = el('span', { className: 'small muted', text: `Comma-separated, up to ${MAX_TAGS_PER_ITEM} tags.` });
 
   const notesTextarea = el('textarea', {
     className: 'field-input notes-textarea',
@@ -283,6 +294,11 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
         el('span', { className: 'field-label', text: 'Priority' }),
         prioritySelect
       ]),
+      el('label', { className: 'field' }, [
+        el('span', { className: 'field-label', text: 'Tags' }),
+        tagsInput,
+        tagsHint
+      ]),
       el('div', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Time tracked' }),
         el('div', { className: 'timer-row' }, [timerToggleBtn, timerDisplay, timerResetBtn])
@@ -352,9 +368,19 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
               formError.textContent = `Resource labels must be ${MAX_RESOURCE_LABEL_LENGTH} characters or fewer and URLs ${MAX_RESOURCE_URL_LENGTH} or fewer.`;
               return;
             }
+            const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+            if (tags.length > MAX_TAGS_PER_ITEM) {
+              formError.textContent = `Enter at most ${MAX_TAGS_PER_ITEM} tags.`;
+              return;
+            }
+            const badTag = tags.find(t => t.length > MAX_TAG_LENGTH);
+            if (badTag) {
+              formError.textContent = `Each tag must be ${MAX_TAG_LENGTH} characters or fewer.`;
+              return;
+            }
             clearTimeout(notesSaveTimer);
             notesSaveTimer = null;
-            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources, notes: notesTextarea.value });
+            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources, notes: notesTextarea.value, tags });
             close();
           }
         })

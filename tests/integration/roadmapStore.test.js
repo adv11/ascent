@@ -2191,3 +2191,35 @@ describe('lastReviewedAt — "Mark reviewed" store contract (issue #134)', () =>
     expect(getReviewDueItems(snapshot.items, now).map(i => i.id)).not.toContain(firstId);
   });
 });
+
+describe('tags — item field store contract (issue #182)', () => {
+  it('updateItem({ tags }) persists like notes and bumps structuralVersion', async () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const beforeVersion = store.getSnapshot().structuralVersion;
+
+    const ok = store.updateItem(firstId, { tags: ['two-pointer', 'sliding-window'] });
+    expect(ok).toBe(true);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.structuralVersion).toBeGreaterThan(beforeVersion);
+    expect(snapshot.items.find(i => i.id === firstId).tags).toEqual(['two-pointer', 'sliding-window']);
+  });
+
+  it('rejects a patch with more than MAX_TAGS_PER_ITEM tags, mutating nothing', async () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const before = store.getSnapshot().items.find(i => i.id === firstId).tags;
+
+    const ok = store.updateItem(firstId, { tags: ['a', 'b', 'c', 'd', 'e', 'f'] });
+    expect(ok).toBe(false);
+    expect(store.getSnapshot().items.find(i => i.id === firstId).tags).toEqual(before);
+  });
+
+  it('rejects a tag over MAX_TAG_LENGTH characters', async () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    const ok = store.updateItem(firstId, { tags: ['x'.repeat(31)] });
+    expect(ok).toBe(false);
+  });
+});
