@@ -280,3 +280,55 @@ describe('itemPanel — time tracking (issue #180)', () => {
     vi.useRealTimers();
   });
 });
+
+describe('itemPanel — reset time tracked (issue #203)', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('resets a stopped timer to 0s after confirming', async () => {
+    const onSave = vi.fn();
+    openItemPanel({ item: { ...baseItem, timeSpentSeconds: 125 }, onSave });
+    expect(getPanel().querySelector('.timer-display').textContent).toBe('2m');
+
+    getPanel().querySelector('.timer-reset-btn').click();
+    document.querySelector('.modal-overlay [data-action="confirm"]').click();
+    await Promise.resolve();
+
+    expect(getPanel().querySelector('.timer-display').textContent).toBe('0s');
+    expect(onSave).toHaveBeenCalledWith({ timeSpentSeconds: 0 });
+  });
+
+  it('stops a running timer and zeroes the total, not the pre-reset accumulated value', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    const onSave = vi.fn();
+    openItemPanel({ item: baseItem, onSave });
+    const toggleBtn = getPanel().querySelector('.timer-toggle-btn');
+
+    toggleBtn.click();
+    vi.setSystemTime(30000);
+
+    getPanel().querySelector('.timer-reset-btn').click();
+    document.querySelector('.modal-overlay [data-action="confirm"]').click();
+    await vi.runAllTimersAsync();
+
+    expect(getPanel().querySelector('.timer-display').textContent).toBe('0s');
+    expect(toggleBtn.classList.contains('active')).toBe(false);
+    expect(toggleBtn.getAttribute('aria-label')).toBe('Start timer');
+    expect(onSave).toHaveBeenLastCalledWith({ timeSpentSeconds: 0 });
+    vi.useRealTimers();
+  });
+
+  it('cancelling the confirm dialog leaves the total untouched', async () => {
+    const onSave = vi.fn();
+    openItemPanel({ item: { ...baseItem, timeSpentSeconds: 125 }, onSave });
+
+    getPanel().querySelector('.timer-reset-btn').click();
+    document.querySelector('.modal-overlay [data-action="cancel"]').click();
+    await Promise.resolve();
+
+    expect(getPanel().querySelector('.timer-display').textContent).toBe('2m');
+    expect(onSave).not.toHaveBeenCalled();
+  });
+});

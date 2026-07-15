@@ -1161,7 +1161,16 @@ state genuinely does not exist anywhere the store or Firebase can see it. `/prog
 sums `timeSpentSeconds` across the active roadmap's `items` and every Daily Todo into a
 5th `.kpi-tile` stat (`progress.js`'s `renderStatCards()`) — computed fresh on every
 render, not cached, since even the item-count cap (800) and todo cap (20 active) make
-that cheap.
+that cheap. **A reset (⟲) icon-button next to `itemPanel.js`'s timer toggle (issue
+#203)** zeroes `timeSpentSeconds` back to 0, gated behind `confirmDialog({ danger: true
+})` since it's unrecoverable — same click-guard-free pattern as the toggle button itself
+(both sit directly in `.timer-row`, no nested-interactive-content concern since neither
+is inside a `role="checkbox"`/`role="button"` ancestor). If a session is currently
+running, `resetTimer()` clears `runningSince`/`timerTickTimer` first (same teardown
+`stopTimer()` does) rather than letting a still-running session's next tick resurrect a
+nonzero total — reset always leaves the display at "0s", never a stale in-progress
+value. Persists through the exact same `onSave({ timeSpentSeconds })` call every other
+timer mutation already uses; no store-level change was needed.
 
 **`activityLogStore.js` and the `onCompletionToggle` hook (issue #8, part 1 — data layer
 only, no UI yet).** A fourth store alongside `roadmapStore.js`/`dailyTodoStore.js`

@@ -60,6 +60,22 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
     title: 'Start timer'
   }, [createIcon('play', { size: 'xs' })]);
   const timerDisplay = el('span', { className: 'timer-display', text: formatTimeSpent(timeSpentSeconds) });
+  const timerResetBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-ghost btn-icon timer-reset-btn',
+    'aria-label': 'Reset time tracked',
+    title: 'Reset time tracked',
+    onClick: async () => {
+      if (await confirmDialog({
+        title: 'Reset time tracked?',
+        message: 'This clears the time tracked for this topic — this cannot be undone.',
+        confirmText: 'Reset',
+        danger: true
+      })) {
+        resetTimer();
+      }
+    }
+  }, [createIcon('reset', { size: 'xs' })]);
 
   function renderTimerDisplay() {
     const total = runningSince !== null ? timeSpentSeconds + computeElapsedSeconds(runningSince) : timeSpentSeconds;
@@ -72,6 +88,21 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
     runningSince = null;
     clearInterval(timerTickTimer);
     timerTickTimer = null;
+    renderTimerDisplay();
+    onSave?.({ timeSpentSeconds });
+  }
+
+  function resetTimer() {
+    if (runningSince !== null) {
+      runningSince = null;
+      clearInterval(timerTickTimer);
+      timerTickTimer = null;
+      timerToggleBtn.replaceChildren(createIcon('play', { size: 'xs' }));
+      timerToggleBtn.setAttribute('aria-label', 'Start timer');
+      timerToggleBtn.title = 'Start timer';
+      timerToggleBtn.classList.remove('active');
+    }
+    timeSpentSeconds = 0;
     renderTimerDisplay();
     onSave?.({ timeSpentSeconds });
   }
@@ -254,7 +285,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
       ]),
       el('div', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Time tracked' }),
-        el('div', { className: 'timer-row' }, [timerToggleBtn, timerDisplay])
+        el('div', { className: 'timer-row' }, [timerToggleBtn, timerDisplay, timerResetBtn])
       ]),
       el('div', { className: 'field' }, [
         el('div', { className: 'field-label-row' }, [
