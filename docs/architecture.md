@@ -736,6 +736,16 @@ The `issues-label-check` workflow (`.github/workflows/issues-label-check.yml`) f
 
 ---
 
+## Open product decisions
+
+Business/product questions deliberately tracked as open, not silently deferred:
+
+- **Monetization model** (issue #135, `docs/monetization-decision.md`) — free forever,
+  freemium, one-time purchase, or subscription. No decision made yet; revisit
+  post-launch based on real user demand.
+
+---
+
 ## 8. Build Log
 
 > One entry per significant PR. Append at the bottom. Format:
@@ -3709,3 +3719,16 @@ roadmap (brand text present on the first, middle, and last page). See
 technique writeup and why a `position: fixed` header/footer was chosen over a CSS
 `@page` margin box. No change to what data is printed, or the existing "Include
 notes" default-off opt-in (issue #133) — this is a pure visual/branding restyle.
+
+### 2026-07-15 — Issue #135 — Monetization model decision document
+
+Docs-only change, no code. Added `docs/monetization-decision.md`, promoted from
+issue #126 item 4, enumerating realistic pricing models (free forever, freemium,
+one-time purchase, subscription) and what each implies given Ascent's current
+no-backend-compute architecture. Recommends one-time purchase over subscription
+if monetization is ever pursued, since Ascent has already declined a backend
+commitment once before (Google Drive sign-in, #5/#71) and any freemium/subscription
+tier requires webhook-receiving server-side compute this app doesn't have today.
+No decision is finalized — this only ensures the open question is tracked with an
+artifact instead of silently deferred. Added an "Open product decisions" pointer
+section above so this isn't the only place the question is recorded.
