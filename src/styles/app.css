@@ -2596,13 +2596,24 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
    directly next to .daily-todo-collapse-btn's 24x24 box with an 'sm' (20px)
    icon; two different button diameters and two different icon sizes side by
    side read as visibly inconsistent/misaligned (reported live, screenshot).
-   Matches .daily-todo-collapse-btn's box + icon size exactly now. */
+   Matches .daily-todo-collapse-btn's box + icon size exactly now.
+   A second live report (screenshot) flagged the reminder/info/collapse trio
+   as still visibly misaligned — a real `getBoundingClientRect()` check found
+   all three already pixel-identical (same top/height, same 24px box, same
+   'sm' icon size) in this codebase, so the box-model dimensions above were
+   not the cause here. `line-height: 0` was added to all three (below) as a
+   defensive hardening against the sub-pixel/baseline drift an inline-flex
+   button with no text content can pick up from an inherited non-zero
+   line-height at some zoom levels/OS display-scaling factors — harmless if
+   that wasn't the actual cause, and removes one more variable if a fresh
+   report ever reproduces this again. */
 .daily-todo-info-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
+  line-height: 0;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: transparent;
@@ -2623,6 +2634,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   justify-content: center;
   width: 24px;
   height: 24px;
+  line-height: 0;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: transparent;
@@ -2647,6 +2659,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   justify-content: center;
   width: 24px;
   height: 24px;
+  line-height: 0;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: transparent;

@@ -4,9 +4,19 @@ vi.mock('../../src/ui/router.js', () => ({ navigate: vi.fn() }));
 vi.mock('../../src/ui/components/importRoadmapModal.js', () => ({ openCreateRoadmapModal: vi.fn() }));
 // onboarding.js now imports confirmAndSignOut (src/ui/utils/signOut.js) for
 // its new sign-out button, which transitively imports the real firebase.js —
-// mock it the same way dashboard.test.js/signIn.test.js already do.
+// mock it the same way dashboard.test.js/signIn.test.js already do. It also
+// now builds its own top-right account dropdown (mirroring sidebar.js's
+// buildAccountMenu()) which pulls in deleteAccountModal.js/myReports.js/
+// shareRoadmapModal.js — same transitive firebase.js/gstatic-CDN-URL chain
+// dashboard.test.js already stubs for the identical reason.
 vi.mock('../../src/services/firebase.js', () => ({
-  authApi: { signOut: vi.fn().mockResolvedValue(undefined) }
+  authApi: { signOut: vi.fn().mockResolvedValue(undefined), deleteAccount: vi.fn() },
+  authErrorMessage: e => e?.message || 'error',
+  database: {},
+  firebaseClock: vi.fn(),
+}));
+vi.mock('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js', () => ({
+  ref: vi.fn(), push: vi.fn(), update: vi.fn(), onValue: vi.fn(), off: vi.fn(), get: vi.fn(),
 }));
 
 async function setup({
