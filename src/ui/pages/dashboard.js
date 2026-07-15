@@ -885,22 +885,27 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   // crosses into 100% (routed through patchDoneStates) celebrates for real.
   function checkForCelebration(allItems, { seedOnly = false } = {}) {
     const uid = user.uid;
+    let confettiFired = false;
     if (isRoadmapComplete(allItems) && !hasShownRoadmapCelebration(uid, activeTemplateId)) {
       markRoadmapCelebrationShown(uid, activeTemplateId);
-      if (!seedOnly) celebrate('roadmap', currentTemplate.name);
+      if (!seedOnly) confettiFired = celebrate('roadmap', currentTemplate.name, confettiFired);
     }
     getCompletedPhaseTitles(allItems).forEach(title => {
       if (hasShownPhaseCelebration(uid, activeTemplateId, title)) return;
       markPhaseCelebrationShown(uid, activeTemplateId, title);
-      if (!seedOnly) celebrate('phase', title);
+      if (!seedOnly) confettiFired = celebrate('phase', title, confettiFired);
     });
   }
 
-  function celebrate(kind, label) {
+  // Returns whether confetti has now fired, so a roadmap-complete and its
+  // simultaneous final phase-complete (a roadmap this small finishes both at
+  // once) share a single burst instead of stacking two .confetti-burst nodes.
+  function celebrate(kind, label, confettiAlreadyFired) {
     const message = kind === 'roadmap' ? `Roadmap complete! You finished every topic in "${label}".` : `Phase complete: "${label}".`;
     showToast(message, 'success');
-    triggerConfetti();
+    if (!confettiAlreadyFired) triggerConfetti();
     openBadgeShareModal(kind, label).catch(() => {});
+    return true;
   }
 
   function render(snapshot) {
