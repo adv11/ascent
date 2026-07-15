@@ -153,6 +153,82 @@ describe('sign-out privacy guard', () => {
     expect(store.getSnapshot().entries).toEqual({});
     expect(localStorage.getItem(KEYS.ACTIVITY_LOG)).toBeNull();
   });
+
+  it('clears streak-freeze local data on a uid transition, same as entries', async () => {
+    const store = createActivityLogStore();
+    await store.setUser({ uid: 'u1' });
+    expect(localStorage.getItem(KEYS.STREAK_FREEZES)).not.toBeNull();
+
+    await store.setUser({ uid: 'u2' });
+    // u1's freeze state is gone, not carried over — u2 gets its own fresh
+    // baseline (available: 0, a new lastGrantedAt established for u2, same
+    // "first sign-in establishes a baseline" behavior every account gets).
+    expect(store.getSnapshot().streakFreezes.available).toBe(0);
+    expect(store.getSnapshot().streakFreezes.usedDates).toEqual([]);
+  });
+});
+
+// Issue #179's own testing requirement: freeze state must persist and sync the
+// same way other activity/meta data does across a simulated fresh store
+// instance for the same uid — not just unit-level pure-function coverage.
+describe('streak freezes — persistence and cross-instance sync', () => {
+  it('establishes a baseline lastGrantedAt (no freeze yet) on a brand-new account', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 4).getTime());
+    const store = createActivityLogStore();
+    await store.setUser({ uid: 'u1' });
+
+    const { available, usedDates, lastGrantedAt } = store.getSnapshot().streakFreezes;
+    expect(available).toBe(0);
+    expect(usedDates).toEqual([]);
+    expect(lastGrantedAt).toBe(Date.now());
+    vi.useRealTimers();
+  });
+
+  it('persists streak-freeze state to localStorage under KEYS.STREAK_FREEZES within the debounce window', async () => {
+    vi.useFakeTimers();
+    const store = createActivityLogStore();
+    await store.setUser({ uid: 'u1' });
+
+    const raw = JSON.parse(localStorage.getItem(KEYS.STREAK_FREEZES));
+    expect(raw.streakFreezes).toBeDefined();
+
+    await vi.advanceTimersByTimeAsync(600);
+    expect(dbApi.saveStreakFreezes).toHaveBeenCalledTimes(1);
+    expect(dbApi.saveStreakFreezes).toHaveBeenCalledWith('u1', expect.objectContaining({ available: 0 }));
+    vi.useRealTimers();
+  });
+
+  it('syncs a granted freeze to a second store instance for the same uid, via the remote listener', async () => {
+    // Store 1: a full 7-day interval elapses since its baseline grant, so a
+    // real freeze token is granted and flushed to the (mocked) remote.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 1).getTime());
+    const store1 = createActivityLogStore();
+    await store1.setUser({ uid: 'u1' });
+    await vi.advanceTimersByTimeAsync(600); // flush the baseline lastGrantedAt
+
+    vi.setSystemTime(new Date(2026, 6, 9).getTime()); // +8 days
+    dbApi.saveStreakFreezes.mockClear();
+    await store1.setUser({ uid: 'u1' }); // re-resolves streakFreezes with the new `now`
+    await vi.advanceTimersByTimeAsync(600);
+
+    const grantedPayload = dbApi.saveStreakFreezes.mock.calls.at(-1)[1];
+    expect(grantedPayload.available).toBe(1);
+
+    // Store 2 (a fresh instance, simulating a different device/session for
+    // the same uid): its listenStreakFreezes mock now "remotely" returns
+    // what store1 just flushed.
+    dbApi.listenStreakFreezes.mockImplementation((_uid, onData) => {
+      onData(grantedPayload);
+      return () => {};
+    });
+    const store2 = createActivityLogStore();
+    await store2.setUser({ uid: 'u1' });
+
+    expect(store2.getSnapshot().streakFreezes.available).toBe(1);
+    vi.useRealTimers();
+  });
 });
 
 describe('Firebase echo guard', () => {
