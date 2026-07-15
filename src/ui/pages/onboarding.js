@@ -2,11 +2,18 @@ import { el } from '../dom.js';
 import { navigate } from '../router.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createBrandMark } from '../components/brand.js';
+import { createAvatar } from '../components/avatar.js';
+import { createDropdown } from '../components/dropdown.js';
+import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
+import { openMyReports } from '../components/myReports.js';
+import { openShareRoadmapModal } from '../components/shareRoadmapModal.js';
 import { openBuildYourOwnGuide } from '../components/buildYourOwnGuide.js';
 import { openCreateRoadmapModal } from '../components/importRoadmapModal.js';
 import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
+import { exportBackupJson, exportBackupCsv, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
+import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 import { MAX_FAVORITE_ROADMAPS } from '../../core/roadmap/limits.js';
@@ -477,6 +484,51 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     'aria-label': 'Sign out',
     onClick: () => confirmAndSignOut(user, store, dailyTodoStore)
   }, [createIcon('signOut', { size: 'sm' })]);
+
+  // This page had no account/profile affordance at all — a real, reported gap
+  // (a first-time or returning visitor landing here has no way to tell they're
+  // signed in, as who, or reach Settings/backup/delete-account without first
+  // navigating to the dashboard). `dashboard.js`/`settings.js`/`progress.js`
+  // all get this "for free" via `sidebar.js`'s `buildAccountMenu()`, but this
+  // page deliberately has no app-shell sidebar at all (see the "Daily Todos
+  // store" placement note in `.claude/rules/roadmap-store.md` for why) — so
+  // the same item list is rebuilt here as a standalone top-right avatar +
+  // dropdown instead, `align: 'end'` (not the sidebar's `'start'`, since this
+  // trigger sits in the top-right corner, not a bottom-left footer). Every
+  // item mirrors `buildAccountMenu()`'s own list/gating exactly, so a user
+  // gets identical account actions regardless of which page they're on.
+  const userLabel = user.isAnonymous ? 'Guest session' : (user.email || 'Signed in');
+  const importInput = el('input', {
+    type: 'file',
+    accept: '.json,application/json',
+    hidden: true,
+    onChange: () => {
+      const file = importInput.files?.[0];
+      importInput.value = '';
+      if (file) importBackupFromFile(store, file);
+    }
+  });
+  const accountTrigger = el('button', {
+    type: 'button',
+    className: 'btn btn-ghost btn-icon onboarding-account-trigger',
+    'aria-label': `Account menu — ${userLabel}`
+  }, [createAvatar(user, 'sm')]);
+  const accountDropdownItems = [
+    { text: 'Settings', onClick: () => navigate('/settings') },
+    { text: 'My reports', onClick: () => openMyReports({ user }) },
+    { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
+    { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
+    { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
+    { text: 'Import backup…', onClick: () => importInput.click() },
+    { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
+  ];
+  if (dailyTodoStore) {
+    accountDropdownItems.push({ text: 'Export to calendar (.ics)', onClick: () => exportTodosIcs(dailyTodoStore) });
+  }
+  if (!user.isAnonymous) {
+    accountDropdownItems.push({ text: 'Delete account', danger: true, onClick: () => openDeleteAccountModal() });
+  }
+  const accountDropdown = createDropdown(accountTrigger, accountDropdownItems, { align: 'end' });
   // Rendered on this page (not the roadmap dashboard) precisely because it's
   // independent of any single roadmap — this is the "all roadmaps" screen,
   // so Daily Todos lives here instead of looking like it belongs to whichever
@@ -499,7 +551,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     el('div', { className: 'onboarding-inner' }, [
       el('div', { className: 'auth-top-row' }, [
         el('a', { className: 'brand', href: '#/onboarding', 'aria-label': 'Ascent — all roadmaps' }, createBrandMark()),
-        el('div', { className: 'onboarding-top-actions' }, [themeToggleBtn, signOutBtn])
+        el('div', { className: 'onboarding-top-actions' }, [themeToggleBtn, accountDropdown, importInput, signOutBtn])
       ]),
       backBtn,
       el('header', { className: 'onboarding-head' }, [
@@ -523,5 +575,6 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   return () => {
     themeToggleBtn._cleanup?.();
     dailyTodoPanel?._cleanup?.();
+    accountDropdown._cleanup?.();
   };
 }
