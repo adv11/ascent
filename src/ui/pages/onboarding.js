@@ -119,15 +119,17 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // or custom, no distinction) can be starred; starred cards sort before
   // every other card. Toggling re-renders the whole visible grid rather than
   // patching in place, since a toggle can also move the card's position.
-  async function handleToggleFavorite(roadmapId) {
+  async function handleToggleFavorite(roadmapId, name) {
+    const wasFavorite = favoriteRoadmapIds.includes(roadmapId);
     const result = await store.toggleFavoriteRoadmap(roadmapId);
     if (!result.ok) {
       showToast(`You can only favorite up to ${MAX_FAVORITE_ROADMAPS} roadmaps. Unfavorite one first.`, 'info');
       return;
     }
-    favoriteRoadmapIds = favoriteRoadmapIds.includes(roadmapId)
+    favoriteRoadmapIds = wasFavorite
       ? favoriteRoadmapIds.filter(id => id !== roadmapId)
       : [...favoriteRoadmapIds, roadmapId];
+    showToast(wasFavorite ? `Removed "${name}" from favorites.` : `Added "${name}" to favorites.`, 'success');
     renderVisibleGrid();
   }
 
@@ -140,7 +142,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       'aria-pressed': String(isFavorite),
       'aria-label': isFavorite ? `Unfavorite ${name}` : `Favorite ${name}`,
       title: isFavorite ? `Unfavorite ${name}` : `Favorite ${name}`,
-      onClick: () => handleToggleFavorite(roadmapId)
+      onClick: () => handleToggleFavorite(roadmapId, name)
     }, [createIcon('star', { size: 'xs' })]);
   }
 
