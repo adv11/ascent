@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isReviewDue, getReviewDueItems, REVIEW_INTERVAL_MS } from '../../src/core/roadmap/reviewSchedule.js';
+import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag, REVIEW_INTERVAL_MS } from '../../src/core/roadmap/reviewSchedule.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -64,5 +64,47 @@ describe('isReviewDue / getReviewDueItems', () => {
       makeItem({ id: 'd', completedAt: now - 20 * DAY, lastReviewedAt: now - 5 * DAY })
     ];
     expect(getReviewDueItems(items, now).map(i => i.id)).toEqual(['b']);
+  });
+});
+
+describe('groupReviewDueItemsByTag (issue #182)', () => {
+  it('groups items that share a tag together', () => {
+    const now = Date.now();
+    const items = [
+      makeItem({ id: 'a', completedAt: now - 20 * DAY, tags: ['two-pointer'] }),
+      makeItem({ id: 'b', completedAt: now - 20 * DAY, tags: ['two-pointer'] })
+    ];
+    const groups = groupReviewDueItemsByTag(items, now);
+    expect(groups).toEqual([{ tag: 'two-pointer', items: items }]);
+  });
+
+  it('renders an item with no tags as its own singleton group', () => {
+    const now = Date.now();
+    const items = [makeItem({ id: 'a', completedAt: now - 20 * DAY, tags: [] })];
+    expect(groupReviewDueItemsByTag(items, now)).toEqual([{ tag: null, items }]);
+  });
+
+  it('renders an item whose tag no other due item shares as a singleton', () => {
+    const now = Date.now();
+    const items = [
+      makeItem({ id: 'a', completedAt: now - 20 * DAY, tags: ['unique-tag'] }),
+      makeItem({ id: 'b', completedAt: now - 20 * DAY, tags: ['shared'] }),
+      makeItem({ id: 'c', completedAt: now - 20 * DAY, tags: ['shared'] })
+    ];
+    const groups = groupReviewDueItemsByTag(items, now);
+    expect(groups).toContainEqual({ tag: null, items: [items[0]] });
+    expect(groups).toContainEqual({ tag: 'shared', items: [items[1], items[2]] });
+  });
+
+  it('a multi-tag item appears in each group its tags are shared in', () => {
+    const now = Date.now();
+    const a = makeItem({ id: 'a', completedAt: now - 20 * DAY, tags: ['x', 'y'] });
+    const b = makeItem({ id: 'b', completedAt: now - 20 * DAY, tags: ['x'] });
+    const c = makeItem({ id: 'c', completedAt: now - 20 * DAY, tags: ['y'] });
+    const groups = groupReviewDueItemsByTag([a, b, c], now);
+    const tagX = groups.find(g => g.tag === 'x');
+    const tagY = groups.find(g => g.tag === 'y');
+    expect(tagX.items.map(i => i.id)).toEqual(['a', 'b']);
+    expect(tagY.items.map(i => i.id)).toEqual(['a', 'c']);
   });
 });

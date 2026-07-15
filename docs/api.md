@@ -65,6 +65,12 @@ Returns a store instance with the following methods.
                                // field — see core/time/timeTracking.js for the pure elapsed-time math.
                                // A running timer's own session state is local-only UI state, never
                                // persisted or synced live.
+  tags?: string[],  // issue #182 — freeform pattern/concept tags, ≤ MAX_TAGS_PER_ITEM (5) entries of
+                     // ≤ MAX_TAG_LENGTH (30) chars each (core/roadmap/limits.js's isValidTags()).
+                     // Missing/[] both mean "no tags" (backward compat, same as notes). Edited via
+                     // itemPanel.js's comma-separated "Tags" input; used by
+                     // core/roadmap/reviewSchedule.js's groupReviewDueItemsByTag() to group review-due
+                     // topics that share a tag.
   createdAt: number, updatedAt?: number,
 }
 ```
@@ -165,6 +171,7 @@ not a full spaced-repetition algorithm (no per-item ease factors/growing interva
 | `REVIEW_INTERVAL_DAYS` / `REVIEW_INTERVAL_MS` | `number` | The fixed review interval (14 days). |
 | `isReviewDue` | `(item: Item, now?: number) => boolean` | `false` for a soft-deleted, not-`done`, or never-`completedAt` item. Otherwise compares `now` against `item.lastReviewedAt` if set, else `item.completedAt` — due once that gap is `>= REVIEW_INTERVAL_MS`. |
 | `getReviewDueItems` | `(items: Item[], now?: number) => Item[]` | Filters a snapshot's item list with `isReviewDue`. |
+| `groupReviewDueItemsByTag` | `(items: Item[], now?: number) => { tag: string \| null, items: Item[] }[]` | Issue #182 — buckets `getReviewDueItems()`'s output by shared `item.tags` entry. A tag only forms a group once 2+ due items share it; anything left over renders as its own `{ tag: null, items: [item] }` singleton. A multi-tag item can appear in more than one group. Does not change the underlying due-date algorithm — grouping/presentation only. |
 
 ## `src/data/importPrompt.js` — versioned AI-import prompt (issue #4)
 

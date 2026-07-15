@@ -1133,6 +1133,40 @@ every other nested row control. A `done` toggle (`patchDoneStates()`'s fast path
 the full `render()`) also refreshes the header pill, since checking/unchecking an item
 can flip it in or out of review-due state via `completedAt` alone. **This feature had no in-UI explanation of what "Review due" means until a follow-up fix** — unlike Daily Todos/"Build your own roadmap" (both have an ℹ guide modal), the `REVIEW` chip and header pill were undiscoverable, real feedback found live. Fixed with `attachTooltip()` on the chip (hover/focus, explaining the 14-day/"Mark reviewed" mechanic) and a fuller native `title` on the header pill — no new guide modal, since the explanation is one sentence and doesn't warrant `buildYourOwnGuide.js`'s heavier pattern. If this feature ever grows real configurability (a user-adjustable interval, etc.), promote it to a proper guide modal at that point rather than stretching the tooltip.
 
+**Pattern/concept tags — `item.tags`, grouping review-due reminders by shared tag (issue
+#182).** Every item may carry an optional `tags: string[]` field (missing/empty array
+both mean "no tags" — same backward-compat convention as `notes`/`lastReviewedAt`),
+freeform user-entered short labels edited from `itemPanel.js`'s "Tags" field (a single
+comma-separated text input, not a bespoke chip-entry widget — the lightest-weight shape
+that fits alongside the existing Title/Priority/Notes fields). Capped client-side at
+`MAX_TAGS_PER_ITEM` (5) tags of at most `MAX_TAG_LENGTH` (30) characters each
+(`core/roadmap/limits.js`'s `isValidTags()`), enforced the same way `isValidResource()`
+already gates `patch.resources` inside `updateItem()` — an invalid `tags` patch fails
+the whole `updateItem()` call, mutating nothing, same "callers must check the return
+value" convention as the title-length/resource-shape caps. `normalizeBackupItem()`
+(backup/restore path) defaults an incoming item's `tags` to `[]` if it fails
+`isValidTags()`, same defaulting precedent as `resources`/`notes`. `tags` is **not**
+listed in the `updateItem()` cosmetic-check exemption (only `done` is), so a `{ tags }`
+patch bumps `structuralVersion` for free, same as `notes`/`lastReviewedAt`.
+`reviewSchedule.js` gains `groupReviewDueItemsByTag(items, now)` — a pure function (no
+DOM/store access, same convention as `getReviewDueItems()`/`isReviewDue()` above) that
+takes the existing review-due set and buckets it by shared tag: a tag only forms a real
+group once **2 or more** due items share it; anything left over (no tags, or a tag no
+other due item currently shares) renders as its own singleton group (`{ tag: null,
+items: [item] }`). A multi-tag item can legitimately appear in more than one group — it
+only falls back to a singleton if *none* of its tags matched another due item. This
+does **not** change the underlying fixed-interval due-date algorithm in any way — it is
+purely a grouping/presentation layer on top of the existing `getReviewDueItems()`
+output, per the issue's explicit scope. `dashboard.js` surfaces this as a summary banner
+(`.review-tag-group-banner`, one line per tag group) shown only while the `REVIEW`
+filter chip is active, plus a separate, always-available tag filter-chip row
+(`collectAllTags()` collects every distinct tag across the roadmap, sorted
+alphabetically) reusing the existing `.filter-chip`/`.filter-row` CSS as-is — a
+lighter-weight, unpersisted, single-select AND condition layered on top of the sticky
+`activeFilter` priority chips, not a second sticky-session filter. No AI tag suggestion
+and no global tag-management page (rename/merge/delete across every item) — both
+explicitly out of scope for this issue, tags are edited per-item only.
+
 **Lightweight time tracking — `item.timeSpentSeconds`, a plain cumulative counter, not a
 Pomodoro/focus-enforcement feature (issue #180).** Both a roadmap topic and a Daily Todo
 gained an optional `timeSpentSeconds: number` field (missing/`undefined` both mean "never

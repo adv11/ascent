@@ -14,9 +14,21 @@ export const MAX_RESOURCE_URL_LENGTH = 2048;
 // UI needs just this number without pulling in roadmapStore.js's
 // Firebase-backed storage adapter chain.
 export const MAX_FAVORITE_ROADMAPS = 3;
+// Issue #182 — freeform pattern/concept tags on an item, used to group
+// spaced-repetition review reminders by shared tag instead of one item at a
+// time. Caps mirror the resource label cap's reasoning: short enough to stay
+// a scannable chip, capped in count so the tag row never grows unbounded.
+export const MAX_TAG_LENGTH = 30;
+export const MAX_TAGS_PER_ITEM = 5;
 
 export function isValidResource(resource) {
   return !!resource
     && typeof resource.label === 'string' && resource.label.length <= MAX_RESOURCE_LABEL_LENGTH
     && typeof resource.url === 'string' && resource.url.length <= MAX_RESOURCE_URL_LENGTH;
+}
+
+export function isValidTags(tags) {
+  return Array.isArray(tags)
+    && tags.length <= MAX_TAGS_PER_ITEM
+    && tags.every(tag => typeof tag === 'string' && tag.length > 0 && tag.length <= MAX_TAG_LENGTH);
 }

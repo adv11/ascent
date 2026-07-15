@@ -25,7 +25,7 @@ import { createIcon } from '../components/icons.js';
 import { createEmptyState } from '../components/emptyState.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { KEYS } from '../../services/localStorageKeys.js';
-import { isReviewDue, getReviewDueItems } from '../../core/roadmap/reviewSchedule.js';
+import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag } from '../../core/roadmap/reviewSchedule.js';
 import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/completionCelebration.js';
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
 import { triggerConfetti } from '../components/confetti.js';
@@ -156,12 +156,21 @@ function matchesActiveFilter(item, priority) {
   return item.priority === priority;
 }
 
-function filterItems(items, { priority, query }) {
+function filterItems(items, { priority, query, tag }) {
   const q = query.trim().toLowerCase();
   return items.filter(item => {
     const matchesQuery = !q || item.title.toLowerCase().includes(q) || item.phase.toLowerCase().includes(q) || item.section.toLowerCase().includes(q);
-    return matchesActiveFilter(item, priority) && matchesQuery;
+    const matchesTag = !tag || (item.tags || []).includes(tag);
+    return matchesActiveFilter(item, priority) && matchesQuery && matchesTag;
   });
+}
+
+// Issue #182 — every distinct tag currently in use across the roadmap, for
+// the tag filter-chip row. Sorted alphabetically for a stable chip order.
+function collectAllTags(items) {
+  const tags = new Set();
+  items.forEach(item => (item.tags || []).forEach(tag => tags.add(tag)));
+  return [...tags].sort((a, b) => a.localeCompare(b));
 }
 
 function priorityCounts(items, priority) {
@@ -456,6 +465,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   // opened, before ui.filter has been set at all.
   let activeFilter = ui.filter || readDefaultFilterPreference();
   let searchQuery = ui.search || '';
+  // Issue #182 — tag filter is a separate, in-memory-only AND condition on
+  // top of activeFilter (not persisted — a lighter-weight control than the
+  // sticky priority filter chips above it).
+  let tagFilter = null;
   let openPhases = new Set(Array.isArray(ui.openPhases) ? ui.openPhases : [0]);
   let saveBadgeTimer;
   let lastStructuralVersion = null;
@@ -486,6 +499,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const percentRing = createProgressRing(0, { size: 64, strokeWidth: 6 });
   const roadmapMetaRow = el('p', { className: 'roadmap-meta-row', text: '' });
   const filterContainer = el('div', { className: 'filter-row' });
+  const tagFilterContainer = el('div', { className: 'filter-row tag-filter-row' });
+  const reviewTagGroupBanner = el('div', { className: 'review-tag-group-banner' });
   const searchInput = el('input', { className: 'search-input', placeholder: 'Search topics…', value: searchQuery });
   const clearFiltersBtn = el('button', {
     type: 'button',
@@ -495,6 +510,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     onClick: () => {
       activeFilter = 'ALL';
       searchQuery = '';
+      tagFilter = null;
       searchInput.value = '';
       persistUi();
       render(store.getSnapshot());
@@ -910,7 +926,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
 
   function render(snapshot) {
     const allItems = snapshot.items;
-    const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });
+    const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery, tag: tagFilter });
     const stats = countStats(allItems);
     doneStatTotal.textContent = `/ ${stats.total}`;
     roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
@@ -927,13 +943,40 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       hasAnimatedStats = true;
     }
 
-    clearFiltersBtn.hidden = activeFilter === 'ALL' && !searchQuery;
+    clearFiltersBtn.hidden = activeFilter === 'ALL' && !searchQuery && !tagFilter;
 
     filterContainer.replaceChildren(...renderFilterChips(allItems, activeFilter, p => {
       activeFilter = activeFilter === p && p !== 'ALL' ? 'ALL' : p;
       persistUi();
       render(store.getSnapshot());
     }));
+
+    const allTags = collectAllTags(allItems);
+    tagFilterContainer.hidden = allTags.length === 0;
+    tagFilterContainer.replaceChildren(...allTags.map(tag => {
+      const isActive = tagFilter === tag;
+      return el('button', {
+        type: 'button',
+        className: `filter-chip ${isActive ? 'active' : ''}`,
+        'aria-pressed': String(isActive),
+        onClick: () => {
+          tagFilter = isActive ? null : tag;
+          render(store.getSnapshot());
+        }
+      }, [tag]);
+    }));
+
+    if (activeFilter === 'REVIEW') {
+      const groups = groupReviewDueItemsByTag(allItems).filter(g => g.tag);
+      reviewTagGroupBanner.hidden = groups.length === 0;
+      reviewTagGroupBanner.replaceChildren(...groups.map(g => el('p', {
+        className: 'review-tag-group-line',
+        text: `${g.items.length} items tagged "${g.tag}" are due for review.`
+      })));
+    } else {
+      reviewTagGroupBanner.hidden = true;
+      reviewTagGroupBanner.replaceChildren();
+    }
 
     const filteredIds = new Set(filtered.map(i => i.id));
     const phases = groupItems(allItems, snapshot.phases);
@@ -1221,7 +1264,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
               searchInput,
               toggleAllBtn
             ])
-          ])
+          ]),
+          el('div', { className: 'toolbar-block' }, [
+            el('span', { className: 'toolbar-label', text: 'Tags' }),
+            tagFilterContainer
+          ]),
+          reviewTagGroupBanner
         ]),
         content,
         saveBadge

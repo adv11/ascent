@@ -2,7 +2,7 @@ import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
 import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../data/templates/index.js';
 import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
-import { MAX_TITLE_LENGTH, isValidResource, MAX_FAVORITE_ROADMAPS } from '../core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, isValidResource, isValidTags, MAX_FAVORITE_ROADMAPS } from '../core/roadmap/limits.js';
 
 export { MAX_FAVORITE_ROADMAPS };
 
@@ -1259,6 +1259,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     if (!items[id]) return false;
     if (typeof patch.title === 'string' && (!patch.title.trim() || patch.title.length > MAX_TITLE_LENGTH)) return false;
     if (Array.isArray(patch.resources) && !patch.resources.every(isValidResource)) return false;
+    if (Array.isArray(patch.tags) && !isValidTags(patch.tags)) return false;
     // Only a `done` toggle is cosmetic (see docs/architecture.md §5.1). A
     // `notes` patch (issue #15) must NOT be added here — the notes indicator
     // badge on the row needs structuralVersion to bump so it re-renders. The
@@ -1406,6 +1407,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       deleted: false,
       resources: [],
       notes: '',
+      tags: [],
       createdAt: Date.now()
     };
     queueSave();
@@ -1463,7 +1465,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       done,
       completedAt: backupCompletedAt(incoming, done),
       resources: Array.isArray(incoming.resources) ? incoming.resources.filter(isValidResource) : [],
-      notes: typeof incoming.notes === 'string' ? incoming.notes.slice(0, 5000) : ''
+      notes: typeof incoming.notes === 'string' ? incoming.notes.slice(0, 5000) : '',
+      tags: isValidTags(incoming.tags) ? incoming.tags : []
     };
   }
 

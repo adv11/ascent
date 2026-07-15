@@ -2435,6 +2435,21 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Issue #182 — pattern/concept tag filter chips + the review-due tag-grouping
+   summary line; reuses .filter-chip/.filter-row as-is (see above), just two
+   small container-level rules for the pieces that are new to this issue. */
+.tag-filter-row[hidden] { display: none; }
+.review-tag-group-banner[hidden] { display: none; }
+.review-tag-group-banner { display: grid; gap: 4px; margin-top: 8px; }
+.review-tag-group-line {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+}
+
 .filter-chip {
   position: relative;
   min-height: 36px;
