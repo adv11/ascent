@@ -14,6 +14,9 @@ export const KEYS = {
   // user has created manually (issue #4). Each entry's `id` also appears in
   // KEYS.ROADMAPS/startedTemplateIds like any built-in template id.
   CUSTOM_ROADMAPS: 'ascent-custom-roadmaps-v1',
+  // Array of up to 3 roadmap ids (built-in template or `croadmap-...`,
+  // issue #177) the user has starred as favorites on the onboarding picker.
+  FAVORITE_ROADMAPS: 'ascent-favorite-roadmaps-v1',
   // Dedicated store for LocalStorageAdapter (issue #5) — a standalone
   // StorageAdapter implementation, separate from roadmapStore's own
   // ROADMAPS/ONBOARDING_DONE/etc. local-cache bookkeeping above. Not yet

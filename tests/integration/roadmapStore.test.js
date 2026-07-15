@@ -1332,6 +1332,92 @@ describe('hideTemplate / unhideTemplate', () => {
   });
 });
 
+// Favorite roadmaps (issue #177) — up to 3 ids (built-in or custom, no
+// distinction), synced through the same meta path hiddenTemplateIds/
+// customRoadmaps already use, so it gets the same multi-device sync
+// guarantees for free.
+describe('toggleFavoriteRoadmap (issue #177)', () => {
+  it('favoriting persists to Firebase meta and the local snapshot', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'fav-user' });
+
+    const result = await store.toggleFavoriteRoadmap('frontend');
+
+    expect(result).toEqual({ ok: true, capped: false });
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual(['frontend']);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('fav-user', { favoriteRoadmapIds: ['frontend'] });
+  });
+
+  it('toggling an already-favorited id removes it', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'fav-user-2' });
+
+    await store.toggleFavoriteRoadmap('frontend');
+    const result = await store.toggleFavoriteRoadmap('frontend');
+
+    expect(result).toEqual({ ok: true, capped: false });
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual([]);
+    expect(dbApi.saveMeta).toHaveBeenLastCalledWith('fav-user-2', { favoriteRoadmapIds: [] });
+  });
+
+  it('adds up to 3 and rejects a 4th as a no-op, without touching the existing 3', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'fav-user-3' });
+
+    await store.toggleFavoriteRoadmap('frontend');
+    await store.toggleFavoriteRoadmap('data-science');
+    await store.toggleFavoriteRoadmap('piano');
+    const result = await store.toggleFavoriteRoadmap('marketing');
+
+    expect(result).toEqual({ ok: false, capped: true });
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual(['frontend', 'data-science', 'piano']);
+  });
+
+  it('works identically for a custom roadmap id — no distinction from a built-in template id', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'fav-user-4' });
+
+    const result = await store.toggleFavoriteRoadmap('croadmap-123-abc');
+
+    expect(result).toEqual({ ok: true, capped: false });
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual(['croadmap-123-abc']);
+  });
+
+  it('a favorite marked on one simulated device is readable from a fresh store instance pointed at the same uid (multi-device sync)', async () => {
+    const fakeMetaByUid = { 'user-a': { onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] } };
+    dbApi.getMeta.mockImplementation(uid => Promise.resolve(fakeMetaByUid[uid] || { onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] }));
+    dbApi.saveMeta.mockImplementation((uid, patch) => {
+      fakeMetaByUid[uid] = { ...fakeMetaByUid[uid], ...patch };
+      return Promise.resolve();
+    });
+
+    const deviceOne = createRoadmapStore();
+    await deviceOne.setUser({ uid: 'user-a' });
+    await deviceOne.toggleFavoriteRoadmap('frontend');
+    expect(fakeMetaByUid['user-a'].favoriteRoadmapIds).toEqual(['frontend']);
+
+    // A fresh store instance, no shared localStorage — only Firebase meta,
+    // scoped by uid, can carry the favorite across devices.
+    localStorage.clear();
+    const deviceTwo = createRoadmapStore();
+    await deviceTwo.setUser({ uid: 'user-a' });
+    expect(deviceTwo.getSnapshot().favoriteRoadmapIds).toEqual(['frontend']);
+  });
+
+  it('deleting a favorited custom roadmap also drops it from favoriteRoadmapIds', async () => {
+    dbApi.saveRoadmap.mockResolvedValue(undefined);
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'fav-user-5' });
+    const id = await store.createCustomRoadmap({ title: 'My roadmap' });
+
+    await store.toggleFavoriteRoadmap(id);
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual([id]);
+
+    await store.deleteCustomRoadmap(id);
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual([]);
+  });
+});
+
 // Manual roadmap creation (issue #4) — a user-authored roadmap has a
 // generated `croadmap-...` id instead of a built-in template id, starts with
 // zero phases/items, and its phase/section skeleton is fully mutable

@@ -1233,6 +1233,30 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
 /* issue #155 v2 Phase D3 (full completion pass) — straight text/border swap. */
 :root[data-theme='dark'] .template-card-info-corner:hover { color: var(--accent-lime); border-color: var(--accent-lime-light-border); }
 
+/* Favorite-roadmap toggle (issue #177) — same 24px circular-corner-button
+   slot/sizing as .template-card-hide/-delete/-info-corner, but pinned to the
+   opposite (top-left) corner so it never overlaps whichever one of those
+   three a given card also renders. */
+.template-card-favorite {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-glass);
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+}
+.template-card-favorite:hover { color: var(--brand); border-color: var(--brand-light-border); }
+.template-card-favorite.is-favorite { color: var(--brand); border-color: var(--brand-light-border); background: var(--brand-light); }
+/* issue #177 — same lime-recolor pattern as every other --brand accent added post-issue-#155-v2. */
+:root[data-theme='dark'] .template-card-favorite:hover { color: var(--accent-lime); border-color: var(--accent-lime-light-border); }
+:root[data-theme='dark'] .template-card-favorite.is-favorite { color: var(--accent-lime); border-color: var(--accent-lime-light-border); background: var(--accent-lime-light); }
+
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
 .hidden-templates-toggle { justify-self: center; }
 .hidden-grid { width: 100%; }

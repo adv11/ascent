@@ -15,11 +15,13 @@ async function setup({
   activeTemplateId,
   startedTemplateIds = [],
   customRoadmaps = [],
+  favoriteRoadmapIds = [],
   switchRoadmap = vi.fn().mockResolvedValue(undefined),
   hideTemplate = vi.fn().mockResolvedValue(undefined),
   unhideTemplate = vi.fn().mockResolvedValue(undefined),
   createCustomRoadmap = vi.fn().mockResolvedValue('croadmap-test'),
   deleteCustomRoadmap = vi.fn().mockResolvedValue(undefined),
+  toggleFavoriteRoadmap = vi.fn().mockResolvedValue({ ok: true, capped: false }),
   dailyTodoStore
 } = {}) {
   const { navigate } = await import('../../src/ui/router.js');
@@ -27,12 +29,13 @@ async function setup({
   const app = document.createElement('div');
   document.body.appendChild(app);
   const store = {
-    getSnapshot: vi.fn(() => ({ onboardingDone, hiddenTemplateIds, activeTemplateId, startedTemplateIds, customRoadmaps })),
+    getSnapshot: vi.fn(() => ({ onboardingDone, hiddenTemplateIds, activeTemplateId, startedTemplateIds, customRoadmaps, favoriteRoadmapIds })),
     switchRoadmap,
     hideTemplate,
     unhideTemplate,
     createCustomRoadmap,
-    deleteCustomRoadmap
+    deleteCustomRoadmap,
+    toggleFavoriteRoadmap
   };
   const user = { uid: 'uid-1', isAnonymous: false };
   const cleanup = renderOnboarding(app, { user, store, dailyTodoStore });
@@ -61,7 +64,7 @@ describe('onboarding page — gating', () => {
     const { navigate } = await import('../../src/ui/router.js');
     const { renderOnboarding } = await import('../../src/ui/pages/onboarding.js');
     const app = document.createElement('div');
-    renderOnboarding(app, { user: null, store: { getSnapshot: () => ({ onboardingDone: false, hiddenTemplateIds: [], startedTemplateIds: [] }) } });
+    renderOnboarding(app, { user: null, store: { getSnapshot: () => ({ onboardingDone: false, hiddenTemplateIds: [], startedTemplateIds: [], customRoadmaps: [], favoriteRoadmapIds: [] }) } });
     expect(navigate).toHaveBeenCalledWith('/signin', true);
     expect(app.children.length).toBe(0);
   });

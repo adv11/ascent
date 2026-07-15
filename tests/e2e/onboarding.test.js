@@ -232,6 +232,51 @@ test.describe('onboarding — hiding and restoring templates', () => {
   });
 });
 
+test.describe('onboarding — favorite roadmaps (issue #177)', () => {
+  test('starring a roadmap re-sorts its card to the front of the grid and the star persists across a reload', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    const marketingCard = page.locator('.template-card', { hasText: 'Marketing' });
+    await marketingCard.locator('.template-card-favorite').click();
+    await expect(marketingCard.locator('.template-card-favorite')).toHaveClass(/is-favorite/);
+
+    const firstPickableCard = page.locator('.template-grid:not(.hidden-grid) [role="listitem"]').nth(1).locator('.template-card');
+    await expect(firstPickableCard).toContainText('Marketing');
+
+    await page.reload();
+    await expect(page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite')).toHaveClass(/is-favorite/);
+    await expect(page.locator('.template-grid:not(.hidden-grid) [role="listitem"]').nth(1).locator('.template-card')).toContainText('Marketing');
+  });
+
+  test('clicking the star does not trigger pickTemplate', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    await page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite').click();
+    await expect(page).toHaveURL(/#\/onboarding/);
+  });
+
+  test('a 4th favorite is rejected with a toast, leaving the first 3 unchanged', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+    for (const name of ['Java Backend Engineer', 'Frontend Developer', 'Data Scientist']) {
+      await page.locator('.template-card', { hasText: name }).locator('.template-card-favorite').click();
+    }
+    await page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite').click();
+
+    await expect(page.locator('.toast')).toContainText('up to 3');
+    await expect(page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite')).not.toHaveClass(/is-favorite/);
+  });
+});
+
 test.describe('onboarding — "build your own roadmap" guide (issue #100)', () => {
   test('the corner info button on "Create your own roadmap" opens a guide explaining the generate-then-fine-tune flow', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');

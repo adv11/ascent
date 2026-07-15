@@ -55,6 +55,12 @@
             "$index": {
               ".validate": "newData.isString()"
             }
+          },
+          "favoriteRoadmapIds": {
+            ".validate": "newData.numChildren() <= 3",
+            "$index": {
+              ".validate": "newData.isString()"
+            }
           }
         },
         "dailyTodos": {

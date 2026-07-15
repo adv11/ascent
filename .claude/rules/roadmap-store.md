@@ -736,6 +736,33 @@ closes the guide and calls the same `handleImport()` the "Import roadmap" card u
 do not let it drift back to describing a manual copy-paste-into-an-AI-chat workflow now
 that real automated import exists.
 
+**Favorite roadmaps — `favoriteRoadmapIds` (issue #177).** A parallel per-user array,
+same shape/persistence precedent as `hiddenTemplateIds` immediately above: up to
+`MAX_FAVORITE_ROADMAPS` (3, exported from `roadmapStore.js`) roadmap ids, no distinction
+between a built-in template id and a `croadmap-...` custom id (matching how
+`startedTemplateIds` already treats them uniformly), persisted to
+`users/{uid}/meta/favoriteRoadmapIds` plus a local `KEYS.FAVORITE_ROADMAPS` fallback —
+resolved in `resolveMetaExtras()` (remote wins, falling back to the local blob) and reset
+alongside every other per-user array on a uid transition (`freshStateForNewUid()`,
+`clearLocal()` — see the "Sign-out contract" below). `store.toggleFavoriteRoadmap(id)`
+adds the id if under the cap, removes it if already present, and is a no-op — returning
+`{ ok: false, capped: true }` rather than mutating anything — if adding a 4th would
+exceed it; callers must check the return value, same convention as `addItem()`'s
+item-count cap. `firebase/database.rules.json` enforces the same cap server-side via
+`newData.numChildren() <= 3` on the `favoriteRoadmapIds` node — see #122's finding that
+this repo had previously under-enforced server-side caps on similar user-controlled
+arrays; don't repeat that gap for a future array field. `deleteCustomRoadmap()` also
+strips the deleted id from `favoriteRoadmapIds` (both in-memory and the Firebase/local
+persistence) so a deleted custom roadmap can never linger as a "favorite" pointing at
+nothing. `onboarding.js`'s picker grid renders a star toggle (`.template-card-favorite`,
+`data-action="favorite"`, the same click-guard convention as the hide/delete/info corner
+buttons — pinned to the opposite top-left corner so it never overlaps whichever of those
+three a given card also has) on every custom and built-in card, and sorts the "Create
+your own roadmap" action card first (never a favorite target — it isn't a roadmap to
+pick), followed by every pickable card with favorited ones first (`Array#sort`, stable,
+so order is otherwise unchanged). Toggling re-renders the whole visible grid rather than
+patching a single card in place, since a toggle can also move where the card sits.
+
 **"blank" template retirement and migration (`roadmapStore.js`, `src/data/templates/`,
 issue #4 follow-up).** Once manual roadmap creation (CRUD, above) and AI-assisted import
 (above) both existed, the "Start blank" built-in template — four fixed, uneditable

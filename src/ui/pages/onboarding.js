@@ -9,6 +9,7 @@ import { confirmDialog } from '../components/confirmDialog.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
+import { MAX_FAVORITE_ROADMAPS } from '../../core/roadmap/limits.js';
 import { pickCustomRoadmapIcon } from '../utils/customRoadmapIcon.js';
 import { createIcon } from '../components/icons.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
@@ -53,6 +54,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   const startedTemplateIds = [...snapshot.startedTemplateIds];
   let hiddenTemplateIds = [...snapshot.hiddenTemplateIds];
   const customRoadmaps = [...snapshot.customRoadmaps];
+  let favoriteRoadmapIds = [...snapshot.favoriteRoadmapIds];
 
   let picking = false;
   const cardEls = [];
@@ -105,6 +107,35 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   const visibleGrid = el('div', { className: 'template-grid', role: 'list' });
   const hiddenSection = el('div', { className: 'hidden-templates-section' });
+
+  // Favoriting (issue #177) — up to MAX_FAVORITE_ROADMAPS roadmaps (built-in
+  // or custom, no distinction) can be starred; starred cards sort before
+  // every other card. Toggling re-renders the whole visible grid rather than
+  // patching in place, since a toggle can also move the card's position.
+  async function handleToggleFavorite(roadmapId) {
+    const result = await store.toggleFavoriteRoadmap(roadmapId);
+    if (!result.ok) {
+      showToast(`You can only favorite up to ${MAX_FAVORITE_ROADMAPS} roadmaps. Unfavorite one first.`, 'info');
+      return;
+    }
+    favoriteRoadmapIds = favoriteRoadmapIds.includes(roadmapId)
+      ? favoriteRoadmapIds.filter(id => id !== roadmapId)
+      : [...favoriteRoadmapIds, roadmapId];
+    renderVisibleGrid();
+  }
+
+  function buildFavoriteButton(roadmapId, name) {
+    const isFavorite = favoriteRoadmapIds.includes(roadmapId);
+    return el('button', {
+      type: 'button',
+      className: `template-card-favorite${isFavorite ? ' is-favorite' : ''}`,
+      'data-action': 'favorite',
+      'aria-pressed': String(isFavorite),
+      'aria-label': isFavorite ? `Unfavorite ${name}` : `Favorite ${name}`,
+      title: isFavorite ? `Unfavorite ${name}` : `Favorite ${name}`,
+      onClick: () => handleToggleFavorite(roadmapId)
+    }, [createIcon('star', { size: 'xs' })]);
+  }
 
   // "Create your own roadmap" (issue #100 — supersedes the separate manual
   // "Create"/"Import" cards issues #4/#64 shipped) — always the first card,
@@ -252,6 +283,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       onClick: e => { if (e.target === cardEl) pickCustomRoadmap(roadmap, cardEl); }
     }, [
       pickBtn,
+      buildFavoriteButton(roadmap.id, roadmap.title),
       el('button', {
         type: 'button',
         className: 'template-card-delete',
@@ -311,6 +343,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       onClick: e => { if (e.target === cardEl) pickTemplate(template, cardEl); }
     }, [
       pickBtn,
+      buildFavoriteButton(template.id, template.name),
       el('button', {
         type: 'button',
         className: 'template-card-hide',
@@ -364,7 +397,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
         onClick: async () => {
           await store.unhideTemplate(template.id);
           hiddenTemplateIds = hiddenTemplateIds.filter(id => id !== template.id);
-          visibleGrid.appendChild(buildCard(template));
+          renderVisibleGrid();
           renderHiddenToggle();
         }
       })
@@ -393,11 +426,26 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     hiddenSection.replaceChildren(toggleBtn);
   }
 
-  visibleGrid.appendChild(buildCreateCard());
-  customRoadmaps.forEach(roadmap => visibleGrid.appendChild(buildCustomCard(roadmap)));
-  TEMPLATES
-    .filter(t => !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
-    .forEach(template => visibleGrid.appendChild(buildCard(template)));
+  // "Create your own roadmap" is always first (it's an action, not a pickable
+  // roadmap, so it never participates in favorite sorting). Every pickable
+  // card (custom + visible built-in) is then sorted favorites-first, stable
+  // otherwise — Array#sort is a stable sort in every engine this app targets.
+  function renderVisibleGrid() {
+    cardEls.length = 0;
+    visibleGrid.replaceChildren();
+    visibleGrid.appendChild(buildCreateCard());
+    const pickable = [
+      ...customRoadmaps.map(roadmap => ({ id: roadmap.id, build: () => buildCustomCard(roadmap) })),
+      ...TEMPLATES
+        .filter(t => !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
+        .map(template => ({ id: template.id, build: () => buildCard(template) }))
+    ];
+    pickable
+      .sort((a, b) => Number(favoriteRoadmapIds.includes(b.id)) - Number(favoriteRoadmapIds.includes(a.id)))
+      .forEach(entry => visibleGrid.appendChild(entry.build()));
+  }
+
+  renderVisibleGrid();
   renderHiddenToggle();
 
   const themeToggleBtn = createThemeToggle();

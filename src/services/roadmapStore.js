@@ -2,7 +2,9 @@ import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
 import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../data/templates/index.js';
 import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
-import { MAX_TITLE_LENGTH, isValidResource } from '../core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, isValidResource, MAX_FAVORITE_ROADMAPS } from '../core/roadmap/limits.js';
+
+export { MAX_FAVORITE_ROADMAPS };
 
 const LOCAL_KEY = KEYS.ROADMAP;
 const UI_KEY = KEYS.UI_STATE;
@@ -13,6 +15,12 @@ const UI_KEY = KEYS.UI_STATE;
 // even 800 topics, so the tighter cap costs no legitimate user anything while
 // shrinking the accidental-storage-runaway window on the free tier.
 const MAX_ITEMS_PER_ROADMAP = 800;
+
+// MAX_FAVORITE_ROADMAPS (issue #177) lives in core/roadmap/limits.js and is
+// re-exported above — a user may mark at most that many roadmaps (built-in
+// or custom, no distinction) as favorites, sorted before all others on the
+// onboarding picker. Enforced here (toggleFavoriteRoadmap) and server-side
+// (firebase/database.rules.json's numChildren() <= 3 check).
 
 // Firebase's onValue listener fires on every write to the path, including the
 // echo of writes this same client just made. Comparing with JSON.stringify
@@ -191,6 +199,15 @@ function readLocalHiddenTemplates() {
   }
 }
 
+function readLocalFavoriteRoadmaps() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEYS.FAVORITE_ROADMAPS) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
 // Sentinel returned by every onboarding-detection helper below to mean "a
 // newer setUser() call has already taken over — abort without applying this
 // result." Distinct from `null`/`undefined` (both legitimate "no migration
@@ -211,6 +228,7 @@ export function freshStateForNewUid() {
     hiddenTemplateIds: [],
     customRoadmaps: [],
     startedTemplateIds: [],
+    favoriteRoadmapIds: [],
     roadmapCache: {},
     pendingCustomSeeds: {},
     dirty: false,
@@ -247,7 +265,8 @@ async function fetchRemoteMetaSafely(uid, adapter) {
 export function resolveMetaExtras(remoteMeta) {
   return {
     hiddenTemplateIds: normalizeStringArray(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates(),
-    customRoadmaps: normalizeStringArray(remoteMeta?.customRoadmaps) || readLocalCustomRoadmaps()
+    customRoadmaps: normalizeStringArray(remoteMeta?.customRoadmaps) || readLocalCustomRoadmaps(),
+    favoriteRoadmapIds: normalizeStringArray(remoteMeta?.favoriteRoadmapIds) || readLocalFavoriteRoadmaps()
   };
 }
 
@@ -474,6 +493,9 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // the onboarding picker can render a name/description for them (built-in
   // templates get theirs from src/data/templates/index.js instead).
   let customRoadmaps = [];
+  // At most MAX_FAVORITE_ROADMAPS ids (built-in or custom, no distinction —
+  // issue #177), sorted before all others on the onboarding picker.
+  let favoriteRoadmapIds = [];
   // One-shot seed content for a custom roadmap not yet activated (issue #4
   // AI-import): createCustomRoadmap() stashes { phases, items } here, keyed
   // by the freshly generated id, right before calling switchRoadmap(id) —
@@ -531,6 +553,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       phases: templatePhases,
       hiddenTemplateIds,
       customRoadmaps,
+      favoriteRoadmapIds,
       ...meta
     };
   }
@@ -572,6 +595,10 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     localStorage.setItem(KEYS.HIDDEN_TEMPLATES, JSON.stringify(hiddenTemplateIds));
   }
 
+  function persistLocalFavoriteRoadmaps() {
+    localStorage.setItem(KEYS.FAVORITE_ROADMAPS, JSON.stringify(favoriteRoadmapIds));
+  }
+
   // Wipes all local state for the outgoing user — both roadmap data and UI prefs.
   // Called whenever the active uid changes so the next user always starts clean.
   function clearLocal() {
@@ -582,6 +609,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     localStorage.removeItem(KEYS.TEMPLATE_ID);
     localStorage.removeItem(KEYS.HIDDEN_TEMPLATES);
     localStorage.removeItem(KEYS.CUSTOM_ROADMAPS);
+    localStorage.removeItem(KEYS.FAVORITE_ROADMAPS);
   }
 
   function attachRoadmapListener(listenerTemplateId) {
@@ -808,6 +836,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       hiddenTemplateIds = fresh.hiddenTemplateIds;
       customRoadmaps = fresh.customRoadmaps;
       startedTemplateIds = fresh.startedTemplateIds;
+      favoriteRoadmapIds = fresh.favoriteRoadmapIds;
       roadmapCache = fresh.roadmapCache;
       pendingCustomSeeds = fresh.pendingCustomSeeds;
       dirty = fresh.dirty;
@@ -840,6 +869,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     persistLocalHiddenTemplates();
     customRoadmaps = metaExtras.customRoadmaps;
     persistLocalCustomRoadmaps();
+    favoriteRoadmapIds = metaExtras.favoriteRoadmapIds;
+    persistLocalFavoriteRoadmaps();
 
     const onboarding = await determineOnboardingAndActiveRoadmap({ uid, adapter, remoteMeta, localFallback, customRoadmaps, isStale });
     if (onboarding === STALE) return;
@@ -1029,6 +1060,34 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     }
   }
 
+  // Toggles a roadmap's favorite state (issue #177) — applies uniformly to a
+  // built-in template id or a custom `croadmap-...` id, matching how
+  // `startedTemplateIds` already treats them uniformly. Adds if under the
+  // MAX_FAVORITE_ROADMAPS cap, removes if already favorited, and is a no-op
+  // (returning `{ ok: false, capped: true }`) if adding a 4th would exceed
+  // it — callers must check the return value and surface that themselves
+  // (the onboarding picker shows a toast), same convention as every other
+  // capped mutation in this file (addItem, addTodo).
+  async function toggleFavoriteRoadmap(id) {
+    const isFavorite = favoriteRoadmapIds.includes(id);
+    if (!isFavorite && favoriteRoadmapIds.length >= MAX_FAVORITE_ROADMAPS) {
+      return { ok: false, capped: true };
+    }
+    favoriteRoadmapIds = isFavorite
+      ? favoriteRoadmapIds.filter(favId => favId !== id)
+      : [...favoriteRoadmapIds, id];
+    persistLocalFavoriteRoadmaps();
+    notify();
+    if (uid) {
+      try {
+        await adapter.saveMeta(uid, { favoriteRoadmapIds });
+      } catch (error) {
+        console.error('Failed to save favorite roadmap preference', error);
+      }
+    }
+    return { ok: true, capped: false };
+  }
+
   function hideTemplate(idToHide) {
     if (hiddenTemplateIds.includes(idToHide)) return Promise.resolve();
     return setHiddenTemplateIds([...hiddenTemplateIds, idToHide]);
@@ -1079,15 +1138,17 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     }
     customRoadmaps = customRoadmaps.filter(r => r.id !== idToDelete);
     startedTemplateIds = startedTemplateIds.filter(id => id !== idToDelete);
+    favoriteRoadmapIds = favoriteRoadmapIds.filter(id => id !== idToDelete);
     delete roadmapCache[idToDelete];
     persistLocalCustomRoadmaps();
+    persistLocalFavoriteRoadmaps();
     const localAll = readLocalRoadmaps();
     delete localAll[idToDelete];
     localStorage.setItem(KEYS.ROADMAPS, JSON.stringify(localAll));
     notify();
     if (uid) {
       try {
-        await adapter.saveMeta(uid, { customRoadmaps, startedTemplateIds });
+        await adapter.saveMeta(uid, { customRoadmaps, startedTemplateIds, favoriteRoadmapIds });
         await adapter.deleteRoadmap(uid, idToDelete);
       } catch (error) {
         console.error('Failed to delete custom roadmap', error);
@@ -1485,6 +1546,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     switchRoadmap,
     hideTemplate,
     unhideTemplate,
+    toggleFavoriteRoadmap,
     isCustomRoadmapId,
     createCustomRoadmap,
     deleteCustomRoadmap,
