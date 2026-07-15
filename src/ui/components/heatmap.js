@@ -103,11 +103,14 @@ export function createHeatmap(heatmapData = []) {
       // monthRow/dayLabelColumn's existing decorative-label pattern above)
       // instead of a `<button>` — there's no native interactive semantics to
       // suppress once the element was never a real button to begin with.
+      // No native `title` attribute here — attachTooltip() below already
+      // renders a tooltip; adding both showed two overlapping tooltips at
+      // once (the browser's native one, plus the custom bubble), found live
+      // via a screenshot report.
       const button = el('span', {
         'aria-hidden': 'true',
         className: `heatmap-cell gr-${cell.row + 1}`,
-        dataset: { level: String(cell.level), today: cell.isToday ? 'true' : 'false' },
-        title: cellTooltipText(cell)
+        dataset: { level: String(cell.level), today: cell.isToday ? 'true' : 'false' }
       });
       attachTooltip(button, cellTooltipText(cell));
       return button;

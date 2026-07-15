@@ -38,18 +38,30 @@ describe('createHeatmap', () => {
     expect(labels.filter(Boolean).sort()).toEqual(['Fri', 'Mon', 'Wed']);
   });
 
-  it('gives each cell an accessible title with the date and count', () => {
+  it('gives each cell a hover tooltip with the date and count, and no redundant native title (issue #180 follow-up)', () => {
+    document.body.innerHTML = '';
     const data = computeHeatmap({ '2026-07-10': 2 }, NOW);
     const node = createHeatmap(data);
+    document.body.append(node);
     const todayCell = node.querySelector('.heatmap-cell[data-today="true"]');
-    expect(todayCell.getAttribute('title')).toMatch(/Jul 10 · 2 items completed/);
+
+    // A native `title` alongside the custom tooltip showed two overlapping
+    // tooltips at once — see tooltip.js's own portal comment.
+    expect(todayCell.hasAttribute('title')).toBe(false);
+
+    todayCell.dispatchEvent(new Event('mouseenter'));
+    expect(document.body.querySelector('.tooltip-bubble').textContent).toMatch(/Jul 10 · 2 items completed/);
   });
 
   it('handles a single-count day with singular wording', () => {
+    document.body.innerHTML = '';
     const data = computeHeatmap({ '2026-07-10': 1 }, NOW);
     const node = createHeatmap(data);
+    document.body.append(node);
     const todayCell = node.querySelector('.heatmap-cell[data-today="true"]');
-    expect(todayCell.getAttribute('title')).toMatch(/1 item completed/);
+
+    todayCell.dispatchEvent(new Event('mouseenter'));
+    expect(document.body.querySelector('.tooltip-bubble').textContent).toMatch(/1 item completed/);
   });
 
   it('renders a 5-swatch legend', () => {

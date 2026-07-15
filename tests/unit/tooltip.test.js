@@ -6,7 +6,7 @@ beforeEach(() => {
 });
 
 describe('attachTooltip', () => {
-  it('adds .tooltip-trigger to the trigger element and appends a role=tooltip bubble with the given text', () => {
+  it('adds .tooltip-trigger to the trigger element and builds a role=tooltip bubble with the given text, not yet in the DOM', () => {
     const trigger = document.createElement('button');
     document.body.append(trigger);
 
@@ -15,7 +15,24 @@ describe('attachTooltip', () => {
     expect(trigger.classList.contains('tooltip-trigger')).toBe(true);
     expect(bubble.getAttribute('role')).toBe('tooltip');
     expect(bubble.textContent).toBe('Show password');
-    expect(trigger.contains(bubble)).toBe(true);
+    // Portaled on show, not appended eagerly (issue #180 follow-up) — a
+    // trigger sitting inside a scrolling/overflow ancestor (e.g.
+    // heatmap.js's .heatmap-scroll) would otherwise clip a bubble
+    // positioned as its DOM child.
+    expect(document.body.contains(bubble)).toBe(false);
+  });
+
+  it('portals the bubble to document.body (not the trigger) on mouseenter, and removes it on mouseleave', () => {
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    const bubble = attachTooltip(trigger, 'Info');
+
+    trigger.dispatchEvent(new Event('mouseenter'));
+    expect(document.body.contains(bubble)).toBe(true);
+    expect(trigger.contains(bubble)).toBe(false);
+
+    trigger.dispatchEvent(new Event('mouseleave'));
+    expect(document.body.contains(bubble)).toBe(false);
   });
 
   it('flips below when there is not enough room above (mouseenter recalculates position)', () => {

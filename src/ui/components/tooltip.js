@@ -33,32 +33,61 @@ function overlapsVisibleSectionLabel(candidateRect) {
 
 // Issue #6 Phase 3.4 — lightweight tooltip for icon buttons/truncated text,
 // no third-party library. Positions above the trigger by default, flipping
-// below when there isn't enough room above (overflow detection against the
-// viewport, not the trigger's offset parent, since `.tooltip-bubble` is
-// absolutely positioned relative to `.tooltip-trigger` wherever that sits on
-// the page) — or when "above" would land on top of a sticky section header
-// (see `overlapsVisibleSectionLabel` above).
+// below when there isn't enough room above, or when "above" would land on
+// top of a sticky section header (see `overlapsVisibleSectionLabel` above).
+//
+// Portaled to `document.body` on show/removed on hide (issue #180
+// follow-up) — this app's established "every floating/positioned element is
+// a portal" convention (`select.js`/`dropdown.js`, `.claude/rules/
+// ui-styling.md`'s transformed-ancestor section), which this component had
+// never actually followed: it used to append `.tooltip-bubble` as a plain
+// DOM child of the trigger, absolutely positioned relative to it. That's
+// invisible almost everywhere the trigger has no scrolling/overflow
+// ancestor, but a real bug the moment it does — `heatmap.js`'s per-cell
+// tooltip (trigger inside `.heatmap-scroll`, `overflow-x: auto`, which per
+// the CSS overflow spec makes the unset y-axis compute to `auto` too) got
+// its bubble visibly clipped/cut off at the container's edge, found live via
+// a screenshot report. Positioning now reads `getBoundingClientRect()`
+// (viewport-relative, matching `position: fixed`) and writes directly to
+// `bubble.style.left/top` — direct DOM property mutation, not an inline
+// `style` HTML attribute, so it's unaffected by the CSP's `style-src` with
+// no `unsafe-inline` (same distinction `dropdown.js`/`select.js` already
+// rely on).
 export function attachTooltip(triggerEl, text) {
   triggerEl.classList.add('tooltip-trigger');
   const bubble = el('span', { className: 'tooltip-bubble', role: 'tooltip', text });
-  triggerEl.append(bubble);
 
   function positionBubble() {
     const rect = triggerEl.getBoundingClientRect();
-    const bubbleWidth = bubble.offsetWidth || 120;
     const bubbleHeight = bubble.offsetHeight || 28;
+    const centerX = rect.left + rect.width / 2;
     const candidateAbove = {
       top: rect.top - bubbleHeight - 6,
-      bottom: rect.top - 6,
-      left: rect.left + rect.width / 2 - bubbleWidth / 2,
-      right: rect.left + rect.width / 2 + bubbleWidth / 2
+      bottom: rect.top - 6
     };
-    const fitsAbove = candidateAbove.top >= 0 && !overlapsVisibleSectionLabel(candidateAbove);
+    const fitsAbove = candidateAbove.top >= 0 && !overlapsVisibleSectionLabel({
+      ...candidateAbove,
+      left: centerX - (bubble.offsetWidth || 120) / 2,
+      right: centerX + (bubble.offsetWidth || 120) / 2
+    });
     bubble.classList.toggle('tooltip-below', !fitsAbove);
+    bubble.style.left = `${centerX}px`;
+    bubble.style.top = fitsAbove ? `${rect.top - 6}px` : `${rect.bottom + 6}px`;
   }
 
-  triggerEl.addEventListener('mouseenter', positionBubble);
-  triggerEl.addEventListener('focus', positionBubble);
+  function show() {
+    document.body.append(bubble);
+    positionBubble();
+  }
+
+  function hide() {
+    bubble.remove();
+  }
+
+  triggerEl.addEventListener('mouseenter', show);
+  triggerEl.addEventListener('focus', show);
+  triggerEl.addEventListener('mouseleave', hide);
+  triggerEl.addEventListener('blur', hide);
 
   return bubble;
 }
