@@ -3795,3 +3795,23 @@ fails to parse silently serves the emulator's permissive default for the *entire
 namespace, the same trap `favoriteRoadmapIds`' rule already found and documented). See
 `.claude/rules/auth-security.md`'s "Server-side data caps" section for the full
 per-field cap list and reasoning.
+
+### 2026-07-16 — Issue #127 — SEO & social-preview baseline
+
+Two new files, `robots.txt` and `sitemap.xml`, live at the actual repo/hosting root
+(sibling to `index.html`), **not** under `public/` — despite `public/` holding every
+other static asset (`favicon.svg`, `og-image.png`, `manifest.json`, etc.), this repo's
+`firebase.json` sets `"public": "."`, meaning the whole repo root is the Hosting root
+and `public/` is just an ordinary subdirectory within it, served at `/public/*`. A
+crawler only ever checks `/robots.txt` at the true domain root, so putting it under
+`/public/robots.txt` would have silently made it undiscoverable — confirmed by serving
+both locally and checking they resolve at `/robots.txt`/`/sitemap.xml`, not
+`/public/robots.txt`. `index.html` gained `twitter:card`/`twitter:title`/
+`twitter:description`/`twitter:image` meta tags and a `WebApplication` JSON-LD
+`<script type="application/ld+json">` block — verified live (real browser load) to
+produce zero CSP `script-src` violations, since a non-executable script `type` is
+exempt from that directive. No `firebase.json` header change was needed: since these
+two files sit at the root rather than under `/public/**`, they never match that
+directory's `immutable, max-age=31536000` caching rule and fall through to the
+generic `**` block's default (non-immutable) caching, which is exactly what a
+domain/sitemap-content-can-change file needs.

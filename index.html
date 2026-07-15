@@ -9,6 +9,24 @@
   <meta property="og:title" content="Ascent">
   <meta property="og:description" content="Engineer your next move.">
   <meta property="og:image" content="/public/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ascent">
+  <meta name="twitter:description" content="Engineer your next move.">
+  <meta name="twitter:image" content="/public/og-image.png">
+  <!-- type="application/ld+json" is non-executable data, not JavaScript — CSP's
+       script-src only governs elements that would actually execute as a script,
+       so this inline block is exempt and needs no 'unsafe-inline'/nonce. Verified
+       against a real dev-server load with no CSP console violation (issue #127). -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Ascent",
+    "description": "Ascent is a personal roadmap tracker for learning, revising, and tracking progress toward any goal. Engineer your next move.",
+    "applicationCategory": "EducationalApplication",
+    "url": "https://ascent-app.com/"
+  }
+  </script>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self';
              script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://apis.google.com;
