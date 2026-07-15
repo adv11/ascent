@@ -81,6 +81,20 @@ export class StorageAdapter {
     return Promise.resolve();
   }
 
+  // Streak freeze / grace-day state (issue #179) — same optional/safe-no-op-
+  // default shape as listenActivityLog/saveActivityLog above. `_onData`
+  // receives the plain `{ available, usedDates, lastGrantedAt }` map (or
+  // `null`).
+  listenStreakFreezes(_uid, onData) {
+    onData(null);
+    return () => {};
+  }
+
+  /** Full overwrite of the user's streak-freeze state. */
+  saveStreakFreezes(_uid, _payload) {
+    return Promise.resolve();
+  }
+
   /** Cleans up any open listeners/timers. No-op unless a backend needs it. */
   destroy() {}
 }

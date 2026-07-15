@@ -90,12 +90,16 @@ export function computePriorityBreakdown(items = []) {
 // Pure — no DOM, no store access, no side effects — safe to unit test with
 // any data. `items` is a roadmap snapshot's non-deleted item list
 // (store.getSnapshot().items); `activityLog` is activityLogStore's raw
-// entries map (store.getSnapshot().entries).
-export function computeAnalytics(items = [], activityLog = {}, now = Date.now()) {
+// entries map (store.getSnapshot().entries). `streakFreezes` (issue #179) is
+// activityLogStore's `{ available, usedDates, lastGrantedAt }` state —
+// `usedDates` feeds computeStreaks() as frozen days, `available` is passed
+// straight through in the result for the /progress stat card to display.
+export function computeAnalytics(items = [], activityLog = {}, now = Date.now(), streakFreezes = { available: 0, usedDates: [] }) {
   const effectiveLog = buildEffectiveActivityLog(items, activityLog);
   return {
     overview: computeOverview(items),
-    streaks: computeStreaks(effectiveLog, now),
+    streaks: computeStreaks(effectiveLog, now, streakFreezes.usedDates),
+    streakFreezesAvailable: streakFreezes.available || 0,
     velocity: computeVelocity(effectiveLog, now),
     phaseBreakdown: computePhaseBreakdown(items),
     priorityBreakdown: computePriorityBreakdown(items),

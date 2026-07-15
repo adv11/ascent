@@ -140,14 +140,15 @@ function renderRangeChips(active, onChange) {
 // "no fabricated data" discipline this codebase otherwise holds to (see AI-import's
 // own error-message conventions in .claude/rules/content-style.md for the same
 // principle applied to copy). `bar`, where present, renders below the number instead.
-function renderStatTile({ icon, value, total, label, bar, hero }) {
+function renderStatTile({ icon, value, total, label, bar, hero, caption }) {
   return el('div', { className: `kpi-tile${hero ? ' kpi-tile-hero' : ''}` }, [
     el('div', { className: 'kpi-tile-head' }, [
       el('span', { className: 'kpi-tile-label', text: label }),
       el('span', { className: 'card-arrow-badge' }, [createIcon(icon, { size: 'xs' })])
     ]),
     el('div', { className: 'kpi-tile-number' }, [value, total].filter(Boolean)),
-    bar ? el('div', { className: 'kpi-tile-bar' }, [bar]) : null
+    bar ? el('div', { className: 'kpi-tile-bar' }, [bar]) : null,
+    caption ? el('p', { className: 'kpi-tile-delta', text: caption }) : null
   ].filter(Boolean));
 }
 
@@ -157,7 +158,7 @@ function renderStatTile({ icon, value, total, label, bar, hero }) {
 // landed instead of just holding steady, same "animate once" guard
 // dashboard.js's own stat strip already uses.
 function renderStatCards(analytics, animate) {
-  const { overview, streaks, velocity } = analytics;
+  const { overview, streaks, velocity, streakFreezesAvailable } = analytics;
 
   const doneValue = el('span', { text: '0' });
   const currentValue = el('span', { text: '0' });
@@ -187,7 +188,10 @@ function renderStatCards(analytics, animate) {
       icon: 'flame',
       value: currentValue,
       total: el('span', { className: 'kpi-tile-total', text: streaks.current === 1 ? 'day' : 'days' }),
-      label: 'Current streak'
+      label: 'Current streak',
+      caption: streakFreezesAvailable > 0
+        ? `${streakFreezesAvailable} streak freeze${streakFreezesAvailable === 1 ? '' : 's'} available`
+        : 'No streak freezes available'
     }),
     renderStatTile({
       icon: 'sparkle',
@@ -429,8 +433,9 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
 
   function renderAll() {
     const items = store.getSnapshot().items;
-    const entries = activityLogStore.getSnapshot().entries;
-    const analytics = computeAnalytics(items, entries);
+    const activityLogSnapshot = activityLogStore.getSnapshot();
+    const entries = activityLogSnapshot.entries;
+    const analytics = computeAnalytics(items, entries, Date.now(), activityLogSnapshot.streakFreezes);
     latestAnalytics = analytics;
     latestEffectiveLog = buildEffectiveActivityLog(items, entries);
 
@@ -450,6 +455,16 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
 
   const unsubStore = store.subscribe(renderAll);
   const unsubActivityLog = activityLogStore.subscribe(renderAll);
+
+  // One-shot: activityLogStore.setUser() may have just auto-spent a streak
+  // freeze (see maybeAutoApplyStreakFreeze, src/core/analytics/streaks.js) —
+  // consumeJustAppliedFreeze() returns the frozen date at most once, so this
+  // toast only ever shows the one time it actually happened, never again on
+  // a later render or reload.
+  const justAppliedFreezeDate = activityLogStore.consumeJustAppliedFreeze?.();
+  if (justAppliedFreezeDate) {
+    showToast('A streak freeze kept your streak alive after a missed day.', 'success');
+  }
 
   return () => {
     themeToggleBtn._cleanup?.();

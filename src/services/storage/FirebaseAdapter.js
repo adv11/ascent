@@ -63,6 +63,20 @@ export class FirebaseAdapter extends StorageAdapter {
     return withTimeout(set(this.activityLogRef(uid), payload), FIREBASE_TIMEOUT_MS, 'Timed out saving activity log to Firebase');
   }
 
+  streakFreezesRef(uid) {
+    return ref(database, `users/${uid}/streakFreezes`);
+  }
+
+  listenStreakFreezes(uid, callback, onError) {
+    const freezesRef = this.streakFreezesRef(uid);
+    onValue(freezesRef, snapshot => callback(snapshot.exists() ? snapshot.val() : null), onError);
+    return () => off(freezesRef);
+  }
+
+  saveStreakFreezes(uid, payload) {
+    return withTimeout(set(this.streakFreezesRef(uid), payload), FIREBASE_TIMEOUT_MS, 'Timed out saving streak freezes to Firebase');
+  }
+
   listenRoadmap(uid, templateId, callback, onError) {
     const roadmapRef = this.roadmapRef(uid, templateId);
     // Unwrap Firebase's DataSnapshot here so the adapter interface's callback

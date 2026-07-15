@@ -33,6 +33,10 @@ export const KEYS = {
   // account, synced to Firebase, same as DAILY_TODOS). Survives an item
   // later being unchecked — see activityLogStore.js.
   ACTIVITY_LOG: 'ascent-activity-log-v1',
+  // { available, usedDates, lastGrantedAt } — streak freeze / grace-day state
+  // (issue #179), synced the same way ACTIVITY_LOG is (account-scoped, not
+  // per-uid keyed) — see activityLogStore.js.
+  STREAK_FREEZES: 'ascent-streak-freezes-v1',
   // Collapse/expand state of the Today's Todos panel (issue #83) — a purely
   // cosmetic, device-level preference, not account data, so it follows
   // THEME's pattern (plain localStorage, read/written directly by the

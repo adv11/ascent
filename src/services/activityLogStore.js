@@ -1,6 +1,7 @@
 import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
 import { dateKey } from '../core/analytics/dateKey.js';
+import { maybeGrantStreakFreeze, maybeAutoApplyStreakFreeze } from '../core/analytics/streaks.js';
 
 // A third store alongside roadmapStore.js/dailyTodoStore.js (issue #8) — a
 // flat { [dateString]: count } map of items completed per day, kept
@@ -54,15 +55,41 @@ function readLocalLog() {
   }
 }
 
+const DEFAULT_STREAK_FREEZES = { available: 0, usedDates: [], lastGrantedAt: null };
+
+function readLocalStreakFreezes() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEYS.STREAK_FREEZES) || '{}');
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
 export function createActivityLogStore() {
   let adapter = getStorageAdapter(null);
   let uid = null;
   let unsubscribeLog = null;
+  let unsubscribeFreezes = null;
   let entries = {};
   let dirty = false;
   let saveTimer = null;
   let recentFlushedStrs = [];
   const MAX_RECENT_FLUSHES = 8;
+  // Streak freeze / grace day (issue #179) — see .claude/rules/roadmap-store.md.
+  // Same debounced-save shape as `entries`/`dirty`/`saveTimer` above, kept as
+  // its own independent pair since it lives on a separate Firebase path
+  // (`users/{uid}/streakFreezes`, not `activityLog`) and changes far less
+  // often (a grant every 7 days, a spend on a missed day) than entries do.
+  let streakFreezes = { ...DEFAULT_STREAK_FREEZES };
+  let freezesDirty = false;
+  let freezesSaveTimer = null;
+  let recentFlushedFreezeStrs = [];
+  // Set to the just-frozen date whenever maybeAutoApplyStreakFreeze() spends
+  // a token during this setUser() call, so the UI (progress.js) can show a
+  // one-shot toast confirming it happened. Consumed once via
+  // consumeJustAppliedFreeze() — never re-surfaced on a later render/reload.
+  let justAppliedFreezeDate = null;
   // Same stale-call guard as roadmapStore's/dailyTodoStore's setUser.
   let stateCallId = 0;
   const subscribers = new Set();
@@ -72,15 +99,20 @@ export function createActivityLogStore() {
   }
 
   function getSnapshot(meta = {}) {
-    return { uid, entries, dirty, ...meta };
+    return { uid, entries, dirty, streakFreezes, ...meta };
   }
 
   function persistLocal() {
     localStorage.setItem(KEYS.ACTIVITY_LOG, JSON.stringify({ dirty, entries }));
   }
 
+  function persistLocalFreezes() {
+    localStorage.setItem(KEYS.STREAK_FREEZES, JSON.stringify({ dirty: freezesDirty, streakFreezes }));
+  }
+
   function clearLocal() {
     localStorage.removeItem(KEYS.ACTIVITY_LOG);
+    localStorage.removeItem(KEYS.STREAK_FREEZES);
   }
 
   function attachListener() {
@@ -111,6 +143,31 @@ export function createActivityLogStore() {
     });
   }
 
+  function attachFreezesListener() {
+    if (unsubscribeFreezes) return;
+    unsubscribeFreezes = adapter.listenStreakFreezes(uid, remote => {
+      if (freezesDirty) {
+        notify({ saveState: 'synced' });
+        return;
+      }
+      const remoteFreezes = remote || { ...DEFAULT_STREAK_FREEZES };
+      const remoteStr = stableStringify(remoteFreezes);
+      if (recentFlushedFreezeStrs.includes(remoteStr)) {
+        notify({ saveState: 'synced' });
+        return;
+      }
+      if (remoteStr !== stableStringify(streakFreezes)) {
+        streakFreezes = remoteFreezes;
+        freezesDirty = false;
+        persistLocalFreezes();
+      }
+      notify({ saveState: 'synced' });
+    }, error => {
+      console.error('Streak freezes listener failed', error);
+      notify({ saveState: 'error', error });
+    });
+  }
+
   async function flush() {
     persistLocal();
     if (!uid) {
@@ -123,6 +180,21 @@ export function createActivityLogStore() {
     if (recentFlushedStrs.length > MAX_RECENT_FLUSHES) recentFlushedStrs.shift();
     dirty = false;
     persistLocal();
+    notify({ saveState: 'saved' });
+  }
+
+  async function flushFreezes() {
+    persistLocalFreezes();
+    if (!uid) {
+      notify({ saveState: 'local' });
+      return;
+    }
+    const flushedStr = stableStringify(streakFreezes);
+    await adapter.saveStreakFreezes(uid, streakFreezes);
+    recentFlushedFreezeStrs.push(flushedStr);
+    if (recentFlushedFreezeStrs.length > MAX_RECENT_FLUSHES) recentFlushedFreezeStrs.shift();
+    freezesDirty = false;
+    persistLocalFreezes();
     notify({ saveState: 'saved' });
   }
 
@@ -139,6 +211,41 @@ export function createActivityLogStore() {
     }, 500);
   }
 
+  function queueSaveFreezes() {
+    freezesDirty = true;
+    persistLocalFreezes();
+    notify({ saveState: 'saving' });
+    clearTimeout(freezesSaveTimer);
+    freezesSaveTimer = setTimeout(() => {
+      flushFreezes().catch(error => {
+        console.error('Streak freezes save failed', error);
+        notify({ saveState: 'error', error });
+      });
+    }, 500);
+  }
+
+  // Loads streakFreezes' local fallback, runs the grant/auto-apply pure
+  // functions (src/core/analytics/streaks.js), and queues a save if either
+  // changed anything — called once per setUser() call, mirroring how
+  // pruneOldEntries() is applied to entries below. Extracted out of setUser
+  // to keep that function's own complexity down.
+  function resolveStreakFreezes(localBlob, now) {
+    let next = (localBlob.streakFreezes && localBlob.dirty)
+      ? localBlob.streakFreezes
+      : (localBlob.streakFreezes || { ...DEFAULT_STREAK_FREEZES });
+    const wasDirtyLocally = !!(localBlob.streakFreezes && localBlob.dirty);
+
+    const granted = maybeGrantStreakFreeze(next, now);
+    const applied = maybeAutoApplyStreakFreeze(entries, granted, now);
+    if (applied !== granted) {
+      justAppliedFreezeDate = applied.usedDates[applied.usedDates.length - 1];
+    }
+    next = applied;
+
+    const changed = wasDirtyLocally || stableStringify(next) !== stableStringify(localBlob.streakFreezes || DEFAULT_STREAK_FREEZES);
+    return { next, changed };
+  }
+
   // Sign-out privacy guard — same contract roadmapStore.js/dailyTodoStore.js
   // enforce (.claude/rules/roadmap-store.md "Sign-out contract"): never load
   // one user's localStorage into another user's session.
@@ -150,14 +257,21 @@ export function createActivityLogStore() {
     if (uid !== null && uid !== nextUid) {
       clearTimeout(saveTimer);
       saveTimer = null;
+      clearTimeout(freezesSaveTimer);
+      freezesSaveTimer = null;
       clearLocal();
       entries = {};
       dirty = false;
       recentFlushedStrs = [];
+      streakFreezes = { ...DEFAULT_STREAK_FREEZES };
+      freezesDirty = false;
+      recentFlushedFreezeStrs = [];
     }
 
     if (unsubscribeLog) unsubscribeLog();
     unsubscribeLog = null;
+    if (unsubscribeFreezes) unsubscribeFreezes();
+    unsubscribeFreezes = null;
     uid = nextUid;
     adapter = getStorageAdapter(nextUser);
 
@@ -188,11 +302,20 @@ export function createActivityLogStore() {
     if (Object.keys(prunedEntries).length !== Object.keys(entries).length) dirty = true;
     entries = prunedEntries;
 
+    justAppliedFreezeDate = null;
+    const localFreezeBlob = readLocalStreakFreezes();
+    const resolvedFreezes = resolveStreakFreezes(localFreezeBlob, Date.now());
+    streakFreezes = resolvedFreezes.next;
+    if (resolvedFreezes.changed) freezesDirty = true;
+
     if (isStale()) return;
 
     recentFlushedStrs = [];
+    recentFlushedFreezeStrs = [];
     attachListener();
+    attachFreezesListener();
     if (dirty) queueSave();
+    if (freezesDirty) queueSaveFreezes();
     notify({ saveState: 'synced' });
   }
 
@@ -213,6 +336,16 @@ export function createActivityLogStore() {
     queueSave();
   }
 
+  // One-shot read of the date a freeze was just auto-applied this session
+  // (or null) — the UI calls this once per mount to decide whether to show a
+  // confirmation toast, then it's cleared so a later re-render/reload never
+  // re-shows it.
+  function consumeJustAppliedFreeze() {
+    const date = justAppliedFreezeDate;
+    justAppliedFreezeDate = null;
+    return date;
+  }
+
   return {
     subscribe(callback) {
       subscribers.add(callback);
@@ -223,6 +356,7 @@ export function createActivityLogStore() {
     getSnapshot,
     recordCompletion,
     recordUncompletion,
+    consumeJustAppliedFreeze,
     flush
   };
 }

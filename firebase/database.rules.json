@@ -81,6 +81,16 @@
             ".validate": "newData.isNumber() && newData.val() >= 0"
           }
         },
+        "streakFreezes": {
+          ".validate": "newData.hasChildren(['available'])",
+          "available": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "usedDates": {
+            "$index": {
+              ".validate": "newData.isString()"
+            }
+          },
+          "lastGrantedAt": { ".validate": "newData.isNumber() || newData.val() === null" }
+        },
         "reports": {
           "$reportId": {
             ".write": "auth != null && auth.uid == $uid && !data.exists()",
