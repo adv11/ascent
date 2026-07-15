@@ -3749,3 +3749,22 @@ Todos' own device-local live-countdown precedent — only the stopped, accumulat
 syncs. `/progress` gained a 5th stat tile summing time across the active roadmap and
 every Daily Todo. See `.claude/rules/roadmap-store.md`'s "Lightweight time tracking"
 section for the full design writeup.
+
+### 2026-07-16 — Issue #181 — Phase/roadmap completion celebration + badge share-card variant
+
+New pure module `src/core/roadmap/completionCelebration.js` (`isRoadmapComplete`/
+`getCompletedPhaseTitles`, no DOM/store access) detects when a phase or the whole
+roadmap has just reached 100%, reusing `analyticsEngine.js`'s existing
+`computeOverview`/`computePhaseBreakdown` rather than duplicating `dashboard.js`'s own
+filtered progress math. New `src/services/celebrationShownStore.js` wraps a device-local
+localStorage flag (`celebrationShownKey(uid)`, `localStorageKeys.js`) so a phase/roadmap
+only ever celebrates once. `dashboard.js`'s existing `render()`/`patchDoneStates()` hooks
+call into this on every snapshot — no new store field, no new subscription. New
+`src/ui/components/confetti.js` (`triggerConfetti()`) is a CSS-only, self-removing,
+`prefers-reduced-motion`-aware full-viewport flourish. `shareCard.js` gained a
+`generateBadgeCard(kind, label, now?)` sibling to `generateShareCard()`, and
+`shareModal.js` was refactored to share its Download/Copy/Share modal chrome between
+`openShareModal()` (existing) and a new `openBadgeShareModal(kind, label)`, which the
+celebration opens automatically. See `.claude/rules/roadmap-store.md`'s "Phase/roadmap
+completion celebration" section and `.claude/rules/ui-styling.md`'s "fixed-overlay,
+self-removing CSS animation burst" section for the full design writeup.

@@ -2,10 +2,11 @@ import { el } from '../dom.js';
 import { openModal } from './modal.js';
 import { showToast } from './toast.js';
 import { createIcon } from './icons.js';
-import { generateShareCard } from './shareCard.js';
+import { generateShareCard, generateBadgeCard } from './shareCard.js';
 import { BRAND_NAME } from './brand.js';
 
 const FILENAME = 'ascent-progress.png';
+const BADGE_FILENAME = 'ascent-badge.png';
 
 function buildCaption(analytics) {
   const { overview, streaks } = analytics;
@@ -17,6 +18,11 @@ function buildCaption(analytics) {
     '',
     '#LearningInPublic'
   ].join('\n');
+}
+
+function buildBadgeCaption(kind, label) {
+  const headline = kind === 'roadmap' ? `Just finished my "${label}" roadmap on ${BRAND_NAME}! 🏆` : `Just finished the "${label}" phase on ${BRAND_NAME}! 🏆`;
+  return [headline, '', 'Onward to the next move 💪', '', '#LearningInPublic'].join('\n');
 }
 
 function canvasToBlob(canvas) {
@@ -34,12 +40,11 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
-// openShareModal(analytics, activityLog) — analytics is computeAnalytics()'s
-// output, activityLog is the same effective (backfilled) log the Progress
-// page's own heatmap renders from. Generates the card once at open time;
-// Download/Copy/Share all reuse the same canvas rather than regenerating it.
-export async function openShareModal(analytics, activityLog) {
-  const canvas = await generateShareCard(analytics, activityLog);
+// buildAndOpenShareModal(canvas, caption, filename, title) — shared by both
+// openShareModal and openBadgeShareModal (issue #181): builds the
+// caption/Download/Copy/Share UI around an already-generated canvas and
+// opens it in a modal, rather than two parallel implementations.
+function buildAndOpenShareModal(canvas, caption, filename, title) {
   canvas.className = 'share-card-preview';
 
   const captionInput = el('textarea', {
@@ -47,7 +52,7 @@ export async function openShareModal(analytics, activityLog) {
     'aria-label': 'Caption',
     rows: '6'
   });
-  captionInput.value = buildCaption(analytics);
+  captionInput.value = caption;
 
   const downloadBtn = el('button', { type: 'button', className: 'btn btn-primary btn-sm', text: 'Download PNG' });
   const copyBtn = el('button', { type: 'button', className: 'btn btn-secondary btn-sm', text: 'Copy image' });
@@ -59,8 +64,8 @@ export async function openShareModal(analytics, activityLog) {
       showToast('Could not generate the image. Try again.', 'error');
       return;
     }
-    downloadBlob(blob, FILENAME);
-    showToast('Downloaded ascent-progress.png.', 'success');
+    downloadBlob(blob, filename);
+    showToast(`Downloaded ${filename}.`, 'success');
   });
 
   // Copy/Share both need feature-detection — neither is universally
@@ -92,13 +97,13 @@ export async function openShareModal(analytics, activityLog) {
         showToast('Could not generate the image. Try again.', 'error');
         return;
       }
-      const file = new File([blob], FILENAME, { type: 'image/png' });
+      const file = new File([blob], filename, { type: 'image/png' });
       try {
         if (navigator.canShare && !navigator.canShare({ files: [file] })) {
           showToast('Sharing an image is not supported on this device.', 'error');
           return;
         }
-        await navigator.share({ files: [file], title: `${BRAND_NAME} progress`, text: captionInput.value });
+        await navigator.share({ files: [file], title, text: captionInput.value });
       } catch (error) {
         if (error?.name !== 'AbortError') showToast('Could not open the share sheet. Try downloading instead.', 'error');
       }
@@ -115,11 +120,11 @@ export async function openShareModal(analytics, activityLog) {
   }, [createIcon('close', { size: 'sm' })]);
 
   const modal = openModal({
-    ariaLabel: 'Share your progress',
+    ariaLabel: title,
     className: 'share-modal-card',
     content: [
       closeBtn,
-      el('h2', { text: 'Share your progress' }),
+      el('h2', { text: title }),
       canvas,
       el('label', { className: 'share-caption-label', text: 'Caption' }, [captionInput]),
       el('div', { className: 'share-modal-actions' }, [downloadBtn, copyBtn, webShareBtn])
@@ -127,4 +132,22 @@ export async function openShareModal(analytics, activityLog) {
   });
 
   return modal;
+}
+
+// openShareModal(analytics, activityLog) — analytics is computeAnalytics()'s
+// output, activityLog is the same effective (backfilled) log the Progress
+// page's own heatmap renders from. Generates the card once at open time;
+// Download/Copy/Share all reuse the same canvas rather than regenerating it.
+export async function openShareModal(analytics, activityLog) {
+  const canvas = await generateShareCard(analytics, activityLog);
+  return buildAndOpenShareModal(canvas, buildCaption(analytics), FILENAME, 'Share your progress');
+}
+
+// openBadgeShareModal(kind, label) — kind is 'roadmap' or 'phase', label is
+// the roadmap/phase title just completed (issue #181). Reuses the same
+// modal chrome as openShareModal with a distinct badge-card canvas and copy.
+export async function openBadgeShareModal(kind, label) {
+  const canvas = await generateBadgeCard(kind, label);
+  const title = kind === 'roadmap' ? 'Roadmap complete!' : 'Phase complete!';
+  return buildAndOpenShareModal(canvas, buildBadgeCaption(kind, label), BADGE_FILENAME, title);
 }

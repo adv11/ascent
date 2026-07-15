@@ -3033,6 +3033,48 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   .import-step-heading.entering { animation: none; }
 }
 
+/* Phase/roadmap completion confetti flourish (issue #181, confetti.js's
+   triggerConfetti()) — fixed full-viewport overlay, pointer-events: none so
+   it never blocks the underlying UI, self-removed by confetti.js after the
+   animation ends. Colors reuse existing tokens rather than introducing new
+   literals, so no /* intentional */ hex comment is needed here. */
+.confetti-burst {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 300;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  left: calc(var(--confetti-x, 50%));
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall 1.4s var(--ease-out) both;
+}
+.confetti-piece-0 { background: var(--brand); left: 8%; }
+.confetti-piece-1 { background: var(--accent); left: 24%; }
+.confetti-piece-2 { background: var(--accent-2); left: 40%; }
+.confetti-piece-3 { background: var(--accent-lime); left: 56%; }
+.confetti-piece-4 { background: var(--brand); left: 72%; }
+.confetti-piece-5 { background: var(--accent); left: 88%; }
+.confetti-piece-delay-0 { animation-delay: 0ms; }
+.confetti-piece-delay-1 { animation-delay: calc(var(--stagger-base) * 1); }
+.confetti-piece-delay-2 { animation-delay: calc(var(--stagger-base) * 2); }
+.confetti-piece-delay-3 { animation-delay: calc(var(--stagger-base) * 3); }
+.confetti-piece-delay-4 { animation-delay: calc(var(--stagger-base) * 4); }
+.confetti-piece-delay-5 { animation-delay: calc(var(--stagger-base) * 5); }
+.confetti-piece-delay-6 { animation-delay: calc(var(--stagger-base) * 6); }
+@keyframes confetti-fall {
+  from { opacity: 1; transform: translateY(0) rotate(0deg); }
+  to { opacity: 0; transform: translateY(100vh) rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece { animation: none; display: none; }
+}
+
 .check-box {
   width: 20px;
   height: 20px;

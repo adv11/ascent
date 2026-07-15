@@ -156,3 +156,51 @@ export async function generateShareCard(analytics, activityLog, now = Date.now()
 
   return canvas;
 }
+
+function drawBadgeGlyph(ctx) {
+  ctx.font = '700 96px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('🏆', CARD_WIDTH / 2, 220);
+  ctx.textAlign = 'left';
+}
+
+function drawBadgeHeadline(ctx, kind) {
+  const headline = kind === 'roadmap' ? 'Roadmap complete!' : 'Phase complete!';
+  ctx.font = '700 56px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.fillText(headline, CARD_WIDTH / 2, 340);
+  ctx.textAlign = 'left';
+}
+
+function drawBadgeLabel(ctx, label) {
+  ctx.font = '600 32px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, CARD_WIDTH / 2, 400);
+  ctx.textAlign = 'left';
+}
+
+// generateBadgeCard(kind, label, now?) -> Promise<HTMLCanvasElement>
+// `kind` is 'roadmap' or 'phase'; `label` is the roadmap title or phase
+// title being celebrated. A distinct "finish line" variant of
+// generateShareCard, reusing the same background/wordmark/attribution draw
+// path (issue #181) rather than a parallel canvas implementation.
+export async function generateBadgeCard(kind, label, now = Date.now()) {
+  await ensureFontLoaded();
+  const canvas = document.createElement('canvas');
+  canvas.width = CARD_WIDTH;
+  canvas.height = CARD_HEIGHT;
+  const ctx = canvas.getContext('2d');
+
+  drawBackground(ctx);
+  drawWordmark(ctx);
+  drawDate(ctx, now);
+  drawBadgeGlyph(ctx);
+  drawBadgeHeadline(ctx, kind);
+  drawBadgeLabel(ctx, label);
+  drawAttribution(ctx);
+
+  return canvas;
+}

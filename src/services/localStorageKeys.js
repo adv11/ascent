@@ -120,3 +120,14 @@ export function backupReminderDismissedAtKey(uid) {
 export function guestRiskNudgeShownKey(uid) {
   return `ascent-guest-risk-nudge-shown-${uid}`;
 }
+
+// Phase/roadmap completion celebration (issue #181) — a one-shot "have we
+// already celebrated this" flag, same per-uid keyed pattern as
+// guestRiskNudgeShownKey above. Value is
+// `{ [templateId]: { roadmap: true, phases: ["Phase title", ...] } }`.
+// Device-level only, not synced to Firebase: re-showing the celebration once
+// more on a different device for a roadmap finished elsewhere is harmless,
+// and this mirrors every other "already dismissed" flag in this file.
+export function celebrationShownKey(uid) {
+  return `ascent-celebration-shown-${uid}`;
+}
