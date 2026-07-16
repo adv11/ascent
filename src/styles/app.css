@@ -3666,6 +3666,7 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   padding: 3px 10px;
   font-size: var(--text-xs);
 }
+/* intentional: neutral gray hover wash reads correctly against either theme's --status-error-bg fill, same reasoning as .btn-spinner's own neutral track just below (issue #116) */
 .save-badge-retry:hover:not(:disabled) { background: rgba(127, 127, 127, 0.15); }
 /* intentional: neutral gray track works against any --panel value in either theme, same as .btn-spinner above (issue #116) */
 .save-badge .spin {
