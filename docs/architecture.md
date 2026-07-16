@@ -3927,3 +3927,19 @@ was caught and revised before merge, since GitHub Actions artifacts on a public 
 are downloadable by anyone with read access and the export contains every user's data.
 See §6a "Database backup & disaster recovery" for the full retention policy and
 decrypt-then-restore procedure.
+
+### 2026-07-16 — Graphify auto-update workflow
+
+Added `.github/workflows/graph-update.yml` so the committed knowledge graph
+(`graphify-out/`, issue #210) never goes stale between manual `graphify update .`
+runs — it fires on every push to `main`, re-extracts (AST-only, no LLM/API key, since
+this repo is code-only) and, if the graph changed, opens a PR with the updated
+`graph.json`/`graph.html`/`GRAPH_REPORT.md`/`manifest.json`/`wiki/` files rather than
+pushing straight to `main`. The direct-push design was the first draft and was
+rejected before merge: an unattended job with `contents: write` running an unpinned
+third-party package (`graphifyy` from PyPI) and pushing its own output straight to
+`main` with no review is a real supply-chain exposure, not a hypothetical one — if
+that package were ever compromised upstream, the workflow would be a standing,
+privileged execution path. Fixed by pinning `graphifyy==0.9.17` (bump deliberately,
+not via `--upgrade`) and using `peter-evans/create-pull-request` to route every graph
+update through a normal, reviewable PR instead.

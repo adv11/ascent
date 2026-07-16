@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Automated knowledge-graph updates after every merge to main.** New `.github/workflows/graph-update.yml` regenerates `graphify-out/` (the committed code-graph knowledge base from issue #210) via `graphify update .` on every push to `main`, and opens a PR with the diff for review rather than pushing directly — keeps the graph AI assistants query from going stale without needing anyone to remember to run it manually.
 - **Daily automated Realtime Database backup (issue #130).** A new scheduled GitHub Actions workflow (`.github/workflows/db-backup.yml`) exports the entire Firebase Realtime Database daily, encrypts it (AES-256, this repo is public so plaintext artifacts would leak every user's data), and uploads the ciphertext as a 30-day-retention build artifact, reusing the existing `FIREBASE_SERVICE_ACCOUNT` deploy secret plus a new dedicated `BACKUP_ENCRYPTION_KEY` secret. Previously the only backup path was issue #18's manual, user-initiated, per-user export — there was no operator-side recovery mechanism for an accidental rules deploy, a compromised service account, or a platform incident. See `docs/architecture.md` §6a for the retention policy and documented manual decrypt-then-restore procedure (`firebase database:set`).
 
 ### Security
