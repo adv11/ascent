@@ -3815,3 +3815,24 @@ two files sit at the root rather than under `/public/**`, they never match that
 directory's `immutable, max-age=31536000` caching rule and fall through to the
 generic `**` block's default (non-immutable) caching, which is exactly what a
 domain/sitemap-content-can-change file needs.
+
+### 2026-07-16 — Issue #210 — Graphify local knowledge graph for AI-assistant context
+
+Adopted [Graphify](https://github.com/Graphify-Labs/graphify) (`uv tool install graphifyy`)
+to build a queryable code graph of the repo — 1427 nodes / 3122 edges / 124 communities —
+so future AI sessions can run `graphify query "<question>"` against `graphify-out/graph.json`
+instead of re-reading files from scratch. `graphify-out/graph.html`, `GRAPH_REPORT.md`,
+`graph.json`, and `manifest.json` are committed; `cost.json`, the extraction `cache/` dir,
+and the machine-specific `.graphify_python`/`.graphify_root` interpreter/path files are
+gitignored (per Graphify's own recommendation plus this repo's own no-machine-specifics
+convention). `docs/screenshots/`, `.playwright-mcp/`, and root-level `*.png` are excluded
+via `.graphifyignore` — historical per-issue bug screenshots don't represent architecture
+and would have cost ~124 extra vision-extraction subagent dispatches for no graph value.
+`graphify install --project` also auto-registered `.claude/settings.json` `PreToolUse`
+hooks that nudge Claude Code toward `graphify query` instead of raw `grep`/`Read` on
+source files when a graph exists — verified against the installed package's own source
+(`graphify/cli.py`'s `_run_hook_guard`) to be a local-only, fail-open text nudge with no
+network calls or tool-blocking; that file is already gitignored (`.claude/settings.json`,
+"machine-specific, not a repo convention") so the hook doesn't propagate to other clones.
+Regenerate the graph with `graphify update .` after significant code changes, or re-run
+the full `/graphify .` pipeline for a from-scratch rebuild.

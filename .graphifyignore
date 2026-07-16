@@ -1,0 +1,6 @@
+docs/translations/
+firebase-debug.log
+.firebase/
+docs/screenshots/
+.playwright-mcp/
+*.png

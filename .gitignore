@@ -27,3 +27,11 @@ test-results/
 playwright-report/
 .lighthouseci/
 *.report.html
+
+# Graphify knowledge graph — regenerate with `graphify update .`; cost.json/cache are
+# local run bookkeeping, and .graphify_python/.graphify_root hold this machine's absolute
+# paths, none meant to be diffed/reviewed or shared across machines (issue #210)
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
