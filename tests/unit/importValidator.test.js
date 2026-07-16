@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseImportJson, validateImportPayload, validateImportText, SUPPORTED_SCHEMA_VERSION } from '../../src/core/roadmap/importValidator.js';
+import { MAX_TITLE_LENGTH } from '../../src/core/roadmap/limits.js';
 
 function validPayload() {
   return {
@@ -222,6 +223,70 @@ describe('validateImportPayload — item-level', () => {
 // way that's harmless to normalize rather than reject — issue #100
 // follow-up, found live: an otherwise-valid roadmap was rejected wholesale
 // over exactly this.
+// Issue #186 — the AI-import path had no upper bound on title fields at
+// all, unlike the manual-entry path's MAX_TITLE_LENGTH cap (roadmapStore.js's
+// addItem()/updateItem()). An absurdly long title (tens of thousands of
+// chars) used to pass validation cleanly and get persisted as-is.
+describe('validateImportPayload — title length cap (issue #186)', () => {
+  it('accepts an item title at exactly MAX_TITLE_LENGTH (boundary)', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['x'.repeat(MAX_TITLE_LENGTH)];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('flags a plain-string item title over MAX_TITLE_LENGTH with a structured error', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['x'.repeat(MAX_TITLE_LENGTH + 1)];
+    expect(validateImportPayload(data)).toContain(
+      `phases[0].sections[0].items[0].title exceeds ${MAX_TITLE_LENGTH} characters`
+    );
+  });
+
+  it('flags a tuple item title over MAX_TITLE_LENGTH', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [['x'.repeat(MAX_TITLE_LENGTH + 1), 'P0']];
+    expect(validateImportPayload(data)).toContain(
+      `phases[0].sections[0].items[0].title exceeds ${MAX_TITLE_LENGTH} characters`
+    );
+  });
+
+  it('flags an object item title over MAX_TITLE_LENGTH', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: 'x'.repeat(MAX_TITLE_LENGTH + 1), priority: 'P0' }];
+    expect(validateImportPayload(data)).toContain(
+      `phases[0].sections[0].items[0].title exceeds ${MAX_TITLE_LENGTH} characters`
+    );
+  });
+
+  it('flags a phase title over MAX_TITLE_LENGTH', () => {
+    const data = validPayload();
+    data.phases[0].title = 'x'.repeat(MAX_TITLE_LENGTH + 1);
+    expect(validateImportPayload(data)).toContain(
+      `phases[0].title exceeds ${MAX_TITLE_LENGTH} characters`
+    );
+  });
+
+  it('accepts a phase title at exactly MAX_TITLE_LENGTH (boundary)', () => {
+    const data = validPayload();
+    data.phases[0].title = 'x'.repeat(MAX_TITLE_LENGTH);
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('flags a section title over MAX_TITLE_LENGTH', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].title = 'x'.repeat(MAX_TITLE_LENGTH + 1);
+    expect(validateImportPayload(data)).toContain(
+      `phases[0].sections[0].title exceeds ${MAX_TITLE_LENGTH} characters`
+    );
+  });
+
+  it('accepts a section title at exactly MAX_TITLE_LENGTH (boundary)', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].title = 'x'.repeat(MAX_TITLE_LENGTH);
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+});
+
 describe('validateImportPayload — priority normalization (issue #100 follow-up)', () => {
   it('accepts a lowercase priority on a phase', () => {
     const data = validPayload();
