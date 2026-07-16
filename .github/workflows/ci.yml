@@ -203,6 +203,24 @@ jobs:
           fi
           echo "✅ Architecture doc check passed (new_modules=$NEW_MODULES, arch_changed=$ARCH_CHANGED)"
 
+      - name: Check sw.js CACHE_VERSION bumped when src/ changed
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          SRC_CHANGED=$(git diff --name-only "$BASE" "$HEAD" | grep -E '^src/' | wc -l)
+          SW_VERSION_CHANGED=$(git diff "$BASE" "$HEAD" -- sw.js | grep -c '^[+-]const CACHE_VERSION' || true)
+
+          if [ "$SRC_CHANGED" -gt 0 ] && [ "$SW_VERSION_CHANGED" -eq 0 ]; then
+            echo "❌ src/ files changed but sw.js's CACHE_VERSION wasn't bumped in this PR."
+            echo "   /src/** and *.css are served with a short but real Cache-Control max-age"
+            echo "   (see firebase.json, issue #185), and the service worker itself still"
+            echo "   caches those same paths cache-first — bump CACHE_VERSION in sw.js so"
+            echo "   returning visitors with a warm cache actually pick up this change."
+            exit 1
+          fi
+          echo "✅ CACHE_VERSION check passed (src_changed=$SRC_CHANGED, sw_version_changed=$SW_VERSION_CHANGED)"
+
       - name: Check root CLAUDE.md stays under the line-count budget
         run: |
           LINES=$(wc -l < CLAUDE.md | tr -d ' ')

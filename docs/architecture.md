@@ -240,7 +240,7 @@ Realtime Database security rules. Each user's roadmap is scoped to `users/{uid}`
 | `security` | gitleaks + git ls-files | No committed secrets; `firebase.config.js` not tracked |
 | `test-unit` | Vitest + jsdom | Unit and integration tests in `tests/unit/` and `tests/integration/` |
 | `test-e2e` | Playwright (Chromium) | End-to-end flows via Firebase Emulator |
-| `pr-checklist` | github-script | PR body filled (≥ 50 chars, references an issue); CHANGELOG.md updated when `src/` changes; `docs/architecture.md` Build Log updated when new module added |
+| `pr-checklist` | github-script | PR body filled (≥ 50 chars, references an issue); CHANGELOG.md updated when `src/` changes; `docs/architecture.md` Build Log updated when new module added; `sw.js`'s `CACHE_VERSION` bumped when `src/` changes (issue #185) |
 | `issues-label-check` | github-script | All three label categories (type/priority/domain) present on new/edited issues |
 
 **Branch protection on `main` (active):** ESLint, Secret scan, Vitest, and PR description
@@ -924,7 +924,7 @@ migration path if bandwidth grows.
 **`firebase.json`** extended from emulator-only to a full hosting config:
 - `ignore` list keeps dev/doc files (CLAUDE.md, tests/, docs/, package.json, etc.) off the CDN
 - `rewrites` rule `"source": "**" → "/index.html"` enables SPA hash-router on direct URL access
-- `Cache-Control` per route: `no-cache` for `index.html` (always-fresh entry point), `max-age=31536000, immutable` for `/src/**` and `*.css` (cache-busted by the fresh HTML reference)
+- `Cache-Control` per route: `no-cache` for `index.html` (always-fresh entry point), `max-age=86400, must-revalidate` for `/src/**` and `*.css` (see issue #185 Build Log entry below for why this was shortened from a 1-year `immutable` value)
 - Security headers on `**`: HSTS, X-Frame-Options: DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy (supersedes the security-headers-only version from PR #46 / issue #25)
 - `database.rules` wired so `firebase deploy` also updates Realtime DB Security Rules
 
@@ -3973,3 +3973,34 @@ longer silently drift from the repo with no CI signal. See
 `.claude/rules/roadmap-store.md` for the full technical writeup and
 `tests/integration/roadmapStore.test.js` for the regression tests (verified to fail
 against the pre-fix code).
+
+### 2026-07-17 — PR #TBD — CI enforcement of sw.js CACHE_VERSION + shorter static-asset cache lifetime (issue #185)
+
+This app has no build step and no content-hashed filenames (a deliberate, repeatedly-
+revisited decision — see issue #137's own "Out of scope" section), so `firebase.json`'s
+static-asset `Cache-Control` headers were the only lever available, and `sw.js`'s
+`CACHE_VERSION` constant (bumped manually by whoever writes a PR) was the only thing
+invalidating the service worker's own `cacheFirst` runtime cache of those same paths.
+Nothing enforced that bump: a PR could change `src/**` without touching `sw.js`, pass
+CI, and merge — a returning visitor's browser HTTP cache and service-worker cache would
+then both keep serving the old JS/CSS for up to the full `max-age`, paired against a
+freshly-deployed `index.html` (always `no-cache`), producing a silent HTML/JS
+module-graph mismatch. Fixed with the combination the issue itself flagged as
+preferred, rather than picking just one:
+- **`.github/workflows/ci.yml`'s `pr-checklist` job** gained a new step, following the
+  exact pattern of its existing `CHANGELOG.md`/`docs/architecture.md` diff checks: fails
+  a PR that touches `src/**` if `sw.js` has no diff on its `const CACHE_VERSION` line.
+  Real enforcement, and it keeps the perf win from #137's caching work intact — no
+  reliance on the PR author remembering to test after the bump.
+- **`firebase.json`'s `/src/**` and `**/*.css` headers** changed from
+  `public, max-age=31536000, immutable` to `public, max-age=86400, must-revalidate` —
+  a same-day safety net. Even if the `CACHE_VERSION` check were ever bypassed or a
+  non-PR path pushed a change, a browser's plain HTTP cache (independent of the service
+  worker) now only serves stale static assets for at most a day, not a year. `/public/**`
+  (fonts/icons/manifest — genuinely immutable, versionless static binaries this repo
+  doesn't rename) keeps its original 1-year `immutable` value; this is scoped to the
+  actually-changing `/src/**` and CSS paths.
+
+No change to `sw.js`'s own bump convention or `cacheStrategies.js` — this closes the
+enforcement gap around the convention that already existed (issue #19), it doesn't
+replace it.
