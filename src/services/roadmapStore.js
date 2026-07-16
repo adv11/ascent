@@ -536,6 +536,30 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   let stateCallId = 0;
   const subscribers = new Set();
 
+  // Issue #153 — serializes the "compute the latest startedTemplateIds/
+  // customRoadmaps/favoriteRoadmapIds snapshot, then saveMeta it" critical
+  // section across overlapping switchRoadmap()/createCustomRoadmap()/
+  // deleteCustomRoadmap() calls. Without this, two calls racing in back-to-
+  // back (e.g. importing two custom roadmaps within a few seconds) could each
+  // read `startedTemplateIds` before either had reassigned it, so whichever
+  // call's whole-array saveMeta() write happened to land on Firebase last
+  // would silently erase the other's id — Realtime Database's `update()` has
+  // no array-diffing, it fully replaces the field. Chaining every meta
+  // mutation behind this single in-module promise guarantees each one
+  // computes its snapshot only after every previously *queued* mutation has
+  // both applied its in-memory change and had its own saveMeta() settle —
+  // so a later write can never be a stale subset of an earlier one, and the
+  // two can never race each other for last-write-wins. This only serializes
+  // the array-field computation+write itself; the other legs of a
+  // switchRoadmap() call (the outgoing flush, the incoming template's read)
+  // are unaffected and still run concurrently (issue #121 item 6).
+  let metaMutationQueue = Promise.resolve();
+  function serializeMetaMutation(run) {
+    const settled = metaMutationQueue.then(run, run);
+    metaMutationQueue = settled.then(() => {}, () => {});
+    return settled;
+  }
+
   function notify(meta = {}) {
     subscribers.forEach(callback => callback(getSnapshot(meta)));
   }
@@ -655,21 +679,82 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       return;
     }
     const templateId = activeTemplateId;
-    const flushedStr = stableStringify({ items, phases: templatePhases });
+    // Captured by reference here, synchronously, before the only await below
+    // — issue #153 root cause #3. A switchRoadmap() to a *different* template
+    // can reassign the shared `items`/`templatePhases`/`activeTemplateId`/
+    // `dirty` variables while this flush's own adapter.saveRoadmap() await is
+    // still in flight; reading those shared variables again afterward (as
+    // this used to) could stamp a different template's live data into this
+    // template's roadmapCache slot, mislabeled dirty:false. Using these local
+    // captures for every post-await read makes that impossible — the actual
+    // network write already used them too, so this changes no on-the-wire
+    // behavior, only what the post-await bookkeeping reads.
+    const flushedItems = items;
+    const flushedPhases = templatePhases;
+    const flushedStr = stableStringify({ items: flushedItems, phases: flushedPhases });
     const payload = {
       version: ROADMAP_VERSION,
       updatedAt: adapter.now(),
       templateId,
-      items,
-      phases: templatePhases
+      items: flushedItems,
+      phases: flushedPhases
     };
     await adapter.saveRoadmap(uid, templateId, payload);
     recentFlushedStrs.push(flushedStr);
     if (recentFlushedStrs.length > MAX_RECENT_FLUSHES) recentFlushedStrs.shift();
-    dirty = false;
-    persistLocal();
-    roadmapCache[templateId] = { items, phases: templatePhases, dirty: false };
+    // Only touch the live in-memory state if we're still flushing the
+    // currently-active template — if a switch happened mid-flight, the live
+    // `items`/`dirty` now belong to a different template and must be left
+    // alone; the cache slot below still gets stamped for the template this
+    // flush actually wrote, using the captured (not live) content.
+    if (activeTemplateId === templateId) {
+      dirty = false;
+      persistLocal();
+    }
+    roadmapCache[templateId] = { items: flushedItems, phases: flushedPhases, dirty: false };
     notify({ saveState: 'saved' });
+  }
+
+  // Issue #153 root cause #2 — a failed flush used to be a dead end: nothing
+  // ever re-queued a save after the debounced flush().catch() fired, even
+  // though dashboard.js's save badge claimed "retrying…". These two module
+  // vars back real exponential-backoff retry so that claim is actually true.
+  let saveRetryTimer = null;
+  let saveRetryAttempt = 0;
+  const SAVE_RETRY_BASE_MS = 2000;
+  const SAVE_RETRY_MAX_MS = 30000;
+
+  function clearSaveRetry() {
+    clearTimeout(saveRetryTimer);
+    saveRetryTimer = null;
+    saveRetryAttempt = 0;
+  }
+
+  function attemptFlushWithRetry() {
+    flush().then(() => {
+      clearSaveRetry();
+    }).catch(error => {
+      console.error('Roadmap save failed', error);
+      scheduleSaveRetry(error);
+    });
+  }
+
+  function scheduleSaveRetry(error) {
+    clearTimeout(saveRetryTimer);
+    saveRetryAttempt += 1;
+    const delayMs = Math.min(SAVE_RETRY_BASE_MS * 2 ** (saveRetryAttempt - 1), SAVE_RETRY_MAX_MS);
+    notify({ saveState: 'error', error, retryAttempt: saveRetryAttempt, retryInMs: delayMs });
+    saveRetryTimer = setTimeout(attemptFlushWithRetry, delayMs);
+  }
+
+  // Exposed so a UI (dashboard.js's "Retry now" action) can force an
+  // immediate retry instead of waiting out the current backoff delay.
+  function retrySaveNow() {
+    if (!dirty) return;
+    clearTimeout(saveRetryTimer);
+    saveRetryTimer = null;
+    notify({ saveState: 'saving' });
+    attemptFlushWithRetry();
   }
 
   function queueSave() {
@@ -677,12 +762,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     persistLocal();
     notify({ saveState: 'saving' });
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      flush().catch(error => {
-        console.error('Roadmap save failed', error);
-        notify({ saveState: 'error', error });
-      });
-    }, 500);
+    clearSaveRetry();
+    saveTimer = setTimeout(attemptFlushWithRetry, 500);
   }
 
   // A custom roadmap (issue #4) has no template module to load — it starts
@@ -969,10 +1050,13 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     const callId = ++stateCallId;
     const isStale = () => callId !== stateCallId;
 
+    // Best-effort snapshot for picking a fetch strategy (seed vs. load) below
+    // — if this races another call that's also about to start
+    // requestedTemplateId for the first time, both correctly take the
+    // fresh-seed branch; the actual `startedTemplateIds` array persisted to
+    // Firebase is computed fresh, inside the serialized closure below, never
+    // from this snapshot (issue #153).
     const alreadyStarted = startedTemplateIds.includes(requestedTemplateId);
-    const nextStartedTemplateIds = alreadyStarted
-      ? startedTemplateIds
-      : [...startedTemplateIds, requestedTemplateId];
 
     // Not awaited here — issue #121 item 6 (continued below): fetchTemplateData()
     // is a dynamic import() for a built-in template, and used to be awaited in
@@ -999,7 +1083,24 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       ? resolveRoadmapItems(requestedTemplateId, templateDataPromise)
       : templateDataPromise.then(({ baseItems, phases }) => ({ items: baseItems, phases, dirty: true }));
 
-    const metaSave = saveSwitchMeta(requestedTemplateId, nextStartedTemplateIds, extraMeta);
+    // Issue #153 root cause #1 — computing the array to persist and actually
+    // persisting it must happen inside serializeMetaMutation's queue, not
+    // from the `alreadyStarted`/`nextStartedTemplateIds` snapshot taken
+    // above: two overlapping switchRoadmap()/createCustomRoadmap() calls used
+    // to each read the shared `startedTemplateIds` before either had
+    // reassigned it, so whichever call's saveMeta() write landed last would
+    // silently erase the other's id via Realtime Database's whole-array
+    // `update()` replace. Reassigning `startedTemplateIds` synchronously
+    // *inside* the queued closure, before its own await, means a
+    // concurrently-queued mutation always computes from this call's
+    // already-applied result.
+    const metaSave = serializeMetaMutation(() => {
+      const nextStartedTemplateIds = startedTemplateIds.includes(requestedTemplateId)
+        ? startedTemplateIds
+        : [...startedTemplateIds, requestedTemplateId];
+      startedTemplateIds = nextStartedTemplateIds;
+      return saveSwitchMeta(requestedTemplateId, nextStartedTemplateIds, extraMeta);
+    });
 
     const [, resolved] = await Promise.all([outgoingFlush, resolvedPromise, metaSave]);
     if (isStale()) return;
@@ -1008,7 +1109,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     unsubscribeRoadmap = null;
     if (activeTemplateId) roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
 
-    startedTemplateIds = nextStartedTemplateIds;
     activeTemplateId = requestedTemplateId;
     templatePhases = resolved.phases;
     items = resolved.items;
@@ -1142,24 +1242,32 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     if (idToDelete === activeTemplateId) {
       await switchRoadmap('java-backend');
     }
-    customRoadmaps = customRoadmaps.filter(r => r.id !== idToDelete);
-    startedTemplateIds = startedTemplateIds.filter(id => id !== idToDelete);
-    favoriteRoadmapIds = favoriteRoadmapIds.filter(id => id !== idToDelete);
     delete roadmapCache[idToDelete];
-    persistLocalCustomRoadmaps();
-    persistLocalFavoriteRoadmaps();
     const localAll = readLocalRoadmaps();
     delete localAll[idToDelete];
     localStorage.setItem(KEYS.ROADMAPS, JSON.stringify(localAll));
-    notify();
-    if (uid) {
-      try {
-        await adapter.saveMeta(uid, { customRoadmaps, startedTemplateIds, favoriteRoadmapIds });
-        await adapter.deleteRoadmap(uid, idToDelete);
-      } catch (error) {
-        console.error('Failed to delete custom roadmap', error);
-      }
-    }
+
+    // Issue #153 — same lost-update race as switchRoadmap()'s
+    // startedTemplateIds, and the same fix: the filter + the saveMeta() write
+    // both happen inside serializeMetaMutation's queue, computed from
+    // whatever the shared arrays are at the moment this closure actually
+    // runs (i.e. after every previously queued create/switch/delete has
+    // both applied and settled), never from a snapshot taken before an
+    // overlapping call could have changed them.
+    await serializeMetaMutation(() => {
+      customRoadmaps = customRoadmaps.filter(r => r.id !== idToDelete);
+      startedTemplateIds = startedTemplateIds.filter(id => id !== idToDelete);
+      favoriteRoadmapIds = favoriteRoadmapIds.filter(id => id !== idToDelete);
+      persistLocalCustomRoadmaps();
+      persistLocalFavoriteRoadmaps();
+      notify();
+      if (!uid) return Promise.resolve();
+      return adapter.saveMeta(uid, { customRoadmaps, startedTemplateIds, favoriteRoadmapIds })
+        .then(() => adapter.deleteRoadmap(uid, idToDelete))
+        .catch(error => {
+          console.error('Failed to delete custom roadmap', error);
+        });
+    });
   }
 
   function findPhase(phaseId) {
@@ -1575,6 +1683,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     removeResource,
     importBackupItems,
     flush,
+    retrySaveNow,
     getUiState() {
       try {
         return JSON.parse(localStorage.getItem(UI_KEY) || '{}');

@@ -40,6 +40,11 @@ async function setup({
   document.body.appendChild(app);
   const store = {
     getSnapshot: vi.fn(() => ({ onboardingDone, hiddenTemplateIds, activeTemplateId, startedTemplateIds, customRoadmaps, favoriteRoadmapIds })),
+    // Issue #153 root cause #4 — renderOnboarding() now subscribes to live
+    // store updates; a no-op unsubscribe is enough for tests that don't
+    // exercise a background snapshot change (see the dedicated "live store
+    // updates" describe block below for the one that does).
+    subscribe: vi.fn(() => () => {}),
     switchRoadmap,
     hideTemplate,
     unhideTemplate,
@@ -565,5 +570,53 @@ describe('onboarding page — "build your own roadmap" guide (issue #100)', () =
     const gotItBtn = [...document.querySelectorAll('.build-guide-card button')].find(b => b.textContent === 'Got it');
     gotItBtn.click();
     expect(document.querySelector('.build-guide-card')).toBeNull();
+  });
+});
+
+// Issue #153 root cause #4 — every other data-driven page (dashboard.js,
+// progress.js) subscribes to store updates; onboarding.js used to read
+// store.getSnapshot() exactly once and never re-render, so a custom roadmap
+// created by a still-in-flight background call (or any other snapshot
+// change settling after the initial paint) never showed up until the user
+// force-navigated away and back.
+describe('onboarding page — live store updates (issue #153 root cause #4)', () => {
+  it('a background snapshot change (e.g. a slow createCustomRoadmap() settling after mount) re-renders the card grid', async () => {
+    const { renderOnboarding } = await import('../../src/ui/pages/onboarding.js');
+    const app = document.createElement('div');
+    document.body.appendChild(app);
+
+    let notify;
+    const store = {
+      getSnapshot: vi.fn(() => ({
+        onboardingDone: true,
+        hiddenTemplateIds: [],
+        activeTemplateId: 'java-backend',
+        startedTemplateIds: ['java-backend'],
+        customRoadmaps: [],
+        favoriteRoadmapIds: []
+      })),
+      subscribe: vi.fn(callback => { notify = callback; return () => {}; }),
+      switchRoadmap: vi.fn().mockResolvedValue(undefined),
+      hideTemplate: vi.fn().mockResolvedValue(undefined),
+      unhideTemplate: vi.fn().mockResolvedValue(undefined),
+      createCustomRoadmap: vi.fn().mockResolvedValue('croadmap-late'),
+      deleteCustomRoadmap: vi.fn().mockResolvedValue(undefined),
+      toggleFavoriteRoadmap: vi.fn().mockResolvedValue({ ok: true, capped: false })
+    };
+    const user = { uid: 'uid-1', isAnonymous: false };
+    renderOnboarding(app, { user, store });
+
+    expect([...app.querySelectorAll('.template-card-name')].some(el => el.textContent === 'Late Roadmap')).toBe(false);
+
+    notify({
+      onboardingDone: true,
+      hiddenTemplateIds: [],
+      activeTemplateId: 'java-backend',
+      startedTemplateIds: ['java-backend', 'croadmap-late'],
+      customRoadmaps: [{ id: 'croadmap-late', title: 'Late Roadmap', description: '', createdAt: 1 }],
+      favoriteRoadmapIds: []
+    });
+
+    expect([...app.querySelectorAll('.template-card-name')].some(el => el.textContent === 'Late Roadmap')).toBe(true);
   });
 });

@@ -58,9 +58,9 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // Lets the picker mark the active template (see buildCard) and treat re-picking
   // it as a harmless "go back" instead of re-navigating through switchRoadmap.
   const activeTemplateId = snapshot.activeTemplateId;
-  const startedTemplateIds = [...snapshot.startedTemplateIds];
+  let startedTemplateIds = [...snapshot.startedTemplateIds];
   let hiddenTemplateIds = [...snapshot.hiddenTemplateIds];
-  const customRoadmaps = [...snapshot.customRoadmaps];
+  let customRoadmaps = [...snapshot.customRoadmaps];
   let favoriteRoadmapIds = [...snapshot.favoriteRoadmapIds];
 
   let picking = false;
@@ -574,9 +574,39 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   app.replaceChildren(node);
   cardEls[0]?.focus();
 
+  // Issue #153 root cause #4 — every other data-driven page (dashboard.js,
+  // progress.js) subscribes to live store updates; this page used to read
+  // store.getSnapshot() exactly once and build static DOM from it, so a
+  // background change that settles after the initial render (a slow
+  // createCustomRoadmap()/switchRoadmap() call finishing after the page
+  // already painted, or a meta re-fetch) never showed up until the user
+  // force-navigated away and back. Only re-renders the card grid — not the
+  // whole page — and skips entirely while a pick/create/delete is in flight
+  // (`picking`) so a live update never yanks a card out from under an
+  // in-progress click.
+  const unsubStore = store.subscribe(nextSnapshot => {
+    if (picking) return;
+    const nextStarted = [...nextSnapshot.startedTemplateIds];
+    const nextHidden = [...nextSnapshot.hiddenTemplateIds];
+    const nextCustom = [...nextSnapshot.customRoadmaps];
+    const nextFavorite = [...nextSnapshot.favoriteRoadmapIds];
+    const changed = JSON.stringify(nextStarted) !== JSON.stringify(startedTemplateIds)
+      || JSON.stringify(nextHidden) !== JSON.stringify(hiddenTemplateIds)
+      || JSON.stringify(nextCustom) !== JSON.stringify(customRoadmaps)
+      || JSON.stringify(nextFavorite) !== JSON.stringify(favoriteRoadmapIds);
+    if (!changed) return;
+    startedTemplateIds = nextStarted;
+    hiddenTemplateIds = nextHidden;
+    customRoadmaps = nextCustom;
+    favoriteRoadmapIds = nextFavorite;
+    renderVisibleGrid();
+    renderHiddenToggle();
+  });
+
   return () => {
     themeToggleBtn._cleanup?.();
     dailyTodoPanel?._cleanup?.();
     accountDropdown._cleanup?.();
+    unsubStore();
   };
 }

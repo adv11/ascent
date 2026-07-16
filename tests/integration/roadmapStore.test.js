@@ -2242,3 +2242,231 @@ describe('tags — item field store contract (issue #182)', () => {
     expect(ok).toBe(false);
   });
 });
+
+// Issue #153 root cause #1 — two switchRoadmap()/createCustomRoadmap()/
+// deleteCustomRoadmap() calls racing in back-to-back (the reported repro:
+// importing two custom roadmaps within a few seconds) used to each compute
+// `nextStartedTemplateIds` from the shared `startedTemplateIds` before
+// either call had reassigned it — whichever call's saveMeta() write landed
+// on Firebase last would silently erase the other's id via Realtime
+// Database's whole-array `update()` replace. serializeMetaMutation() fixes
+// this by chaining every meta-array mutation behind a single in-module
+// queue; these tests fail against the pre-fix code (verified locally by
+// reverting the serializeMetaMutation change and confirming saveMeta's
+// second call reports only its own id) and pass against the fix.
+// dbApi is a single module-level mock shared by every test in this file —
+// filtering its .mock.calls by the uid under test (rather than asserting a
+// raw, file-wide toHaveBeenCalledTimes()) keeps these assertions accurate
+// regardless of call volume from any other store instance in this suite.
+function callsForUid(mockFn, uid) {
+  return mockFn.mock.calls.filter(args => args[0] === uid);
+}
+
+describe('lost-update race on startedTemplateIds/customRoadmaps — issue #153', () => {
+  it('two overlapping createCustomRoadmap() calls both end up in startedTemplateIds and customRoadmaps, even when the first call\'s saveMeta() write is the slow one', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'race-user' });
+
+    let resolveFirstSaveMeta;
+    let sawFirstCall = false;
+    const saveMetaCalls = [];
+    dbApi.saveMeta.mockImplementation((_uid, patch) => {
+      saveMetaCalls.push(patch);
+      if (!sawFirstCall) {
+        sawFirstCall = true;
+        return new Promise(resolve => { resolveFirstSaveMeta = resolve; });
+      }
+      return Promise.resolve();
+    });
+
+    const createA = store.createCustomRoadmap({ title: 'Roadmap A' });
+    const createB = store.createCustomRoadmap({ title: 'Roadmap B' });
+
+    // Give both calls' synchronous prefixes a chance to run and enqueue
+    // their meta mutation before we let the first (slow) write settle —
+    // this is exactly the "import two roadmaps back-to-back" repro shape.
+    await Promise.resolve();
+    await Promise.resolve();
+    // Only one saveMeta call should have fired so far — the second call's
+    // mutation is queued behind the first and must not have started yet.
+    expect(saveMetaCalls.length).toBe(1);
+    resolveFirstSaveMeta();
+
+    const [idA, idB] = await Promise.all([createA, createB]);
+
+    expect(store.getSnapshot().startedTemplateIds).toEqual(expect.arrayContaining([idA, idB]));
+    expect(store.getSnapshot().customRoadmaps.map(r => r.id)).toEqual(expect.arrayContaining([idA, idB]));
+    // The second (later-queued) saveMeta call is the one that actually
+    // lands last, and it must carry both ids — never a stale subset.
+    const lastCall = saveMetaCalls[saveMetaCalls.length - 1];
+    expect(lastCall.startedTemplateIds).toEqual(expect.arrayContaining([idA, idB]));
+  });
+
+  it('a deleteCustomRoadmap() overlapping a createCustomRoadmap() never loses the created roadmap\'s id', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'race-delete-user' });
+    const existingId = await store.createCustomRoadmap({ title: 'Existing' });
+    await store.switchRoadmap('java-backend'); // make it inactive so delete doesn't also switch
+
+    let resolveFirstSaveMeta;
+    let sawFirstCall = false;
+    dbApi.saveMeta.mockImplementation(() => {
+      if (!sawFirstCall) {
+        sawFirstCall = true;
+        return new Promise(resolve => { resolveFirstSaveMeta = resolve; });
+      }
+      return Promise.resolve();
+    });
+
+    const deleteExisting = store.deleteCustomRoadmap(existingId);
+    const createNew = store.createCustomRoadmap({ title: 'New one' });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    resolveFirstSaveMeta();
+
+    const newId = await createNew;
+    await deleteExisting;
+
+    expect(store.getSnapshot().customRoadmaps.map(r => r.id)).toEqual([newId]);
+    expect(store.getSnapshot().startedTemplateIds).toContain(newId);
+    expect(store.getSnapshot().startedTemplateIds).not.toContain(existingId);
+  });
+});
+
+// Issue #153 root cause #3 — flush() used to read the shared
+// items/templatePhases/activeTemplateId/dirty variables again *after* its
+// own await adapter.saveRoadmap() — if a switchRoadmap() to a different
+// template resolved while an earlier, slower flush() was still in flight,
+// this stamped the NEW template's live data into the OLD template's
+// roadmapCache slot, mislabeled dirty:false.
+describe('flush() post-await state capture — issue #153 root cause #3', () => {
+  it('a switchRoadmap() that completes while an earlier flush() is still in-flight never corrupts the outgoing template\'s roadmapCache entry', async () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'flush-capture-user' }); // java-backend
+
+    const javaFirstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    let resolveSlowSave;
+    dbApi.saveRoadmap.mockImplementation(() => new Promise(resolve => { resolveSlowSave = resolve; }));
+
+    store.updateItem(javaFirstId, { done: true }); // dirty=true; schedules a debounced timer we never advance
+    const slowFlush = store.flush(); // starts the slow write for java-backend, capturing done:true
+
+    // Switch to a different template while the flush above is still awaiting
+    // adapter.saveRoadmap() — this reassigns the shared items/templatePhases/
+    // activeTemplateId/dirty before the flush's own await resolves.
+    dbApi.saveRoadmap.mockImplementation(() => Promise.resolve());
+    await store.switchRoadmap('piano');
+    const pianoItems = { ...store.getSnapshot().allItems };
+
+    resolveSlowSave();
+    await slowFlush;
+
+    // The write itself must have carried java-backend's own edit, not piano's data.
+    const javaWrites = callsForUid(dbApi.saveRoadmap, 'flush-capture-user').filter(args => args[1] === 'java-backend');
+    expect(javaWrites.length).toBeGreaterThan(0);
+    expect(javaWrites[0][2]).toEqual(expect.objectContaining({
+      items: expect.objectContaining({ [javaFirstId]: expect.objectContaining({ done: true }) })
+    }));
+
+    // Switching back to java-backend must load the real edit, not piano's data.
+    await store.switchRoadmap('java-backend');
+    expect(store.getSnapshot().allItems[javaFirstId].done).toBe(true);
+    expect(store.getSnapshot().allItems).not.toEqual(pianoItems);
+
+    // And piano's own state was never touched by the stale flush either.
+    await store.switchRoadmap('piano');
+    expect(store.getSnapshot().allItems).toEqual(pianoItems);
+    // updateItem() above queued a debounced save timer that was never
+    // advanced (deliberately, so it wouldn't interfere with the manual
+    // flush() call this test drives directly) — clear it explicitly rather
+    // than leaving it pending, or a later test's own advanceTimersByTimeAsync
+    // could inadvertently fire this store's leftover callback too.
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+});
+
+// Issue #153 root cause #2 — a failed flush() used to be a dead end: nothing
+// ever re-queued a save, even though dashboard.js's badge claimed "Save
+// failed — retrying…". scheduleSaveRetry() (roadmapStore.js) now backs that
+// claim with real exponential-backoff retries.
+describe('automatic save retry with backoff — issue #153 root cause #2', () => {
+  it('a failed debounced save is automatically retried, and eventually succeeds once the failure clears', async () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'retry-user' });
+
+    let lastSnapshot = null;
+    store.subscribe(snapshot => { lastSnapshot = snapshot; });
+
+    // Scoped to this test's own uid (not a shared .mockRejectedValueOnce()
+    // FIFO queue on the module-level dbApi mock) so an unrelated store
+    // instance elsewhere in this suite calling the same mock can never
+    // consume the "fail once" behavior meant for this call.
+    let failedOnce = false;
+    dbApi.saveRoadmap.mockImplementation(uid => {
+      if (uid !== 'retry-user') return Promise.resolve();
+      if (!failedOnce) {
+        failedOnce = true;
+        return Promise.reject(new Error('network error'));
+      }
+      return Promise.resolve();
+    });
+
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    store.updateItem(firstId, { done: true });
+
+    await vi.advanceTimersByTimeAsync(500); // debounce fires, first attempt fails
+    expect(lastSnapshot.saveState).toBe('error');
+    expect(lastSnapshot.retryAttempt).toBe(1);
+    expect(callsForUid(dbApi.saveRoadmap, 'retry-user').length).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(2000); // first retry backoff (2s)
+    expect(callsForUid(dbApi.saveRoadmap, 'retry-user').length).toBe(2);
+    expect(lastSnapshot.saveState).toBe('saved');
+
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('retrySaveNow() forces an immediate retry instead of waiting out the backoff delay', async () => {
+    vi.useFakeTimers();
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'retry-now-user' });
+
+    let lastSnapshot = null;
+    store.subscribe(snapshot => { lastSnapshot = snapshot; });
+
+    let failedOnce = false;
+    dbApi.saveRoadmap.mockImplementation(uid => {
+      if (uid !== 'retry-now-user') return Promise.resolve();
+      if (!failedOnce) {
+        failedOnce = true;
+        return Promise.reject(new Error('network error'));
+      }
+      return Promise.resolve();
+    });
+
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    store.updateItem(firstId, { done: true });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(lastSnapshot.saveState).toBe('error');
+
+    // Still under fake timers here, deliberately — retrySaveNow() itself
+    // clearTimeout()s the pending backoff timer synchronously, so calling it
+    // while that timer still belongs to the active fake clock actually
+    // cancels it. Switching to real timers first would leave that fake
+    // timer dangling (clearTimeout on a since-uninstalled fake id is a
+    // no-op), which a later test's own advanceTimersByTimeAsync could then
+    // inadvertently fire.
+    await store.retrySaveNow();
+    vi.clearAllTimers();
+    vi.useRealTimers();
+
+    expect(callsForUid(dbApi.saveRoadmap, 'retry-now-user').length).toBe(2);
+    expect(lastSnapshot.saveState).toBe('saved');
+  });
+});

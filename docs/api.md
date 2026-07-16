@@ -40,6 +40,7 @@ Returns a store instance with the following methods.
 | `addResource` / `updateResource` / `removeResource` | `(id, ...) => void` | Mutate an item's `resources` array via `updateItem`. |
 | `importBackupItems` | `(backupItems: Record<string, object>) => { added: number, updated: number, skipped: number }` | Issue #18 — restores a validated JSON backup's `items` map (see "Backup export/import" below) into the active roadmap. Preserves each item's own id (merges onto a matching existing id instead of duplicating — including un-deleting a soft-deleted match); a genuinely new id is subject to the same 800-item cap `addItem` enforces. Re-validates title/resource caps itself (a backup file is untrusted input). Bumps `structuralVersion` once and calls `queueSave()` once if anything was added/updated; a call where everything was skipped is a total no-op. Never mutates `items` directly from outside the store — the one entry point UI import call sites use. |
 | `flush` | `async () => void` | Immediately persists `items` and `phases` to `localStorage` and (if signed in) Firebase, bypassing the debounce. |
+| `retrySaveNow` | `() => void` | Issue #153 — no-op if `dirty` is false. Cancels any pending exponential-backoff retry timer and immediately re-attempts `flush()`, instead of waiting out the current delay. Backs the dashboard save badge's "Retry now" button. |
 | `getUiState` / `setUiState` | `() => object` / `(state) => void` | Per-device UI prefs (open phases, filter, search) — never synced to Firebase. |
 
 ### Item shape
@@ -88,6 +89,10 @@ patch function — see `.claude/rules/roadmap-store.md`'s "Lightweight time trac
   allItems: Record<string, Item>,
   dirty: boolean,
   saveState: 'idle' | 'saving' | 'saved' | 'local' | 'synced' | 'error',
+  retryAttempt?: number,  // issue #153 — only present alongside saveState: 'error'; which
+                           // exponential-backoff attempt is currently scheduled (1, 2, 3…)
+  retryInMs?: number,     // issue #153 — only present alongside saveState: 'error'; ms until
+                           // the next automatic retry fires (also settable early via retrySaveNow())
   structuralVersion: number,
   activeTemplateId: string | null,   // null only while onboardingDone === false
   startedTemplateIds: string[],      // issue #58 — every templateId this account has started

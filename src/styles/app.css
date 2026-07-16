@@ -3654,7 +3654,20 @@ a.brand:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; bo
   gap: 8px;
 }
 .save-badge.show { opacity: 1; transform: translateY(0); }
-.save-badge.error { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); }
+/* issue #153 — an error-state badge now carries a real "Retry now" button
+   (roadmapStore.js's retrySaveNow()), so pointer-events flips to auto only in
+   this state; every other state stays click-through (pointer-events: none
+   above) since it's purely informational. */
+.save-badge.error { background: var(--status-error-bg); color: var(--status-error-text); border-color: var(--status-error-border); pointer-events: auto; }
+.save-badge-retry {
+  color: inherit;
+  border-color: currentColor;
+  min-height: 0;
+  padding: 3px 10px;
+  font-size: var(--text-xs);
+}
+/* intentional: neutral gray hover wash reads correctly against either theme's --status-error-bg fill, same reasoning as .btn-spinner's own neutral track just below (issue #116) */
+.save-badge-retry:hover:not(:disabled) { background: rgba(127, 127, 127, 0.15); }
 /* intentional: neutral gray track works against any --panel value in either theme, same as .btn-spinner above (issue #116) */
 .save-badge .spin {
   width: 12px; height: 12px; border-radius: 50%;

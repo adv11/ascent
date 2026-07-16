@@ -74,3 +74,25 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: ${{ vars.FIREBASE_PROJECT_ID }}
           channelId: live
+
+      # Issue #153 root cause #5 — firebase/database.rules.json was previously
+      # ONLY ever deployed by someone manually running `firebase deploy
+      # --only database` locally (root CLAUDE.md's own "Deploying" section
+      # documented this as manual-only). That meant the rules actually
+      # enforced against the live project could silently drift arbitrarily
+      # far from what's in this repo, with no CI signal — a stale ruleset
+      # rejecting a write to a newer path/field is indistinguishable, from a
+      # user's perspective, from any other "Save failed" error. Deploying
+      # rules on every push to main (same trigger as hosting, above) closes
+      # that gap; firebase-tools authenticates via
+      # GOOGLE_APPLICATION_CREDENTIALS pointing at the same service-account
+      # JSON already used for the hosting deploy above, no new secret needed.
+      - name: Deploy database rules (main)
+        if: steps.ready.outputs.ok == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx firebase-tools@latest deploy --only database --project "${{ vars.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$GOOGLE_APPLICATION_CREDENTIALS"

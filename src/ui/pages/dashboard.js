@@ -571,7 +571,34 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     });
   }
 
-  function updateSaveBadge(state) {
+  // Issue #153 root cause #2 — the error-state badge now carries a real
+  // "Retry now" button (roadmapStore.js's retrySaveNow()) instead of a
+  // static "retrying…" claim that was never actually true. Extracted out of
+  // updateSaveBadge() below to keep that function's own complexity from
+  // growing past the ESLint gate (root CLAUDE.md's "prefer extracting a
+  // named, module-scope function" convention).
+  function renderSaveBadgeError(retryAttempt, retryInMs) {
+    const retrySecs = retryInMs ? Math.round(retryInMs / 1000) : null;
+    const retryBtn = el('button', {
+      type: 'button',
+      className: 'btn btn-ghost btn-sm save-badge-retry',
+      text: 'Retry now',
+      onClick: () => store.retrySaveNow()
+    });
+    saveBadge.replaceChildren(
+      el('span', {
+        text: retryAttempt && retrySecs
+          ? `Save failed — retrying in ${retrySecs}s…`
+          : 'Save failed.'
+      }),
+      retryBtn
+    );
+    saveBadge.classList.add('show', 'error');
+  }
+
+  // `retryAttempt`/`retryInMs` come straight off the snapshot
+  // roadmapStore.js's scheduleSaveRetry() notifies with.
+  function updateSaveBadge({ saveState: state, retryAttempt, retryInMs }) {
     clearTimeout(saveBadgeTimer);
     saveBadge.className = 'save-badge';
     if (state === 'saving') {
@@ -588,13 +615,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       saveBadgeTimer = setTimeout(() => saveBadge.classList.remove('show'), 1800);
       lastSyncedAt = Date.now();
     } else if (state === 'error') {
-      saveBadge.textContent = 'Save failed — retrying…';
-      saveBadge.classList.add('show', 'error');
+      renderSaveBadgeError(retryAttempt, retryInMs);
     } else {
       saveBadge.classList.remove('show');
     }
 
-    syncPill.textContent = user.isAnonymous ? 'Local only' : (state === 'synced' ? 'Synced' : state === 'saving' ? 'Saving…' : 'Ready');
+    syncPill.textContent = user.isAnonymous ? 'Local only' : (state === 'synced' ? 'Synced' : state === 'saving' ? 'Saving…' : state === 'error' ? 'Save failed' : 'Ready');
     syncPill.className = `sync-pill ${userPillClass}${state === 'error' ? ' error' : ''}`;
   }
 
@@ -930,7 +956,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     const stats = countStats(allItems);
     doneStatTotal.textContent = `/ ${stats.total}`;
     roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
-    updateSaveBadge(snapshot.saveState);
+    updateSaveBadge(snapshot);
     updateReviewDueBadge(allItems);
     if (hasAnimatedStats) {
       doneStat.textContent = String(stats.done);
@@ -1059,7 +1085,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     doneStat.textContent = String(stats.done);
     percentStat.textContent = String(stats.pct);
     percentRing._setPct(stats.pct);
-    updateSaveBadge(snapshot.saveState);
+    updateSaveBadge(snapshot);
     updateReviewDueBadge(allItems);
     roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
 

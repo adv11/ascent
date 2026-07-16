@@ -135,9 +135,9 @@ Distinct from `CHANGELOG.md` (user-facing). The CI `pr-checklist` job (`.github/
 
 ## Deploying
 
-Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`. Every PR gets a temporary 7-day preview URL posted as a PR comment. A daily scheduled workflow (`.github/workflows/db-backup.yml`, issue #130) exports the full Realtime Database, encrypts it (this repo is public), and uploads it as a build artifact — see `docs/architecture.md` §6a for the retention policy, the `BACKUP_ENCRYPTION_KEY` secret, and the restore procedure.
+Every push to `main` auto-deploys to Firebase Hosting **and** `firebase/database.rules.json` via `.github/workflows/deploy.yml` (issue #153 — database rules deploy used to be manual-only, which meant the rules actually enforced against the live project could silently drift from the repo with no CI signal; a stale ruleset rejecting a write reads identically to any other "Save failed" error). Every PR gets a temporary 7-day preview URL posted as a PR comment (hosting only — a PR preview never touches production rules). A daily scheduled workflow (`.github/workflows/db-backup.yml`, issue #130) exports the full Realtime Database, encrypts it (this repo is public), and uploads it as a build artifact — see `docs/architecture.md` §6a for the retention policy, the `BACKUP_ENCRYPTION_KEY` secret, and the restore procedure.
 
-**For a manual deploy:**
+**For a manual deploy** (only needed to push a rules/hosting change ahead of the next push to `main`, e.g. while testing locally):
 ```bash
 firebase deploy            # deploys hosting + database rules
 firebase deploy --only hosting

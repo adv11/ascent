@@ -3943,3 +3943,33 @@ that package were ever compromised upstream, the workflow would be a standing,
 privileged execution path. Fixed by pinning `graphifyy==0.9.17` (bump deliberately,
 not via `--upgrade`) and using `peter-evans/create-pull-request` to route every graph
 update through a normal, reviewable PR instead.
+
+### 2026-07-17 — Custom roadmap lost-update race + save-retry hardening (issue #153)
+
+Fixed a critical, reported data-loss bug: two overlapping `switchRoadmap()`/
+`createCustomRoadmap()`/`deleteCustomRoadmap()` calls (e.g. importing two custom
+roadmaps within a few seconds) could each compute the array to persist to
+`meta.startedTemplateIds` from the same stale snapshot before either had reassigned
+it — whichever call's whole-array Firebase write landed last silently erased the
+other's id, which then caused that roadmap to re-seed empty and get overwritten with
+nothing on its next save. Fixed with `roadmapStore.js`'s new `serializeMetaMutation()`
+— a single in-module promise queue every array-field mutation (`startedTemplateIds`/
+`customRoadmaps`/`favoriteRoadmapIds`) is now chained behind, so a later mutation
+always computes from every previously-queued mutation's already-applied result,
+sidestepping the "which write lands on Firebase last" race entirely rather than
+trying to win it. Three related fixes shipped in the same PR: `flush()` no longer
+reads the shared `items`/`templatePhases`/`activeTemplateId` again after its own
+network write settles (which could stamp a different, newly-active template's data
+into the wrong template's `roadmapCache` slot if a `switchRoadmap()` completed mid-
+flight); a failed save is now automatically retried with exponential backoff
+(`scheduleSaveRetry()`) instead of failing once and never retrying, backing the
+dashboard save badge's "retrying…" copy with an actual retry and a manual "Retry now"
+button; and `onboarding.js` now subscribes to live store updates (`dashboard.js`/
+`progress.js` already did) instead of reading the store once and never re-rendering.
+Also closed a related process gap: `firebase/database.rules.json` used to be manual-
+deploy-only (`.github/workflows/deploy.yml` deployed hosting only) — it now deploys
+automatically on every push to `main`, alongside hosting, so the live rules can no
+longer silently drift from the repo with no CI signal. See
+`.claude/rules/roadmap-store.md` for the full technical writeup and
+`tests/integration/roadmapStore.test.js` for the regression tests (verified to fail
+against the pre-fix code).
