@@ -1,0 +1,92 @@
+name: Realtime Database backup
+
+# Daily snapshot of the entire Firebase Realtime Database, encrypted and kept
+# as a GitHub Actions artifact. This repo is public, so artifacts are
+# downloadable by anyone with read access — the snapshot contains every
+# user's roadmap/Daily Todos/activity-log/feedback data, so it is encrypted
+# with BACKUP_ENCRYPTION_KEY before upload; the plaintext JSON never touches
+# disk as an uploaded artifact. See docs/architecture.md's "Database backup &
+# disaster recovery" section for the retention policy and restore procedure
+# (issue #130).
+
+on:
+  schedule:
+    # 09:00 UTC daily — off-peak for this app's userbase, ahead of most weekday activity.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Export Realtime Database
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check backup readiness
+        id: ready
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ -n "$SERVICE_ACCOUNT" ] && [ -n "$ENCRYPTION_KEY" ] && [ -n "${{ vars.FIREBASE_PROJECT_ID }}" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  FIREBASE_SERVICE_ACCOUNT/BACKUP_ENCRYPTION_KEY secret or FIREBASE_PROJECT_ID variable not set — backup skipped"
+          fi
+
+      - name: Write service account key
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+
+      - name: Install Firebase CLI
+        if: steps.ready.outputs.ok == 'true'
+        run: npm install -g firebase-tools
+
+      - name: Export database snapshot
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
+        run: |
+          SNAPSHOT_NAME="rtdb-backup-$(date -u +%Y-%m-%dT%H-%M-%SZ).json"
+          echo "SNAPSHOT_NAME=$SNAPSHOT_NAME" >> "$GITHUB_ENV"
+          firebase database:get / \
+            --project "${{ vars.FIREBASE_PROJECT_ID }}" \
+            --output "$SNAPSHOT_NAME"
+
+      - name: Encrypt snapshot
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          openssl enc -aes-256-cbc -pbkdf2 -salt \
+            -in "$SNAPSHOT_NAME" \
+            -out "$SNAPSHOT_NAME.enc" \
+            -pass env:ENCRYPTION_KEY
+          rm -f "$SNAPSHOT_NAME"
+          echo "SNAPSHOT_NAME=$SNAPSHOT_NAME.enc" >> "$GITHUB_ENV"
+
+      - name: Upload encrypted snapshot artifact
+        if: steps.ready.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SNAPSHOT_NAME }}
+          path: ${{ env.SNAPSHOT_NAME }}
+          # Daily snapshots kept 30 days; see docs/architecture.md for the
+          # documented long-term retention policy (weekly snapshots saved
+          # manually by whoever downloads them, until this graduates to a
+          # private Cloud Storage bucket with lifecycle rules). Repo is
+          # public, so this file is AES-256 encrypted (previous step) —
+          # only the plaintext-JSON risk is mitigated here, the artifact
+          # itself is still publicly downloadable as ciphertext.
+          retention-days: 30
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"

@@ -135,7 +135,7 @@ Distinct from `CHANGELOG.md` (user-facing). The CI `pr-checklist` job (`.github/
 
 ## Deploying
 
-Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`. Every PR gets a temporary 7-day preview URL posted as a PR comment.
+Every push to `main` auto-deploys to Firebase Hosting via `.github/workflows/deploy.yml`. Every PR gets a temporary 7-day preview URL posted as a PR comment. A daily scheduled workflow (`.github/workflows/db-backup.yml`, issue #130) exports the full Realtime Database, encrypts it (this repo is public), and uploads it as a build artifact — see `docs/architecture.md` §6a for the retention policy, the `BACKUP_ENCRYPTION_KEY` secret, and the restore procedure.
 
 **For a manual deploy:**
 ```bash
@@ -150,6 +150,7 @@ firebase deploy --only database
 - `FIREBASE_SERVICE_ACCOUNT` (secret) — Firebase service account JSON for deploy auth
 - `FIREBASE_CONFIG` (secret) — contents of `src/services/firebase.config.js` for production
 - `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive; use GitHub Variables, not Secrets)
+- `BACKUP_ENCRYPTION_KEY` (secret) — passphrase for the daily database-backup workflow; this repo is public, so the exported snapshot is encrypted before being uploaded as a build artifact
 
 Also update `.firebaserc` with the real project ID before running `firebase deploy` locally.
 

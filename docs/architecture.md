@@ -717,6 +717,81 @@ adapters`.
 
 ---
 
+## 6a. Database backup & disaster recovery
+
+`.github/workflows/db-backup.yml` (issue #130) runs a daily scheduled export (09:00 UTC
+cron, plus `workflow_dispatch` for manual/on-demand runs) of the entire Firebase
+Realtime Database via `firebase database:get /`, authenticated with the same
+`FIREBASE_SERVICE_ACCOUNT` secret already used by `deploy.yml` — evaluated against a
+narrower-scoped service account and kept as the existing one since it already has the
+Realtime Database read access a backup needs, and provisioning a second credential
+would be extra secret-rotation surface for no real isolation benefit (a backup job
+compromised via the same secret as deploy is no worse than deploy itself being
+compromised). **This repo is public**, so GitHub Actions artifacts are downloadable by
+anyone with read access to it — the plaintext export would leak every user's roadmap,
+Daily Todos, activity log, and feedback-report data. The snapshot is therefore
+AES-256-CBC encrypted (`openssl enc -pbkdf2`) with a dedicated `BACKUP_ENCRYPTION_KEY`
+secret before upload, and the plaintext JSON is deleted from the runner immediately
+after encryption; only the `.enc` ciphertext is ever uploaded. `BACKUP_ENCRYPTION_KEY`
+is a separate secret from `FIREBASE_SERVICE_ACCOUNT` (a long random passphrase, e.g.
+`openssl rand -base64 32`, set once in repo → Settings → Secrets and variables →
+Actions) — anyone with that passphrase plus a downloaded artifact can read a full
+database dump, so treat it with the same care as a production credential and rotate it
+if ever suspected of leaking (rotating it does not retroactively re-encrypt older
+artifacts, only affects future runs). Each snapshot is uploaded as a GitHub Actions
+build artifact named `rtdb-backup-<UTC timestamp>.json.enc` with `retention-days: 30`
+— at this app's data size (~20-30KB per user, per issue #5's research), a daily
+snapshot is trivially cheap and a private Cloud Storage bucket (which wouldn't need
+this encryption step, since it isn't publicly readable) is deferred until real usage
+numbers justify the added infrastructure. Retention policy: GitHub Actions retains the
+last 30 daily snapshots
+automatically; anyone wanting longer-term (e.g. weekly-for-a-year) retention should
+download and archive a snapshot manually until this graduates to a bucket with
+lifecycle rules. If the workflow itself fails, GitHub's own workflow-failure
+notification (email/GitHub UI, to whoever has notifications enabled for this repo) is
+the alert — no separate alerting infrastructure was built for this.
+
+**Restore procedure** (manual — not automated; see issue #130's scope):
+
+1. Download the encrypted snapshot artifact from the failed/target workflow run
+   (Actions tab → run → Artifacts) — it downloads as a `.zip` containing the
+   `rtdb-backup-<timestamp>.json.enc` file.
+2. Decrypt it locally with the `BACKUP_ENCRYPTION_KEY` secret's value (repo → Settings
+   → Secrets and variables → Actions doesn't let you view an existing secret's value —
+   whoever holds a copy from when it was created must supply it):
+   ```
+   openssl enc -d -aes-256-cbc -pbkdf2 \
+     -in rtdb-backup-<timestamp>.json.enc \
+     -out rtdb-backup-<timestamp>.json \
+     -pass pass:<the BACKUP_ENCRYPTION_KEY value>
+   ```
+3. **Freeze writes first.** Don't restore over live traffic — either put the app in
+   maintenance mode or temporarily tighten `firebase/database.rules.json` to
+   read-only, deploy that, confirm no writes are in flight, then proceed.
+4. Restore with the Firebase CLI, authenticated as an operator with write access to
+   the target project:
+   ```
+   firebase database:set / rtdb-backup-<timestamp>.json --project <project-id>
+   ```
+   This **overwrites the entire database** with the snapshot's contents — there is no
+   partial/merge restore. Double-check the project ID before running it.
+5. Revert any temporary rules lockdown from step 3 and redeploy the real
+   `firebase/database.rules.json`.
+6. Spot-check a few known user records (roadmap, Daily Todos) against the snapshot to
+   confirm the restore matches, before announcing the incident resolved.
+7. Delete the decrypted plaintext JSON from your local machine once the restore is
+   confirmed — it's the same sensitive full-database dump the encryption step exists
+   to protect.
+
+Before relying on this in a real incident, run the dry run once against a throwaway
+Firebase project: trigger the workflow via `workflow_dispatch`, download the resulting
+artifact, then run the `database:set` command above against that same throwaway
+project and confirm the data matches. This has not yet been performed as of the
+workflow's introduction (issue #130) — do it before the first real incident, not
+during one.
+
+---
+
 ## 7. Issue templates & enforcement
 
 `.github/ISSUE_TEMPLATE/` contains four GitHub issue forms:
@@ -3836,3 +3911,19 @@ network calls or tool-blocking; that file is already gitignored (`.claude/settin
 "machine-specific, not a repo convention") so the hook doesn't propagate to other clones.
 Regenerate the graph with `graphify update .` after significant code changes, or re-run
 the full `/graphify .` pipeline for a from-scratch rebuild.
+
+### 2026-07-16 — Issue #130 — Daily Realtime Database backup workflow
+
+Added `.github/workflows/db-backup.yml`, a new scheduled GitHub Actions workflow (daily
+cron + `workflow_dispatch`) that exports the entire Firebase Realtime Database via
+`firebase database:get /`. Closes the operational gap where the only existing backup
+path was issue #18's user-initiated, per-user export — there was no operator-side
+recovery mechanism for accidental rules deploys, compromised credentials, or platform
+incidents. Reuses the existing `FIREBASE_SERVICE_ACCOUNT` deploy secret rather than
+provisioning a second one (see §6a for the reasoning). Because this repo is public,
+the export is AES-256 encrypted with a new `BACKUP_ENCRYPTION_KEY` secret before being
+uploaded as a build artifact — an earlier plaintext-artifact version of this workflow
+was caught and revised before merge, since GitHub Actions artifacts on a public repo
+are downloadable by anyone with read access and the export contains every user's data.
+See §6a "Database backup & disaster recovery" for the full retention policy and
+decrypt-then-restore procedure.
