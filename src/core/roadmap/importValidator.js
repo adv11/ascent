@@ -2,7 +2,7 @@
 // no Firebase. Deliberately decoupled from schemaAdapter.js: bumping
 // SUPPORTED_SCHEMA_VERSION and adding a new adapter is how a future schema
 // version gets supported, not by editing what "valid" means here.
-import { MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from './limits.js';
+import { MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, MAX_TITLE_LENGTH } from './limits.js';
 
 const VALID_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
 const MAX_ITEMS = 500;
@@ -94,6 +94,16 @@ function findCorruptedResourceIndex(resources) {
   return resources.findIndex(r => looksCorrupted(r?.label) || looksCorrupted(r?.url));
 }
 
+// Index of the first (only) too-long title, or -1 — mirrors
+// findCorruptedResourceIndex's "-1 means none found" convention. Checked
+// before isValidItem()'s normal shape validation, same as the corruption
+// check below, so an oversized title gets a specific, actionable
+// "exceeds N characters" error instead of a bare "is invalid".
+function itemTitleTooLong(item) {
+  const titleText = extractItemTitleText(item);
+  return typeof titleText === 'string' && titleText.length > MAX_TITLE_LENGTH;
+}
+
 // Scans a single item's title and resource label/url fields for the
 // corruption markers above, returning the first specific error found (or
 // `null`). Checked *before* isValidItem()'s normal shape validation so a
@@ -119,11 +129,12 @@ function isValidResourcesField(resources) {
 function isValidTupleItem(item) {
   if (item.length !== 2) return false;
   const [title, priority] = item;
-  return typeof title === 'string' && title.trim().length > 0 && VALID_PRIORITIES.includes(normalizePriority(priority));
+  return typeof title === 'string' && title.trim().length > 0 && title.length <= MAX_TITLE_LENGTH
+    && VALID_PRIORITIES.includes(normalizePriority(priority));
 }
 
 function isValidObjectItem(item) {
-  const titleOk = typeof item.title === 'string' && item.title.trim().length > 0;
+  const titleOk = typeof item.title === 'string' && item.title.trim().length > 0 && item.title.length <= MAX_TITLE_LENGTH;
   const priorityOk = item.priority === undefined || VALID_PRIORITIES.includes(normalizePriority(item.priority));
   return titleOk && priorityOk && isValidResourcesField(item.resources);
 }
@@ -136,7 +147,7 @@ function isValidObjectItem(item) {
 // matching the plain-string item's existing behavior. Priority values are
 // normalized (trim + uppercase) before the VALID_PRIORITIES check.
 function isValidItem(item) {
-  if (typeof item === 'string') return item.trim().length > 0;
+  if (typeof item === 'string') return item.trim().length > 0 && item.length <= MAX_TITLE_LENGTH;
   if (Array.isArray(item)) return isValidTupleItem(item);
   if (item && typeof item === 'object') return isValidObjectItem(item);
   return false;
@@ -173,6 +184,8 @@ export function validateImportPayload(data) {
       errors.push(`phases[${i}].title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
     } else if (typeof phase.title !== 'string' || !phase.title.trim()) {
       errors.push(`phases[${i}].title is required`);
+    } else if (phase.title.length > MAX_TITLE_LENGTH) {
+      errors.push(`phases[${i}].title exceeds ${MAX_TITLE_LENGTH} characters`);
     }
     if (!VALID_PRIORITIES.includes(normalizePriority(phase.priority))) {
       errors.push(`phases[${i}].priority must be one of ${VALID_PRIORITIES.join(', ')}`);
@@ -190,6 +203,8 @@ export function validateImportPayload(data) {
         errors.push(`phases[${i}].sections[${j}].title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
       } else if (typeof section.title !== 'string' || !section.title.trim()) {
         errors.push(`phases[${i}].sections[${j}].title is required`);
+      } else if (section.title.length > MAX_TITLE_LENGTH) {
+        errors.push(`phases[${i}].sections[${j}].title exceeds ${MAX_TITLE_LENGTH} characters`);
       }
       if (!Array.isArray(section.items) || section.items.length === 0) {
         errors.push(`phases[${i}].sections[${j}].items must have at least one item`);
@@ -200,6 +215,8 @@ export function validateImportPayload(data) {
         const corruption = findItemCorruption(item, path);
         if (corruption) {
           errors.push(corruption);
+        } else if (itemTitleTooLong(item)) {
+          errors.push(`${path}.title exceeds ${MAX_TITLE_LENGTH} characters`);
         } else if (!isValidItem(item)) {
           errors.push(`item at ${path} is invalid`);
         } else {
