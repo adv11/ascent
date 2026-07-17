@@ -821,6 +821,28 @@ Business/product questions deliberately tracked as open, not silently deferred:
 
 ---
 
+## Accepted security risks
+
+Dependency/CVE findings deliberately left unresolved after investigation, with the
+reasoning recorded so the decision isn't silently re-litigated (or silently forgotten)
+later:
+
+- **`firebase-tools` transitive moderate advisories** (issue #191, 2026-07-17) —
+  `npm audit` reports 5 moderate advisories (`@opentelemetry/core <2.8.0` unbounded
+  memory allocation, `uuid <11.1.1` missing buffer bounds check) pulled in transitively
+  via `firebase-tools`'s own `@google-cloud/pubsub`/`gaxios` dependencies. Confirmed
+  `firebase-tools@15.24.0` (latest as of this writing; bumped from the previously
+  pinned `^15.22.4`) still resolves to the same vulnerable transitive versions — no
+  upstream release yet fixes this. `npm audit fix --force` would downgrade
+  `firebase-tools` to `14.23.0`, a major-version downgrade with its own
+  CLI-compatibility risk, so that path was rejected. Accepted because: `firebase-tools`
+  is a devDependency only, never shipped to the client bundle; exposure is limited to
+  local/CI developer machines running the CLI. Revisit next time `firebase-tools` is
+  bumped, or every ~90 days, whichever comes first — re-run `npm audit` and `npm ls
+  @opentelemetry/core uuid` to check whether upstream has resolved it.
+
+---
+
 ## 8. Build Log
 
 > One entry per significant PR. Append at the bottom. Format:
