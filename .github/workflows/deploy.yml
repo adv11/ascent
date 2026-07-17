@@ -31,9 +31,14 @@ jobs:
 
       # Write the client-side Firebase config from the GitHub Secret.
       # FIREBASE_CONFIG is a JSON object stored as a repository secret.
-      # If the secret is not set the deploy falls back to the example
-      # placeholder file so the workflow doesn't hard-fail on forks or
-      # feature branches that haven't been granted the secret.
+      # Issue #190: this used to fall back to the example placeholder file
+      # and only log a warning when the secret was unset, which meant a
+      # cleared/misconfigured secret would silently deploy a fully
+      # non-functional app (placeholder Firebase keys — every Auth/Database
+      # call fails) straight to the live production channel, with nothing
+      # but a workflow-log warning to notice it by. Fail the job outright
+      # instead — a missing secret must produce a failed, visible CI check,
+      # not a quiet no-op deploy of broken placeholder config.
       - name: Write Firebase client config
         env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
@@ -41,8 +46,8 @@ jobs:
           if [ -n "$FIREBASE_CONFIG" ]; then
             echo "$FIREBASE_CONFIG" > src/services/firebase.config.js
           else
-            cp src/services/firebase.config.example.js src/services/firebase.config.js
-            echo "⚠️  FIREBASE_CONFIG secret not set — deploying with example placeholder (app will not connect to Firebase)"
+            echo "::error::FIREBASE_CONFIG secret not set — refusing to deploy with placeholder Firebase config. Add the secret in GitHub → Settings → Secrets and variables → Actions (see docs/architecture.md#cicd)."
+            exit 1
           fi
 
       # Check whether the deploy secret is available.
