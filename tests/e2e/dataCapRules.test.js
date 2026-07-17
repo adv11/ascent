@@ -225,6 +225,33 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
     expect(compliant.ok, 'a compliant screenshotB64 should still succeed').toBe(true);
   });
 
+  // Issue #192 — users/{uid}/reports/{reportId} is the per-user mirror of the
+  // top-level reports/{reportId} write submitReport() (feedbackStore.js) makes
+  // in the same multi-path update; its .validate rule previously only checked
+  // hasChildren(['type','title','submittedAt']), missing the type-enum and
+  // title-length cap the top-level path already enforces. These cases prove
+  // the per-user copy now rejects the same malformed writes and still accepts
+  // a legitimate submitReport()-shaped write.
+  test('users/{uid}/reports rejects an invalid type/oversized title; accepts a compliant report', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+
+    const invalidType = await writeAtPath(page, `users/${uid}/reports/rules-test-badtype-${Date.now()}`, {
+      type: 'not-a-real-type', title: 'A report', submittedAt: Date.now()
+    });
+    expect(invalidType.ok, 'a report with a type outside bug|feature|feedback should be rejected').toBe(false);
+
+    const oversizedTitle = await writeAtPath(page, `users/${uid}/reports/rules-test-badtitle-${Date.now()}`, {
+      type: 'bug', title: 'a'.repeat(121), submittedAt: Date.now()
+    });
+    expect(oversizedTitle.ok, 'a report title over 120 chars should be rejected').toBe(false);
+
+    const compliant = await writeAtPath(page, `users/${uid}/reports/rules-test-ok-${Date.now()}`, {
+      type: 'bug', title: 'A report', submittedAt: Date.now()
+    });
+    expect(compliant.ok, 'a compliant per-user report should still succeed').toBe(true);
+  });
+
   // Issue #188 — sharedRoadmaps/{shareId} is the one publicly-readable path
   // in the app; before this its `items` field had no shape/size validation
   // at all. These cases mirror shareSchema.js's toShareItem() field set
