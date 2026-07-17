@@ -135,4 +135,61 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
     });
     expect(compliant.ok, 'a compliant screenshotB64 should still succeed').toBe(true);
   });
+
+  // Issue #188 — sharedRoadmaps/{shareId} is the one publicly-readable path
+  // in the app; before this its `items` field had no shape/size validation
+  // at all. These cases mirror shareSchema.js's toShareItem() field set
+  // (title/phase/section/priority/done/resources) — see
+  // roadmapSharingRules.test.js for the ownership/read/revoke rule coverage
+  // this file deliberately doesn't duplicate.
+  test('sharedRoadmaps/{shareId}/items rejects an oversized/malformed item; accepts a compliant one', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+    const baseShare = {
+      schemaVersion: 1, ownerUid: uid, templateId: 'java-backend', title: 'Rules test roadmap', publishedAt: Date.now()
+    };
+
+    const missingItems = await writeAtPath(page, `sharedRoadmaps/rules-test-missing-items-${Date.now()}`, baseShare);
+    expect(missingItems.ok, 'a share published with no items field at all should be rejected').toBe(false);
+
+    const oversizedTitle = await writeAtPath(page, `sharedRoadmaps/rules-test-title-${Date.now()}`, {
+      ...baseShare,
+      items: { 'item-1': { title: 'a'.repeat(201), phase: 'Phase 1', section: 'Section 1', priority: 'P1', done: false } }
+    });
+    expect(oversizedTitle.ok, 'a shared item title over 200 chars should be rejected').toBe(false);
+
+    const missingRequiredField = await writeAtPath(page, `sharedRoadmaps/rules-test-shape-${Date.now()}`, {
+      ...baseShare,
+      items: { 'item-1': { title: 'Topic 1', phase: 'Phase 1', section: 'Section 1' } }
+    });
+    expect(missingRequiredField.ok, 'a shared item missing priority/done should be rejected').toBe(false);
+
+    const extraField = await writeAtPath(page, `sharedRoadmaps/rules-test-extra-${Date.now()}`, {
+      ...baseShare,
+      items: { 'item-1': { title: 'Topic 1', phase: 'Phase 1', section: 'Section 1', priority: 'P1', done: false, notes: 'should not be here' } }
+    });
+    expect(extraField.ok, 'a shared item carrying a field outside the narrow public schema (e.g. notes) should be rejected').toBe(false);
+
+    const oversizedResourceUrl = await writeAtPath(page, `sharedRoadmaps/rules-test-url-${Date.now()}`, {
+      ...baseShare,
+      items: {
+        'item-1': {
+          title: 'Topic 1', phase: 'Phase 1', section: 'Section 1', priority: 'P1', done: false,
+          resources: { 0: { label: 'Docs', url: `https://x.com/${'a'.repeat(2048)}` } }
+        }
+      }
+    });
+    expect(oversizedResourceUrl.ok, 'a shared item resource url over 2048 chars should be rejected').toBe(false);
+
+    const compliant = await writeAtPath(page, `sharedRoadmaps/rules-test-ok-${Date.now()}`, {
+      ...baseShare,
+      items: {
+        'item-1': {
+          title: 'Topic 1', phase: 'Phase 1', section: 'Section 1', priority: 'P1', done: false,
+          resources: { 0: { label: 'Docs', url: 'https://x.com' } }
+        }
+      }
+    });
+    expect(compliant.ok, 'a compliant shared item within every cap should still succeed').toBe(true);
+  });
 });

@@ -139,12 +139,30 @@
       "$shareId": {
         ".read": true,
         ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() == auth.uid) || (data.exists() && data.child('ownerUid').val() == auth.uid && newData.val() === null))",
-        ".validate": "newData.hasChildren(['schemaVersion', 'ownerUid', 'templateId', 'title', 'publishedAt'])",
+        ".validate": "newData.hasChildren(['schemaVersion', 'ownerUid', 'templateId', 'title', 'publishedAt', 'items'])",
         "schemaVersion": { ".validate": "newData.isNumber()" },
         "ownerUid": { ".validate": "newData.isString()" },
         "templateId": { ".validate": "newData.isString()" },
         "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
-        "publishedAt": { ".validate": "newData.isNumber()" }
+        "publishedAt": { ".validate": "newData.isNumber()" },
+        "items": {
+          "$itemId": {
+            ".validate": "newData.hasChildren(['title', 'phase', 'section', 'priority', 'done'])",
+            "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "phase": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "section": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "priority": { ".validate": "newData.isString() && newData.val().length <= 50" },
+            "done": { ".validate": "newData.isBoolean()" },
+            "resources": {
+              "$index": {
+                ".validate": "newData.hasChildren(['label', 'url']) && $index.matches(/^[0-9]{1,3}$/)",
+                "label": { ".validate": "newData.isString() && newData.val().length <= 120" },
+                "url": { ".validate": "newData.isString() && newData.val().length <= 2048" }
+              }
+            },
+            "$other": { ".validate": "false" }
+          }
+        }
       }
     }
   }
