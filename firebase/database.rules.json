@@ -34,15 +34,42 @@
             },
             "items": {
               "$itemId": {
-                "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
+                "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
                 "notes": { ".validate": "newData.isString() && newData.val().length <= 5000" },
+                "phase": { ".validate": "newData.isString() && newData.val().length <= 200" },
+                "section": { ".validate": "newData.isString() && newData.val().length <= 200" },
+                "priority": { ".validate": "newData.val().matches(/^(P0|P1|P2|P3)$/)" },
+                "done": { ".validate": "newData.isBoolean()" },
+                "custom": { ".validate": "newData.isBoolean()" },
+                "deleted": { ".validate": "newData.isBoolean()" },
+                "createdAt": { ".validate": "newData.isNumber()" },
                 "resources": {
                   "$index": {
+                    ".validate": "$index.matches(/^[0-9]{1,2}$/)",
                     "label": { ".validate": "newData.isString() && newData.val().length <= 120" },
                     "url": { ".validate": "newData.isString() && newData.val().length <= 2048" }
                   }
                 }
               }
+            },
+            "phases": {
+              "$index": {
+                ".validate": "$index.matches(/^[0-9]{1,3}$/)",
+                "id": { ".validate": "newData.isString()" },
+                "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+                "priority": { ".validate": "newData.val().matches(/^(P0|P1|P2|P3)$/)" },
+                "resourceKey": { ".validate": "newData.isString() || newData.val() === null" },
+                "sections": {
+                  "$sectionIndex": {
+                    ".validate": "$sectionIndex.matches(/^[0-9]{1,3}$/)",
+                    "id": { ".validate": "newData.isString()" },
+                    "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" }
+                  }
+                }
+              }
+            },
+            "$other": {
+              ".validate": "false"
             }
           }
         },
@@ -84,6 +111,9 @@
             "$index": {
               ".validate": "newData.isString() && $index.matches(/^[0-2]$/)"
             }
+          },
+          "$other": {
+            ".validate": "false"
           }
         },
         "dailyTodos": {

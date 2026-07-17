@@ -121,6 +121,95 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
     expect(compliant.ok, 'a compliant activityLog entry should still succeed').toBe(true);
   });
 
+  test('roadmaps/{templateId}/items rejects a missing/oversized title, a bad priority, and an out-of-range resource index; accepts a compliant item (issue #187)', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+
+    const emptyTitle = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1, items: { item1: { title: '' } }
+    });
+    expect(emptyTitle.ok, 'an empty item title should be rejected').toBe(false);
+
+    const oversizedTitle = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1, items: { item1: { title: 'a'.repeat(201) } }
+    });
+    expect(oversizedTitle.ok, 'an item title over 200 chars should be rejected').toBe(false);
+
+    const badPriority = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1, items: { item1: { title: 'Learn Java', priority: 'P9' } }
+    });
+    expect(badPriority.ok, 'a priority outside P0-P3 should be rejected').toBe(false);
+
+    const outOfRangeResourceIndex = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1,
+      items: { item1: { title: 'Learn Java', resources: { 100: { label: 'Docs', url: 'https://x.com' } } } }
+    });
+    expect(outOfRangeResourceIndex.ok, 'a resource index outside the allowed pattern should be rejected').toBe(false);
+
+    const compliant = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1,
+      items: {
+        item1: {
+          title: 'Learn Java',
+          priority: 'P1',
+          done: false,
+          resources: { 0: { label: 'Docs', url: 'https://x.com' } }
+        }
+      }
+    });
+    expect(compliant.ok, 'a compliant item within every cap should still succeed').toBe(true);
+  });
+
+  test('roadmaps/{templateId}/phases rejects an oversized/out-of-range entry; accepts a compliant one; roadmaps/{templateId} rejects an undeclared top-level key (issue #187)', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+
+    // Note: an empty `items: {}` object is silently dropped by Realtime
+    // Database on write (documented in .claude/rules/roadmap-store.md's
+    // sharedRoadmaps note) — there is no way to persist an "empty container"
+    // as a real child node, so a payload using `items: {}` would never
+    // actually satisfy the pre-existing `hasChildren(['version', 'items'])`
+    // rule at the templateId level. Every payload below uses a non-empty
+    // `items` object so that check isn't what's under test here.
+    const baseItems = { item1: { title: 'Learn Java' } };
+
+    const oversizedPhaseTitle = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1, items: baseItems, phases: { 0: { id: 'phase-1', title: 'a'.repeat(201) } }
+    });
+    expect(oversizedPhaseTitle.ok, 'a phase title over 200 chars should be rejected').toBe(false);
+
+    const outOfRangePhaseIndex = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1, items: baseItems, phases: { 1000: { id: 'phase-1', title: 'Foundations' } }
+    });
+    expect(outOfRangePhaseIndex.ok, 'a phases index outside the allowed pattern should be rejected').toBe(false);
+
+    const badSectionTitle = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1,
+      items: baseItems,
+      phases: { 0: { id: 'phase-1', title: 'Foundations', sections: { 0: { id: 'section-1', title: '' } } } }
+    });
+    expect(badSectionTitle.ok, 'an empty section title should be rejected').toBe(false);
+
+    const undeclaredKey = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1, items: baseItems, notAField: true
+    });
+    expect(undeclaredKey.ok, 'an undeclared top-level key should be rejected').toBe(false);
+
+    const compliant = await writeAtPath(page, `users/${uid}/roadmaps/java-backend`, {
+      version: 1,
+      items: baseItems,
+      phases: {
+        0: {
+          id: 'phase-1',
+          title: 'Foundations',
+          priority: 'P1',
+          sections: { 0: { id: 'section-1', title: 'Core' } }
+        }
+      }
+    });
+    expect(compliant.ok, 'a compliant phases entry should still succeed').toBe(true);
+  });
+
   test('top-level reports/{reportId}.screenshotB64 rejects an oversized value; accepts a compliant one', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const uid = await signInGuestAndGetUid(page);
