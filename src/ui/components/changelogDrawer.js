@@ -1,6 +1,7 @@
 import { el } from '../dom.js';
 import { createIcon } from './icons.js';
 import { attachFocusTrap } from './modal.js';
+import { BRAND_NAME } from './brand.js';
 
 const TYPE_LABELS = { feat: 'New', fix: 'Fix', improvement: 'Improved' };
 
@@ -52,7 +53,7 @@ export function openChangelogDrawer({ entries, onClose }) {
   panel.append(
     el('div', { className: 'panel-header' }, [
       el('div', {}, [
-        el('p', { className: 'panel-kicker', text: 'Ascent' }),
+        el('p', { className: 'panel-kicker', text: BRAND_NAME }),
         el('h2', { className: 'panel-title', id: titleId, text: "What's New" })
       ]),
       el('button', { type: 'button', className: 'btn btn-ghost btn-icon', 'aria-label': 'Close', onClick: close }, [createIcon('close', { size: 'sm' })])
