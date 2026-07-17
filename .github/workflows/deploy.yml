@@ -29,30 +29,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Write the client-side Firebase config from the GitHub Secret.
-      # FIREBASE_CONFIG is a JSON object stored as a repository secret.
-      # Issue #190: this used to fall back to the example placeholder file
-      # and only log a warning when the secret was unset, which meant a
-      # cleared/misconfigured secret would silently deploy a fully
-      # non-functional app (placeholder Firebase keys — every Auth/Database
-      # call fails) straight to the live production channel, with nothing
-      # but a workflow-log warning to notice it by. Fail the job outright
-      # instead — a missing secret must produce a failed, visible CI check,
-      # not a quiet no-op deploy of broken placeholder config.
-      - name: Write Firebase client config
-        env:
-          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
-        run: |
-          if [ -n "$FIREBASE_CONFIG" ]; then
-            echo "$FIREBASE_CONFIG" > src/services/firebase.config.js
-          else
-            echo "::error::FIREBASE_CONFIG secret not set — refusing to deploy with placeholder Firebase config. Add the secret in GitHub → Settings → Secrets and variables → Actions (see docs/architecture.md#cicd)."
-            exit 1
-          fi
-
-      # Check whether the deploy secret is available.
+      # Check whether the deploy secrets are available.
       # Secrets cannot be read in `if:` expressions directly, so we probe
-      # via an env var and emit a step output.
+      # via env vars and emit step outputs.
+      #
+      # Issue #190: a deploy only actually happens when FIREBASE_SERVICE_ACCOUNT
+      # is set (see the deploy steps' `if:` below) — so FIREBASE_CONFIG being
+      # unset is only dangerous when a deploy would otherwise proceed. It used
+      # to fall back to the example placeholder file and only log a warning
+      # regardless of whether a real deploy would follow, which meant a
+      # cleared/misconfigured secret could silently deploy a fully
+      # non-functional app (placeholder Firebase keys — every Auth/Database
+      # call fails) straight to the live production channel, with nothing but
+      # a workflow-log warning to notice it by. Now: if a deploy would run
+      # (SERVICE_ACCOUNT set) but FIREBASE_CONFIG is missing, fail the job
+      # outright instead of writing placeholder config. If no deploy would run
+      # anyway (SERVICE_ACCOUNT unset, e.g. this repo today), a missing
+      # FIREBASE_CONFIG is harmless — warn and continue, same as before.
       - name: Check deploy readiness
         id: ready
         env:
@@ -65,6 +58,23 @@ jobs:
             echo "⚠️  FIREBASE_SERVICE_ACCOUNT secret not set — deploy steps skipped"
             echo "   Add the secret in GitHub → Settings → Secrets and variables → Actions"
             echo "   See docs/architecture.md#cicd for setup instructions"
+          fi
+
+      # Write the client-side Firebase config from the GitHub Secret.
+      # FIREBASE_CONFIG is a JSON object stored as a repository secret.
+      - name: Write Firebase client config
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+          DEPLOY_READY: ${{ steps.ready.outputs.ok }}
+        run: |
+          if [ -n "$FIREBASE_CONFIG" ]; then
+            echo "$FIREBASE_CONFIG" > src/services/firebase.config.js
+          elif [ "$DEPLOY_READY" = "true" ]; then
+            echo "::error::FIREBASE_CONFIG secret not set — refusing to deploy with placeholder Firebase config. Add the secret in GitHub → Settings → Secrets and variables → Actions (see docs/architecture.md#cicd)."
+            exit 1
+          else
+            echo "⚠️  FIREBASE_CONFIG secret not set — using placeholder config (no deploy will run, FIREBASE_SERVICE_ACCOUNT is also unset)"
+            cp src/services/firebase.config.example.js src/services/firebase.config.js
           fi
 
       # PR → deploy to a temporary preview channel (expires in 7 days).
