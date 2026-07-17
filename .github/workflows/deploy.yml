@@ -16,6 +16,15 @@ jobs:
   deploy:
     name: Firebase Hosting deploy
     runs-on: ubuntu-latest
+    # Issue #189 — without this, two rapid pushes to main can trigger
+    # overlapping deploy runs with no ordering guarantee: the
+    # slower-starting-but-earlier-commit job could finish after the
+    # newer-commit job, briefly serving an older commit as "live" right
+    # after a newer one was already deployed. Queue instead of racing;
+    # never cancel a deploy mid-flight (cancel-in-progress: false).
+    concurrency:
+      group: ${{ github.workflow }}-main
+      cancel-in-progress: false
 
     steps:
       - uses: actions/checkout@v4
