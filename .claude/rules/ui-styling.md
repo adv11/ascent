@@ -672,21 +672,103 @@ that file's own `cssVar()` calls), `--accent-50/400/500`.
   same reason as the sidebar item above.
 - **Empty states** — Progress page zero-states, dashboard's no-matching-filter state,
   and `itemPanel.js`'s "no resources yet" state got action-oriented copy (per
-  `.claude/rules/content-style.md`) plus a small `var(--gradient-alpenglow)` accent dot
-  (never a full-bleed background) — de-emphasizing the literal zero rather than leading
-  with it.
-- **Progress ring + brand mark** — the Progress page's circular "Complete" indicator and
-  `brand.js`'s `createBrandIcon()` both render `var(--gradient-alpenglow)` via an inline
-  SVG `<linearGradient>` stroke. This is the one deliberate exception to this file's own
-  long-standing "brand mark is fixed product identity, never touched by a design pass"
-  precedent (see v1/v2's "Deliberately still untouched" notes above) — issue #206 §7
-  explicitly calls for the logo and the ring to agree on the same gradient.
+  `.claude/rules/content-style.md`) — de-emphasizing the literal zero rather than leading
+  with it. The accent dot originally spec'd as `var(--gradient-alpenglow)` is a flat
+  `var(--color-brand-gold)` fill instead, per the no-gradients decision immediately below.
+- **Progress ring + brand mark, superseded by a later no-gradients decision.** §7
+  originally called for the Progress page's circular "Complete" indicator and
+  `brand.js`'s `createBrandIcon()` to both render `var(--gradient-alpenglow)` via an
+  inline SVG `<linearGradient>` stroke — shipped that way initially, then reverted in
+  the same PR after an explicit user decision: **no gradients anywhere in the app,
+  solid colors only.** `progressRing.js` no longer builds a `<linearGradient>` at all
+  (flat `var(--color-brand-gold)` stroke via `.progress-ring-fill` in `app.css`, not an
+  inline attribute); `.brand-mark`/`.text-gradient-brand`/`.template-card-current`'s
+  border-image top accent all moved to the same flat gold. `--gradient-alpenglow`
+  (`app.css` `:root`) is kept as a token definition — still referenced by its own doc
+  comments, in case a future design pass wants it back — but has **zero remaining call
+  sites** anywhere in `app.css` or any `.js` file as of this decision. A follow-up
+  pass (issue #206 §5) later found four page-wide ambient background gradients this
+  sweep had missed (`body`, `.auth-page-bg`, `.auth-marketing`, `.bg-grid-glow`'s glow)
+  — see the Motion section below for that fix. If you find a stray
+  `var(--gradient-alpenglow)` reference anywhere, it's a regression, not an
+  intentional use — flatten it to `var(--color-brand-gold)` (or `--color-brand-rose`
+  if the specific spot was meant to skew toward the rose end) rather than restoring
+  the gradient.
 
-**Deliberately out of scope for this pass (PR 2, issue #206 §4/§4.1/§5, depends on this
-token layer landing first):** replacing emoji/legacy icons with a curated SVG set, the
-card-action overflow menu, and the full motion/animation system (route transitions,
-checkbox pop, modal/toast entrance-exit, reduced-motion handling). Don't assume any of
-those exist yet just because this section documents the token/color layer as done.
+**PR 2, issue #206 §4.1 — card-action overflow menu, shipped.** `onboarding.js`'s
+template cards used to stack a standalone `.template-card-favorite` star button next to
+a `.template-card-hide` (built-in) or `.template-card-delete` (custom/imported) button in
+the card's top-right corner — both now collapse behind one new
+`.template-card-overflow-btn` (⋯, `createIcon('overflow', ...)`) opening a
+`createDropdown()` menu (`.template-card-overflow`, the dropdown's own portaled-to-
+`document.body` wrapper positioned in the same corner slot the old buttons occupied) with
+Favorite/Unfavorite plus Hide or Delete, per the spec's "2+ secondary actions collapse
+into one ⋯ menu" rule. `onboarding.js` tracks every open dropdown in its own
+`dropdownEls` array (parallel to the existing `cardEls` array) specifically because
+`renderVisibleGrid()` tears down and rebuilds every card on any favorite/hide/delete/live-
+store-update — each dropdown's `_cleanup()` (removes its `document` click listener and any
+still-portaled menu node) must run before the old card DOM is discarded, or a re-render
+leaks one listener per rebuild; the same cleanup array is also flushed in the route's own
+final cleanup return. "Create your own roadmap" keeps its own single, always-visible
+`.template-card-info-corner` button unchanged — it only ever had one secondary action, so
+the spec's 2-or-more-actions trigger for collapsing into a menu never applied to it.
+Icon replacement (§4) needed no new work here — it was already complete app-wide from
+issue #136's earlier emoji-elimination pass (`scripts/lint-icons.mjs` was already clean
+before this PR); the one new icon this PR added is `overflow` itself
+(`src/ui/components/icons.js`), the ⋯ trigger glyph, since no existing icon in the set
+covered that shape.
+
+**PR 2 (continued), issue #206 §5 — motion/animation system, shipped.** Most of §5 turned
+out to already exist from earlier work (route-mount fade-in per page, modal entrance,
+skeleton/confetti/entering-row animations, and a global
+`@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:
+0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto
+!important; } }` catch-all covering every animation in the app, not just the ones with
+their own explicit override) — this pass closed the specific remaining gaps, found by
+auditing every §5 bullet against the actual codebase rather than assuming the whole
+section was unbuilt:
+- **Checkbox check micro-animation** — `.check-pop` (`app.css`, next to `.check-box`),
+  a `scale(1)->scale(1.15)->scale(1)` pop on `--duration-fast`, layered on top of (not
+  replacing) `.check-mark`'s pre-existing spring-bounce fade-in. `toggleDone()`
+  (`dashboard.js`) adds/removes the class directly — a forced reflow (`void
+  checkBoxEl.offsetWidth`) between remove and re-add is required so the animation
+  restarts on rapid repeated clicks, since a second toggle before the first
+  `animationend` fires would otherwise be a no-op class-add. Fires only when marking an
+  item *done*, never on uncheck, matching the spec's exact wording.
+- **Toast entrance/exit timing** — `.toast`'s transition moved off a hardcoded `220ms
+  ease` onto `--duration-base`/`--ease-decelerate` (entrance, the base rule) and
+  `--duration-fast`/`--ease-accelerate` (exit, a `.toast:not(.show)` override) — CSS
+  transitions use the *target* state's own `transition` property, so this asymmetric
+  in/out pairing works correctly with a single declarative rule pair, no JS timing
+  logic needed. `toast.js`'s own post-fade DOM-removal `setTimeout` was retuned from a
+  hardcoded `260` to a named `EXIT_TRANSITION_MS = 120` constant matching
+  `--duration-fast`'s value — kept as a literal (not read via `getComputedStyle`) since
+  it's one constant; if `--duration-fast` is ever retuned, update this alongside it or
+  the toast will be yanked from the DOM before its own fade-out visually finishes.
+- **Route transition coverage** — every page already had a `.fade-in` class on its
+  outermost container (`authShell.js`'s `.auth-page`, `dashboard.js`/`onboarding.js`/
+  `progress.js`/`settings.js`'s own `.app-shell-2` wrapper) *except* `landing.js` and
+  `sharedRoadmapView.js`, both missed by the earlier pass. A genuine router-level
+  approach (applying the class once in `router.js` to the shared `#app` mount) was
+  prototyped and deliberately **not** kept — it would have double-animated every page
+  that already carries its own inner `.fade-in`, and the spec's own wording explicitly
+  frames the router-level approach as an *alternative* to per-page ("if possible... else
+  per-page"), not something to layer on top of an existing per-page implementation.
+  Closing the two gaps was the correct, minimal fix.
+- **Progress ring fill** — already animates `stroke-dashoffset` on change
+  (`.progress-ring-fill`, `var(--duration-enter) var(--ease-spring)`) — a valid
+  `--duration-*`/`--ease-*` token pairing, just not literally `--duration-slow`/
+  `--ease-standard` as the spec's own example names; left as-is rather than retuned for
+  its own sake, since the actual requirement (animate on mount/update, tokens only) was
+  already met.
+- **Modal entrance** — already used `--duration-enter`/`--ease-spring` (a valid token
+  pair outside the core §2 list, same status as the progress ring above); no exit
+  animation existed and none was added — modals in this app currently close by DOM
+  removal, not a class-driven exit transition, and adding one was judged out of scope
+  for a gap-closing pass this focused.
+
+No PR 3 remains for §5 — the section is complete. If a future audit finds another gap,
+treat it as a normal follow-up fix, not evidence the whole system needs rebuilding.
 
 ## Branded print/PDF export (issue #160)
 

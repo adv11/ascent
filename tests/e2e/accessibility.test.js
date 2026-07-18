@@ -272,7 +272,11 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.template-card', { hasText: 'Learning Piano' }).locator('.template-card-hide').click();
+    // Issue #206 §4.1 — Hide moved behind the card's ⋯ overflow menu; the
+    // menu itself is portaled to document.body on open (dropdown.js), so
+    // it's located at the page level, not via the card locator.
+    await page.locator('.template-card', { hasText: 'Learning Piano' }).locator('.template-card-overflow-btn').click();
+    await page.locator('.dropdown-menu .dropdown-item', { hasText: 'Hide' }).click();
     const dialog = page.locator('.modal-overlay[aria-label*="Learning Piano"]');
     await expect(dialog).toBeVisible();
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label*="Learning Piano"]' });

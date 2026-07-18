@@ -83,7 +83,9 @@ function renderSnapshot(snapshot) {
 }
 
 export function renderSharedRoadmapView(app) {
-  const container = el('div', { className: 'shared-view-container' }, [
+  // fade-in (issue #206 §5) — same route-transition coverage every other
+  // page's outermost container already has; see landing.js's identical note.
+  const container = el('div', { className: 'shared-view-container fade-in' }, [
     el('p', { className: 'shared-view-loading', text: 'Loading roadmap…' })
   ]);
   app.replaceChildren(container);

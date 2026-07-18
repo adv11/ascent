@@ -142,7 +142,11 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
     const card = page.locator('.template-card', { hasText: 'Deletable Roadmap' });
     await expect(card.locator('.template-card-current-badge')).toContainText('Current');
-    await card.locator('[data-action="delete"]').click();
+    // Issue #206 §4.1 — Delete moved behind the card's ⋯ overflow menu; the
+    // menu itself is portaled to document.body on open (dropdown.js), so
+    // it's located at the page level, not via the card locator.
+    await card.locator('.template-card-overflow-btn').click();
+    await page.locator('.dropdown-menu .dropdown-item', { hasText: 'Delete' }).click();
     await page.locator('.modal-overlay [data-action="confirm"]').click();
 
     await expect(page.locator('.template-card', { hasText: 'Deletable Roadmap' })).toHaveCount(0);

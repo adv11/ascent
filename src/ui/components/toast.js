@@ -15,6 +15,15 @@ function ensureRoot() {
   return root;
 }
 
+// Issue #206 §5 — the exit delay below (120ms) matches app.css's
+// `.toast:not(.show)` exit transition, which reads `--duration-fast`
+// (120ms) — kept as a literal here rather than read from the CSS custom
+// property at runtime (a `getComputedStyle` round trip for one constant
+// isn't worth it), so if `--duration-fast` is ever retuned, update this
+// value to match or the toast will be removed from the DOM before its own
+// fade-out finishes.
+const EXIT_TRANSITION_MS = 120;
+
 export function showToast(message, type = 'info', duration = 3200) {
   const stack = ensureRoot();
   const toast = document.createElement('div');
@@ -24,6 +33,6 @@ export function showToast(message, type = 'info', duration = 3200) {
   requestAnimationFrame(() => toast.classList.add('show'));
   setTimeout(() => {
     toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 260);
+    setTimeout(() => toast.remove(), EXIT_TRANSITION_MS);
   }, duration);
 }

@@ -283,10 +283,18 @@ html, body { min-height: 100%; }
 
 body {
   font-family: var(--font-body);
-  background:
-    radial-gradient(1200px 500px at 10% -10%, var(--color-brand-gold), transparent 55%),
-    radial-gradient(900px 400px at 90% 0%, var(--color-brand-rose), transparent 50%),
-    var(--color-bg);
+  /* issue #206 §5 follow-up — was a page-wide radial gold/rose glow behind
+     every single screen (dashboard, onboarding, progress, settings); found
+     live to read as a large, high-frequency gradient fill, the same category
+     of thing the earlier "no gradients anywhere, solid colors only" user
+     decision already removed from the brand mark/progress ring/template-card
+     border (see `--gradient-alpenglow`'s own comment below — it has zero
+     remaining call sites app-wide) — this was simply a spot that decision's
+     original sweep had missed, since it targeted component-level gradient
+     fills, not this page-wide ambient background. Solid `--color-bg` now,
+     matching the token's own documented "warm neutral, not pure white/black"
+     role. */
+  background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -520,22 +528,23 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    defensive reset for any future child that doesn't. */
 .icon-btn-group > * { border: none; background: transparent; }
 
-/* Decorative diagonal-grid + radial brand-glow background layer (the
-   reference's faint grid-line texture behind hero/CTA sections) — an
-   absolutely-positioned child of any position:relative;overflow:hidden
-   section. Diagonal lines read from --color-text via color-mix() so they stay
-   faint-but-visible in both themes without a separate dark-theme override
-   (unlike .auth-marketing-bg-pattern's fixed-white version above, which is
-   correct only because that one panel is always-dark regardless of site
-   theme); the radial glow reuses --color-brand-gold, which already flips per
-   theme on its own. */
+/* Decorative diagonal-grid background layer (the reference's faint
+   grid-line texture behind hero/CTA sections) — an absolutely-positioned
+   child of any position:relative;overflow:hidden section. Diagonal lines
+   read from --color-text via color-mix() so they stay faint-but-visible in
+   both themes without a separate dark-theme override (unlike
+   .auth-marketing-bg-pattern's fixed-white version above, which is correct
+   only because that one panel is always-dark regardless of site theme).
+   issue #206 §5 follow-up removed the radial --color-brand-gold glow this
+   layer used to also carry — same "no ambient color-gradient background
+   anywhere in the app" decision as body/.auth-page-bg/.auth-marketing
+   above; the repeating-linear-gradient line pattern itself is a faint
+   6%-opacity structural texture, not a color wash, and is kept. */
 .bg-grid-glow {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image:
-    radial-gradient(640px 380px at 18% 0%, var(--color-brand-gold), transparent 60%),
-    repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-text) 6%, transparent) 0px, color-mix(in srgb, var(--color-text) 6%, transparent) 1px, transparent 1px, transparent 28px);
+  background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-text) 6%, transparent) 0px, color-mix(in srgb, var(--color-text) 6%, transparent) 1px, transparent 1px, transparent 28px);
 }
 
 /* Theme toggle */
@@ -757,12 +766,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   min-width: 0;
 }
 
+/* issue #206 §5 follow-up — was two radial gold/rose glows covering the
+   entire auth-page right column; removed for the same "ambient gradient
+   background reads as a high-frequency fill" reason as `body`'s own fix
+   above. `.auth-page-bg` is now solid `--color-bg`, effectively a no-op
+   layer (it exists mainly so `.auth-page-right`'s content can sit at a
+   z-index above it without a separate background rule) — left in place
+   rather than deleted in case a future non-gradient background treatment
+   (a subtle pattern, etc.) wants this same fixed full-bleed layer again. */
 .auth-page-bg {
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(circle at 20% 20%, var(--color-brand-gold), transparent 40%),
-    radial-gradient(circle at 80% 10%, var(--color-brand-rose), transparent 35%);
+  background: var(--color-bg);
   pointer-events: none;
   z-index: 0;
 }
@@ -774,16 +789,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    background regardless of the site's own light/dark theme — this panel is
    intentionally always-dark, matching the ZeBeyond direction's near-black
    marketing surface (issue #155) rather than the previous solid brand-teal
-   gradient fill. Two radial teal/cyan glows replace the old flat gradient;
-   the diagonal-line texture below is unchanged. */
-/* intentional: fixed literals, not tokens, since this panel never reads the
+   gradient fill. issue #206 §5 follow-up removed the two radial teal/cyan
+   glows this comment used to describe (a leftover from the pre-Alpenglow
+   ZeBeyond/lime pass, never retuned to gold/rose) — solid near-black now,
+   same "no ambient background gradient anywhere in the app" decision as
+   `body`/`.auth-page-bg` above; the diagonal-line texture below is
+   unchanged. */
+/* intentional: fixed literal, not a token, since this panel never reads the
    site's own light/dark theme tokens — same reasoning as the rest of this
    always-dark panel, issue #116. */
 .auth-marketing {
-  background:
-    radial-gradient(700px 500px at 12% 90%, rgba(45, 212, 191, 0.28), transparent 60%),
-    radial-gradient(520px 420px at 92% 8%, rgba(34, 211, 238, 0.14), transparent 65%),
-    linear-gradient(180deg, #0a0a0a 0%, #0d0f0e 100%);
+  background: #0a0a0a;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1106,52 +1122,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 }
 .template-card-started { border-color: var(--color-border-strong); }
 
-.template-card-hide {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid var(--border-glass);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: 15px;
-  line-height: 1;
-  cursor: pointer;
-}
-.template-card-hide:hover { color: var(--color-danger); border-color: var(--color-danger); }
-
-/* Distinct from .template-card-hide (issue #61) — this button permanently
-   deletes a custom/imported roadmap and all its progress, unlike the neutral
-   hide button's reversible per-user visibility toggle. Styled danger-forward
-   at rest (not just on hover) so the destructive affordance is visible before
-   the click, not just caught by the confirmDialog after it. */
-.template-card-delete {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid var(--color-danger);
-  background: var(--color-surface);
-  color: var(--color-danger);
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-}
-/* intentional: fixed white text on a solid --color-danger background on hover, same in both themes (issue #116) */
-.template-card-delete:hover { background: var(--color-danger); color: #fff; border-color: var(--color-danger); }
-
 /* Corner info button on "Create your own roadmap" (issue #4 follow-up) —
-   same slot/sizing as .template-card-hide, opening buildYourOwnGuide instead
-   of hiding/deleting. Used to live only on the now-retired "blank" template
-   as an inline text link; moved here since blank was its sole home. */
+   same 24px circular-corner-button slot/sizing the old standalone
+   .template-card-hide/-delete/-favorite buttons used (all three retired in
+   issue #206 §4.1, collapsed into .template-card-overflow-btn below —
+   "Create your own roadmap" is the one card that never had 2+ secondary
+   actions, so it keeps its own single always-visible corner button rather
+   than a menu), opening buildYourOwnGuide instead of hiding/deleting. Used
+   to live only on the now-retired "blank" template as an inline text link;
+   moved here since blank was its sole home. */
 .template-card-info-corner {
   position: absolute;
   top: 12px;
@@ -1172,17 +1151,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 /* issue #155 v2 Phase D3 (full completion pass) — straight text/border swap. */
 :root[data-theme='dark'] .template-card-info-corner:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
 
-/* Favorite-roadmap toggle (issue #177) — same 24px circular-corner-button
-   slot/sizing as .template-card-hide/-delete/-info-corner, placed directly
-   left of whichever one of those three a given card also renders (top-right,
-   offset by one button-width + gap). Top-left was tried first but collides
-   with the decorative template icon (createDecorativeIcon()/
-   pickCustomRoadmapIcon()), which also renders at the top-left of the
-   card's normal content flow — found live, screenshotted. */
-.template-card-favorite {
-  position: absolute;
-  top: 12px;
-  right: 44px;
+/* Card-action overflow menu (issue #206 §4.1) — collapses the favorite +
+   hide/delete corner buttons (formerly `.template-card-favorite`/`-hide`/
+   `-delete`, issue #177/#61, removed here) behind one ⋯ trigger.
+   `.template-card-overflow` is `createDropdown()`'s own `.dropdown` wrapper
+   (app.css's existing `.dropdown`/`.dropdown-menu`/`.dropdown-item` rules
+   style the portaled menu itself) positioned absolutely in the same
+   top-right corner slot the old standalone hide/delete button used to
+   occupy — only one button now, so no `right: 44px` favorite-offset variant
+   is needed. */
+.template-card-overflow { position: absolute; top: 12px; right: 12px; }
+.template-card-overflow-btn {
   width: 24px;
   height: 24px;
   display: grid;
@@ -1193,11 +1172,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   color: var(--color-text-muted);
   cursor: pointer;
 }
-.template-card-favorite:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
-.template-card-favorite.is-favorite { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); background: var(--color-warning-bg); }
-/* issue #177 — same lime-recolor pattern as every other --color-brand-gold accent added post-issue-#155-v2. */
-:root[data-theme='dark'] .template-card-favorite:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
-:root[data-theme='dark'] .template-card-favorite.is-favorite { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); background: var(--color-warning-bg); }
+.template-card-overflow-btn:hover,
+.template-card-overflow-btn[aria-expanded='true'] { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
+/* issue #155 v2 Phase D3 (full completion pass) — straight text/border swap, same as .template-card-info-corner:hover above. */
+:root[data-theme='dark'] .template-card-overflow-btn:hover,
+:root[data-theme='dark'] .template-card-overflow-btn[aria-expanded='true'] { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
 
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
 .hidden-templates-toggle { justify-self: center; }
@@ -3039,9 +3018,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    dark-enough in both themes to safely host a fixed white checkmark with no
    per-theme text-color override needed (unlike the old lime-based dark
    theme, which needed near-black text — that override is removed below).
-   No scale micro-animation added here — explicitly deferred to §5/PR2's
-   motion-system pass; the existing scale(0)->scale(1) is a static toggle
-   between two end states, not a new bounce effect. */
+   The scale micro-animation itself (§5) shipped separately, below, as
+   `.check-pop` — kept apart from `.check-box`'s own base rule since it's a
+   one-shot class `toggleDone()` (dashboard.js) adds/removes around the
+   click, not a permanent style. */
 .check-box {
   width: 20px;
   height: 20px;
@@ -3069,6 +3049,25 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 }
 .check-item.done .check-mark { transform: scale(1); opacity: 1; }
 .check-item.done .check-title { color: var(--color-text-muted); }
+
+/* issue #206 §5 — checkbox check micro-animation: a scale(1)->scale(1.15)->
+   scale(1) pop on the checkbox itself, layered on top of (not replacing) the
+   check-mark's own existing spring-bounce fade-in above. `--duration-fast`
+   keeps the whole pop comfortably under the spec's 200ms ceiling — the
+   app's highest-frequency interaction must never read as laggy under rapid
+   repeated clicking. Class lifecycle (add, forced reflow, remove-on-
+   `animationend`) lives in `toggleDone()`, dashboard.js — see that
+   function's own comment for why a one-shot JS-toggled class was needed
+   instead of a plain CSS transition here. */
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.check-box.check-pop { animation: check-pop var(--duration-fast) var(--ease-standard); }
+@media (prefers-reduced-motion: reduce) {
+  .check-box.check-pop { animation: none; }
+}
 
 .check-body { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 /* issue #6 Phase 7 — strike-through animates in via `::after` width 0% -> 100%
@@ -3666,6 +3665,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    left-edge color bar reads as a cut corner against a fully rounded pill,
    the same reasoning as the sidebar active-item shape change in this pass —
    flagging this shape change. */
+/* issue #206 §5 — entrance/exit timing switched from a hardcoded 220ms/ease
+   to the shared duration/ease tokens (the spec's "only --duration-*/--ease-*
+   tokens" hard limit), matching the modal entrance's own duration-enter/
+   ease-spring pairing in spirit: slide+fade in on show, a quicker fade+slide
+   back on dismiss. `toast.js`'s own setTimeout delays (260ms before the DOM
+   remove) stay in sync with `--duration-base`, not restated here since JS
+   can't read a CSS custom property without an extra getComputedStyle call
+   for a one-line constant — see that file's own comment. */
 .toast {
   background: var(--color-surface);
   color: var(--color-text);
@@ -3677,9 +3684,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   box-shadow: var(--shadow-lg);
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity var(--duration-base) var(--ease-decelerate), transform var(--duration-base) var(--ease-decelerate);
 }
 .toast.show { opacity: 1; transform: translateY(0); }
+.toast:not(.show) { transition-timing-function: var(--ease-accelerate); transition-duration: var(--duration-fast); }
 .toast-success { border-left-color: var(--color-success); }
 .toast-info { border-left-color: var(--color-brand-gold); }
 .toast-error { border-left-color: var(--color-danger); }

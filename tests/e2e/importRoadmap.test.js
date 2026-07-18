@@ -247,7 +247,8 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
 
     const card = page.locator('.template-card', { hasText: 'Imported Roadmap' });
     await expect(card.locator('.template-card-current-badge')).toContainText('Current');
-    await expect(card.locator('[data-action="delete"]')).toBeVisible();
+    // Issue #206 §4.1 — Delete moved behind the card's ⋯ overflow menu.
+    await expect(card.locator('.template-card-overflow-btn')).toBeVisible();
   });
 });
 

@@ -632,12 +632,30 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   // topic that's since been unchecked — either by re-toggling it here
   // directly, or by un-checking the linked todo itself (dailyTodoPanel.js's
   // uncheck-sync path calls this same store method, not this handler).
-  function toggleDone(item) {
+  // `checkBoxEl` (issue #206 §5) — when passed and the toggle is marking the
+  // item *done* (never on uncheck, per the spec's "on marking done" wording),
+  // fires the checkbox's scale(1)->scale(1.15)->scale(1) pop
+  // (`.check-pop`, app.css) directly and synchronously here, not via
+  // patchDoneStates()'s snapshot diff — that function re-touches every
+  // item's `.done` class on every store update with no "did this specific
+  // row just flip" signal, so it can't distinguish a genuine toggle from an
+  // unrelated re-render without extra state. Removing the class before
+  // re-adding it (with a forced reflow in between) is required for the
+  // animation to replay on rapid repeated clicks — otherwise a second toggle
+  // before the first animation's `animationend` fires would be a no-op class
+  // add, and the pop simply wouldn't restart.
+  function toggleDone(item, checkBoxEl) {
     const live = store.getSnapshot().allItems[item.id];
     if (!live) return;
     const nextDone = !live.done;
     const patch = { done: nextDone };
     if (!nextDone && live.completedViaTodoAt) patch.completedViaTodoAt = null;
+    if (nextDone && checkBoxEl) {
+      checkBoxEl.classList.remove('check-pop');
+      void checkBoxEl.offsetWidth;
+      checkBoxEl.classList.add('check-pop');
+      checkBoxEl.addEventListener('animationend', () => checkBoxEl.classList.remove('check-pop'), { once: true });
+    }
     store.updateItem(item.id, patch);
   }
 
@@ -693,7 +711,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       dataset: { id: item.id },
       onClick: e => {
         if (e.target.closest('[data-action]')) return;
-        toggleDone(item);
+        toggleDone(item, e.currentTarget.querySelector('.check-box'));
       }
     }, [
       el('div', {
@@ -704,12 +722,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
         'aria-label': item.title,
         onClick: e => {
           e.stopPropagation();
-          toggleDone(item);
+          toggleDone(item, e.currentTarget);
         },
         onKeydown: e => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            toggleDone(item);
+            toggleDone(item, e.currentTarget);
           }
         }
       }, [el('span', { className: 'check-mark', 'aria-hidden': 'true' }, [createIcon('check', { size: 'xs' })])]),

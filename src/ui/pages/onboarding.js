@@ -65,6 +65,13 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   let picking = false;
   const cardEls = [];
+  // Overflow-menu dropdowns (issue #206 §4.1) are portaled to document.body
+  // while open (see dropdown.js's own comment on why) — renderVisibleGrid()
+  // tears down and rebuilds every card, so each dropdown's own document
+  // click-listener must be explicitly cleaned up first or it leaks one per
+  // re-render. Same "collect + cleanup before rebuild" pattern cardEls uses,
+  // just for a different lifecycle concern.
+  let dropdownEls = [];
   let createCardEl = null;
   // Assigned below, once the button itself is built — declared up here so
   // setBusy() (called from deep inside pickTemplate/pickCustomRoadmap/
@@ -133,17 +140,36 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     renderVisibleGrid();
   }
 
-  function buildFavoriteButton(roadmapId, name) {
-    const isFavorite = favoriteRoadmapIds.includes(roadmapId);
-    return el('button', {
+  // Issue #206 §4.1 — a card with 2+ icon-button corner actions (favorite +
+  // hide, or favorite + delete) collapses them behind one ⋯ overflow trigger
+  // instead of stacking separate corner buttons; the primary "pick this
+  // roadmap" action stays the card's own main click target
+  // (`.template-card-pick`), untouched by this. "Create your own roadmap"
+  // has only one secondary action (the info button) and is deliberately left
+  // alone — the spec only calls for collapsing when there are two or more.
+  // `createDropdown()` portals its menu to `document.body` on open, so the
+  // trigger button itself never needs `data-action`/`stopPropagation()` — a
+  // portaled menu can't be an accidental nested-click target of the card's
+  // own onClick fallback the way an in-card button would be.
+  function buildCardOverflowMenu(name, actions) {
+    const trigger = el('button', {
       type: 'button',
-      className: `template-card-favorite${isFavorite ? ' is-favorite' : ''}`,
-      'data-action': 'favorite',
-      'aria-pressed': String(isFavorite),
-      'aria-label': isFavorite ? `Unfavorite ${name}` : `Favorite ${name}`,
-      title: isFavorite ? `Unfavorite ${name}` : `Favorite ${name}`,
+      className: 'template-card-overflow-btn',
+      'aria-label': `More actions for ${name}`,
+      title: 'More actions'
+    }, [createIcon('overflow', { size: 'xs' })]);
+    const dropdown = createDropdown(trigger, actions, { align: 'end' });
+    dropdown.classList.add('template-card-overflow');
+    dropdownEls.push(dropdown);
+    return dropdown;
+  }
+
+  function buildFavoriteMenuAction(roadmapId, name) {
+    const isFavorite = favoriteRoadmapIds.includes(roadmapId);
+    return {
+      text: isFavorite ? 'Unfavorite' : 'Favorite',
       onClick: () => handleToggleFavorite(roadmapId, name)
-    }, [createIcon('star', { size: 'xs' })]);
+    };
   }
 
   // "Create your own roadmap" (issue #100 — supersedes the separate manual
@@ -292,15 +318,10 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       onClick: e => { if (e.target === cardEl) pickCustomRoadmap(roadmap, cardEl); }
     }, [
       pickBtn,
-      buildFavoriteButton(roadmap.id, roadmap.title),
-      el('button', {
-        type: 'button',
-        className: 'template-card-delete',
-        'data-action': 'delete',
-        'aria-label': `Delete ${roadmap.title}`,
-        title: `Delete ${roadmap.title}`,
-        onClick: () => deleteCustomCard(roadmap, cardEl)
-      }, [createIcon('trash', { size: 'xs' })]),
+      buildCardOverflowMenu(roadmap.title, [
+        buildFavoriteMenuAction(roadmap.id, roadmap.title),
+        { text: 'Delete', danger: true, onClick: () => deleteCustomCard(roadmap, cardEl) }
+      ]),
       buildPickingOverlay()
     ]);
 
@@ -331,36 +352,33 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       footerEl
     ]);
     // Issue #6 Phase 9 — the card is a plain wrapper; role="button" moved off
-    // it onto the real nested .template-card-pick button so the hide button
-    // (a second, independently-focusable control) is a sibling, not nested
-    // inside another button — see the .template-card-pick CSS comment, which
-    // already documented (but never implemented) that the outer card "can
-    // still have a plain (non-ARIA) onClick for mouse convenience." Without
-    // it, `.template-card`'s own 24px/20px padding around `.template-card-pick`
-    // is real, unhandled dead space — a click landing there (not uncommon:
-    // found via a genuinely reproducible E2E flake where Playwright, unable
-    // to scroll a card fully into view on a short/narrow viewport, clicked
-    // the center of whatever portion *was* visible, which sometimes fell
-    // in this padding rather than on the button) silently does nothing, no
-    // error, exactly the symptom investigated. `e.target === cardEl` only
-    // fires this fallback for a click that lands directly on the div itself
-    // (the dead zone) — a click on any real child (the button, the hide
-    // button, the picking overlay) already has its own handler and must not
-    // also re-trigger this one via bubbling.
+    // it onto the real nested .template-card-pick button so the overflow
+    // menu trigger (issue #206 §4.1, a second, independently-focusable
+    // control collapsing favorite/hide behind one ⋯ button) is a sibling,
+    // not nested inside another button — see the .template-card-pick CSS
+    // comment, which already documented (but never implemented) that the
+    // outer card "can still have a plain (non-ARIA) onClick for mouse
+    // convenience." Without it, `.template-card`'s own 24px/20px padding
+    // around `.template-card-pick` is real, unhandled dead space — a click
+    // landing there (not uncommon: found via a genuinely reproducible E2E
+    // flake where Playwright, unable to scroll a card fully into view on a
+    // short/narrow viewport, clicked the center of whatever portion *was*
+    // visible, which sometimes fell in this padding rather than on the
+    // button) silently does nothing, no error, exactly the symptom
+    // investigated. `e.target === cardEl` only fires this fallback for a
+    // click that lands directly on the div itself (the dead zone) — a click
+    // on any real child (the button, the overflow trigger, the picking
+    // overlay) already has its own handler and must not also re-trigger this
+    // one via bubbling.
     const cardEl = el('div', {
       className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
       onClick: e => { if (e.target === cardEl) pickTemplate(template, cardEl); }
     }, [
       pickBtn,
-      buildFavoriteButton(template.id, template.name),
-      el('button', {
-        type: 'button',
-        className: 'template-card-hide',
-        'data-action': 'hide',
-        'aria-label': `Hide ${template.name}`,
-        title: `Hide ${template.name}`,
-        onClick: () => hideTemplate(template, cardEl)
-      }, [createIcon('close', { size: 'xs' })]),
+      buildCardOverflowMenu(template.name, [
+        buildFavoriteMenuAction(template.id, template.name),
+        { text: 'Hide', onClick: () => hideTemplate(template, cardEl) }
+      ]),
       buildPickingOverlay()
     ]);
 
@@ -441,6 +459,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // otherwise — Array#sort is a stable sort in every engine this app targets.
   function renderVisibleGrid() {
     cardEls.length = 0;
+    dropdownEls.forEach(dropdown => dropdown._cleanup?.());
+    dropdownEls = [];
     visibleGrid.replaceChildren();
     visibleGrid.appendChild(buildCreateCard());
     const pickable = [
@@ -607,6 +627,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     themeToggleBtn._cleanup?.();
     dailyTodoPanel?._cleanup?.();
     accountDropdown._cleanup?.();
+    dropdownEls.forEach(dropdown => dropdown._cleanup?.());
     unsubStore();
   };
 }
