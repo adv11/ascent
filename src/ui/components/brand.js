@@ -21,6 +21,11 @@ function brandGlyph() {
   return svg;
 }
 
+// issue #206 §7 — the old "teal/cyan" fill this comment used to describe is
+// now solid var(--color-brand-gold) (.brand-mark, app.css), matching the
+// Progress page's ring stroke — both flat gold, no gradient app-wide per a
+// later user decision in the same PR. No change needed here in the glyph
+// itself — it was already currentColor, driven entirely by .brand-mark's CSS.
 export function createBrandIcon() {
   return el('span', { className: 'brand-mark' }, [brandGlyph()]);
 }

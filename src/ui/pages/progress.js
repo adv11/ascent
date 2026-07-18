@@ -134,20 +134,25 @@ function renderRangeChips(active, onChange) {
 // horizontal icon-left/number-right row, issue #6 Phase 4.1, still used by dashboard.js
 // and left alone there) to Phase B's `.kpi-tile` (the v2 reference's vertical KPI
 // card). `hero: true` marks the single solid-filled tile per the reference's "exactly
-// one hero-highlighted tile" pattern — "Items complete" is the one that matters most
+// one hero-highlighted tile" pattern — "Topics complete" is the one that matters most
 // on this page, mirroring the reasoning the issue itself asked for. No fabricated
 // "+N% vs last month" delta caption is added — this app doesn't track a comparable
 // prior-period figure for any of these four stats, and inventing one would violate the
 // "no fabricated data" discipline this codebase otherwise holds to (see AI-import's
 // own error-message conventions in .claude/rules/content-style.md for the same
 // principle applied to copy). `bar`, where present, renders below the number instead.
-function renderStatTile({ icon, value, total, label, bar, hero, caption }) {
+// issue #206 §6 — `zero: true` de-emphasizes a stat that's still at its starting
+// value (0 topics done, 0-day streak, 0.0 velocity): the number renders muted
+// instead of the tile's normal bold/accent color, so a fresh roadmap doesn't read
+// as a wall of loud "0"s. Pair with an action-oriented `caption` (see call sites
+// below) rather than leaving the zero to speak for itself.
+function renderStatTile({ icon, value, total, label, bar, hero, caption, zero }) {
   return el('div', { className: `kpi-tile${hero ? ' kpi-tile-hero' : ''}` }, [
     el('div', { className: 'kpi-tile-head' }, [
       el('span', { className: 'kpi-tile-label', text: label }),
       el('span', { className: 'card-arrow-badge' }, [createIcon(icon, { size: 'xs' })])
     ]),
-    el('div', { className: 'kpi-tile-number' }, [value, total].filter(Boolean)),
+    el('div', { className: `kpi-tile-number${zero ? ' kpi-tile-number-zero' : ''}` }, [value, total].filter(Boolean)),
     bar ? el('div', { className: 'kpi-tile-bar' }, [bar]) : null,
     caption ? el('p', { className: 'kpi-tile-delta', text: caption }) : null
   ].filter(Boolean));
@@ -181,30 +186,38 @@ function renderStatCards(analytics, animate, timeSpentSeconds) {
       icon: 'check',
       value: doneValue,
       total: el('span', { className: 'kpi-tile-total', text: `/ ${overview.total}` }),
-      label: 'Items complete',
+      label: 'Topics complete',
       bar: renderMiniBar(overview.pct),
-      hero: true
+      hero: true,
+      zero: overview.done === 0,
+      caption: overview.done === 0 ? 'Check off your first topic to get started.' : undefined
     }),
     renderStatTile({
       icon: 'flame',
       value: currentValue,
       total: el('span', { className: 'kpi-tile-total', text: streaks.current === 1 ? 'day' : 'days' }),
       label: 'Current streak',
-      caption: streakFreezesAvailable > 0
-        ? `${streakFreezesAvailable} streak freeze${streakFreezesAvailable === 1 ? '' : 's'} available`
-        : 'No streak freezes available'
+      zero: streaks.current === 0,
+      caption: streaks.current === 0
+        ? 'Complete a topic today to start your streak.'
+        : streakFreezesAvailable > 0
+          ? `${streakFreezesAvailable} streak freeze${streakFreezesAvailable === 1 ? '' : 's'} available.`
+          : 'No streak freezes available.'
     }),
     renderStatTile({
       icon: 'sparkle',
       value: longestValue,
       total: el('span', { className: 'kpi-tile-total', text: streaks.longest === 1 ? 'day' : 'days' }),
-      label: 'Longest streak'
+      label: 'Longest streak',
+      zero: streaks.longest === 0
     }),
     renderStatTile({
       icon: 'trendingUp',
       value: velocityValue,
       total: el('span', { className: 'kpi-tile-total', text: '/ day' }),
-      label: '7-day velocity'
+      label: '7-day velocity',
+      zero: velocity === 0,
+      caption: velocity === 0 ? 'Complete topics daily to build velocity.' : undefined
     }),
     renderStatTile({
       icon: 'timer',
@@ -275,12 +288,12 @@ function renderProjectionCard(projection) {
     return el('p', { className: 'projection-empty', text: "You've completed every topic in this roadmap. Nice work." });
   }
   if (projection.noRecentActivity) {
-    return el('p', { className: 'projection-empty', text: 'No recent activity — pick up 3 items today to get back on track.' });
+    return el('p', { className: 'projection-empty', text: 'No recent activity. Check off 3 topics today to get back on track.' });
   }
   return el('div', { className: 'projection-card-body' }, [
-    el('p', { className: 'projection-pace', text: `At your current pace (${projection.velocity.toFixed(1)} items/day)` }),
+    el('p', { className: 'projection-pace', text: `At your current pace (${projection.velocity.toFixed(1)} topics/day)` }),
     el('p', { className: 'projection-headline', text: `~${projection.daysToComplete} days · ${formatLongDate(projection.projectedDate)}` }),
-    el('p', { className: 'projection-boost', text: `Speed up by 2 items/day → done by ${formatLongDate(projection.boostedProjectedDate)}.` })
+    el('p', { className: 'projection-boost', text: `Speed up by 2 topics/day → done by ${formatLongDate(projection.boostedProjectedDate)}.` })
   ]);
 }
 
@@ -336,6 +349,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   const priorityTableSlot = el('div', {});
   const projectionSlot = el('div', {});
   const rangeToggleSlot = el('div', {});
+  const velocityEmptySlot = el('div', {});
   const lineCanvas = el('canvas', { className: 'chart-canvas-loading' });
   const barCanvas = el('canvas', { className: 'chart-canvas-loading' });
   const lineSkeleton = createSkeletonCard();
@@ -375,6 +389,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     ]),
     el('div', { className: 'progress-card' }, [
       el('h2', { className: 'progress-card-title', text: 'Daily velocity' }),
+      velocityEmptySlot,
       el('div', { className: 'chart-container' }, [barSkeleton, barCanvas])
     ]),
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Phase breakdown' }), phaseBreakdownSlot]),
@@ -412,6 +427,17 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     const days = currentRangeDays();
     const cumulative = buildCumulativeSeries(effectiveLog, days);
     const velocitySeries = buildVelocitySeries(effectiveLog, days);
+    // issue #206 §6 — a flat-zero velocity chart (no completions anywhere in the
+    // selected range) reads as an error/loading state rather than "nothing to show
+    // yet" without a caption. Small solid gold dot, not a full illustration.
+    if (velocitySeries.counts.every(count => count === 0)) {
+      velocityEmptySlot.replaceChildren(el('p', { className: 'chart-empty-note' }, [
+        el('span', { className: 'chart-empty-dot', 'aria-hidden': 'true' }),
+        el('span', { text: 'No activity in this range yet. Check off a topic to start your trend.' })
+      ]));
+    } else {
+      velocityEmptySlot.replaceChildren();
+    }
     const [nextLineChart, nextBarChart] = await Promise.all([
       createLineChart(lineCanvas, cumulative),
       createBarChart(barCanvas, velocitySeries)

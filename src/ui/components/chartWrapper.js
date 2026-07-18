@@ -42,13 +42,13 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
-const BRAND_FILL_TOP = 'rgba(20, 184, 166, 0.3)';
-const BRAND_FILL_BOTTOM = 'rgba(20, 184, 166, 0)';
+const BRAND_FILL_TOP = 'rgba(217, 164, 65, 0.3)';
+const BRAND_FILL_BOTTOM = 'rgba(217, 164, 65, 0)';
 const AVERAGE_LINE_COLOR = '#f97316';
 
 function axisOptions() {
-  const tickColor = cssVar('--muted', '#5f6e84');
-  const gridColor = cssVar('--line', '#dbe3ee');
+  const tickColor = cssVar('--color-text-muted', '#6b6156');
+  const gridColor = cssVar('--color-border', '#e4dfd8');
   return {
     x: { ticks: { color: tickColor }, grid: { color: gridColor } },
     y: { ticks: { color: tickColor }, grid: { color: gridColor } }
@@ -60,7 +60,7 @@ function axisOptions() {
 export async function createLineChart(canvas, { labels, totals }) {
   const Chart = await loadChartModule();
   const ctx = canvas.getContext('2d');
-  const brandColor = cssVar('--brand', '#0f766e');
+  const brandColor = cssVar('--color-brand-gold', '#d9a441');
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height || 260);
   gradient.addColorStop(0, BRAND_FILL_TOP);
   gradient.addColorStop(1, BRAND_FILL_BOTTOM);
@@ -94,7 +94,7 @@ export async function createLineChart(canvas, { labels, totals }) {
 // velocity bars plus a 7-day rolling-average overlay line.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
-  const brandColor = cssVar('--brand', '#0f766e');
+  const brandColor = cssVar('--color-brand-gold', '#d9a441');
   const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
     data: {
@@ -132,8 +132,8 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
 // floating custom tooltip (a small white rounded-rect card, dark text, pointing down
 // at the hovered bar) + legend row (dot + label). Built and visually verified in
 // isolation this phase; no page calls this yet — Phase C/D wires it into a real chart.
-const BUCKET_TOKENS = { high: '--accent-lime', medium: '--faint', low: '--line-strong' };
-const BUCKET_FALLBACKS = { high: '#f0f941', medium: '#94a3b8', low: '#c7d2e1' };
+const BUCKET_TOKENS = { high: '--color-brand-gold', medium: '--color-text-faint', low: '--color-border-strong' };
+const BUCKET_FALLBACKS = { high: '#d9a441', medium: '#9c9184', low: '#d3ccc0' };
 export const BUCKET_LEGEND = [
   { bucket: 'high', label: 'High' },
   { bucket: 'medium', label: 'Medium' },

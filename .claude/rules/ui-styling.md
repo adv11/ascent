@@ -552,6 +552,142 @@ layout regression — expected, since every change across this whole pass (Phase
 is a color-value swap; no `display`/`flex`/`grid`/`width`/`height`/`padding`/`margin`
 property was touched anywhere.
 
+## Visual design language v3 — "Alpenglow" (issue #206, supersedes v2 above)
+
+Issue #206 replaces (not extends) the lime/near-black direction documented in full
+above — same supersession relationship v2 had to its own ZeBeyond predecessor. Warm
+neutrals in both themes (not pure white/black, not cream) with a two-color gold→rose
+brand gradient (`--gradient-alpenglow`) as the signature element, used sparingly:
+the active-roadmap card's top border, the Progress page's "Complete" ring, the brand
+mark, and one gradient accent dot per empty state — never a flat fill on a
+button/chip/badge or any high-frequency element.
+
+**Full token replace, not an alias layer.** Every token in `:root`/
+`:root[data-theme='dark']` was renamed and re-valued to the issue's exact spec'd names
+(`--color-bg`, `--color-surface`, `--color-surface-raised`, `--color-border`,
+`--color-border-strong`, `--color-text`, `--color-text-muted`, `--color-text-faint`,
+`--color-brand-gold`, `--color-brand-rose`, `--color-success`/`-bg`, `--color-warning`/
+`-bg`, `--color-danger`/`-bg`, `--color-p0`–`--color-p3`, plus the type/spacing/radius/
+shadow/motion scale — `--text-*`, `--space-*`, `--radius-*`, `--shadow-*`,
+`--duration-*`, `--ease-*`), and every call site across `app.css` was mechanically
+updated in the same PR — a deliberate decision made with the user after an initial
+parallel-namespace (`-ag`-suffixed) approach was rejected as leaving permanent dual
+naming in production CSS. If you find a stray `--ink`/`--soft`/`--panel`/`--brand`/
+`--accent-lime*`/`--muted`/`--line`/`--accent-2*` reference anywhere (including inside
+`cssVar()` calls in `.js` files, which a pure `app.css` grep won't catch — this bit
+`chartWrapper.js`'s chart-color helpers during this migration, see below), it's a
+migration miss and should be repointed to the mapping below, not left as dead code.
+
+**Old token → new token mapping** (for anything not yet migrated, or any future
+archaeology): `--ink`→`--color-text`, `--muted`→`--color-text-muted`,
+`--faint`→`--color-text-faint`, `--panel`/`--panel-2`→`--color-surface`/
+`--color-surface-raised`, `--line`/`--line-strong`→`--color-border`/
+`--color-border-strong`, `--soft`→`--color-bg` (background role) or `--color-text`
+(text-on-accent-fill role — gold hosts dark text in **both** themes now, collapsing the
+old cross-theme near-black/near-white flip), `--danger`/`--danger-border`→
+`--color-danger` (border variant collapsed, no dedicated tint-border token in spec),
+`--p0`–`--p3`→`--color-p0`–`--color-p3`, `--accent`→`--color-warning`, `--brand`/
+`--brand-dark`/`--accent-lime`/`--accent-lime-dark`→`--color-brand-gold` (all four old
+"primary accent" variants converge — Alpenglow has no separate darker-gold tier),
+`--brand-light`/`--accent-lime-light`→`--color-warning-bg` (closest available light-gold
+tint, not a precise match), `--brand-light-border`/`--accent-lime-light-border`→
+`--color-border-strong`, **`--accent-2`/`--accent-2-dark`→`--color-brand-rose`** (the old
+violet "AI-assisted" hue — deliberately kept distinct from brand color by the v2 rule
+above — now shares a token with the gradient's second stop; a real user decision, not a
+guess: Alpenglow's two-hue palette has no room for a third, and the alternative of
+inventing a new token outside the spec's exact list was explicitly rejected in favor of
+staying spec-exact), `--accent-2-light`→`--color-danger-bg` (arbitrary nearest-unused
+tint, not a strong semantic match), `--status-ok/warn/error-bg/text/border`→
+`--color-success/-warning/-danger` `-bg`/plain pairs (border variants collapsed into the
+text token), `--track-bg`→`--color-border-strong`, `--emphasis-bg`/`-text`→
+`--color-text`/`--color-bg` (preserves the existing "inverted chip" trick),
+`--surface-glass`/`--border-glass`/`--glow-brand`/`--glow-accent`/`--focus` kept their
+own names but were retuned from cool/lime rgba to warm-neutral/gold rgba (no Alpenglow
+spec name exists for the glass/glow roles), `--surface-0/1/2/3`→`--color-bg`/
+`--color-surface`/`--color-surface-raised`/`--color-surface-raised` (the old 4th
+"deepest inset" tier has no Alpenglow equivalent, collapsed into `-raised`), `--font`→
+`--font-body`, `--mono`→`--font-mono`, `--font-display` kept its name (value now
+Fraunces — the spec's 4-location-only restriction on where this token may be used is a
+per-component job, not the token pass's; some headings may still render serif until
+their own component is touched), `--text-md`→`--text-base` (rounded up, no exact spec
+tier existed), `--leading-relaxed`→`--leading-loose` (exact 1.7 value match),
+`--space-5/10/20`→`--space-6/12/24` (rounded up, arbitrarily tie-broken — each was
+equidistant between two new tiers), `--radius`→`--radius-md` (exact pixel match, zero
+visual risk). `--brand-cyan` (the old `.text-gradient-brand`/`.brand-mark` gradient
+endpoint) was removed outright once its last call site was repointed to
+`var(--gradient-alpenglow)` directly — no Alpenglow equivalent needed, since the whole
+point of the new token is to replace ad hoc two-color gradients like that one.
+**Left untouched, no Alpenglow spec coverage** (still live, still valid): motion tokens
+not in the spec's list (`--duration-instant`/`-enter`, `--stagger-base`, all
+`--ease-spring`/`-out`/`-in-out`/`-bounce` — motion consolidation is PR 2/§5 scope),
+`--leading-snug`, `--tracking-*`, `--topbar-h`, `--icon-size-*`, `--chip-*`,
+`--shadow-xs`/`-xl`/`-brand`, `--heat-0..4`, `--neutral-*`, `--brand-50/100/500/600/700`
+(`shareCard.js`'s canvas-rendered share card, a distinct product-identity surface — see
+that file's own `cssVar()` calls), `--accent-50/400/500`.
+
+**Component-level changes, all CSS-only except where noted:**
+- **Buttons** — `.btn-primary`/`.btn-secondary`/`.btn-ghost`/`.btn-danger` rebuilt
+  against the mapping above: filled-gold + shadow-lift hover, surface+border-strong,
+  transparent→surface-raised hover, filled-danger, respectively. Every variant's focus
+  ring moved to `outline` on `:focus-visible` only (never plain `:focus`), and disabled
+  state suppresses hover entirely rather than just fading opacity. `.btn-cta` (the
+  landing-page pill CTA) was kept as its own class aliased to the primary treatment
+  rather than merged into `.btn-primary`, to avoid a `.js` touch on a CSS-only pass —
+  flagged as a possible future unification.
+- **Cards** — hover-lift (`translateY(-2px)` + shadow-md + border-strong) is now scoped
+  to genuinely clickable cards only (`.template-card`, which has a real
+  `.template-card-pick` click target) — removed from `.phase-card` and `.stat-tile`,
+  which have no card-level click handler of their own. The active-roadmap indicator
+  (`.template-card-current`) uses `border-image: var(--gradient-alpenglow) 1` sliced to
+  the top edge only (`border-image-slice`/`-width` zeroed on the other three sides, which
+  fall back to the card's plain `border-{side}: 1px solid var(--color-border)`) — not a
+  full gradient border or a background tint. The `.template-card` equal-height flex
+  column + `margin-top: auto` footer pattern (the real historical bug this file's own
+  card-grid section above documents) was verified intact, not regressed.
+- **Checklist rows** — `.check-box`'s checked-state fill moved from the old brand/gold
+  color to `--color-success` (a semantic completion color, distinct from the brand
+  accent) + a light contrast checkmark.
+- **Forms** — focus glow uses `color-mix(in srgb, var(--color-brand-gold) 20%,
+  transparent)`, matching this file's existing opacity-token idiom (`--surface-glass`,
+  `--focus`) rather than a fresh rgba literal.
+- **Modals** — the overlay scrim is `rgba(0,0,0,0.5)` fixed regardless of theme, per an
+  explicit `/* intentional: ... */` comment satisfying `scripts/lint-theme.mjs`'s rule
+  (see that rule's own entry above) — the one deliberate non-token color in this pass.
+- **Badges/chips** — priority pills (`.badge.P0`–`P3`, `.filter-chip[data-p].active`)
+  moved from a flat saturated fill + white text to a `color-mix()` 15%-opacity tint
+  background + full-opacity `--color-p*` text — removes the need for the old dark-theme
+  white-text-contrast override this file's issue #116 section documents, since the new
+  pairing is contrast-safe by construction in both themes.
+- **Nav sidebar** — `.nav-item.active`'s indicator changed from a flat background fill
+  to `box-shadow: inset 3px 0 0 var(--color-brand-gold)` (a left-edge accent bar) +
+  `--color-surface-raised` bg — inset box-shadow was chosen specifically to avoid the
+  layout shift a real `border-left` would have caused on an element with existing
+  padding. Also moved off the old full-pill radius to `--radius-md`, since a straight
+  edge bar reads as visually clipped against a rounded pill corner.
+- **Toasts** — rebuilt from a solid-fill 999px pill with white text to
+  `--color-surface` bg + `--color-text` + a `border-left: 3px solid` accent bar colored
+  by type (a real border was used here instead of the sidebar's inset-shadow approach,
+  since toasts have no existing border to conflict with and a border naturally respects
+  `border-radius` clipping) — also moved off the pill radius to `--radius-md` for the
+  same reason as the sidebar item above.
+- **Empty states** — Progress page zero-states, dashboard's no-matching-filter state,
+  and `itemPanel.js`'s "no resources yet" state got action-oriented copy (per
+  `.claude/rules/content-style.md`) plus a small `var(--gradient-alpenglow)` accent dot
+  (never a full-bleed background) — de-emphasizing the literal zero rather than leading
+  with it.
+- **Progress ring + brand mark** — the Progress page's circular "Complete" indicator and
+  `brand.js`'s `createBrandIcon()` both render `var(--gradient-alpenglow)` via an inline
+  SVG `<linearGradient>` stroke. This is the one deliberate exception to this file's own
+  long-standing "brand mark is fixed product identity, never touched by a design pass"
+  precedent (see v1/v2's "Deliberately still untouched" notes above) — issue #206 §7
+  explicitly calls for the logo and the ring to agree on the same gradient.
+
+**Deliberately out of scope for this pass (PR 2, issue #206 §4/§4.1/§5, depends on this
+token layer landing first):** replacing emoji/legacy icons with a curated SVG set, the
+card-action overflow menu, and the full motion/animation system (route transitions,
+checkbox pop, modal/toast entrance-exit, reduced-motion handling). Don't assume any of
+those exist yet just because this section documents the token/color layer as done.
+
 ## Branded print/PDF export (issue #160)
 
 **A repeating print header/footer uses `position: fixed`, not a CSS `@page` margin

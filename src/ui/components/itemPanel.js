@@ -175,7 +175,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   function renderResources() {
     resourceList.replaceChildren();
     if (!resources.length) {
-      resourceList.append(el('p', { className: 'muted small', text: 'No resources yet. Add links below.' }));
+      resourceList.append(el('p', { className: 'resource-list-empty' }, [
+        el('span', { className: 'resource-list-empty-dot', 'aria-hidden': 'true' }),
+        el('span', { text: 'No resources yet. Add links below.' })
+      ]));
       return;
     }
     resources.forEach((resource, index) => {

@@ -1,9 +1,13 @@
 import { svgEl } from '../utils/svg.js';
 
 // Issue #6 Phase 3.7 — small animated SVG circular progress ring. `size` in
-// px, `strokeWidth` in px; the track (background circle) uses `--track-bg`,
-// the fill uses `--brand`, matching `.progress-track`/`.progress-fill`'s
-// existing linear equivalent so both progress affordances read consistently.
+// px, `strokeWidth` in px; the track (background circle) uses `--track-bg`.
+// issue #206 §7 originally struck this with a var(--gradient-alpenglow)
+// <linearGradient>; a later user decision in the same PR reverted every
+// gradient app-wide back to solid color, so the fill is a flat
+// `var(--color-brand-gold)` stroke again (set via app.css's
+// `.progress-ring-fill` rule, not inline) — no <defs>/<linearGradient>
+// needed.
 export function createProgressRing(pct = 0, { size = 40, strokeWidth = 4 } = {}) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;

@@ -53,16 +53,16 @@ describe('createLineChart', () => {
   });
 
   it('reads axis tick/grid colors from the live theme tokens, not a hardcoded literal (issue #116)', async () => {
-    document.documentElement.style.setProperty('--muted', 'rgb(1, 2, 3)');
-    document.documentElement.style.setProperty('--line', 'rgb(4, 5, 6)');
+    document.documentElement.style.setProperty('--color-text-muted', 'rgb(1, 2, 3)');
+    document.documentElement.style.setProperty('--color-border', 'rgb(4, 5, 6)');
     const { createLineChart } = await import('../../src/ui/components/chartWrapper.js');
     const chart = await createLineChart(fakeCanvas(), { labels: [], totals: [] });
     expect(chart.config.options.scales.x.ticks.color).toBe('rgb(1, 2, 3)');
     expect(chart.config.options.scales.y.ticks.color).toBe('rgb(1, 2, 3)');
     expect(chart.config.options.scales.x.grid.color).toBe('rgb(4, 5, 6)');
     expect(chart.config.options.scales.y.grid.color).toBe('rgb(4, 5, 6)');
-    document.documentElement.style.removeProperty('--muted');
-    document.documentElement.style.removeProperty('--line');
+    document.documentElement.style.removeProperty('--color-text-muted');
+    document.documentElement.style.removeProperty('--color-border');
   });
 });
 
@@ -86,7 +86,7 @@ describe('createBarChart', () => {
   it('falls back to the light-theme default colors when a token is unset', async () => {
     const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
     const chart = await createBarChart(fakeCanvas(), { labels: [], counts: [], rollingAverage: [] });
-    expect(chart.config.data.datasets[0].backgroundColor).toBe('#0f766e');
-    expect(chart.config.options.scales.y.ticks.color).toBe('#5f6e84');
+    expect(chart.config.data.datasets[0].backgroundColor).toBe('#d9a441');
+    expect(chart.config.options.scales.y.ticks.color).toBe('#6b6156');
   });
 });

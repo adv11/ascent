@@ -4026,3 +4026,62 @@ preferred, rather than picking just one:
 No change to `sw.js`'s own bump convention or `cacheStrategies.js` — this closes the
 enforcement gap around the convention that already existed (issue #19), it doesn't
 replace it.
+
+### 2026-07-17 — PR #221 (pending) — "Alpenglow" visual redesign, PR 1 of 2: token layer + component restyle (issue #206)
+
+Full-replace of `app.css`'s `:root`/`:root[data-theme='dark']` token layer with the
+"Alpenglow" gold→rose gradient identity, superseding (not extending) issue #155's
+"lime/near-black" direction — the same supersession pattern #155 itself used against its
+own ZeBeyond predecessor (see `.claude/rules/ui-styling.md`'s design-language history).
+Unlike #155's incremental phased rollout (which kept old token names live via aliases
+while re-valuing them in place), this pass renamed every token to the issue's exact
+spec'd names (`--color-text`, `--space-6`, `--radius-md`, etc.) and mechanically
+updated every call site across the file in the same PR — a deliberate scope decision
+made with the user mid-implementation after an initial parallel-namespace approach was
+rejected as leaving permanent `-ag`-suffixed names in production CSS. The full
+old-token → new-token mapping (`--ink` → `--color-text`, `--accent-lime`/`--brand`/
+`--brand-dark` all converging on `--color-brand-gold` since Alpenglow has only two
+brand hues, `--accent-2`'s old "AI-assisted" violet collapsing into `--color-brand-rose`
+per an explicit user decision, etc.) is documented in `.claude/rules/ui-styling.md`'s
+new Alpenglow section, including every case flagged as an imprecise/ambiguous mapping
+rather than silently guessed.
+
+Every component category the issue's §3 named was restyled against the new tokens:
+buttons (`.btn-primary`'s filled-gold hover-lift + shadow, `:focus-visible`-only focus
+rings), cards (hover-lift scoped to genuinely clickable cards only — removed from
+`.phase-card`/`.stat-tile`, kept on `.template-card`; the active-roadmap card's
+`border-image: var(--gradient-alpenglow) 1` top-only accent via zero-width side slices),
+checklist rows (`.check-box`'s checked state moved from a gold to a `--color-success`
+fill), form fields (focus glow via `color-mix(in srgb, var(--color-brand-gold) 20%,
+transparent)`, matching the file's existing opacity-token idiom), modals (the one
+deliberate fixed-value overlay scrim, per `scripts/lint-theme.mjs`'s intentional-comment
+convention), badges/chips (priority pills moved from a flat saturated fill to a 15%-tint
+background + full-opacity text via `color-mix()`), the nav sidebar (left-edge
+`inset box-shadow` accent bar replacing the old flat-fill active state — zero layout
+shift) and toasts (`border-left` accent bar by type, plus a shape change from a 999px
+pill to `--radius-md` since a pill doesn't suit a straight edge bar). Empty states
+(Progress page, dashboard's no-matching-filter state, `itemPanel.js`'s "no resources
+yet") got action-oriented copy per `.claude/rules/content-style.md` plus a small
+`var(--gradient-alpenglow)` accent dot — never a full-bleed fill, per the issue's "rare
+to stay meaningful" rule. The Progress page's circular "Complete" stat ring and
+`brand.js`'s `createBrandIcon()` (previously a fixed teal/cyan fill, explicitly
+untouched by every prior #155 phase as "product identity, not an accent") both now
+render `var(--gradient-alpenglow)` as an inline SVG `<linearGradient>` stroke — the one
+deliberate exception to that precedent, made explicitly by this issue's §7.
+
+Caught and fixed during a final review pass (post-mechanical-rename artifacts, not
+present in the issue spec itself): `chartWrapper.js`'s bucketed-bar-chart and line/bar
+chart color helpers were still reading the now-deleted `--accent-lime`/`--muted`/
+`--line`/`--brand` token names via `cssVar()`, which would have silently fallen through
+to hardcoded stale-lime/teal literal fallbacks forever (the token rename made these
+`getComputedStyle` lookups return empty, not an error) — repointed to the new token
+names plus updated fallback literals, with `tests/unit/chartWrapper.test.js`'s two
+token-name-asserting tests updated to match. `.text-gradient-brand` (landing hero
+headline accent) was similarly still hand-mixing the new gold token with an orphaned
+`--brand-cyan` remnant in its light-theme rule and had gone flat gold-to-gold in its
+dark-theme override — simplified to read `var(--gradient-alpenglow)` directly in both
+themes, and the now-fully-unused `--brand-cyan` token definition was removed.
+
+Icon replacement (§4), the card-action overflow menu (§4.1), and the motion system (§5)
+are out of scope for this PR by the issue's own explicit two-PR split — PR 2 depends on
+this PR's token layer landing first and is tracked separately.
