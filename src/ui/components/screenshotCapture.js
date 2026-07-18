@@ -106,6 +106,16 @@ export async function captureScreenshot({ excludeSelector = DEFAULT_EXCLUDE_SELE
   const canvas = await html2canvas(document.body, {
     useCORS: true,
     scale: Math.min(window.devicePixelRatio || 1, 2),
+    // html2canvas's default cloning strategy copies each cloned node's
+    // computed styles onto its own inline `style` attribute so the clone
+    // renders identically once detached from the live page — this app's CSP
+    // has no `unsafe-inline` for `style-src` (see .claude/rules/
+    // auth-security.md), so every one of those inline styles is silently
+    // dropped by the browser, breaking the capture. foreignObjectRendering
+    // draws the live DOM directly via an SVG <foreignObject> using the
+    // browser's own rendering engine instead of a clone-and-restyle pass,
+    // which needs no inline styles at all and is unaffected by the CSP.
+    foreignObjectRendering: true,
     // el.matches() supports the full multi-selector string above — the
     // previous classList.contains(single-class-only) hack couldn't.
     ignoreElements: el => el.matches?.(excludeSelector) ?? false
