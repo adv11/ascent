@@ -8,10 +8,19 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 // one ⋯ overflow trigger; the menu itself is portaled to document.body on
 // open (createDropdown()'s own convention, see dropdown.js), so it's never
 // a descendant of the card locator that opened it — locate it at the page
-// level, not via `card.locator(...)`.
+// level, not via `card.locator(...)`. onboarding.js subscribes to live store
+// snapshot updates and can re-render the whole card grid in the background
+// (roadmap-store.md's "onboarding.js now subscribes to store updates" note)
+// — a re-render landing between the trigger click and the menu-item click
+// tears down the just-opened menu, so the item click can miss. Wrapped in
+// `expect(...).toPass()` to reopen and retry rather than a single
+// fire-and-forget click pair.
 async function clickOverflowAction(card, text) {
-  await card.locator('.template-card-overflow-btn').click();
-  await card.page().locator('.dropdown-menu .dropdown-item', { hasText: text }).click();
+  const menuItem = card.page().locator('.dropdown-menu .dropdown-item', { hasText: text });
+  await expect(async () => {
+    await card.locator('.template-card-overflow-btn').click();
+    await menuItem.click({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
 }
 
 test.describe('onboarding — starter template picker (issue #51)', () => {

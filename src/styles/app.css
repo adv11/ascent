@@ -57,6 +57,14 @@
   --color-p1-ink: var(--color-warning-ink);
   --color-p2-ink: var(--color-brand-gold-ink);
   --color-p3-ink: var(--color-text-muted);
+  /* issue #206 §5 follow-up — real, axe-confirmed contrast bug (not a
+     sampler artifact, unlike several others found in the same audit):
+     `.template-card-ai-badge`'s plain `var(--color-brand-rose)` text on
+     `var(--color-danger-bg)` measured 3.31:1 live via axe, failing the
+     4.5:1 minimum — same "-ink" derivation pattern as
+     `--color-brand-gold-ink` above, computed to 7.73:1 against
+     `--color-danger-bg` (#F3E1DC). */
+  --color-brand-rose-ink: color-mix(in srgb, var(--color-brand-rose) 55%, black);
 
   /* issue #206 — no direct spec equivalent for these three roles (a
      translucent glass-panel surface/border pair, and a decorative low-alpha
@@ -253,6 +261,10 @@
   --color-p1-ink: var(--color-warning-ink);
   --color-p2-ink: var(--color-brand-gold-ink);
   --color-p3-ink: var(--color-text-muted);
+  /* issue #206 §5 follow-up — passthrough, not darkened: dark theme's rose
+     (#D4788A) on --color-danger-bg (#3A2721) computes to ~4.6:1, already
+     clearing the 4.5:1 minimum without a color-mix() derivation. */
+  --color-brand-rose-ink: var(--color-brand-rose);
 
   --surface-glass: rgba(18, 18, 18, 0.88);
   --border-glass: rgba(58, 49, 41, 0.8);
@@ -1226,7 +1238,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-brand-rose);
+  color: var(--color-brand-rose-ink);
   background: var(--color-danger-bg);
   border: 1px solid var(--color-border-strong);
 }
