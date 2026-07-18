@@ -30,10 +30,15 @@ for the full data model and file layout, and [`CLAUDE.md`](CLAUDE.md) /
    cd SwitchPrep
    ```
 2. **Set up Firebase.** Create a project at [console.firebase.google.com](https://console.firebase.google.com),
-   then:
-   ```bash
-   cp src/services/firebase.config.example.js src/services/firebase.config.js
-   ```
+   then copy the example config to a real one:
+   - macOS/Linux:
+     ```bash
+     cp src/services/firebase.config.example.js src/services/firebase.config.js
+     ```
+   - Windows (PowerShell):
+     ```powershell
+     Copy-Item src/services/firebase.config.example.js src/services/firebase.config.js
+     ```
    Fill in `firebase.config.js` with your project's values (Project settings →
    General → Your apps). This file is gitignored — it's meant to hold your own
    credentials, never a committed value.
@@ -43,7 +48,10 @@ for the full data model and file layout, and [`CLAUDE.md`](CLAUDE.md) /
    ```bash
    npm run dev
    ```
-   Serves the app at `http://localhost:4173`.
+   Serves the app at `http://localhost:4173` on macOS, Linux, and Windows alike —
+   `npm run dev` shells out to a small Node-only static server
+   (`scripts/dev-server.mjs`), so no separate Python install or OS-specific command is
+   needed.
 
 ## Deploying
 

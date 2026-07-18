@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Local dev setup assumed a macOS/Python dev machine, breaking `npm run dev`/`start` outright on Windows machines without Python installed (issue #211).** `package.json`'s `dev`/`start` scripts shelled out to `python3 -m http.server 4173` — unavailable by default on Windows, and inconsistently named (`python3` vs `python`/`py`) even where present. Both scripts now run a small zero-dependency Node static server (`scripts/dev-server.mjs`), so `npm run dev` behaves identically on macOS, Linux, and Windows with nothing beyond the Node/npm already required for `npm test`/`npm run lint`. `README.md`'s "Getting started" now calls out the one genuinely OS-specific step (copying `firebase.config.example.js`) with both a macOS/Linux and a Windows (PowerShell) command.
+
 ### Added
 - **Printed/exported-to-PDF roadmaps now show a faint, blurred Ascent logo+wordmark watermark behind the checklist content on every page — real feedback (screenshot).** `printRoadmap.js` appends a `position: fixed` `.print-watermark` layer alongside the existing print snapshot (repeats correctly per page on its own, same as `position: fixed` already does for one-off elements — see the header/footer entry below for why that mechanism isn't right for content that needs *reserved* space, which the watermark deliberately doesn't). Low opacity (0.07) plus a slight blur keeps the roadmap's own checklist text fully legible on top of it, per the explicit "both should be visible" requirement.
 

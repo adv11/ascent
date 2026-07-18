@@ -27,7 +27,7 @@ templates + onboarding ✅ — core architecture hardening continues).
 
 | Choice | Rationale |
 |---|---|
-| Vanilla JS, native ES modules, no bundler | Zero-cost dev startup (`python3 -m http.server 4173`). No build step to fail, no lock-in. Appropriate for a solo MVP moving toward a sellable product where bundle size and framework churn are risks. |
+| Vanilla JS, native ES modules, no bundler | Zero-cost dev startup (`npm run dev`, a small Node-only static server — see `scripts/dev-server.mjs`). No build step to fail, no lock-in, and no OS-specific dependency (issue #211). Appropriate for a solo MVP moving toward a sellable product where bundle size and framework churn are risks. |
 | Firebase Auth (email/password + anonymous) | Covers both the guest "try it now" path and the returning registered user in one SDK. Anonymous sessions can be upgraded to email accounts later without losing progress. |
 | Firebase Realtime Database | Per-user roadmap documents, offline-capable, real-time sync, and simple security rules (`auth.uid == $uid`). Simpler than Firestore for a flat `items` map with no query needs. |
 | Vitest | Fast, ESM-native, jsdom-integrated. No need for Jest's transform layer on a no-build codebase. |
@@ -705,8 +705,8 @@ adapters`.
    never commit real credentials).
 2. Enable Email/Password and Anonymous auth in Firebase Console.
 3. Publish Realtime Database rules from `firebase/database.rules.json`.
-4. Serve static files (`python3 -m http.server 4173` locally; Firebase Hosting or any
-   CDN in production).
+4. Serve static files (`npm run dev` locally, via `scripts/dev-server.mjs`; Firebase
+   Hosting or any CDN in production).
 5. Enable Firebase App Check before a public launch.
 6. Add `FIREBASE_CONFIG_TEST` and `FIREBASE_TOKEN` GitHub secrets to enable E2E CI.
 
@@ -4085,3 +4085,22 @@ themes, and the now-fully-unused `--brand-cyan` token definition was removed.
 Icon replacement (§4), the card-action overflow menu (§4.1), and the motion system (§5)
 are out of scope for this PR by the issue's own explicit two-PR split — PR 2 depends on
 this PR's token layer landing first and is tracked separately.
+
+### 2026-07-19 — Issue #211 — OS-agnostic local dev setup
+
+`npm run dev`/`npm start` shelled out directly to `python3 -m http.server 4173`,
+assuming a macOS/Linux dev machine with Python 3 pre-installed under the exact
+`python3` command name. This broke `npm run dev` outright on any Windows machine
+without Python installed, and even where Python is present, Windows commonly exposes
+it as `python`/the `py` launcher rather than `python3` — a portability gap in the one
+command every contributor runs first. Replaced with `scripts/dev-server.mjs`, a small
+zero-dependency Node `http`/`fs`-based static file server (path traversal guarded via
+`path.normalize()` + a root-prefix check), so `npm run dev` needs nothing beyond the
+Node/npm already required for `npm test`/`npm run lint` and behaves identically on
+every OS. Audited `scripts/generate-brand-assets.mjs`, `lint-icons.mjs`, and
+`lint-theme.mjs` for the same class of OS-specific assumption — all three already use
+`path.join`/`path.resolve` exclusively and contain no Unix-only shell built-ins, so no
+changes were needed there. `README.md`'s "Getting started" now gives an explicit
+Windows (PowerShell) alternative for the one step (`cp` → `Copy-Item`) that genuinely
+differs by OS; every other step, including the dev server itself, is now identical
+across platforms.

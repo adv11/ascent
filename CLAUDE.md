@@ -4,7 +4,7 @@ Ascent ("Engineer your next move.") is a personal roadmap tracker for anyone lea
 
 ## Stack
 
-- Vanilla JavaScript, native ES modules, **no build step, no framework, no bundler**. `npm run dev` / `npm start` just serves the static files with `python3 -m http.server 4173`.
+- Vanilla JavaScript, native ES modules, **no build step, no framework, no bundler**. `npm run dev` / `npm start` just serve the static files with a small Node-only server (`scripts/dev-server.mjs`), OS-agnostic since it only needs the Node already required to run `npm test`/`npm run lint`.
 - Firebase Authentication (email/password + anonymous "guest" sessions) and Firebase Realtime Database for per-user roadmap sync; security rules in `firebase/database.rules.json`. Project credentials live in `src/services/firebase.config.js`, which is **gitignored** — copy `src/services/firebase.config.example.js` to that path and fill in your own Firebase project's values before running locally. Never put real credentials back into a tracked file.
 - **Vitest** for unit/integration tests (`tests/unit/`, `tests/integration/`); **Playwright** for E2E (`tests/e2e/`). Run `npm test` before pushing — all checks must be green. Run `npm run lint` to enforce security and quality rules. Never merge a PR with failing checks.
 
