@@ -26,17 +26,14 @@
   /* issue #206 §5 follow-up — real feedback (screenshot): the original
      "trail-green, not stock green" success color still read as a jarring,
      out-of-family cool green against every other warm gold/rose/cream
-     element on screen — most visible on `.check-box.done`'s solid fill,
-     the single highest-frequency colored surface in the app. Retuned
-     warmer/more olive (yellow-shifted hue, similar lightness) so it reads
-     as part of the same warm family instead of a foreign accent, while
-     staying visually distinct from `--color-brand-gold`/`--color-warning`
-     (still a real, if desaturated, green — not gold). `.check-mark`'s
-     fixed white text against this fill is a decorative icon, not body
-     text, so it isn't held to the 4.5:1 text-contrast minimum — 4.46:1
-     here (live relative-luminance calculation), essentially unchanged from
-     the previous value's own 4.3:1-ish headroom against the same fixed
-     white. */
+     element on screen. Retuned warmer/more olive (yellow-shifted hue,
+     similar lightness) so it reads as part of the same warm family instead
+     of a foreign accent, while staying visually distinct from
+     `--color-brand-gold`/`--color-warning` (still a real, if desaturated,
+     green — not gold). `.check-box.done` no longer reads this token at all
+     (moved to a flat `--color-brand-gold` fill in a second follow-up round,
+     see that rule's own comment) — `--color-success`/`-bg` are still used
+     elsewhere (e.g. `.toast-success`'s accent bar). */
   --color-success:        #6E7D4F;
   --color-success-bg:     #EBEBDE;
   --color-warning:        #C68A3D;
@@ -256,10 +253,7 @@
   --color-brand-gold:     #E8B457;
   --color-brand-rose:     #D4788A;
   /* issue #206 §5 follow-up — same warm-olive retune as the light-theme
-     token above, see that comment for the full reasoning; darker than a
-     first pass at this token to keep `.check-mark`'s fixed white icon at a
-     similar ~3.3:1 to the original dark value's own ~3:1 (again, a
-     decorative icon, not body text). */
+     token above, see that comment for the full reasoning. */
   --color-success:        #7E9560;
   --color-success-bg:     #2E3324;
   --color-warning:        #D9A05C;
@@ -3064,10 +3058,23 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   background: var(--color-surface);
   transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
-/* intentional: fixed white checkmark on the --color-success-colored .check-box.done background, same in both themes (issue #116) */
+/* issue #206 §5 follow-up — real feedback (screenshots, twice): the checked
+   fill kept reading as an out-of-family green no matter how much the
+   `--color-success` token itself was warmed, since it's still a genuinely
+   different hue from the app's gold/rose palette. Dropped the semantic
+   "success ≠ brand" distinction for this one highest-frequency surface and
+   switched the checked fill to solid `--color-brand-gold` instead — the
+   same accent every other "this is selected/complete/active" indicator in
+   the app already uses (the active-roadmap badge, the sidebar's active-nav
+   bar, `.progress-ring-fill`). `--color-success`/`-bg` tokens are
+   unchanged and still used elsewhere (e.g. toast-success's accent bar) —
+   only `.check-box.done`'s fill moved off them. `--color-ink-on-gold`
+   (not fixed white) for the checkmark, since white-on-gold is the exact
+   "fails badly in dark theme" bug `--color-ink-on-gold`'s own token
+   comment already documents. */
 .check-mark {
   display: inline-flex;
-  color: #fff;
+  color: var(--color-ink-on-gold);
   transform: scale(0);
   opacity: 0;
   /* issue #6 Phase 4.2 — spring bounce on toggle; pre-existing, kept as-is
@@ -3075,7 +3082,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   transition: transform var(--duration-base) var(--ease-bounce), opacity 120ms ease;
 }
 .check-item.done .check-box {
-  background: var(--color-success);
+  background: var(--color-brand-gold);
   border-color: transparent;
 }
 .check-item.done .check-mark { transform: scale(1); opacity: 1; }
