@@ -70,12 +70,24 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   // content does. Without this, scrolling the page while the menu is open
   // left it visually stuck at its original screen coordinates while the
   // trigger scrolled out from under it (the identical bug `select.js`'s
-  // listbox had, same fix applied here — see that file's own comment).
-  // `scroll` doesn't bubble, so this must be a capture-phase `document`
-  // listener; closing rather than repositioning is the simplest fix that
-  // can't itself drift out of sync with a moved/resized trigger.
+  // listbox had, same fix applied here — see that file's own comment for the
+  // full writeup, including why "close on any scroll event" was tried first
+  // and rejected: this app's global `html { scroll-behavior: smooth }`
+  // turns an unrelated modal-open focus elsewhere on the page into a real,
+  // multi-hundred-millisecond stream of genuine `scroll` events, which an
+  // any-scroll-closes listener misreads as the user scrolling this menu
+  // away). `TRIGGER_MOVE_THRESHOLD_PX` closes only once the trigger has
+  // actually moved a meaningful amount, absorbing that unrelated jitter
+  // while still closing promptly on a real, deliberate page scroll.
+  const TRIGGER_MOVE_THRESHOLD_PX = 4;
+  let openTriggerRect = null;
+
   function onWindowScrollOrResize() {
-    close();
+    if (!openTriggerRect) return;
+    const rect = trigger.getBoundingClientRect();
+    const moved = Math.abs(rect.top - openTriggerRect.top) > TRIGGER_MOVE_THRESHOLD_PX
+      || Math.abs(rect.left - openTriggerRect.left) > TRIGGER_MOVE_THRESHOLD_PX;
+    if (moved) close();
   }
 
   function setOpen(next) {
@@ -86,10 +98,17 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
     if (open) {
       document.body.appendChild(menu);
       positionMenu();
-      itemEls[0]?.focus();
+      openTriggerRect = trigger.getBoundingClientRect();
+      // `{ preventScroll: true }` — without it, focusing an item the browser
+      // considers off-screen kicks off its own smooth-scroll, on top of
+      // whatever else is already happening on the page. Doesn't fully solve
+      // the problem on its own (see the block comment above), but still
+      // worth keeping so this component never *adds* to the noise.
+      itemEls[0]?.focus({ preventScroll: true });
       document.addEventListener('scroll', onWindowScrollOrResize, true);
       window.addEventListener('resize', onWindowScrollOrResize);
     } else if (menu.isConnected) {
+      openTriggerRect = null;
       menu.remove();
       document.removeEventListener('scroll', onWindowScrollOrResize, true);
       window.removeEventListener('resize', onWindowScrollOrResize);
@@ -110,6 +129,9 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
     if (!wrap.contains(e.target) && !menu.contains(e.target)) close();
   }
 
+  // `preventScroll` on both arrow-key focus moves below, same reason as
+  // `setOpen()`'s own — either can move focus to an item the browser
+  // considers off-screen while the scroll-close listener is active.
   function onKeydown(e) {
     if (!open) return;
     const idx = itemEls.indexOf(document.activeElement);
@@ -118,10 +140,10 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
       close();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      itemEls[(idx + 1 + itemEls.length) % itemEls.length]?.focus();
+      itemEls[(idx + 1 + itemEls.length) % itemEls.length]?.focus({ preventScroll: true });
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      itemEls[(idx - 1 + itemEls.length) % itemEls.length]?.focus();
+      itemEls[(idx - 1 + itemEls.length) % itemEls.length]?.focus({ preventScroll: true });
     }
   }
 

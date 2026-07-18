@@ -107,18 +107,35 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
   // screen coordinates while the trigger (and everything else) scrolled out
   // from under it — a real, reported bug: an open listbox rendered as a
   // giant stuck overlay covering unrelated page content at every subsequent
-  // scroll position, never closing. `scroll` doesn't bubble, so this must be
-  // a capture-phase listener on `document`, matching `resize`'s own
-  // always-global dispatch — closing (not repositioning) is the simplest fix
-  // that can't itself drift out of sync with a moved/resized trigger.
-  // `e.target === listbox` is excluded: `.custom-select-listbox` itself is
-  // `overflow-y: auto` (a long options list scrolls internally), and that
-  // internal scroll also dispatches a `scroll` event a capture-phase
-  // `document` listener sees — closing the listbox because the user is
-  // scrolling *through its own options* would be a new, self-inflicted bug.
+  // scroll position, never closing.
+  //
+  // Closing on *every* `scroll` event (tried first) turned out too blunt —
+  // caught by CI's real-browser E2E suite, not local unit tests (jsdom
+  // doesn't dispatch real scroll events at all). Opening a modal focuses its
+  // first field, and this app's global `html { scroll-behavior: smooth }`
+  // (`app.css`) turns that into a real, multi-hundred-millisecond
+  // smooth-scroll settle — a stream of genuine `scroll` events completely
+  // unrelated to the select itself. `{ preventScroll: true }` on this
+  // component's own `.focus()` calls (below) stops *this component* from
+  // causing that kind of scroll, but can't stop an unrelated one already in
+  // flight elsewhere on the page from being misread as "the user scrolled,
+  // close the dropdown." The fix: check whether the trigger has actually
+  // moved meaningfully since open, not just whether a scroll event fired.
+  // `TRIGGER_MOVE_THRESHOLD_PX` absorbs sub-pixel/smooth-scroll jitter while
+  // still closing promptly on a real, deliberate scroll (which moves the
+  // trigger by far more than a few pixels within one frame). `e.target ===
+  // listbox` is still excluded separately: `.custom-select-listbox` itself
+  // is `overflow-y: auto` for a long option list, and scrolling *through its
+  // own options* should never close it regardless of trigger movement.
+  const TRIGGER_MOVE_THRESHOLD_PX = 4;
+  let openTriggerRect = null;
+
   function onWindowScrollOrResize(e) {
-    if (e?.target === listbox) return;
-    close();
+    if (e?.target === listbox || !openTriggerRect) return;
+    const rect = trigger.getBoundingClientRect();
+    const moved = Math.abs(rect.top - openTriggerRect.top) > TRIGGER_MOVE_THRESHOLD_PX
+      || Math.abs(rect.left - openTriggerRect.left) > TRIGGER_MOVE_THRESHOLD_PX;
+    if (moved) close();
   }
 
   function setOpen(next) {
@@ -129,11 +146,18 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
     if (open) {
       document.body.appendChild(listbox);
       positionListbox();
+      openTriggerRect = trigger.getBoundingClientRect();
       const activeIdx = Math.max(0, options.findIndex(o => o.value === selected));
-      optionEls[activeIdx]?.focus();
+      // `{ preventScroll: true }` — without it, focusing an option the
+      // browser considers off-screen kicks off its own smooth-scroll, on top
+      // of whatever else is already happening on the page. Doesn't fully
+      // solve the problem on its own (see the block comment above), but
+      // still worth keeping so this component never *adds* to the noise.
+      optionEls[activeIdx]?.focus({ preventScroll: true });
       document.addEventListener('scroll', onWindowScrollOrResize, true);
       window.addEventListener('resize', onWindowScrollOrResize);
     } else if (listbox.isConnected) {
+      openTriggerRect = null;
       listbox.remove();
       document.removeEventListener('scroll', onWindowScrollOrResize, true);
       window.removeEventListener('resize', onWindowScrollOrResize);
@@ -154,14 +178,19 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
     if (changed && !silent) wrap.dispatchEvent(new Event('change'));
   }
 
+  // Every keyboard-driven `.focus()` call below also needs `preventScroll`
+  // for the same reason `setOpen()`'s does — any of these can move focus to
+  // an option the browser considers off-screen while the scroll-close
+  // listener is active, and an un-prevented auto-scroll would close the
+  // listbox out from under the very keystroke that moved focus.
   function moveFocus(delta) {
     const idx = optionEls.indexOf(document.activeElement);
     const next = ((idx === -1 ? 0 : idx) + delta + optionEls.length) % optionEls.length;
-    optionEls[next]?.focus();
+    optionEls[next]?.focus({ preventScroll: true });
   }
 
   function jumpFocus(toEnd) {
-    optionEls[toEnd ? optionEls.length - 1 : 0]?.focus();
+    optionEls[toEnd ? optionEls.length - 1 : 0]?.focus({ preventScroll: true });
   }
 
   function handleTypeahead(key) {
@@ -171,7 +200,7 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
     const match = options.find(o => o.label.toLowerCase().startsWith(typeahead));
     if (!match) return;
     if (open) {
-      optionEls[options.indexOf(match)]?.focus();
+      optionEls[options.indexOf(match)]?.focus({ preventScroll: true });
     } else {
       choose(match.value);
     }
