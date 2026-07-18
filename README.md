@@ -27,7 +27,7 @@ for the full data model and file layout, and [`CLAUDE.md`](CLAUDE.md) /
    site.
    ```bash
    git clone <this-repo-url>
-   cd SwitchPrep
+   cd ascent
    ```
 2. **Set up Firebase.** Create a project at [console.firebase.google.com](https://console.firebase.google.com),
    then copy the example config to a real one:
@@ -81,6 +81,11 @@ feature list.
 Tests run via `npm test` (Vitest unit + integration) and `npm run test:e2e` (Playwright).
 Run `npm run lint` to check for security and quality issues. See the "Verifying changes"
 section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
+
+## Contributing
+
+Found a bug or want to suggest a feature? See [`CONTRIBUTING.md`](CONTRIBUTING.md) for
+local setup, code conventions, and how to report issues.
 
 ## License
 
