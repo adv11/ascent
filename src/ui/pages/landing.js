@@ -195,7 +195,12 @@ export function renderLanding(app) {
   // Issue #6 Phase 9 — id="main-content"/tabindex="-1" is the skip link's
   // jump target (index.html), so Tab from page load can bypass the nav bar
   // straight to the hero.
-  const node = el('div', { className: 'landing-page' }, [
+  // fade-in (issue #206 §5) — every other route's outermost container
+  // already carries this class (authShell.js's .auth-page, dashboard.js's/
+  // onboarding.js's/progress.js's/settings.js's own app-shell-2 wrapper);
+  // landing.js was the one page missing it, found while auditing route
+  // transition coverage for the motion-system pass.
+  const node = el('div', { className: 'landing-page fade-in' }, [
     buildNav(),
     el('main', { id: 'main-content', tabindex: '-1' }, [
       buildHero(),

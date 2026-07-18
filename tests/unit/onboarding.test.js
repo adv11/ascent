@@ -68,6 +68,17 @@ function clickDialogAction(action) {
   document.querySelector(`.modal-overlay [data-action="${action}"]`)?.click();
 }
 
+// Issue #206 §4.1 — a card's favorite/hide/delete actions are collapsed
+// behind one ⋯ overflow trigger; the menu itself is portaled to
+// document.body on open (createDropdown()'s own convention), not nested
+// inside the card, so a caller opens the trigger first, then clicks the
+// document-level menu item by its visible text.
+function clickOverflowAction(card, text) {
+  card.querySelector('.template-card-overflow-btn').click();
+  const item = [...document.querySelectorAll('.dropdown-menu .dropdown-item')].find(el => el.textContent === text);
+  item?.click();
+}
+
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
@@ -268,29 +279,29 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 
-  it('every built-in template card has a hide (×) button — "blank" is retired, no more exceptions', async () => {
+  it('every built-in template card has an overflow (⋯) menu trigger — "blank" is retired, no more exceptions', async () => {
     const { app } = await setup();
     const { TEMPLATES } = await import('../../src/data/templates/index.js');
     TEMPLATES.forEach(template => {
       const card = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes(template.name));
-      expect(card.querySelector('.template-card-hide')).not.toBeNull();
+      expect(card.querySelector('.template-card-overflow-btn')).not.toBeNull();
     });
   });
 
-  it('"Create your own roadmap" has a corner info button instead of a hide button — no built-in template has one anymore', async () => {
+  it('"Create your own roadmap" has a corner info button instead of an overflow menu — no built-in template has an info button anymore', async () => {
     const { app } = await setup();
     const createCard = app.querySelector('.template-card-create');
     expect(createCard.querySelector('.template-card-info-corner')).not.toBeNull();
-    expect(createCard.querySelector('.template-card-hide')).toBeNull();
+    expect(createCard.querySelector('.template-card-overflow-btn')).toBeNull();
   });
 
-  it('clicking the hide button asks for confirmation, then hides the card without picking it', async () => {
+  it('clicking Hide in the overflow menu asks for confirmation, then hides the card without picking it', async () => {
     const hideTemplate = vi.fn().mockResolvedValue(undefined);
     const switchRoadmap = vi.fn().mockResolvedValue(undefined);
     const { app, navigate } = await setup({ hideTemplate, switchRoadmap });
 
     const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
-    javaCard.querySelector('.template-card-hide').click();
+    clickOverflowAction(javaCard, 'Hide');
 
     expect(getConfirmDialog()).toBeTruthy();
     clickDialogAction('confirm');
@@ -307,7 +318,7 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     const { app } = await setup({ hideTemplate });
 
     const javaCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Java Backend Engineer'));
-    javaCard.querySelector('.template-card-hide').click();
+    clickOverflowAction(javaCard, 'Hide');
 
     clickDialogAction('cancel');
     await vi.waitFor(() => expect(getConfirmDialog()).toBeNull());
@@ -488,14 +499,14 @@ describe('onboarding page — create-your-own roadmap (issue #100)', () => {
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/app', true));
   });
 
-  it('renders a card per custom roadmap with its title/description and a delete button', async () => {
+  it('renders a card per custom roadmap with its title/description and an overflow menu trigger', async () => {
     const customRoadmaps = [{ id: 'croadmap-1', title: 'Interview prep', description: 'For my new job', createdAt: 1 }];
     const { app } = await setup({ customRoadmaps, activeTemplateId: 'java-backend', onboardingDone: true });
 
     const card = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Interview prep'));
     expect(card).toBeTruthy();
     expect(card.textContent).toContain('For my new job');
-    expect(card.querySelector('[data-action="delete"]')).toBeTruthy();
+    expect(card.querySelector('.template-card-overflow-btn')).toBeTruthy();
   });
 
   it('deleting a custom roadmap asks for confirmation, then calls deleteCustomRoadmap and removes the card', async () => {
@@ -504,7 +515,7 @@ describe('onboarding page — create-your-own roadmap (issue #100)', () => {
     const { app } = await setup({ customRoadmaps, deleteCustomRoadmap, activeTemplateId: 'java-backend', onboardingDone: true });
 
     const card = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Interview prep'));
-    card.querySelector('[data-action="delete"]').click();
+    clickOverflowAction(card, 'Delete');
 
     expect(getConfirmDialog()).toBeTruthy();
     clickDialogAction('confirm');

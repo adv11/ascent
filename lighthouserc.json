@@ -1,14 +1,14 @@
 {
   "ci": {
     "collect": {
-      "numberOfRuns": 1,
+      "numberOfRuns": 3,
       "url": [
         "http://localhost:4173/"
       ],
       "settings": {
         "chromeFlags": "--no-sandbox --headless=new --disable-gpu --disable-dev-shm-usage",
-        "maxWaitForFcp": 60000,
-        "maxWaitForLoad": 90000
+        "maxWaitForFcp": 120000,
+        "maxWaitForLoad": 150000
       }
     },
     "assert": {

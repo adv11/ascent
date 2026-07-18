@@ -93,7 +93,7 @@ export function createRadioGroup({ name, label, options, required = true }) {
   const errorEl = el('span', { className: 'field-error', role: 'alert' });
   errorEl.hidden = true;
 
-  const node = el('fieldset', { className: 'field feedback-field' }, [
+  const node = el('fieldset', { className: 'field feedback-field feedback-radio-fieldset' }, [
     el('legend', { className: 'field-label', text: `${label}${required ? ' *' : ''}` }),
     el('div', { className: 'feedback-radio-group' }, buttons),
     errorEl

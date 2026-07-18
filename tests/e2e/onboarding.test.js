@@ -4,6 +4,25 @@ import { test, expect } from './fixtures.js';
 // needs a real (anonymous) sign-in so Firebase meta detection actually runs.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
+// Issue #206 §4.1 — a card's favorite/hide/delete actions collapse behind
+// one ⋯ overflow trigger; the menu itself is portaled to document.body on
+// open (createDropdown()'s own convention, see dropdown.js), so it's never
+// a descendant of the card locator that opened it — locate it at the page
+// level, not via `card.locator(...)`. onboarding.js subscribes to live store
+// snapshot updates and can re-render the whole card grid in the background
+// (roadmap-store.md's "onboarding.js now subscribes to store updates" note)
+// — a re-render landing between the trigger click and the menu-item click
+// tears down the just-opened menu, so the item click can miss. Wrapped in
+// `expect(...).toPass()` to reopen and retry rather than a single
+// fire-and-forget click pair.
+async function clickOverflowAction(card, text) {
+  const menuItem = card.page().locator('.dropdown-menu .dropdown-item', { hasText: text });
+  await expect(async () => {
+    await card.locator('.template-card-overflow-btn').click();
+    await menuItem.click({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+}
+
 test.describe('onboarding — starter template picker (issue #51)', () => {
   test('new guest sign-up lands on /onboarding, title stays Ascent, one card per template plus "Create your own roadmap"', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
@@ -166,7 +185,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     const pianoCard = page.locator('.template-card', { hasText: 'Learning Piano' });
     await expect(pianoCard).toBeVisible();
 
-    await pianoCard.locator('.template-card-hide').click();
+    await clickOverflowAction(pianoCard, 'Hide');
     const dialog = page.locator('.modal-overlay[aria-label*="Learning Piano"]');
     await expect(dialog).toBeVisible();
     await dialog.locator('[data-action="confirm"]').click();
@@ -190,7 +209,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
-    await page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-hide').click();
+    await clickOverflowAction(page.locator('.template-card', { hasText: 'Marketing' }), 'Hide');
     const dialog = page.locator('.modal-overlay[aria-label*="Marketing"]');
     await expect(dialog).toBeVisible();
     await dialog.locator('[data-action="cancel"]').click();
@@ -200,20 +219,20 @@ test.describe('onboarding — hiding and restoring templates', () => {
   });
 
   // "blank" is retired (issue #4 follow-up) — every built-in template card
-  // now has a hide button with no exceptions.
-  test('every built-in template card has a hide button, including the ones that used to be exceptions', async ({ page }) => {
+  // now has an overflow menu (with a Hide action) with no exceptions.
+  test('every built-in template card has an overflow menu trigger, including the ones that used to be exceptions', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     for (const name of ['Java Backend Engineer', 'Learning Piano', 'Marketing']) {
-      await expect(page.locator('.template-card', { hasText: name }).locator('.template-card-hide')).toBeVisible();
+      await expect(page.locator('.template-card', { hasText: name }).locator('.template-card-overflow-btn')).toBeVisible();
     }
-    // "Create your own roadmap" has the info corner button instead, never a hide button.
+    // "Create your own roadmap" has the info corner button instead, never an overflow menu.
     const createCard = page.locator('.template-card-create');
     await expect(createCard.locator('.template-card-info-corner')).toBeVisible();
-    await expect(createCard.locator('.template-card-hide')).toHaveCount(0);
+    await expect(createCard.locator('.template-card-overflow-btn')).toHaveCount(0);
   });
 
   test('a hidden template stays hidden across a reload (persisted per-user)', async ({ page }) => {
@@ -222,7 +241,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
-    await page.locator('.template-card', { hasText: 'Learning Piano' }).locator('.template-card-hide').click();
+    await clickOverflowAction(page.locator('.template-card', { hasText: 'Learning Piano' }), 'Hide');
     await page.locator('.modal-overlay[aria-label*="Learning Piano"] [data-action="confirm"]').click();
     await expect(page.locator('.template-card', { hasText: 'Learning Piano' })).toHaveCount(0);
 
@@ -240,24 +259,33 @@ test.describe('onboarding — favorite roadmaps (issue #177)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     const marketingCard = page.locator('.template-card', { hasText: 'Marketing' });
-    await marketingCard.locator('.template-card-favorite').click();
-    await expect(marketingCard.locator('.template-card-favorite')).toHaveClass(/is-favorite/);
+    await clickOverflowAction(marketingCard, 'Favorite');
 
     const firstPickableCard = page.locator('.template-grid:not(.hidden-grid) [role="listitem"]').nth(1).locator('.template-card');
     await expect(firstPickableCard).toContainText('Marketing');
 
+    // The overflow menu's own item text is the observable "is this
+    // favorited" state now (no standalone .is-favorite button class exists
+    // post-issue-#206) — open it again and confirm it now reads "Unfavorite".
+    await marketingCard.locator('.template-card-overflow-btn').click();
+    await expect(page.locator('.dropdown-menu .dropdown-item', { hasText: 'Unfavorite' })).toBeVisible();
+    await page.keyboard.press('Escape');
+
     await page.reload();
-    await expect(page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite')).toHaveClass(/is-favorite/);
+    const marketingCardAfterReload = page.locator('.template-card', { hasText: 'Marketing' });
+    await marketingCardAfterReload.locator('.template-card-overflow-btn').click();
+    await expect(page.locator('.dropdown-menu .dropdown-item', { hasText: 'Unfavorite' })).toBeVisible();
+    await page.keyboard.press('Escape');
     await expect(page.locator('.template-grid:not(.hidden-grid) [role="listitem"]').nth(1).locator('.template-card')).toContainText('Marketing');
   });
 
-  test('clicking the star does not trigger pickTemplate', async ({ page }) => {
+  test('clicking Favorite does not trigger pickTemplate', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
-    await page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite').click();
+    await clickOverflowAction(page.locator('.template-card', { hasText: 'Marketing' }), 'Favorite');
     await expect(page).toHaveURL(/#\/onboarding/);
   });
 
@@ -268,15 +296,18 @@ test.describe('onboarding — favorite roadmaps (issue #177)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     for (const name of ['Java Backend Engineer', 'Frontend Developer', 'Data Scientist']) {
-      await page.locator('.template-card', { hasText: name }).locator('.template-card-favorite').click();
+      await clickOverflowAction(page.locator('.template-card', { hasText: name }), 'Favorite');
     }
-    await page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite').click();
+    const marketingCard = page.locator('.template-card', { hasText: 'Marketing' });
+    await clickOverflowAction(marketingCard, 'Favorite');
 
     // Scoped by text, not just `.toast` — the "Guest session started…" toast
     // from sign-up can still be visible/fading out at this point, and a bare
     // `.toast` locator matches both (strict-mode violation).
     await expect(page.locator('.toast', { hasText: 'up to 3' })).toBeVisible();
-    await expect(page.locator('.template-card', { hasText: 'Marketing' }).locator('.template-card-favorite')).not.toHaveClass(/is-favorite/);
+    await marketingCard.locator('.template-card-overflow-btn').click();
+    await expect(page.locator('.dropdown-menu .dropdown-item', { hasText: 'Favorite', hasNotText: 'Unfavorite' })).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 });
 

@@ -142,7 +142,18 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
 
     const card = page.locator('.template-card', { hasText: 'Deletable Roadmap' });
     await expect(card.locator('.template-card-current-badge')).toContainText('Current');
-    await card.locator('[data-action="delete"]').click();
+    // Issue #206 §4.1 — Delete moved behind the card's ⋯ overflow menu; the
+    // menu itself is portaled to document.body on open (dropdown.js), so
+    // it's located at the page level, not via the card locator. Wrapped in
+    // `expect(...).toPass()` since onboarding.js's live store subscription
+    // can re-render the card grid between the two clicks and close the
+    // just-opened menu — see accessibility.test.js's identical fix for the
+    // full explanation.
+    const deleteItem = page.locator('.dropdown-menu .dropdown-item', { hasText: 'Delete' });
+    await expect(async () => {
+      await card.locator('.template-card-overflow-btn').click();
+      await deleteItem.click({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
     await page.locator('.modal-overlay [data-action="confirm"]').click();
 
     await expect(page.locator('.template-card', { hasText: 'Deletable Roadmap' })).toHaveCount(0);

@@ -131,6 +131,11 @@ const ICON_SHAPES = {
   ],
   pause: () => [
     { d: 'M104,40H56A16,16,0,0,0,40,56V200a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40Zm0,160H56V56h48ZM200,40H152a16,16,0,0,0-16,16V200a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,160H152V56h48Z', fill: 'currentColor', stroke: 'none' }
+  ],
+  // Card-action overflow trigger (issue #206 §4.1) — a horizontal three-dot
+  // "more actions" glyph, distinct from `menu`'s hamburger-lines shape.
+  overflow: () => [
+    { d: 'M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM60,116a12,12,0,1,0,12,12A12,12,0,0,0,60,116Zm136,0a12,12,0,1,0,12,12A12,12,0,0,0,196,116Z', fill: 'currentColor', stroke: 'none' }
   ]
 };
 
