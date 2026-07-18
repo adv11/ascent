@@ -1508,6 +1508,31 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    class) — it is no longer a DOM descendant of `.dropdown`, so its
    open/closed visibility is driven by `.dropdown-menu.open` directly, not a
    `.dropdown.open .dropdown-menu` descendant selector. */
+/* A portaled floating menu/listbox has no page-flow relationship to what it
+   visually sits on top of — clicking a trigger near the top of a short card
+   (the Daily Todos duration select is the reported case, issue #228 follow-up)
+   can open a menu tall enough to cover that same card's own sibling controls
+   (the "Add" button, 8px below the trigger) and spill well past the card into
+   unrelated content beneath it. That's expected positioning (see the
+   position: fixed comments below), but with no visual layer marking it as a
+   floating overlay, it reads as corrupted layout rather than an open menu —
+   a real, reported bug, not a hypothetical. `.floating-scrim` is a shared,
+   fixed, full-viewport dim layer inserted just behind the listbox/menu (a
+   sibling body child, not a wrapper — the listbox/menu keep their own
+   independent position: fixed coordinates) whenever one is open, giving every
+   portaled floating element the same "this is a layer above the page, not
+   part of it" visual cue a native <select>'s OS-rendered dropdown gets for
+   free. Purely visual — clicking it closes the menu via the existing
+   click-outside-`wrap`-and-`listbox`/`menu` handler already in
+   select.js/dropdown.js, since the scrim is neither. */
+.floating-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45); /* intentional: a fixed dim overlay, not a themed surface — same reasoning as .modal-overlay's own scrim */
+}
+.custom-select-scrim { z-index: 1009; }
+.dropdown-scrim { z-index: 209; }
+
 .dropdown { position: relative; display: inline-flex; min-width: 0; }
 .dropdown-menu {
   position: fixed;

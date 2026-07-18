@@ -48,6 +48,14 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   // nested inside, exactly like `select.js`'s fix for the identical
   // underlying issue.
   const wrap = el('div', { className: 'dropdown' }, [trigger]);
+  // Dim backdrop shown behind the portaled menu while open — see
+  // `.floating-scrim`'s comment in app.css (select.js's listbox has the
+  // identical treatment for the same reported bug: a floating menu with no
+  // "this is an overlay, not part of the page" visual cue reads as broken
+  // layout when it covers content beneath it). Never gets its own click
+  // handler — `onDocClick` below already treats a click outside `wrap`/`menu`
+  // as "close", and the scrim is neither.
+  const scrim = el('div', { className: 'floating-scrim dropdown-scrim' });
   let open = false;
 
   function positionMenu() {
@@ -96,6 +104,7 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
     menu.classList.toggle('open', open);
     trigger.setAttribute('aria-expanded', String(open));
     if (open) {
+      document.body.appendChild(scrim);
       document.body.appendChild(menu);
       positionMenu();
       openTriggerRect = trigger.getBoundingClientRect();
@@ -110,6 +119,7 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
     } else if (menu.isConnected) {
       openTriggerRect = null;
       menu.remove();
+      scrim.remove();
       document.removeEventListener('scroll', onWindowScrollOrResize, true);
       window.removeEventListener('resize', onWindowScrollOrResize);
     }
@@ -164,6 +174,7 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
     document.removeEventListener('scroll', onWindowScrollOrResize, true);
     window.removeEventListener('resize', onWindowScrollOrResize);
     if (menu.isConnected) menu.remove();
+    if (scrim.isConnected) scrim.remove();
   };
 
   return wrap;
