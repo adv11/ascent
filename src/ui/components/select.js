@@ -42,6 +42,14 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
   }, [valueLabel, el('span', { className: 'custom-select-caret', 'aria-hidden': 'true' }, [createIcon('chevron', { size: 'xs' })])]);
 
   const listbox = el('ul', { className: 'custom-select-listbox', role: 'listbox', tabindex: '-1' });
+  // A dim backdrop shown behind the portaled listbox while open — see
+  // `.floating-scrim`'s own comment in app.css for why this exists (a real,
+  // reported bug: an open listbox with no visual "this is a floating layer"
+  // cue reads as broken layout when it covers a sibling control or unrelated
+  // content beneath a short card). Never receives its own click handler —
+  // `onDocClick` below already treats any click outside `wrap`/`listbox` as
+  // "close", and the scrim is neither.
+  const scrim = el('div', { className: 'floating-scrim custom-select-scrim' });
   // `className` (the caller's identifying/sizing class, e.g. 'settings-select')
   // lives on this wrapper, the same node `.value`/`.disabled` are defined on
   // below — a test or call site that does
@@ -144,6 +152,7 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
     listbox.classList.toggle('open', open);
     trigger.setAttribute('aria-expanded', String(open));
     if (open) {
+      document.body.appendChild(scrim);
       document.body.appendChild(listbox);
       positionListbox();
       openTriggerRect = trigger.getBoundingClientRect();
@@ -159,6 +168,7 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
     } else if (listbox.isConnected) {
       openTriggerRect = null;
       listbox.remove();
+      scrim.remove();
       document.removeEventListener('scroll', onWindowScrollOrResize, true);
       window.removeEventListener('resize', onWindowScrollOrResize);
     }
@@ -277,6 +287,7 @@ export function createSelect(options, { value, ariaLabel, className = '' } = {})
     document.removeEventListener('scroll', onWindowScrollOrResize, true);
     window.removeEventListener('resize', onWindowScrollOrResize);
     listbox.remove();
+    scrim.remove();
   };
 
   return wrap;
