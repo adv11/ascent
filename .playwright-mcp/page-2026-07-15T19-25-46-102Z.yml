@@ -1,5 +1,0 @@
-- generic [active] [ref=e1]:
-  - link "Skip to content" [ref=e2] [cursor=pointer]:
-    - /url: "#main-content"
-  - button "Send feedback" [ref=e4] [cursor=pointer]:
-    - generic [ref=e9]: Feedback
