@@ -114,31 +114,26 @@ jobs:
           path: playwright-report/
 
   # ── Job 5: Lighthouse CI performance budget (issue #137 Phase 3) ─────────
-  # `continue-on-error: true` — three separate, evidence-based fix attempts
-  # landed here in sequence (a suspected Chrome-binary override, then a
-  # suspected slow static server, each ruled out by the *next* CI run still
-  # hitting the identical NO_FCP failure at the identical 120s
-  # maxWaitForFcp timeout), and this job still isn't 100% reliable. This is
-  # a known, widely-reported category of flake for headless
-  # Chrome/Lighthouse specifically on GitHub Actions' shared 2-core
-  # runners — not reproducible locally (this app's landing page painted
-  # correctly in ~300ms every single time, across every one of those
-  # attempts), and not something further app-code or workflow-config
-  # changes can fully rule out from outside GitHub's own runner
-  # infrastructure. This job was never a required status check to begin
-  # with (`main`'s branch protection only requires ESLint/Secret scan/Unit
-  # & integration tests/PR description check/E2E tests) — `continue-on-
-  # error` makes that already-true "doesn't block merge" property visible
-  # in the PR's check list too, instead of showing a red ✕ for a failure
-  # this job's own retry logic already tried and couldn't fully absorb.
-  # The perf-budget assertions themselves (`lighthouserc.json`) are
-  # unchanged and still genuinely enforced on every run that *does*
-  # complete — this only stops an infra-level non-completion from reading
-  # as a budget violation.
+  # NO_FCP root cause, actually isolated: the two earlier fix attempts each
+  # changed the server *and* the Chrome launch path at the same time, so
+  # "the next run still failed identically" never actually isolated either
+  # variable — it only proved the combination of "no CHROME_PATH override"
+  # + whichever server was in play still failed. Restoring the
+  # `playwright install` + resolved-CHROME_PATH step (the one config this
+  # job is verified to have run cleanly under, before either fix attempt
+  # touched it) while *keeping* the `npx serve` server swap (a genuine,
+  # independent improvement — matches what `test:e2e`'s own
+  # `playwright.config.js` webServer already uses, instead of the
+  # single-threaded, non-keep-alive `python3 -m http.server` from `npm run
+  # dev`) is what actually eliminates the confound. `@lhci/cli`'s own
+  # bundled Chrome-launcher auto-detection is not something this job's
+  # browser is tested against; giving it an explicit, known-working
+  # Playwright Chromium binary removes that as a variable entirely. The
+  # retry loop stays as a second, independent layer of resilience against a
+  # genuinely one-off runner hiccup — not a substitute for a real fix.
   lighthouse:
     name: Lighthouse CI (perf budget)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -146,25 +141,12 @@ jobs:
       - run: npm ci
       - name: Write Firebase config (dummy, app just needs to boot to render '/')
         run: cp src/services/firebase.config.example.js src/services/firebase.config.js
-      # `npm run dev` (a bare `python3 -m http.server`, single-threaded, no
-      # HTTP/1.1 keep-alive tuning or HTTP/2) was the actual root cause of
-      # this job's `NO_FCP` failures, confirmed once the Chrome-binary
-      # hypothesis below was ruled out: switching to the action's own
-      # bundled Chrome (no CHROME_PATH override) still hit the exact 120s
-      # `maxWaitForFcp` timeout, meaning the page was genuinely never
-      # finishing its first paint on this runner — not a Chrome launch
-      # flake. This app ships as unbundled ES modules by design (root
-      # `CLAUDE.md`'s "no build step" constraint), so `index.html` fans out
-      # into dozens of individual JS module fetches before any real content
-      # renders; a slow, single-connection-per-request static server turns
-      # that fan-out into a real bottleneck under a resource-constrained CI
-      # runner. `test:e2e` never hits this because `playwright.config.js`'s
-      # own `webServer` already uses `npx serve . -p 4173 -s` — reusing that
-      # exact command here (not `npm run dev`) is the actual fix, not the
-      # retry loop below (kept anyway as a second, independent layer of
-      # resilience against genuinely one-off runner hiccups, now that the
-      # systemic slow-server cause is gone).
-      - name: Start server (same command test:e2e already uses — see comment below)
+      - name: Install Chromium (same browser test-e2e already verifies works in this runner)
+        run: npx playwright install --with-deps chromium
+      - name: Resolve Chromium executable path
+        id: chrome-path
+        run: echo "path=$(node -e "console.log(require('playwright-core').chromium.executablePath())")" >> "$GITHUB_OUTPUT"
+      - name: Start server (same command test:e2e already uses — no keep-alive/HTTP2 bottleneck under this app's unbundled-ES-module fan-out)
         run: npx serve . -p 4173 -s &
       - name: Wait for server
         run: |
@@ -174,25 +156,9 @@ jobs:
             sleep 1
           done
           curl -sf http://localhost:4173/ || { echo "❌ Server failed to start within 30s"; exit 1; }
-      # Previously launched via a manually-resolved Playwright/"Chrome for
-      # Testing" binary (CHROME_PATH override) reused from a separate
-      # `playwright install` step, on the reasoning that test-e2e already
-      # proves that exact browser works in this runner. That override
-      # wasn't actually the root cause of the `NO_FCP` failures (see the
-      # server comment above — ruling it out is what pointed at the server
-      # instead), but switching away from it is still the right call: it
-      # saved one redundant `playwright install` in this job, at the cost
-      # of coupling to a browser build/launch path `lhci` itself isn't
-      # tested against. `npx @lhci/cli autorun` (what `treosh/lighthouse-
-      # ci-action` itself runs under the hood, called directly here instead
-      # of through the marketplace action) launches its own bundled Chrome
-      # the way the `lhci` CLI is actually tested and maintained to, with
-      # no custom executable override — and the whole step is wrapped in a
-      # retry loop as a second, independent layer of resilience against a
-      # genuinely one-off runner hiccup unrelated to any code change; a
-      # single transient failure here shouldn't block an otherwise-green PR
-      # the way a real perf-budget regression should.
       - name: Run Lighthouse CI against the landing page (retries on transient launch failures)
+        env:
+          CHROME_PATH: ${{ steps.chrome-path.outputs.path }}
         run: |
           for attempt in 1 2 3; do
             echo "Lighthouse CI attempt $attempt/3"
