@@ -429,8 +429,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     const velocitySeries = buildVelocitySeries(effectiveLog, days);
     // issue #206 §6 — a flat-zero velocity chart (no completions anywhere in the
     // selected range) reads as an error/loading state rather than "nothing to show
-    // yet" without a caption. Small gradient dot, not a full illustration —
-    // var(--gradient-alpenglow) stays a rare accent, not a placeholder background.
+    // yet" without a caption. Small solid gold dot, not a full illustration.
     if (velocitySeries.counts.every(count => count === 0)) {
       velocityEmptySlot.replaceChildren(el('p', { className: 'chart-empty-note' }, [
         el('span', { className: 'chart-empty-dot', 'aria-hidden': 'true' }),

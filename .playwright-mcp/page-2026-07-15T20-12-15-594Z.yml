@@ -1,0 +1,92 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e92]:
+    - generic [ref=e93]:
+      - link "Ascent — all roadmaps" [ref=e94] [cursor=pointer]:
+        - /url: "#/onboarding"
+        - generic [ref=e98]: Ascent
+      - generic [ref=e99]:
+        - button "Switch to light mode" [ref=e100] [cursor=pointer]
+        - button "Account menu — Guest session" [ref=e104] [cursor=pointer]:
+          - generic [ref=e105]: G
+        - button "Sign out" [disabled] [ref=e106]
+    - banner [ref=e109]:
+      - heading "Pick a starting roadmap" [level=1] [ref=e110]
+      - paragraph [ref=e111]: Choose a template to get started. You can add, edit, or remove topics anytime, and start more templates later without losing progress.
+    - generic [ref=e113]:
+      - heading "Today's Todos" [level=2] [ref=e117]
+      - generic [ref=e118]: 0 active
+      - button "Turn on due-soon reminders" [ref=e119] [cursor=pointer]
+      - button "About Today's Todos" [ref=e122] [cursor=pointer]
+      - button "Expand Today's Todos" [ref=e125] [cursor=pointer]
+    - list [ref=e129]:
+      - listitem [ref=e130]:
+        - generic:
+          - button "AI-powered Create your own roadmap Answer a few questions, generate it with an AI assistant, and paste the result back in." [disabled]:
+            - generic: AI-powered
+            - generic: Create your own roadmap
+            - generic: Answer a few questions, generate it with an AI assistant, and paste the result back in.
+          - button "How do I build my own roadmap?" [disabled]
+      - listitem [ref=e142]:
+        - generic:
+          - button "Java Backend Engineer Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep. 484 topics Current" [disabled]:
+            - generic: Java Backend Engineer
+            - generic: Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep.
+            - generic:
+              - generic: 484 topics
+              - generic: Current
+          - button "Favorite Java Backend Engineer" [disabled]
+          - button "Hide Java Backend Engineer" [disabled]
+          - generic: Opening…
+      - listitem [ref=e160]:
+        - generic:
+          - button "GenAI / Agentic AI Engineer LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep. 81 topics" [disabled]:
+            - generic: GenAI / Agentic AI Engineer
+            - generic: LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep.
+            - generic: 81 topics
+          - button "Favorite GenAI / Agentic AI Engineer" [disabled]
+          - button "Hide GenAI / Agentic AI Engineer" [disabled]
+      - listitem [ref=e177]:
+        - generic:
+          - button "Frontend Developer HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep. 230 topics" [disabled]:
+            - generic: Frontend Developer
+            - generic: HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep.
+            - generic: 230 topics
+          - button "Favorite Frontend Developer" [disabled]
+          - button "Hide Frontend Developer" [disabled]
+      - listitem [ref=e194]:
+        - generic:
+          - button "Data Scientist Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep. 166 topics" [disabled]:
+            - generic: Data Scientist
+            - generic: Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep.
+            - generic: 166 topics
+          - button "Favorite Data Scientist" [disabled]
+          - button "Hide Data Scientist" [disabled]
+      - listitem [ref=e211]:
+        - generic:
+          - button "12th Grade Mathematics Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep. 85 topics" [disabled]:
+            - generic: 12th Grade Mathematics
+            - generic: Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep.
+            - generic: 85 topics
+          - button "Favorite 12th Grade Mathematics" [disabled]
+          - button "Hide 12th Grade Mathematics" [disabled]
+      - listitem [ref=e228]:
+        - generic:
+          - button "Learning Piano Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills. 65 topics" [disabled]:
+            - generic: Learning Piano
+            - generic: Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills.
+            - generic: 65 topics
+          - button "Favorite Learning Piano" [disabled]
+          - button "Hide Learning Piano" [disabled]
+      - listitem [ref=e245]:
+        - generic:
+          - button "Marketing Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep. 75 topics" [disabled]:
+            - generic: Marketing
+            - generic: Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep.
+            - generic: 75 topics
+          - button "Favorite Marketing" [disabled]
+          - button "Hide Marketing" [disabled]
+  - button "Send feedback" [ref=e85] [cursor=pointer]:
+    - generic [ref=e90]: Feedback
+  - status

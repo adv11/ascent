@@ -1,0 +1,90 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e120]:
+    - generic [ref=e121]:
+      - link "Ascent — all roadmaps" [ref=e122] [cursor=pointer]:
+        - /url: "#/onboarding"
+        - generic [ref=e126]: Ascent
+      - generic [ref=e127]:
+        - button "Switch to light mode" [ref=e128] [cursor=pointer]
+        - button "Account menu — codesmartly2020@gmail.com" [ref=e132] [cursor=pointer]:
+          - generic [ref=e133]: CO
+        - button "Sign out" [ref=e134] [cursor=pointer]
+    - banner [ref=e137]:
+      - heading "Pick a starting roadmap" [level=1] [ref=e138]
+      - paragraph [ref=e139]: Choose a template to get started. You can add, edit, or remove topics anytime, and start more templates later without losing progress.
+    - generic [ref=e141]:
+      - heading "Today's Todos" [level=2] [ref=e145]
+      - generic [ref=e146]: 0 active
+      - button "Turn on due-soon reminders" [ref=e147] [cursor=pointer]
+      - button "About Today's Todos" [ref=e150] [cursor=pointer]
+      - button "Expand Today's Todos" [ref=e153] [cursor=pointer]
+    - list [ref=e157]:
+      - listitem [ref=e158]:
+        - generic [ref=e159] [cursor=pointer]:
+          - button "AI-powered Create your own roadmap Answer a few questions, generate it with an AI assistant, and paste the result back in." [ref=e160]:
+            - generic [ref=e164]: AI-powered
+            - generic [ref=e165]: Create your own roadmap
+            - generic [ref=e166]: Answer a few questions, generate it with an AI assistant, and paste the result back in.
+          - button "How do I build my own roadmap?" [ref=e167]
+      - listitem [ref=e170]:
+        - generic [ref=e171] [cursor=pointer]:
+          - button "Java Backend Engineer Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep. 484 topics Current" [ref=e172]:
+            - generic [ref=e177]: Java Backend Engineer
+            - generic [ref=e178]: Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep.
+            - generic [ref=e179]:
+              - generic [ref=e180]: 484 topics
+              - generic [ref=e181]: Current
+          - button "Favorite Java Backend Engineer" [ref=e182]
+          - button "Hide Java Backend Engineer" [ref=e185]
+      - listitem [ref=e188]:
+        - generic [ref=e189] [cursor=pointer]:
+          - button "GenAI / Agentic AI Engineer LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep. 81 topics" [ref=e190]:
+            - generic [ref=e195]: GenAI / Agentic AI Engineer
+            - generic [ref=e196]: LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep.
+            - generic [ref=e197]: 81 topics
+          - button "Favorite GenAI / Agentic AI Engineer" [ref=e199]
+          - button "Hide GenAI / Agentic AI Engineer" [ref=e202]
+      - listitem [ref=e205]:
+        - generic [ref=e206] [cursor=pointer]:
+          - button "Frontend Developer HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep. 230 topics" [ref=e207]:
+            - generic [ref=e212]: Frontend Developer
+            - generic [ref=e213]: HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep.
+            - generic [ref=e214]: 230 topics
+          - button "Favorite Frontend Developer" [ref=e216]
+          - button "Hide Frontend Developer" [ref=e219]
+      - listitem [ref=e222]:
+        - generic [ref=e223] [cursor=pointer]:
+          - button "Data Scientist Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep. 166 topics" [ref=e224]:
+            - generic [ref=e229]: Data Scientist
+            - generic [ref=e230]: Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep.
+            - generic [ref=e231]: 166 topics
+          - button "Favorite Data Scientist" [ref=e233]
+          - button "Hide Data Scientist" [ref=e236]
+      - listitem [ref=e239]:
+        - generic [ref=e240] [cursor=pointer]:
+          - button "12th Grade Mathematics Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep. 85 topics" [ref=e241]:
+            - generic [ref=e246]: 12th Grade Mathematics
+            - generic [ref=e247]: Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep.
+            - generic [ref=e248]: 85 topics
+          - button "Favorite 12th Grade Mathematics" [ref=e250]
+          - button "Hide 12th Grade Mathematics" [ref=e253]
+      - listitem [ref=e256]:
+        - generic [ref=e257] [cursor=pointer]:
+          - button "Learning Piano Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills. 65 topics" [ref=e258]:
+            - generic [ref=e263]: Learning Piano
+            - generic [ref=e264]: Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills.
+            - generic [ref=e265]: 65 topics
+          - button "Favorite Learning Piano" [ref=e267]
+          - button "Hide Learning Piano" [ref=e270]
+      - listitem [ref=e273]:
+        - generic [ref=e274] [cursor=pointer]:
+          - button "Marketing Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep. 75 topics" [ref=e275]:
+            - generic [ref=e280]: Marketing
+            - generic [ref=e281]: Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep.
+            - generic [ref=e282]: 75 topics
+          - button "Favorite Marketing" [ref=e284]
+          - button "Hide Marketing" [ref=e287]
+  - button "Send feedback" [ref=e113] [cursor=pointer]:
+    - generic [ref=e118]: Feedback

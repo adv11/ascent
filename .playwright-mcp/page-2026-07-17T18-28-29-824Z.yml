@@ -1,0 +1,119 @@
+- generic [active] [ref=f253e1]:
+  - link "Skip to content" [ref=f253e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f253e1675]:
+    - generic [ref=f253e1676]:
+      - link "Ascent — all roadmaps" [ref=f253e1677] [cursor=pointer]:
+        - /url: "#/onboarding"
+        - generic [ref=f253e1681]: Ascent
+      - generic [ref=f253e1682]:
+        - button "Switch to light mode" [ref=f253e1683] [cursor=pointer]
+        - button "Account menu — codesmartly2020@gmail.com" [ref=f253e1687] [cursor=pointer]:
+          - generic [ref=f253e1688]: CO
+        - button "Sign out" [ref=f253e1689] [cursor=pointer]
+    - button "← Back to my roadmap" [ref=f253e1692] [cursor=pointer]
+    - banner [ref=f253e1693]:
+      - heading "Switch your starter roadmap" [level=1] [ref=f253e1694]
+      - paragraph [ref=f253e1695]: Switch between your roadmaps anytime — each one keeps its own progress, and starting or switching never overwrites another.
+    - generic [ref=f253e1696]:
+      - generic [ref=f253e1697]:
+        - heading "Today's Todos" [level=2] [ref=f253e1701]
+        - button "Turn on due-soon reminders" [ref=f253e1702] [cursor=pointer]
+        - button "About Today's Todos" [ref=f253e1705] [cursor=pointer]
+        - button "Collapse Today's Todos" [expanded] [ref=f253e1708] [cursor=pointer]
+      - generic [ref=f253e1712]:
+        - textbox "New todo title" [ref=f253e1713]:
+          - /placeholder: Add a todo, due in…
+        - combobox "Due in" [ref=f253e1715] [cursor=pointer]:
+          - generic [ref=f253e1716]: 24 hours
+        - button "Add" [ref=f253e1720] [cursor=pointer]
+      - paragraph [ref=f253e1722]: Nothing due in the next while — add one above.
+      - button "▸ Missed (0)" [ref=f253e1723] [cursor=pointer]
+    - list [ref=f253e1724]:
+      - listitem [ref=f253e1725]:
+        - generic [ref=f253e1726] [cursor=pointer]:
+          - button "AI-powered Create your own roadmap Answer a few questions, generate it with an AI assistant, and paste the result back in." [ref=f253e1727]:
+            - generic [ref=f253e1731]: AI-powered
+            - generic [ref=f253e1732]: Create your own roadmap
+            - generic [ref=f253e1733]: Answer a few questions, generate it with an AI assistant, and paste the result back in.
+          - button "How do I build my own roadmap?" [ref=f253e1734]
+      - listitem [ref=f253e1737]:
+        - generic [ref=f253e1738] [cursor=pointer]:
+          - button "Java Backend Engineer Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep. 484 topics Current" [ref=f253e1739]:
+            - generic [ref=f253e1744]: Java Backend Engineer
+            - generic [ref=f253e1745]: Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep.
+            - generic [ref=f253e1746]:
+              - generic [ref=f253e1747]: 484 topics
+              - generic [ref=f253e1748]: Current
+          - button "Unfavorite Java Backend Engineer" [pressed] [ref=f253e1749]
+          - button "Hide Java Backend Engineer" [ref=f253e1752]
+      - listitem [ref=f253e1755]:
+        - generic [ref=f253e1756] [cursor=pointer]:
+          - button "Car Driving Roadmap (Beginner, 1 Month) Your own roadmap. In progress" [ref=f253e1757]:
+            - generic [ref=f253e1762]: Car Driving Roadmap (Beginner, 1 Month)
+            - generic [ref=f253e1763]: Your own roadmap.
+            - generic [ref=f253e1764]: In progress
+          - button "Favorite Car Driving Roadmap (Beginner, 1 Month)" [ref=f253e1766]
+          - button "Delete Car Driving Roadmap (Beginner, 1 Month)" [ref=f253e1769]
+      - listitem [ref=f253e1772]:
+        - generic [ref=f253e1773] [cursor=pointer]:
+          - button "Computer Hardware Fixing Roadmap (Beginner, 3 Months) Your own roadmap. In progress" [ref=f253e1774]:
+            - generic [ref=f253e1779]: Computer Hardware Fixing Roadmap (Beginner, 3 Months)
+            - generic [ref=f253e1780]: Your own roadmap.
+            - generic [ref=f253e1781]: In progress
+          - button "Favorite Computer Hardware Fixing Roadmap (Beginner, 3 Months)" [ref=f253e1783]
+          - button "Delete Computer Hardware Fixing Roadmap (Beginner, 3 Months)" [ref=f253e1786]
+      - listitem [ref=f253e1789]:
+        - generic [ref=f253e1790] [cursor=pointer]:
+          - button "GenAI / Agentic AI Engineer LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep. Loading topics… In progress" [ref=f253e1791]:
+            - generic [ref=f253e1796]: GenAI / Agentic AI Engineer
+            - generic [ref=f253e1797]: LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep.
+            - generic [ref=f253e1798]:
+              - generic [ref=f253e1799]: Loading topics…
+              - generic [ref=f253e1800]: In progress
+          - button "Favorite GenAI / Agentic AI Engineer" [ref=f253e1801]
+          - button "Hide GenAI / Agentic AI Engineer" [ref=f253e1804]
+      - listitem [ref=f253e1807]:
+        - generic [ref=f253e1808] [cursor=pointer]:
+          - button "Frontend Developer HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep. Loading topics…" [ref=f253e1809]:
+            - generic [ref=f253e1814]: Frontend Developer
+            - generic [ref=f253e1815]: HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep.
+            - generic [ref=f253e1816]: Loading topics…
+          - button "Favorite Frontend Developer" [ref=f253e1818]
+          - button "Hide Frontend Developer" [ref=f253e1821]
+      - listitem [ref=f253e1824]:
+        - generic [ref=f253e1825] [cursor=pointer]:
+          - button "Data Scientist Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep. Loading topics… In progress" [ref=f253e1826]:
+            - generic [ref=f253e1831]: Data Scientist
+            - generic [ref=f253e1832]: Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep.
+            - generic [ref=f253e1833]:
+              - generic [ref=f253e1834]: Loading topics…
+              - generic [ref=f253e1835]: In progress
+          - button "Favorite Data Scientist" [ref=f253e1836]
+          - button "Hide Data Scientist" [ref=f253e1839]
+      - listitem [ref=f253e1842]:
+        - generic [ref=f253e1843] [cursor=pointer]:
+          - button "12th Grade Mathematics Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep. Loading topics…" [ref=f253e1844]:
+            - generic [ref=f253e1849]: 12th Grade Mathematics
+            - generic [ref=f253e1850]: Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep.
+            - generic [ref=f253e1851]: Loading topics…
+          - button "Favorite 12th Grade Mathematics" [ref=f253e1853]
+          - button "Hide 12th Grade Mathematics" [ref=f253e1856]
+      - listitem [ref=f253e1859]:
+        - generic [ref=f253e1860] [cursor=pointer]:
+          - button "Learning Piano Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills. Loading topics…" [ref=f253e1861]:
+            - generic [ref=f253e1866]: Learning Piano
+            - generic [ref=f253e1867]: Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills.
+            - generic [ref=f253e1868]: Loading topics…
+          - button "Favorite Learning Piano" [ref=f253e1870]
+          - button "Hide Learning Piano" [ref=f253e1873]
+      - listitem [ref=f253e1876]:
+        - generic [ref=f253e1877] [cursor=pointer]:
+          - button "Marketing Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep. Loading topics…" [ref=f253e1878]:
+            - generic [ref=f253e1883]: Marketing
+            - generic [ref=f253e1884]: Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep.
+            - generic [ref=f253e1885]: Loading topics…
+          - button "Favorite Marketing" [ref=f253e1887]
+          - button "Hide Marketing" [ref=f253e1890]
+  - button "Send feedback" [ref=f253e113] [cursor=pointer]:
+    - generic [ref=f253e118]: Feedback

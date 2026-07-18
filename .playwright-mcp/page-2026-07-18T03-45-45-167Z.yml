@@ -1,0 +1,289 @@
+- generic [active] [ref=f254e1]:
+  - link "Skip to content" [ref=f254e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f254e677]:
+    - complementary "Sidebar" [ref=f254e678]:
+      - link "Ascent — all roadmaps" [ref=f254e679] [cursor=pointer]:
+        - /url: "#/onboarding"
+        - generic [ref=f254e683]: Ascent
+      - navigation "Primary" [ref=f254e684]:
+        - link "Dashboard" [ref=f254e685] [cursor=pointer]:
+          - /url: "#/app"
+        - link "Progress" [ref=f254e690] [cursor=pointer]:
+          - /url: "#/progress"
+        - link "My Roadmaps" [ref=f254e695] [cursor=pointer]:
+          - /url: "#/onboarding"
+        - link "Settings" [ref=f254e700] [cursor=pointer]:
+          - /url: "#/settings"
+      - button "Collapse sidebar" [ref=f254e706] [cursor=pointer]
+      - generic [ref=f254e709]:
+        - button "Account menu — codesmartly2020@gmail.com" [ref=f254e711] [cursor=pointer]:
+          - generic [ref=f254e712]: CO
+          - generic [ref=f254e713]: codesmartly2020@gmail.com
+        - button "Sign out" [ref=f254e714] [cursor=pointer]
+    - generic [ref=f254e717]:
+      - banner [ref=f254e718]:
+        - generic [ref=f254e719]: Progress
+        - generic [ref=f254e721]:
+          - button "Search (Ctrl+K)" [ref=f254e722] [cursor=pointer]
+          - button "What's new — unread updates" [ref=f254e725] [cursor=pointer]
+          - button "Switch to light mode" [ref=f254e729] [cursor=pointer]
+      - generic [ref=f254e732]:
+        - banner [ref=f254e733]:
+          - generic [ref=f254e734]:
+            - heading "Progress" [level=1] [ref=f254e735]
+            - paragraph [ref=f254e736]: Your preparation journey at a glance.
+          - generic [ref=f254e737]:
+            - group "Time range" [ref=f254e739]:
+              - button "This Week" [ref=f254e740] [cursor=pointer]
+              - button "This Month" [ref=f254e741] [cursor=pointer]
+              - button "All Time" [pressed] [ref=f254e742] [cursor=pointer]
+            - button "Share progress" [ref=f254e743] [cursor=pointer]
+        - generic [ref=f254e747]:
+          - generic [ref=f254e748]:
+            - generic [ref=f254e749]: Topics complete
+            - generic [ref=f254e754]:
+              - generic [ref=f254e755]: "0"
+              - generic [ref=f254e756]: / 484
+            - paragraph [ref=f254e760]: Check off your first topic to get started.
+          - generic [ref=f254e761]:
+            - generic [ref=f254e762]: Current streak
+            - generic [ref=f254e767]:
+              - generic [ref=f254e768]: "0"
+              - generic [ref=f254e769]: days
+            - paragraph [ref=f254e770]: Complete a topic today to start your streak.
+          - generic [ref=f254e771]:
+            - generic [ref=f254e772]: Longest streak
+            - generic [ref=f254e777]:
+              - generic [ref=f254e778]: "0"
+              - generic [ref=f254e779]: days
+          - generic [ref=f254e780]:
+            - generic [ref=f254e781]: 7-day velocity
+            - generic [ref=f254e786]:
+              - generic [ref=f254e787]: "0.0"
+              - generic [ref=f254e788]: / day
+            - paragraph [ref=f254e789]: Complete topics daily to build velocity.
+          - generic [ref=f254e790]:
+            - generic [ref=f254e791]: Time tracked
+            - generic [ref=f254e796]: 0s
+        - generic [ref=f254e798]:
+          - heading "Activity" [level=2] [ref=f254e799]
+          - 'img "Activity heatmap: 0 items completed in the last year" [ref=f254e801]':
+            - generic [ref=f254e802]:
+              - generic [ref=f254e803]:
+                - generic [ref=f254e805]: Mon
+                - generic [ref=f254e807]: Wed
+                - generic [ref=f254e809]: Fri
+              - group "Activity heatmap, scrollable" [ref=f254e811]:
+                - generic [ref=f254e812]:
+                  - generic [ref=f254e813]: Jul
+                  - generic [ref=f254e815]: Aug
+                  - generic [ref=f254e820]: Sep
+                  - generic [ref=f254e824]: Oct
+                  - generic [ref=f254e828]: Nov
+                  - generic [ref=f254e833]: Dec
+                  - generic [ref=f254e837]: Jan
+                  - generic [ref=f254e841]: Feb
+                  - generic [ref=f254e845]: Mar
+                  - generic [ref=f254e850]: Apr
+                  - generic [ref=f254e854]: May
+                  - generic [ref=f254e859]: Jun
+                  - generic [ref=f254e863]: Jul
+            - generic [ref=f254e1230]:
+              - generic [ref=f254e1231]: Less
+              - generic [ref=f254e1237]: More
+        - heading "Cumulative progress" [level=2] [ref=f254e1239]
+        - generic [ref=f254e1242]:
+          - heading "Daily velocity" [level=2] [ref=f254e1243]
+          - paragraph [ref=f254e1245]:
+            - generic [ref=f254e1247]: No activity in this range yet. Check off a topic to start your trend.
+        - generic [ref=f254e1250]:
+          - heading "Phase breakdown" [level=2] [ref=f254e1251]
+          - generic [ref=f254e1253]:
+            - button "Core Java 0% · 0/60" [ref=f254e1254] [cursor=pointer]:
+              - generic [ref=f254e1256]: Core Java
+              - generic [ref=f254e1260]: 0% · 0/60
+            - button "Spring and Spring Boot 0% · 0/63" [ref=f254e1261] [cursor=pointer]:
+              - generic [ref=f254e1263]: Spring and Spring Boot
+              - generic [ref=f254e1267]: 0% · 0/63
+            - button "System Design 0% · 0/40" [ref=f254e1268] [cursor=pointer]:
+              - generic [ref=f254e1270]: System Design
+              - generic [ref=f254e1274]: 0% · 0/40
+            - button "DSA 0% · 0/23" [ref=f254e1275] [cursor=pointer]:
+              - generic [ref=f254e1277]: DSA
+              - generic [ref=f254e1281]: 0% · 0/23
+            - button "Cloud, Docker, Kubernetes 0% · 0/35" [ref=f254e1282] [cursor=pointer]:
+              - generic [ref=f254e1284]: Cloud, Docker, Kubernetes
+              - generic [ref=f254e1288]: 0% · 0/35
+            - button "Testing and Quality 0% · 0/16" [ref=f254e1289] [cursor=pointer]:
+              - generic [ref=f254e1291]: Testing and Quality
+              - generic [ref=f254e1295]: 0% · 0/16
+            - button "Observability and Production Engineering 0% · 0/22" [ref=f254e1296] [cursor=pointer]:
+              - generic [ref=f254e1298]: Observability and Production Engineering
+              - generic [ref=f254e1302]: 0% · 0/22
+            - button "Security 0% · 0/14" [ref=f254e1303] [cursor=pointer]:
+              - generic [ref=f254e1305]: Security
+              - generic [ref=f254e1309]: 0% · 0/14
+            - button "GenAI and Agentic AI 0% · 0/44" [ref=f254e1310] [cursor=pointer]:
+              - generic [ref=f254e1312]: GenAI and Agentic AI
+              - generic [ref=f254e1316]: 0% · 0/44
+            - button "Interview and Career 0% · 0/18" [ref=f254e1317] [cursor=pointer]:
+              - generic [ref=f254e1319]: Interview and Career
+              - generic [ref=f254e1323]: 0% · 0/18
+            - button "Portfolio Projects 0% · 0/19" [ref=f254e1324] [cursor=pointer]:
+              - generic [ref=f254e1326]: Portfolio Projects
+              - generic [ref=f254e1330]: 0% · 0/19
+            - button "Microservices 0% · 0/25" [ref=f254e1331] [cursor=pointer]:
+              - generic [ref=f254e1333]: Microservices
+              - generic [ref=f254e1337]: 0% · 0/25
+            - button "Kafka and Messaging 0% · 0/22" [ref=f254e1338] [cursor=pointer]:
+              - generic [ref=f254e1340]: Kafka and Messaging
+              - generic [ref=f254e1344]: 0% · 0/22
+            - button "Databases 0% · 0/21" [ref=f254e1345] [cursor=pointer]:
+              - generic [ref=f254e1347]: Databases
+              - generic [ref=f254e1351]: 0% · 0/21
+            - button "Redis and Caching 0% · 0/11" [ref=f254e1352] [cursor=pointer]:
+              - generic [ref=f254e1354]: Redis and Caching
+              - generic [ref=f254e1358]: 0% · 0/11
+            - button "Distributed Systems 0% · 0/12" [ref=f254e1359] [cursor=pointer]:
+              - generic [ref=f254e1361]: Distributed Systems
+              - generic [ref=f254e1365]: 0% · 0/12
+            - button "CI/CD and Git 0% · 0/15" [ref=f254e1366] [cursor=pointer]:
+              - generic [ref=f254e1368]: CI/CD and Git
+              - generic [ref=f254e1372]: 0% · 0/15
+            - button "Linux and Shell 0% · 0/14" [ref=f254e1373] [cursor=pointer]:
+              - generic [ref=f254e1375]: Linux and Shell
+              - generic [ref=f254e1379]: 0% · 0/14
+            - button "CS Fundamentals 0% · 0/10" [ref=f254e1380] [cursor=pointer]:
+              - generic [ref=f254e1382]: CS Fundamentals
+              - generic [ref=f254e1386]: 0% · 0/10
+        - generic [ref=f254e1387]:
+          - heading "Priority × phase" [level=2] [ref=f254e1388]
+          - table [ref=f254e1391]:
+            - rowgroup [ref=f254e1392]:
+              - row [ref=f254e1393]:
+                - columnheader "Phase" [ref=f254e1394]
+                - columnheader "P0" [ref=f254e1395]
+                - columnheader "P1" [ref=f254e1396]
+                - columnheader "P2" [ref=f254e1397]
+                - columnheader "P3" [ref=f254e1398]
+            - rowgroup [ref=f254e1399]:
+              - row [ref=f254e1400]:
+                - cell "Core Java" [ref=f254e1401]
+                - cell "0/45" [ref=f254e1402]
+                - cell "0/8" [ref=f254e1403]
+                - cell "0/5" [ref=f254e1404]
+                - cell "0/2" [ref=f254e1405]
+              - row [ref=f254e1406]:
+                - cell "Spring and Spring Boot" [ref=f254e1407]
+                - cell "0/47" [ref=f254e1408]
+                - cell "0/11" [ref=f254e1409]
+                - cell "0/2" [ref=f254e1410]
+                - cell "0/3" [ref=f254e1411]
+              - row [ref=f254e1412]:
+                - cell "System Design" [ref=f254e1413]
+                - cell "0/36" [ref=f254e1414]
+                - cell "0/3" [ref=f254e1415]
+                - cell "0/1" [ref=f254e1416]
+                - cell "—" [ref=f254e1417]
+              - row [ref=f254e1418]:
+                - cell "DSA" [ref=f254e1419]
+                - cell "0/20" [ref=f254e1420]
+                - cell "—" [ref=f254e1421]
+                - cell "0/2" [ref=f254e1422]
+                - cell "0/1" [ref=f254e1423]
+              - row [ref=f254e1424]:
+                - cell "Cloud, Docker, Kubernetes" [ref=f254e1425]
+                - cell "—" [ref=f254e1426]
+                - cell "0/32" [ref=f254e1427]
+                - cell "0/3" [ref=f254e1428]
+                - cell "—" [ref=f254e1429]
+              - row [ref=f254e1430]:
+                - cell "Testing and Quality" [ref=f254e1431]
+                - cell "—" [ref=f254e1432]
+                - cell "0/13" [ref=f254e1433]
+                - cell "0/1" [ref=f254e1434]
+                - cell "0/2" [ref=f254e1435]
+              - row [ref=f254e1436]:
+                - cell "Observability and Production Engineering" [ref=f254e1437]
+                - cell "—" [ref=f254e1438]
+                - cell "0/20" [ref=f254e1439]
+                - cell "0/2" [ref=f254e1440]
+                - cell "—" [ref=f254e1441]
+              - row [ref=f254e1442]:
+                - cell "Security" [ref=f254e1443]
+                - cell "—" [ref=f254e1444]
+                - cell "0/12" [ref=f254e1445]
+                - cell "0/2" [ref=f254e1446]
+                - cell "—" [ref=f254e1447]
+              - row [ref=f254e1448]:
+                - cell "GenAI and Agentic AI" [ref=f254e1449]
+                - cell "—" [ref=f254e1450]
+                - cell "0/37" [ref=f254e1451]
+                - cell "0/6" [ref=f254e1452]
+                - cell "0/1" [ref=f254e1453]
+              - row [ref=f254e1454]:
+                - cell "Interview and Career" [ref=f254e1455]
+                - cell "0/17" [ref=f254e1456]
+                - cell "0/1" [ref=f254e1457]
+                - cell "—" [ref=f254e1458]
+                - cell "—" [ref=f254e1459]
+              - row [ref=f254e1460]:
+                - cell "Portfolio Projects" [ref=f254e1461]
+                - cell "0/16" [ref=f254e1462]
+                - cell "—" [ref=f254e1463]
+                - cell "0/3" [ref=f254e1464]
+                - cell "—" [ref=f254e1465]
+              - row [ref=f254e1466]:
+                - cell "Microservices" [ref=f254e1467]
+                - cell "0/23" [ref=f254e1468]
+                - cell "0/1" [ref=f254e1469]
+                - cell "—" [ref=f254e1470]
+                - cell "0/1" [ref=f254e1471]
+              - row [ref=f254e1472]:
+                - cell "Kafka and Messaging" [ref=f254e1473]
+                - cell "0/15" [ref=f254e1474]
+                - cell "0/2" [ref=f254e1475]
+                - cell "0/5" [ref=f254e1476]
+                - cell "—" [ref=f254e1477]
+              - row [ref=f254e1478]:
+                - cell "Databases" [ref=f254e1479]
+                - cell "0/15" [ref=f254e1480]
+                - cell "0/2" [ref=f254e1481]
+                - cell "0/3" [ref=f254e1482]
+                - cell "0/1" [ref=f254e1483]
+              - row [ref=f254e1484]:
+                - cell "Redis and Caching" [ref=f254e1485]
+                - cell "—" [ref=f254e1486]
+                - cell "0/10" [ref=f254e1487]
+                - cell "0/1" [ref=f254e1488]
+                - cell "—" [ref=f254e1489]
+              - row [ref=f254e1490]:
+                - cell "Distributed Systems" [ref=f254e1491]
+                - cell "—" [ref=f254e1492]
+                - cell "0/9" [ref=f254e1493]
+                - cell "0/3" [ref=f254e1494]
+                - cell "—" [ref=f254e1495]
+              - row [ref=f254e1496]:
+                - cell "CI/CD and Git" [ref=f254e1497]
+                - cell "—" [ref=f254e1498]
+                - cell "0/11" [ref=f254e1499]
+                - cell "0/2" [ref=f254e1500]
+                - cell "0/2" [ref=f254e1501]
+              - row [ref=f254e1502]:
+                - cell "Linux and Shell" [ref=f254e1503]
+                - cell "—" [ref=f254e1504]
+                - cell "—" [ref=f254e1505]
+                - cell "0/12" [ref=f254e1506]
+                - cell "0/2" [ref=f254e1507]
+              - row [ref=f254e1508]:
+                - cell "CS Fundamentals" [ref=f254e1509]
+                - cell "—" [ref=f254e1510]
+                - cell "—" [ref=f254e1511]
+                - cell "0/10" [ref=f254e1512]
+                - cell "—" [ref=f254e1513]
+        - generic [ref=f254e1514]:
+          - heading "Projected completion" [level=2] [ref=f254e1515]
+          - paragraph [ref=f254e1517]: No recent activity. Check off 3 topics today to get back on track.
+  - button "Send feedback" [ref=f254e113] [cursor=pointer]:
+    - generic [ref=f254e118]: Feedback

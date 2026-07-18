@@ -1,0 +1,108 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e2151]:
+    - complementary "Sidebar" [ref=e2152]:
+      - link "Ascent — all roadmaps" [ref=e2153] [cursor=pointer]:
+        - /url: "#/onboarding"
+        - generic [ref=e2157]: Ascent
+      - navigation "Primary" [ref=e2158]:
+        - link "Dashboard" [ref=e2159] [cursor=pointer]:
+          - /url: "#/app"
+        - link "Progress" [ref=e2164] [cursor=pointer]:
+          - /url: "#/progress"
+        - link "My Roadmaps" [ref=e2169] [cursor=pointer]:
+          - /url: "#/onboarding"
+        - link "Settings" [ref=e2174] [cursor=pointer]:
+          - /url: "#/settings"
+      - button "Collapse sidebar" [ref=e2180] [cursor=pointer]
+      - generic [ref=e2183]:
+        - button "Account menu — codesmartly2020@gmail.com" [ref=e2185] [cursor=pointer]:
+          - generic [ref=e2186]: CO
+          - generic [ref=e2187]: codesmartly2020@gmail.com
+        - button "Sign out" [ref=e2188] [cursor=pointer]
+    - generic [ref=e2191]:
+      - banner [ref=e2192]:
+        - generic [ref=e2193]: Roadmaps / Celebration Screenshot Roadmap
+        - generic [ref=e2194]:
+          - generic [ref=e2195]: Synced
+          - generic [ref=e2196]:
+            - button "Search (Ctrl+K)" [ref=e2197] [cursor=pointer]
+            - button "What's new" [ref=e2200] [cursor=pointer]
+            - button "Switch to light mode" [ref=e2204] [cursor=pointer]
+      - generic [ref=e2207]:
+        - banner [ref=e2208]:
+          - generic [ref=e2209]:
+            - generic [ref=e2210]: Celebration Screenshot Roadmap roadmap
+            - paragraph [ref=e2215]: 1 item · 100% complete · Last synced just now
+          - generic [ref=e2216]:
+            - generic [ref=e2217]:
+              - generic [ref=e2221]:
+                - generic [ref=e2222]: "1"
+                - generic [ref=e2223]: / 1
+              - generic [ref=e2224]: Items done
+            - generic [ref=e2225]:
+              - generic [ref=e2226]:
+                - img "100% complete" [ref=e2297]
+                - generic [ref=e2230]:
+                  - generic [ref=e2231]: "100"
+                  - generic [ref=e2232]: "%"
+              - generic [ref=e2233]: Complete
+          - generic [ref=e2234]:
+            - generic [ref=e2235]:
+              - generic [ref=e2236]: Priority
+              - generic [ref=e2237]:
+                - button "All 1/1" [pressed] [ref=e2298] [cursor=pointer]
+                - button "P0 0/0" [ref=e2239] [cursor=pointer]
+                - button "P1 1/1" [ref=e2299] [cursor=pointer]
+                - button "P2 0/0" [ref=e2241] [cursor=pointer]
+                - button "P3 0/0" [ref=e2242] [cursor=pointer]
+                - button "Resources 0/0" [ref=e2243] [cursor=pointer]
+                - button "Review due 0/0" [ref=e2246] [cursor=pointer]
+            - generic [ref=e2249]:
+              - textbox "Search topics…" [ref=e2250]
+              - button "Collapse all" [ref=e2251] [cursor=pointer]
+        - main [ref=e2252]:
+          - generic [ref=e2253]:
+            - textbox "New phase name…" [ref=e2254]
+            - button "+ Add phase" [ref=e2255] [cursor=pointer]
+          - generic [ref=e2256]:
+            - button "01 Seed Phase P1 100% complete 1/1" [expanded] [ref=e2300] [cursor=pointer]:
+              - generic [ref=e2258]: "01"
+              - generic [ref=e2259]: Seed Phase
+              - generic [ref=e2260]: P1
+              - img "100% complete" [ref=e2301]
+              - generic [ref=e2264]: 1/1
+            - generic [ref=e2268]:
+              - generic [ref=e2269]:
+                - generic [ref=e2270]: Rename or delete this phase
+                - generic [ref=e2271]:
+                  - textbox "Rename phase \"Seed Phase\"" [ref=e2272]: Seed Phase
+                  - button "Rename" [ref=e2273] [cursor=pointer]
+                  - button "Delete phase" [ref=e2274] [cursor=pointer]
+              - generic [ref=e2275]:
+                - generic [ref=e2276]: Rename or delete this section
+                - generic [ref=e2277]:
+                  - textbox "Rename section \"Seed Section\"" [ref=e2278]:
+                    - /placeholder: Section name
+                    - text: Seed Section
+                  - button "Rename" [ref=e2279] [cursor=pointer]
+                  - button "Delete section" [ref=e2280] [cursor=pointer]
+              - generic [ref=e2281] [cursor=pointer]:
+                - checkbox "Seed topic" [checked] [active] [ref=e2282]
+                - generic [ref=e2283]:
+                  - generic [ref=e2284]: Seed topic
+                  - generic [ref=e2285]: P1
+                - generic [ref=e2286]:
+                  - button "Add \"Seed topic\" to Today's Todos" [ref=e2287]
+                  - button "Edit Seed topic" [ref=e2290]: Edit
+              - generic [ref=e2291]:
+                - textbox "Add a custom topic…" [ref=e2292]
+                - button "Add" [ref=e2293] [cursor=pointer]
+              - generic [ref=e2294]:
+                - textbox "New section name…" [ref=e2295]
+                - button "+ Add section" [ref=e2296] [cursor=pointer]
+        - status: Saved to cloud
+  - button "Send feedback" [ref=e4] [cursor=pointer]:
+    - generic [ref=e9]: Feedback
+  - status

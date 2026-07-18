@@ -1,0 +1,111 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e1860]:
+    - generic [ref=e1861]:
+      - link "Ascent — all roadmaps" [ref=e1862] [cursor=pointer]:
+        - /url: "#/onboarding"
+        - generic [ref=e1866]: Ascent
+      - generic [ref=e1867]:
+        - button "Switch to light mode" [ref=e1868] [cursor=pointer]
+        - button "Account menu — codesmartly2020@gmail.com" [ref=e1872] [cursor=pointer]:
+          - generic [ref=e1873]: CO
+        - button "Sign out" [disabled] [ref=e1874]
+    - button "← Back to my roadmap" [ref=e1877] [cursor=pointer]
+    - banner [ref=e1878]:
+      - heading "Switch your starter roadmap" [level=1] [ref=e1879]
+      - paragraph [ref=e1880]: Switch between your roadmaps anytime — each one keeps its own progress, and starting or switching never overwrites another.
+    - generic [ref=e1882]:
+      - heading "Today's Todos" [level=2] [ref=e1886]
+      - generic [ref=e1887]: 0 active
+      - button "Turn on due-soon reminders" [ref=e1888] [cursor=pointer]
+      - button "About Today's Todos" [ref=e1891] [cursor=pointer]
+      - button "Expand Today's Todos" [ref=e1894] [cursor=pointer]
+    - list [ref=e1898]:
+      - listitem [ref=e1899]:
+        - generic:
+          - button "AI-powered Create your own roadmap Answer a few questions, generate it with an AI assistant, and paste the result back in." [disabled]:
+            - generic: AI-powered
+            - generic: Create your own roadmap
+            - generic: Answer a few questions, generate it with an AI assistant, and paste the result back in.
+          - button "How do I build my own roadmap?" [disabled]
+          - generic: Importing…
+      - listitem [ref=e1911]:
+        - generic:
+          - button "Java Backend Engineer Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep. 484 topics Current" [disabled]:
+            - generic: Java Backend Engineer
+            - generic: Java, Spring Boot, microservices, Kafka, Redis, system design, GenAI, DSA, and interview prep.
+            - generic:
+              - generic: 484 topics
+              - generic: Current
+          - button "Unfavorite Java Backend Engineer" [disabled] [pressed]
+          - button "Hide Java Backend Engineer" [disabled]
+      - listitem [ref=e1929]:
+        - generic:
+          - button "Car Driving Roadmap (Beginner, 1 Month) Your own roadmap." [disabled]:
+            - generic: Car Driving Roadmap (Beginner, 1 Month)
+            - generic: Your own roadmap.
+          - button "Favorite Car Driving Roadmap (Beginner, 1 Month)" [disabled]
+          - button "Delete Car Driving Roadmap (Beginner, 1 Month)" [disabled]
+      - listitem [ref=e1945]:
+        - generic:
+          - button "Computer Hardware Fixing Roadmap (Beginner, 3 Months) Your own roadmap." [disabled]:
+            - generic: Computer Hardware Fixing Roadmap (Beginner, 3 Months)
+            - generic: Your own roadmap.
+          - button "Favorite Computer Hardware Fixing Roadmap (Beginner, 3 Months)" [disabled]
+          - button "Delete Computer Hardware Fixing Roadmap (Beginner, 3 Months)" [disabled]
+      - listitem [ref=e1961]:
+        - generic:
+          - button "GenAI / Agentic AI Engineer LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep. 81 topics In progress" [disabled]:
+            - generic: GenAI / Agentic AI Engineer
+            - generic: LLM fundamentals, prompt engineering, RAG, agents, frameworks, fine-tuning, evaluation, safety, and interview prep.
+            - generic:
+              - generic: 81 topics
+              - generic: In progress
+          - button "Favorite GenAI / Agentic AI Engineer" [disabled]
+          - button "Hide GenAI / Agentic AI Engineer" [disabled]
+      - listitem [ref=e1979]:
+        - generic:
+          - button "Frontend Developer HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep. 230 topics In progress" [disabled]:
+            - generic: Frontend Developer
+            - generic: HTML, CSS, JavaScript, TypeScript, React, testing, tooling, performance, accessibility, system design, and interview prep.
+            - generic:
+              - generic: 230 topics
+              - generic: In progress
+          - button "Favorite Frontend Developer" [disabled]
+          - button "Hide Frontend Developer" [disabled]
+      - listitem [ref=e1997]:
+        - generic:
+          - button "Data Scientist Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep. 166 topics" [disabled]:
+            - generic: Data Scientist
+            - generic: Python, math and statistics, ML, deep learning, NLP, SQL, data engineering, MLOps, and interview prep.
+            - generic: 166 topics
+          - button "Favorite Data Scientist" [disabled]
+          - button "Hide Data Scientist" [disabled]
+      - listitem [ref=e2014]:
+        - generic:
+          - button "12th Grade Mathematics Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep. 85 topics" [disabled]:
+            - generic: 12th Grade Mathematics
+            - generic: Relations and functions, algebra, calculus, vectors and 3D geometry, linear programming, probability, and exam prep.
+            - generic: 85 topics
+          - button "Favorite 12th Grade Mathematics" [disabled]
+          - button "Hide 12th Grade Mathematics" [disabled]
+      - listitem [ref=e2031]:
+        - generic:
+          - button "Learning Piano Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills. 65 topics" [disabled]:
+            - generic: Learning Piano
+            - generic: Reading music, technique, scales and chords, repertoire, sight-reading, ear training, and performance skills.
+            - generic: 65 topics
+          - button "Favorite Learning Piano" [disabled]
+          - button "Hide Learning Piano" [disabled]
+      - listitem [ref=e2048]:
+        - generic:
+          - button "Marketing Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep. 75 topics" [disabled]:
+            - generic: Marketing
+            - generic: Fundamentals, branding, content and SEO, paid ads, social and email marketing, analytics, growth, and career prep.
+            - generic: 75 topics
+          - button "Favorite Marketing" [disabled]
+          - button "Hide Marketing" [disabled]
+  - button "Send feedback" [ref=e4] [cursor=pointer]:
+    - generic [ref=e9]: Feedback
+  - status

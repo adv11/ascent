@@ -370,18 +370,16 @@ body {
 a.brand:hover { opacity: 0.85; }
 a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offset: 4px; border-radius: var(--radius-md); }
 
-/* intentional: fixed brand gradient + white text/glow, same in both themes (issue #116).
-   issue #206 §7 — moved off the old teal->cyan gradient onto var(--gradient-alpenglow)
-   (the same gold->rose gradient the progress ring's stroke now uses), per explicit
-   instruction to make the logo and the ring agree — this deliberately supersedes the
-   "deliberately still untouched — product identity, not an accent" precedent from
-   issue #155 v2 Phase A above; #206 §7 is a real, scoped decision to change it, not an
-   accidental catch-all recolor. */
+/* intentional: fixed solid brand gold + white text/glow, same in both themes (issue #116).
+   issue #206 §7 originally moved this to var(--gradient-alpenglow); a later user
+   decision in the same PR reverted every gradient app-wide back to solid color, so
+   this is a flat var(--color-brand-gold) fill again — the logo and the progress ring
+   still agree with each other, both solid now instead of both gradient. */
 .brand-mark {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--gradient-alpenglow);
+  background: var(--color-brand-gold);
   color: #fff;
   font-weight: 900;
   font-size: 20px;
@@ -424,16 +422,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 :root[data-theme='dark'] .eyebrow { color: var(--color-brand-gold-ink); }
 :root[data-theme='dark'] .eyebrow-dot { background: var(--color-brand-gold); }
 
-/* Gradient-filled headline text, for one accent phrase inside an otherwise
-   plain-color heading — never the whole heading, which would fail contrast
-   tooling that can't evaluate a gradient's endpoints against a background.
-   Same --gradient-alpenglow used by the progress ring and brand mark (§7),
-   in both themes — no per-theme override needed. */
+/* Solid accent-color headline text, for one accent phrase inside an
+   otherwise plain-color heading. Was a background-clip:text gradient;
+   reverted to a flat color per the app-wide "no gradients, solid only"
+   decision — the class name is kept as-is (matching every JS call site) even
+   though it's no longer literally a gradient. */
 .text-gradient-brand {
-  background: var(--gradient-alpenglow);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-brand-gold-ink);
 }
 
 /* Two-tone tag-chip pair (the "EPOP CONCEPT" + "AUTOMOTIVE" chip pattern) —
@@ -471,10 +466,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
 }
 /* issue #155 v2 Phase C — landing-scoped recolor; falls back to mint in light theme. */
-:root[data-theme='dark'] .icon-tile { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .icon-tile { color: var(--color-brand-gold-ink); }
 
 /* issue #206 §3.1 — .btn-cta is landing.js's marketing "Start for free" CTA
    (3 call sites, all `className: 'btn-cta'`/`'btn-cta btn-lg'`). Folded into
@@ -631,10 +626,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .btn-lg { min-height: 48px; padding: 12px 24px; font-size: var(--text-base); }
 .btn-icon { width: 36px; height: 36px; padding: 0; font-size: 22px; line-height: 1; }
 
-.link { color: var(--color-brand-gold); font-weight: 700; text-decoration: none; }
+.link { color: var(--color-brand-gold-ink); font-weight: 700; text-decoration: none; }
 /* issue #155 v2 Phase D3 (full completion pass) — the app's generic inline-link class;
    straight text swap. */
-:root[data-theme='dark'] .link { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .link { color: var(--color-brand-gold-ink); }
 .link:hover { text-decoration: underline; }
 
 /* Form fields */
@@ -709,10 +704,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   justify-content: center;
   pointer-events: none;
 }
-.field-validation-icon.valid { color: var(--color-brand-gold); }
+.field-validation-icon.valid { color: var(--color-brand-gold-ink); }
 .field-validation-icon.invalid { color: var(--color-danger); }
 /* issue #155 v2 Phase D3 (full completion pass) — straight icon-color swap. */
-:root[data-theme='dark'] .field-validation-icon.valid { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .field-validation-icon.valid { color: var(--color-brand-gold-ink); }
 .field-input-wrap.has-toggle .field-validation-icon { right: 46px; }
 .field-input-wrap.has-toggle .field-input { padding-right: 84px; }
 
@@ -725,11 +720,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 
 .field-label-row { display: flex; justify-content: space-between; align-items: center; }
 .forgot-link { background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--color-text-muted); cursor: pointer; line-height: 1; }
-.forgot-link:hover { color: var(--color-brand-gold); text-decoration: underline; }
+.forgot-link:hover { color: var(--color-brand-gold-ink); text-decoration: underline; }
 .forgot-link:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offset: 2px; border-radius: 2px; }
 .forgot-link:disabled { opacity: 0.5; cursor: not-allowed; }
 /* issue #155 v2 Phase D3 (full completion pass) — straight text/outline swap. */
-:root[data-theme='dark'] .forgot-link:hover { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .forgot-link:hover { color: var(--color-brand-gold-ink); }
 :root[data-theme='dark'] .forgot-link:focus-visible { outline-color: var(--color-brand-gold); }
 
 .reset-success-msg { display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-base); color: var(--color-text); line-height: 1.5; }
@@ -1013,10 +1008,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   border-radius: var(--radius-lg);
   font-size: var(--text-sm);
   font-weight: 700;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
 }
 /* issue #155 v2 Phase D3 (full completion pass) — plain text on a glass overlay. */
-:root[data-theme='dark'] .template-card-picking-overlay { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .template-card-picking-overlay { color: var(--color-brand-gold-ink); }
 .template-card.picking .template-card-picking-overlay { display: flex; }
 .template-card-picking-overlay .btn-spinner { width: 16px; height: 16px; border-width: 2px; }
 /* issue #6 Phase 9 — the "pick this template" action is now a real <button>
@@ -1046,20 +1041,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   cursor: pointer;
 }
 .template-card-pick:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--focus); border-radius: var(--radius-lg); }
-/* issue #206 §3.2 — 3px gradient TOP border only; right/bottom/left stay the
-   card's normal 1px solid --color-border. border-top sets the top edge's
-   width/style/color (transparent, since border-image paints over it); the
-   per-side border-image-slice/-width values (1 0 0 0 / 3px 0 0 0) scope the
-   gradient to the top edge only — a 0 image-width on the other three sides
-   makes them fall back to rendering with the plain border declared above
-   (border-right/-bottom/-left, still 1px solid var(--color-border) from
-   .template-card's base rule, untouched here). */
+/* issue #206 §3.2 — 3px TOP border only; right/bottom/left stay the card's
+   normal 1px solid --color-border, untouched by this rule (border-top only
+   sets the top edge). Was a border-image gradient; reverted to a plain solid
+   color per the app-wide "no gradients, solid only" decision — simpler now
+   that there's no gradient to scope to one edge via border-image-slice. */
 .template-card-current {
-  border-top: 3px solid transparent;
-  border-image-source: var(--gradient-alpenglow);
-  border-image-slice: 1 0 0 0;
-  border-image-width: 3px 0 0 0;
-  border-image-outset: 0;
+  border-top: 3px solid var(--color-brand-gold);
 }
 .template-card-icon { display: inline-flex; font-size: var(--icon-size-lg); line-height: 1; }
 .template-card-name { font-size: var(--text-lg); font-weight: 800; }
@@ -1068,21 +1056,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .template-card-count {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 /* issue #155 v2 Phase D3 (full completion pass) — plain text, straight swap. */
-:root[data-theme='dark'] .template-card-count { color: var(--color-brand-gold); }
-/* issue #206 §3.6 — "Current" gets a small gradient-filled dot (::before)
-   next to the label rather than gradient text: gradient text needs
-   background-clip:text on the label itself, which would conflict with this
-   badge's own pill background/border and require wrapping the text in a
-   new inner span (onboarding.js currently renders this as a single
-   `el('span', { text: 'Current' })` with no child node) — the dot achieves
-   the same "one signature gradient touch" goal with a pure-CSS ::before,
-   no markup change. Flagging per the issue's instruction to flag any
-   markup-avoiding judgment call. */
+:root[data-theme='dark'] .template-card-count { color: var(--color-brand-gold-ink); }
+/* issue #206 §3.6 — "Current" gets a small solid-filled dot (::before) next
+   to the label, no markup change needed (onboarding.js renders this as a
+   single `el('span', { text: 'Current' })` with no child node). Was a
+   gradient dot; reverted to solid gold per the app-wide "no gradients"
+   decision. */
 .template-card-current-badge {
   display: inline-flex;
   align-items: center;
@@ -1094,7 +1078,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   background: var(--color-warning-bg);
   border: 1px solid var(--color-border-strong);
 }
@@ -1103,7 +1087,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--gradient-alpenglow);
+  background: var(--color-brand-gold);
   flex-shrink: 0;
 }
 .template-card-started-badge {
@@ -1184,9 +1168,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   line-height: 1;
   cursor: pointer;
 }
-.template-card-info-corner:hover { color: var(--color-brand-gold); border-color: var(--color-border-strong); }
+.template-card-info-corner:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
 /* issue #155 v2 Phase D3 (full completion pass) — straight text/border swap. */
-:root[data-theme='dark'] .template-card-info-corner:hover { color: var(--color-brand-gold); border-color: var(--color-border-strong); }
+:root[data-theme='dark'] .template-card-info-corner:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
 
 /* Favorite-roadmap toggle (issue #177) — same 24px circular-corner-button
    slot/sizing as .template-card-hide/-delete/-info-corner, placed directly
@@ -1209,11 +1193,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   color: var(--color-text-muted);
   cursor: pointer;
 }
-.template-card-favorite:hover { color: var(--color-brand-gold); border-color: var(--color-border-strong); }
-.template-card-favorite.is-favorite { color: var(--color-brand-gold); border-color: var(--color-border-strong); background: var(--color-warning-bg); }
+.template-card-favorite:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
+.template-card-favorite.is-favorite { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); background: var(--color-warning-bg); }
 /* issue #177 — same lime-recolor pattern as every other --color-brand-gold accent added post-issue-#155-v2. */
-:root[data-theme='dark'] .template-card-favorite:hover { color: var(--color-brand-gold); border-color: var(--color-border-strong); }
-:root[data-theme='dark'] .template-card-favorite.is-favorite { color: var(--color-brand-gold); border-color: var(--color-border-strong); background: var(--color-warning-bg); }
+:root[data-theme='dark'] .template-card-favorite:hover { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); }
+:root[data-theme='dark'] .template-card-favorite.is-favorite { color: var(--color-brand-gold-ink); border-color: var(--color-border-strong); background: var(--color-warning-bg); }
 
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
 .hidden-templates-toggle { justify-self: center; }
@@ -1341,7 +1325,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    pill treatment. */
 .nav-item.active {
   background: var(--color-surface-raised);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   border-radius: var(--radius-md);
   box-shadow: inset 3px 0 0 var(--color-brand-gold);
 }
@@ -1400,7 +1384,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .app-sidebar-guest-risk {
   display: inline-flex;
   flex-shrink: 0;
-  color: var(--color-warning);
+  color: var(--color-warning-ink);
 }
 
 /* Collapsed — manual desktop icon-rail toggle, persisted to localStorage
@@ -1600,9 +1584,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   cursor: pointer;
 }
 .custom-select-option:hover, .custom-select-option:focus-visible { background: var(--color-surface-raised); outline: none; }
-.custom-select-option.active { color: var(--color-brand-gold); font-weight: 700; background: var(--color-warning-bg); }
+.custom-select-option.active { color: var(--color-brand-gold-ink); font-weight: 700; background: var(--color-warning-bg); }
 /* issue #155 v2 Phase D3 (full completion pass) — text-on-light-fill pattern. */
-:root[data-theme='dark'] .custom-select-option.active { color: var(--color-brand-gold); background: var(--color-warning-bg); }
+:root[data-theme='dark'] .custom-select-option.active { color: var(--color-brand-gold-ink); background: var(--color-warning-bg); }
 /* Issue #36 — no focusable field renders under 16px on touch, but a listbox
    option isn't a text-zoom-triggering field; matches .field-input's own
    compact variant instead so density stays consistent with the rest of a
@@ -1799,7 +1783,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: 10px 16px;
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-warning);
-  color: var(--color-warning);
+  color: var(--color-warning-ink);
   font-size: var(--text-sm);
   font-weight: 600;
   text-align: center;
@@ -1815,7 +1799,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: 10px 16px;
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-border-strong);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   font-size: var(--text-sm);
   font-weight: 600;
 }
@@ -1824,7 +1808,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 :root[data-theme='dark'] .verification-banner {
   background: var(--color-warning-bg);
   border-bottom-color: var(--color-border-strong);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
 }
 .verification-msg { flex: 1; min-width: 0; }
 .verification-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
@@ -1837,7 +1821,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: 10px 16px;
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-border-strong);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   font-size: var(--text-sm);
   font-weight: 600;
 }
@@ -1846,7 +1830,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 :root[data-theme='dark'] .backup-reminder-banner {
   background: var(--color-warning-bg);
   border-bottom-color: var(--color-border-strong);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
 }
 .backup-reminder-icon { font-size: var(--text-base); }
 .backup-reminder-msg { flex: 1; min-width: 220px; font-weight: 500; }
@@ -1958,15 +1942,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
 }
-.shared-item-status { width: 18px; text-align: center; color: var(--color-brand-gold); font-weight: 700; }
+.shared-item-status { width: 18px; text-align: center; color: var(--color-brand-gold-ink); font-weight: 700; }
 /* issue #155 v2 Phase D3 (full completion pass) — sharedRoadmapView.js's public
    read-only page; straight text swaps. */
-:root[data-theme='dark'] .shared-item-status { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .shared-item-status { color: var(--color-brand-gold-ink); }
 .shared-item-title { flex: 1; min-width: 0; }
 .shared-item-done .shared-item-title { color: var(--color-text-muted); text-decoration: line-through; }
 .shared-item-resources { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
-.shared-resource-link { color: var(--color-brand-gold); font-size: var(--text-sm); }
-:root[data-theme='dark'] .shared-resource-link { color: var(--color-brand-gold); }
+.shared-resource-link { color: var(--color-brand-gold-ink); font-size: var(--text-sm); }
+:root[data-theme='dark'] .shared-resource-link { color: var(--color-brand-gold-ink); }
 .shared-view-footer { margin-top: 32px; text-align: center; }
 .shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: var(--text-sm); }
 
@@ -2111,7 +2095,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   background: var(--color-success-bg);
   color: var(--color-success);
 }
-.sync-pill.guest { background: var(--color-warning-bg); color: var(--color-warning); border-color: var(--color-warning); }
+.sync-pill.guest { background: var(--color-warning-bg); color: var(--color-warning-ink); border-color: var(--color-warning); }
 .sync-pill.error { background: var(--color-danger-bg); color: var(--color-danger); border-color: var(--color-danger); }
 
 /* intentional: fixed "synced OK" green status dot, same in both themes (issue #116) */
@@ -2147,7 +2131,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 }
 .daily-todo-nav-badge:hover, .daily-todo-nav-badge:focus-visible { transform: translateY(-1px); }
 .daily-todo-nav-badge:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
-.daily-todo-nav-badge.warn { background: var(--color-warning-bg); color: var(--color-warning); border-color: var(--color-warning); }
+.daily-todo-nav-badge.warn { background: var(--color-warning-bg); color: var(--color-warning-ink); border-color: var(--color-warning); }
 .daily-todo-nav-badge.danger { background: var(--color-danger-bg); color: var(--color-danger); border-color: var(--color-danger); }
 .daily-todo-nav-icon { display: inline-flex; flex-shrink: 0; }
 
@@ -2195,7 +2179,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   background: var(--color-warning-bg);
   border: 1px solid var(--color-border-strong);
   border-radius: 999px;
@@ -2205,7 +2189,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 /* issue #155 v2 Phase D3 (full completion pass) — dashboard.js's header badge;
    text-on-light-fill pattern. */
 :root[data-theme='dark'] .current-roadmap-badge {
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   background: var(--color-warning-bg);
   border-color: var(--color-border-strong);
 }
@@ -2256,17 +2240,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   height: 40px;
   border-radius: 999px;
   background: var(--color-warning-bg);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   flex-shrink: 0;
 }
 /* issue #155 v2 Phase D3 (full completion pass) — dashboard.js's own stat-strip
    (distinct component from progress.js's .kpi-tile, Phase D1); text-on-light-fill
    pattern. */
-:root[data-theme='dark'] .stat-tile-icon { background: var(--color-warning-bg); color: var(--color-brand-gold); }
+:root[data-theme='dark'] .stat-tile-icon { background: var(--color-warning-bg); color: var(--color-brand-gold-ink); }
 
 .stat-tile-value { display: flex; align-items: baseline; gap: 4px; }
-.stat-tile-number { font-size: var(--text-3xl); font-weight: 900; color: var(--color-brand-gold); font-variant-numeric: tabular-nums; }
-:root[data-theme='dark'] .stat-tile-number { color: var(--color-brand-gold); }
+.stat-tile-number { font-size: var(--text-3xl); font-weight: 900; color: var(--color-brand-gold-ink); font-variant-numeric: tabular-nums; }
+:root[data-theme='dark'] .stat-tile-number { color: var(--color-brand-gold-ink); }
 .stat-tile-total { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-tile-label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; }
 
@@ -2292,9 +2276,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   justify-content: center;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
 }
-:root[data-theme='dark'] .stat-tile-ring-value { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .stat-tile-ring-value { color: var(--color-brand-gold-ink); }
 /* percentStat (dashboard.js) reuses the shared .stat-tile-number class (32px,
    sized for the big "Items done" tile) — scope it down inside the 64px ring
    so it doesn't overflow/wrap. */
@@ -2561,7 +2545,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   gap: 8px;
   margin: 0 0 10px;
 }
-.daily-todo-icon { display: inline-flex; flex-shrink: 0; color: var(--color-warning); }
+.daily-todo-icon { display: inline-flex; flex-shrink: 0; color: var(--color-warning-ink); }
 .daily-todo-heading {
   margin: 0 auto 0 0;
   font-size: var(--text-base);
@@ -2597,7 +2581,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: 0;
   flex-shrink: 0;
 }
-.daily-todo-info-btn:hover { color: var(--color-warning); border-color: var(--color-warning); }
+.daily-todo-info-btn:hover { color: var(--color-warning-ink); border-color: var(--color-warning); }
 .daily-todo-info-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 
 /* Local reminder opt-in toggle (issue #132) — same 24x24/'sm'-icon box as
@@ -2618,9 +2602,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: 0;
   flex-shrink: 0;
 }
-.daily-todo-reminder-btn:hover { color: var(--color-warning); border-color: var(--color-warning); }
+.daily-todo-reminder-btn:hover { color: var(--color-warning-ink); border-color: var(--color-warning); }
 .daily-todo-reminder-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
-.daily-todo-reminder-btn.active { color: var(--color-warning); border-color: var(--color-warning); }
+.daily-todo-reminder-btn.active { color: var(--color-warning-ink); border-color: var(--color-warning); }
 
 /* Collapse/expand toggle (issue #83) — reuses the exact same chevron-rotate
    language as .phase-card/.chevron (dashboard.js's phase cards) so the two
@@ -2643,7 +2627,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: 0;
   flex-shrink: 0;
 }
-.daily-todo-collapse-btn:hover { color: var(--color-warning); border-color: var(--color-warning); }
+.daily-todo-collapse-btn:hover { color: var(--color-warning-ink); border-color: var(--color-warning); }
 .daily-todo-collapse-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 .daily-todo-panel:not(.collapsed) .daily-todo-collapse-btn .chevron { transform: rotate(90deg); }
 
@@ -2736,7 +2720,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   flex-shrink: 0;
   font-size: 10px;
   font-weight: 700;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   background: var(--color-warning-bg);
   border-radius: 999px;
   padding: 2px 8px;
@@ -2744,7 +2728,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 }
 /* issue #155 v2 Phase D3 (full completion pass) — dailyTodoPanel.js; text-on-light-fill
    pattern. */
-:root[data-theme='dark'] .daily-todo-linked-badge { color: var(--color-brand-gold); background: var(--color-warning-bg); }
+:root[data-theme='dark'] .daily-todo-linked-badge { color: var(--color-brand-gold-ink); background: var(--color-warning-bg); }
 
 /* Fixed width + right-aligned, always rendered (see renderRow in
    dailyTodoPanel.js) — every row's status text now lines up flush against
@@ -2760,8 +2744,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.daily-todo-remaining.ok { color: var(--color-brand-gold); }
-:root[data-theme='dark'] .daily-todo-remaining.ok { color: var(--color-brand-gold); }
+.daily-todo-remaining.ok { color: var(--color-brand-gold-ink); }
+:root[data-theme='dark'] .daily-todo-remaining.ok { color: var(--color-brand-gold-ink); }
 .daily-todo-remaining.warn { color: var(--color-p1-ink); }
 .daily-todo-remaining.danger { color: var(--color-p0); }
 .daily-todo-remaining.done { color: var(--color-text-muted); font-weight: 700; }
@@ -3188,7 +3172,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  color: var(--color-warning);
+  color: var(--color-warning-ink);
   cursor: default;
 }
 
@@ -3333,19 +3317,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .notes-status {
   font-size: var(--text-xs);
   font-weight: 700;
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   opacity: 0;
   transition: opacity 200ms ease;
 }
-:root[data-theme='dark'] .notes-status { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .notes-status { color: var(--color-brand-gold-ink); }
 .notes-status.show { opacity: 1; }
-.notes-status.error { color: var(--color-warning); }
+.notes-status.error { color: var(--color-warning-ink); }
 
 /* Issue #180 — timer start/pause control + running total, itemPanel.js and
    dailyTodoPanel.js. */
 .timer-row { display: flex; align-items: center; gap: 8px; }
-.timer-toggle-btn.active { color: var(--color-brand-gold); }
-:root[data-theme='dark'] .timer-toggle-btn.active { color: var(--color-brand-gold); }
+.timer-toggle-btn.active { color: var(--color-brand-gold-ink); }
+:root[data-theme='dark'] .timer-toggle-btn.active { color: var(--color-brand-gold-ink); }
 .timer-display { font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
 .daily-todo-timer-btn {
   border: none;
@@ -3357,9 +3341,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   align-items: center;
   font: inherit;
 }
-.daily-todo-timer-btn:hover, .daily-todo-timer-btn.active { color: var(--color-brand-gold); }
+.daily-todo-timer-btn:hover, .daily-todo-timer-btn.active { color: var(--color-brand-gold-ink); }
 :root[data-theme='dark'] .daily-todo-timer-btn:hover,
-:root[data-theme='dark'] .daily-todo-timer-btn.active { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .daily-todo-timer-btn.active { color: var(--color-brand-gold-ink); }
 .daily-todo-time-spent {
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
@@ -3367,11 +3351,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 }
 
 .resource-list { display: grid; gap: 10px; }
-/* issue #206 §6 — small gradient dot instead of a plain muted-gray message,
-   the same rare var(--gradient-alpenglow) accent pattern as .empty-icon and
-   .chart-empty-dot elsewhere in this pass. */
+/* issue #206 §6 — small solid gold dot instead of a plain muted-gray message.
+   Was a gradient dot; reverted to solid per the app-wide "no gradients"
+   decision. */
 .resource-list-empty { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
-.resource-list-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--gradient-alpenglow); }
+.resource-list-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--color-brand-gold); }
 .resource-card {
   display: grid;
   gap: 8px;
@@ -3431,11 +3415,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
 }
-/* issue #206 §6 — small gradient-filled icon badge, not a generic muted-gray
-   glyph: the one deliberately "rare" var(--gradient-alpenglow) touch this
-   empty state gets, per the issue's "sparingly ... not a generic gray
-   placeholder" instruction. */
-/* intentional: fixed white icon on the solid --gradient-alpenglow fill, same in both themes, matching every other white-on-solid-accent badge in this file (issue #116 precedent) */
+/* issue #206 §6 — small solid gold icon badge, not a generic muted-gray
+   glyph. Was a gradient fill; reverted to solid per the app-wide
+   "no gradients" decision. */
 .empty-icon {
   display: inline-flex;
   align-items: center;
@@ -3444,8 +3426,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   height: 48px;
   margin: 0 auto var(--space-3);
   border-radius: 50%;
-  background: var(--gradient-alpenglow);
-  color: #fff;
+  background: var(--color-brand-gold);
+  color: var(--color-ink-on-gold);
 }
 .empty-title { font-weight: 800; color: var(--color-text); margin-top: var(--space-2); }
 .empty-message { margin-top: var(--space-1); }
@@ -3526,29 +3508,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   padding: var(--space-3) var(--space-4);
   cursor: pointer;
 }
-.tab[aria-selected='true'] { color: var(--color-brand-gold); border-bottom-color: var(--color-brand-gold); }
+.tab[aria-selected='true'] { color: var(--color-brand-gold-ink); border-bottom-color: var(--color-brand-gold); }
 .tab:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; animation: fade-in var(--duration-base) var(--ease-out); }
 
-/* 3.7 Progress ring (issue #206 §7) — the fill's stroke color now comes from
-   the element's own `stroke="url(#alpenglow-gradient-N)"` attribute
-   (progressRing.js), not a CSS `stroke` declaration here — a CSS `stroke`
-   rule would win over that attribute by specificity and clobber the
-   gradient with a flat color, so this rule only sets the transition, never
-   `stroke` itself. See progressRing.js for the gradient `<linearGradient>`/
-   `<stop>` setup and app.css's `.alpenglow-gradient-stop-*` rules below for
-   where the stop colors actually come from. */
+/* 3.7 Progress ring (issue #206 §7) — flat solid stroke. Was a
+   var(--gradient-alpenglow) <linearGradient> (progressRing.js built a real
+   <defs>/<linearGradient>/<stop> tree, since CSS custom properties can't be
+   read from an SVG `stop-color` presentation attribute); reverted to a
+   plain CSS `stroke` declaration per the app-wide "no gradients" decision —
+   simpler now that there's no gradient def to keep out of this rule's way. */
 .progress-ring-track { stroke: var(--color-border-strong); }
 .progress-ring-fill {
+  stroke: var(--color-brand-gold);
   transition: stroke-dashoffset var(--duration-enter) var(--ease-spring);
 }
-/* issue #206 §7 — real CSS custom-property reads on the gradient's <stop>
-   elements, not an inline `style` attribute (CSP has no unsafe-inline for
-   style-src) and not a JS-computed literal hex (which wouldn't update live
-   on a theme toggle). */
-.alpenglow-gradient-stop-gold { stop-color: var(--color-brand-gold); }
-.alpenglow-gradient-stop-rose { stop-color: var(--color-brand-rose); }
 
 /* 3.8 Notification badge */
 /* intentional: fixed white text on a solid --color-danger background, same in both themes (issue #116) */
@@ -3741,9 +3716,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .settings-row-label-group { display: inline-flex; align-items: center; gap: var(--space-2); }
 .settings-row-value { color: var(--color-text-muted); font-size: var(--text-sm); margin-right: auto; }
 .settings-row-hint { color: var(--color-text-muted); font-size: 12px; margin: 0; }
-.settings-verified { color: var(--color-brand-gold); font-weight: 700; }
+.settings-verified { color: var(--color-brand-gold-ink); font-weight: 700; }
 /* issue #155 v2 Phase D2 — settings-only class, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .settings-verified { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .settings-verified { color: var(--color-brand-gold-ink); }
 .settings-unverified { color: var(--color-p1-ink); font-weight: 700; }
 
 .settings-select { max-width: 200px; }
@@ -3923,10 +3898,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .chart-container { position: relative; height: 260px; }
 .chart-container canvas { width: 100% !important; height: 100% !important; }
 /* issue #206 §6 — flat-zero chart empty-state note (progress.js's velocityEmptySlot).
-   A small gradient dot, not a full illustration — var(--gradient-alpenglow) stays a
-   rare accent per the issue's own "sparingly" instruction, not a placeholder fill. */
+   A small solid gold dot, not a full illustration. Was a gradient dot;
+   reverted to solid per the app-wide "no gradients" decision. */
 .chart-empty-note { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
-.chart-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--gradient-alpenglow); }
+.chart-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--color-brand-gold); }
 /* Issue #125 — a skeleton placeholder for the first Chart.js CDN load only
    (chartWrapper.js's dynamic import), shown/hidden by progress.js rather
    than CSS alone since it must disappear the instant the real chart mounts,
@@ -3994,14 +3969,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
 .priority-table tbody tr:last-child td { border-bottom: none; }
 .priority-cell[data-band="empty"] { color: var(--color-text-muted); }
 .priority-cell[data-band="low"] { background: var(--color-danger-bg); color: var(--color-danger); }
-.priority-cell[data-band="mid"] { background: var(--color-warning-bg); color: var(--color-warning); }
+.priority-cell[data-band="mid"] { background: var(--color-warning-bg); color: var(--color-warning-ink); }
 .priority-cell[data-band="high"] { background: var(--color-success-bg); color: var(--color-success); }
 
 /* Projected completion (B8) */
 .projection-card-body { display: grid; gap: 4px; justify-items: center; text-align: center; }
 .projection-pace { color: var(--color-text-muted); font-size: var(--text-sm); }
-.projection-headline { font-size: var(--text-2xl); font-weight: 800; color: var(--color-brand-gold); }
-:root[data-theme='dark'] .projection-headline { color: var(--color-brand-gold); }
+.projection-headline { font-size: var(--text-2xl); font-weight: 800; color: var(--color-brand-gold-ink); }
+:root[data-theme='dark'] .projection-headline { color: var(--color-brand-gold-ink); }
 .projection-boost { color: var(--color-text-muted); font-size: var(--text-sm); }
 .projection-empty { color: var(--color-text-muted); text-align: center; }
 
@@ -4162,11 +4137,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   justify-content: center;
   border-radius: var(--radius-md);
   background: var(--color-warning-bg);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   margin-bottom: var(--space-6);
 }
 /* issue #155 v2 Phase C — landing-only class, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .feature-card-icon { background: var(--color-warning-bg); color: var(--color-brand-gold); }
+:root[data-theme='dark'] .feature-card-icon { background: var(--color-warning-bg); color: var(--color-brand-gold-ink); }
 .feature-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); margin: 0 0 var(--space-2); color: var(--color-text); }
 .feature-card-text { font-size: var(--text-base); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
@@ -4208,11 +4183,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
   justify-content: center;
   border-radius: 50%;
   background: var(--color-warning-bg);
-  color: var(--color-brand-gold);
+  color: var(--color-brand-gold-ink);
   margin-bottom: var(--space-4);
 }
 /* issue #155 v2 Phase C — landing-only class, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .step-card-icon { background: var(--color-warning-bg); color: var(--color-brand-gold); }
+:root[data-theme='dark'] .step-card-icon { background: var(--color-warning-bg); color: var(--color-brand-gold-ink); }
 .step-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-base); margin: 0 0 var(--space-2); color: var(--color-text); }
 .step-card-text { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
@@ -4433,9 +4408,9 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 
 .feedback-success { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 12px 0; }
 .feedback-success-icon { font-size: var(--text-4xl); }
-.feedback-reference { font-family: var(--font-mono); font-weight: 700; color: var(--color-brand-gold); }
+.feedback-reference { font-family: var(--font-mono); font-weight: 700; color: var(--color-brand-gold-ink); }
 /* issue #155 v2 Phase D3 — modal-scoped recolor; falls back to mint in light theme. */
-:root[data-theme='dark'] .feedback-reference { color: var(--color-brand-gold); }
+:root[data-theme='dark'] .feedback-reference { color: var(--color-brand-gold-ink); }
 
 .my-reports-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
 .my-report-row { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
@@ -4444,7 +4419,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .my-report-title { flex: 1; }
 .my-report-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
 .my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--color-danger-bg); color: var(--color-danger); }
-.my-report-severity-low, .my-report-severity-medium { background: var(--color-warning-bg); color: var(--color-warning); }
+.my-report-severity-low, .my-report-severity-medium { background: var(--color-warning-bg); color: var(--color-warning-ink); }
 .my-report-details { padding: 0 14px 14px; font-size: var(--text-sm); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
 
 /* Collapse the feedback trigger to icon-only below 480px (issue #9 §2.1) —

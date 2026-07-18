@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e10]:
+    - complementary [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]: Ascent
+        - generic [ref=e18]:
+          - paragraph [ref=e19]: Engineer your next move
+          - heading [level=2] [ref=e21]: Engineer your next move.
+          - paragraph [ref=e22]: The roadmap tracker for anyone learning, revising, or leveling up — pick a starting point, track every topic, and always know what’s next.
+          - list [ref=e23]:
+            - listitem [ref=e24]:
+              - generic [ref=e29]:
+                - generic [ref=e30]: Track any roadmap
+                - generic [ref=e31]: Pick a starter template or build your own, organized by phase and priority.
+            - listitem [ref=e32]:
+              - generic [ref=e37]:
+                - generic [ref=e38]: Sync everywhere
+                - generic [ref=e39]: Your progress follows you across every device, automatically.
+            - listitem [ref=e40]:
+              - generic [ref=e46]:
+                - generic [ref=e47]: Stay focused
+                - generic [ref=e48]: Priority filters and Daily Todos keep today’s work front and center.
+        - paragraph [ref=e49]: 7 starter roadmaps — Java, Frontend, Data Science, GenAI, and more. Or build your own.
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - link "Ascent" [ref=e53] [cursor=pointer]:
+          - /url: "#/signin"
+        - button "Switch to dark mode" [ref=e58] [cursor=pointer]
+      - generic [ref=e61]:
+        - banner [ref=e62]:
+          - heading "Welcome back" [level=1] [ref=e63]
+          - paragraph [ref=e64]: Sign in to sync your roadmap across devices.
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - generic [ref=e69]: Email
+            - textbox "Email" [ref=e71]:
+              - /placeholder: you@example.com
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - generic [ref=e74]: Password
+              - button "Forgot password?" [disabled] [ref=e75]
+            - generic [ref=e76]:
+              - textbox "Your password" [ref=e77]
+              - button "Show password" [ref=e78] [cursor=pointer]: Show
+          - generic [ref=e79] [cursor=pointer]:
+            - checkbox "Keep me signed in" [checked] [ref=e80]
+            - generic [ref=e81]: Keep me signed in
+          - paragraph [ref=e82]
+          - button "Sign in" [disabled] [ref=e83]
+          - generic [ref=e84]: or
+          - button "Continue as guest" [disabled] [ref=e86]
+        - contentinfo [ref=e87]:
+          - paragraph [ref=e88]:
+            - text: New here?
+            - link "Create an account" [ref=e89] [cursor=pointer]:
+              - /url: "#/signup"
+      - paragraph [ref=e90]: Built for anyone learning, revising, or tracking progress toward a goal.
+  - button "Send feedback" [ref=e4] [cursor=pointer]:
+    - generic [ref=e9]: Feedback
