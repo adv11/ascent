@@ -43,6 +43,20 @@ async function createCustomRoadmapViaImport(page, title) {
   // the dashboard has fetched/rendered the roadmap it just switched to.
   await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
   await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 10_000 });
+
+  // Issue #17's first-time feature tour auto-starts the moment a fresh guest
+  // finishes onboarding — its `.tour-scrim` sits above every other element
+  // (z-index 1100+, see .claude/rules/ui-styling.md's featureTour.js entry)
+  // and swallows clicks on the rest of the page until dismissed. Every test
+  // in this file interacts with dashboard controls immediately after this
+  // helper returns, so the tour must be skipped here or those clicks hang
+  // until the 30s test timeout (see featureTour.test.js for the tour's own
+  // dedicated coverage).
+  const tourWelcome = page.locator('.tour-welcome-card [data-action="skip"]');
+  if (await tourWelcome.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await tourWelcome.click();
+    await expect(page.locator('.tour-welcome-card')).toBeHidden();
+  }
 }
 
 test.describe('manual roadmap creation — full phase/section/topic CRUD (issue #4, seeded via issue #100\'s AI-import flow)', () => {
