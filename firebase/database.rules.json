@@ -112,6 +112,9 @@
               ".validate": "newData.isString() && $index.matches(/^[0-2]$/)"
             }
           },
+          "tourDone": {
+            ".validate": "newData.isBoolean()"
+          },
           "$other": {
             ".validate": "false"
           }

@@ -791,6 +791,45 @@ section was unbuilt:
 No PR 3 remains for §5 — the section is complete. If a future audit finds another gap,
 treat it as a normal follow-up fix, not evidence the whole system needs rebuilding.
 
+## First-time feature tour — spotlight/portal/focus-trap convention (`featureTour.js`, issue #17)
+
+**Reuses two existing conventions instead of inventing new ones — `attachFocusTrap()`
+and the "every floating/positioned element is a portal" rule above.** Each step's
+popover and the welcome card both call `attachFocusTrap(cardEl, { onEscape })` (`modal.js`)
+directly, same as every ad hoc modal in this app — no bespoke Escape-only `keydown`
+handler. The ring, scrim, and popover are all appended straight to `document.body` (the
+portal convention), never a descendant of whatever they're highlighting, and the
+target itself is resolved live via `step.target()` (a plain `querySelector` call) on
+every reposition, not a cached element reference — this is what lets a step survive a
+structural re-render (a `.phase-card` toggling open, a `structuralVersion` bump) between
+`showStep()` calls.
+
+**The dimming "spotlight" is the ring's own `box-shadow`, not a `clip-path`'d overlay.**
+`.tour-ring` is positioned with `getBoundingClientRect()` over the target and given a
+huge-spread `box-shadow: 0 0 0 9999px rgba(0,0,0,0.6)` — that spread fills the rest of
+the viewport, leaving the ring's own box as a transparent "cutout" over the highlighted
+element. Repositioning on scroll/resize is then just two style writes
+(`ring.style.left`/`top`/`width`/`height`) rather than recomputing a path — cheaper to
+keep in sync, and the reason the issue's own spec called for box-shadow over
+`clip-path` in the first place. A separate `.tour-scrim` (transparent, `pointer-events:
+auto`) sits behind the ring/popover purely to swallow clicks on the dimmed page during
+the tour — the ring itself is `pointer-events: none`, and box-shadow never participates
+in hit-testing.
+
+**z-index 1100+, deliberately above every other floating element in this file,
+including an already-open modal.** `.custom-select-listbox`'s `1010` was the highest
+z-index anywhere in `app.css` before this — the tour can be re-triggered mid-session via
+"Take a tour" while the user is anywhere on the dashboard, so it must render on top of
+literally everything, not just the base page content every other portaled element
+above assumes it's competing with.
+
+**Collision-aware popover placement is hand-rolled, matching `tooltip.js`'s existing
+approach rather than pulling in a positioning library.** `computePlacement()`
+(`featureTour.js`) tries below → above → right → left, in that order, falling back to a
+viewport-clamped "below" if nothing fits cleanly — same shape as `tooltip.js`'s
+above/below flip, just with two more fallback directions since a tour popover is larger
+and more likely to need them.
+
 ## Branded print/PDF export (issue #160, restructured onto `<thead>`/`<tfoot>` in a follow-up)
 
 **A repeating print header/footer uses a real `<table>` with `<thead>`/`<tfoot>`, not

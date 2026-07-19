@@ -1503,6 +1503,88 @@ describe('toggleFavoriteRoadmap (issue #177)', () => {
   });
 });
 
+describe('tourDone / completeTour / resetTour (issue #17)', () => {
+  it('a fresh account picking a template for the first time keeps tourDone false — no backfill, real auto-start signal', async () => {
+    dbApi.getMeta.mockResolvedValue(null);
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'fresh-tour-user' });
+    expect(store.getSnapshot().onboardingDone).toBe(false);
+
+    await store.switchRoadmap('java-backend');
+
+    expect(store.getSnapshot().tourDone).toBe(false);
+  });
+
+  it('an existing account with real progress and no tourDone field is backfilled to true — never auto-starts', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] });
+    dbApi.getRoadmap.mockResolvedValue({
+      version: 3,
+      items: { 'custom-1': { id: 'custom-1', title: 'Done thing', phase: 'Learn', section: '', priority: 'P1', done: true, custom: false, deleted: false, resources: [] } }
+    });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'existing-progress-user' });
+
+    expect(store.getSnapshot().tourDone).toBe(true);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('existing-progress-user', { tourDone: true });
+  });
+
+  it('an account onboarded via legacy migration is backfilled to true even with zero real progress', async () => {
+    dbApi.getMeta.mockResolvedValue(null);
+    dbApi.getLegacyRoadmap.mockResolvedValue({ version: 3, items: { a: { done: true } } });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'legacy-migrated-user' });
+
+    expect(store.getSnapshot().onboardingDone).toBe(true);
+    expect(store.getSnapshot().tourDone).toBe(true);
+  });
+
+  it('an account with no real progress and a fresh (non-migrated) onboardingDone keeps tourDone false', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'] });
+    dbApi.getRoadmap.mockResolvedValue({ version: 3, items: {} });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'no-progress-user' });
+
+    expect(store.getSnapshot().tourDone).toBe(false);
+    expect(dbApi.saveMeta).not.toHaveBeenCalled();
+  });
+
+  it('remote tourDone: true always wins, regardless of local progress', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend'], tourDone: true });
+    dbApi.getRoadmap.mockResolvedValue({ version: 3, items: {} });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'remote-tour-done-user' });
+
+    expect(store.getSnapshot().tourDone).toBe(true);
+  });
+
+  it('completeTour() persists locally and remotely', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'complete-tour-user' });
+    expect(store.getSnapshot().tourDone).toBe(false);
+
+    await store.completeTour();
+
+    expect(store.getSnapshot().tourDone).toBe(true);
+    expect(dbApi.saveMeta).toHaveBeenCalledWith('complete-tour-user', { tourDone: true });
+  });
+
+  it('resetTour() is in-memory only — no Firebase write until the tour is skipped/completed again', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'reset-tour-user' });
+    await store.completeTour();
+    dbApi.saveMeta.mockClear();
+
+    store.resetTour();
+
+    expect(store.getSnapshot().tourDone).toBe(false);
+    expect(dbApi.saveMeta).not.toHaveBeenCalled();
+  });
+});
+
 // Manual roadmap creation (issue #4) — a user-authored roadmap has a
 // generated `croadmap-...` id instead of a built-in template id, starts with
 // zero phases/items, and its phase/section skeleton is fully mutable

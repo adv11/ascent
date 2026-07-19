@@ -50,6 +50,7 @@ describe('freshStateForNewUid', () => {
     expect(fresh.pendingCustomSeeds).toEqual({});
     expect(fresh.dirty).toBe(false);
     expect(fresh.recentFlushedStrs).toEqual([]);
+    expect(fresh.tourDone).toBeNull();
     expect(Object.keys(fresh.items).length).toBeGreaterThan(0);
   });
 });
@@ -87,6 +88,24 @@ describe('resolveMetaExtras', () => {
     const extras = resolveMetaExtras(null);
     expect(extras.hiddenTemplateIds).toEqual(['marketing']);
     expect(extras.customRoadmaps).toEqual([{ id: 'croadmap-2' }]);
+  });
+
+  it('tourDone (issue #17): defaults to false with no remote value and no local flag', () => {
+    expect(resolveMetaExtras(null).tourDone).toBe(false);
+  });
+
+  it('tourDone: remote true wins even with no local flag', () => {
+    expect(resolveMetaExtras({ tourDone: true }).tourDone).toBe(true);
+  });
+
+  it('tourDone: falls back to the local flag when remote is absent', () => {
+    localStorage.setItem(KEYS.TOUR_DONE, 'true');
+    expect(resolveMetaExtras(null).tourDone).toBe(true);
+  });
+
+  it('tourDone: an explicit remote false does not override an already-true local flag (only ever written true)', () => {
+    localStorage.setItem(KEYS.TOUR_DONE, 'true');
+    expect(resolveMetaExtras({ tourDone: false }).tourDone).toBe(true);
   });
 });
 

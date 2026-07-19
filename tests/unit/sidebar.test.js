@@ -127,6 +127,27 @@ describe('createSidebar — account identity', () => {
     expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Import backup…', 'Print roadmap…']);
   });
 
+  // Issue #17 — only the dashboard's sidebar instance passes onStartTour;
+  // every other page's sidebar (progress/settings/onboarding) omits it, so
+  // "Take a tour" never appears where its spotlight targets don't exist.
+  it('adds a "Take a tour" item, right after Settings, only when onStartTour is passed', async () => {
+    const onStartTour = vi.fn();
+    const node = await freshSidebar({
+      activeRoute: '/app',
+      user: { isAnonymous: true },
+      store: fakeStore(),
+      onStartTour
+    });
+    document.body.append(node);
+    node.querySelector('.app-sidebar-identity').click();
+    const items = Array.from(document.querySelectorAll('.dropdown-item'));
+    expect(items[0].textContent).toBe('Settings');
+    expect(items[1].textContent).toBe('Take a tour');
+
+    items[1].click();
+    expect(onStartTour).toHaveBeenCalledTimes(1);
+  });
+
   // Issue #133 — the ICS export item only appears when a dailyTodoStore is
   // actually passed in, same optional-prop precedent as confirmAndSignOut's
   // third param.

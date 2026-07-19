@@ -1,17 +1,21 @@
 ---
 name: open-pr
-description: Use right before and when opening a pull request in this repo — the four required pre-PR checks (test/lint/rebase/push) and the PR template/linking convention. tracker-sync.yml handles the tracker row automatically; this skill only covers the manual steps.
+description: Use right before and when opening a pull request in this repo — the required pre-PR checks (test/lint/cache-version/rebase/push) and the PR template/linking convention. tracker-sync.yml handles the tracker row automatically; this skill only covers the manual steps.
 ---
 
-# Before opening a PR — all four required, no exceptions
+# Before opening a PR — all five required, no exceptions
 
 Relocated from `CLAUDE.md`'s MANDATORY WORKFLOW section (issue #86) with no content
 changes — see `docs/adr/ADR-007-agent-memory-architecture.md`.
 
 1. `npm test` — zero failures
 2. `npm run lint` — zero errors
-3. `git fetch origin && git rebase origin/main` — branch must be on top of latest main
-4. `git push --force-with-lease origin <branch>`
+3. `npm run check:cache-version` — bump `sw.js`'s `CACHE_VERSION` if it fails (issue #17
+   follow-up: CI's "PR description check" job silently fails this same check on every
+   PR touching `src/**` — this local script mirrors that exact CI logic so it's caught
+   before push instead of after opening the PR)
+4. `git fetch origin && git rebase origin/main` — branch must be on top of latest main
+5. `git push --force-with-lease origin <branch>`
 
 # Opening the PR
 

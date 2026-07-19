@@ -7,6 +7,13 @@ export const KEYS = {
   ROADMAPS: 'ascent-roadmaps-v1',
   UI_STATE: 'ascent-ui-v3',
   ONBOARDING_DONE: 'ascent-onboarding-done',
+  // First-time feature tour (issue #17) — distinct from ONBOARDING_DONE
+  // (#51's template-picker completion flag). Account-scoped, synced via
+  // Firebase meta the same way ONBOARDING_DONE is, with this as the local
+  // fallback — never written 'false', same "only ever persist a positive
+  // state" precedent as ONBOARDING_DONE (its absence already means "not
+  // done", so there's nothing useful to write on the false path).
+  TOUR_DONE: 'ascent-tour-done',
   // Now means the *active* template id (issue #58) — the one currently displayed.
   TEMPLATE_ID: 'ascent-template-id',
   HIDDEN_TEMPLATES: 'ascent-hidden-templates',

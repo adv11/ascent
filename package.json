@@ -15,6 +15,7 @@
     "test:e2e:ui": "playwright test --ui",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "check:cache-version": "node scripts/check-cache-version.mjs",
     "generate:brand-assets": "node scripts/generate-brand-assets.mjs"
   },
   "description": "Ascent is a personal roadmap tracker for learning, revising, and tracking progress toward any goal.",

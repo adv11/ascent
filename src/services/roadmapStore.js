@@ -208,6 +208,10 @@ function readLocalFavoriteRoadmaps() {
   }
 }
 
+function readLocalTourDone() {
+  return localStorage.getItem(KEYS.TOUR_DONE) === 'true';
+}
+
 // Sentinel returned by every onboarding-detection helper below to mean "a
 // newer setUser() call has already taken over — abort without applying this
 // result." Distinct from `null`/`undefined` (both legitimate "no migration
@@ -229,6 +233,7 @@ export function freshStateForNewUid() {
     customRoadmaps: [],
     startedTemplateIds: [],
     favoriteRoadmapIds: [],
+    tourDone: null,
     roadmapCache: {},
     pendingCustomSeeds: {},
     dirty: false,
@@ -266,7 +271,11 @@ export function resolveMetaExtras(remoteMeta) {
   return {
     hiddenTemplateIds: normalizeStringArray(remoteMeta?.hiddenTemplateIds) || readLocalHiddenTemplates(),
     customRoadmaps: normalizeStringArray(remoteMeta?.customRoadmaps) || readLocalCustomRoadmaps(),
-    favoriteRoadmapIds: normalizeStringArray(remoteMeta?.favoriteRoadmapIds) || readLocalFavoriteRoadmaps()
+    favoriteRoadmapIds: normalizeStringArray(remoteMeta?.favoriteRoadmapIds) || readLocalFavoriteRoadmaps(),
+    // Only ever true or false — remote wins the moment it's ever been set
+    // true (this only ever gets backfilled/completed forward, never reset
+    // remotely), otherwise fall back to this device's own local flag.
+    tourDone: remoteMeta?.tourDone === true || readLocalTourDone()
   };
 }
 
@@ -496,6 +505,10 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // At most MAX_FAVORITE_ROADMAPS ids (built-in or custom, no distinction —
   // issue #177), sorted before all others on the onboarding picker.
   let favoriteRoadmapIds = [];
+  // First-time feature tour (issue #17) — null until the first setUser()
+  // resolves it (mirrors onboardingDone's null-while-loading convention),
+  // then true/false. Reset back to null on a uid transition (sign-out) below.
+  let tourDone = null;
   // One-shot seed content for a custom roadmap not yet activated (issue #4
   // AI-import): createCustomRoadmap() stashes { phases, items } here, keyed
   // by the freshly generated id, right before calling switchRoadmap(id) —
@@ -578,6 +591,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       hiddenTemplateIds,
       customRoadmaps,
       favoriteRoadmapIds,
+      tourDone,
       ...meta
     };
   }
@@ -623,6 +637,13 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     localStorage.setItem(KEYS.FAVORITE_ROADMAPS, JSON.stringify(favoriteRoadmapIds));
   }
 
+  // Only ever persists a positive tour state — same "nothing useful to write
+  // on the false path" precedent as persistLocalOnboarding above.
+  function persistLocalTourDone() {
+    if (!tourDone) return;
+    localStorage.setItem(KEYS.TOUR_DONE, 'true');
+  }
+
   // Wipes all local state for the outgoing user — both roadmap data and UI prefs.
   // Called whenever the active uid changes so the next user always starts clean.
   function clearLocal() {
@@ -634,6 +655,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     localStorage.removeItem(KEYS.HIDDEN_TEMPLATES);
     localStorage.removeItem(KEYS.CUSTOM_ROADMAPS);
     localStorage.removeItem(KEYS.FAVORITE_ROADMAPS);
+    localStorage.removeItem(KEYS.TOUR_DONE);
   }
 
   function attachRoadmapListener(listenerTemplateId) {
@@ -889,6 +911,32 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     return resolved;
   }
 
+  // Issue #17 — backfill for accounts that already existed before the tour
+  // shipped: without this, every current account gets tourDone defaulted to
+  // false and the tour would auto-fire for long-time users who never asked
+  // for it. Called once per sign-in, right after the active roadmap's items
+  // have loaded (mirrors the timing hasRealProgress() needs). An account
+  // counts as "already past onboarding" — no forced tour — if it either (a)
+  // already has real progress (a custom or done item) in the roadmap that
+  // just loaded, or (b) reached onboardingDone via a legacy migration path
+  // (blank-template retirement or the pre-#58 singular-roadmap migration)
+  // rather than a fresh template pick made from here forward. Only an
+  // account that both starts with zero real progress AND reached
+  // onboardingDone via a genuine fresh pick keeps tourDone's real `false`
+  // default, so only it gets the auto-start.
+  function backfillTourDoneIfNeeded(onboarding) {
+    if (tourDone) return;
+    const reachedViaMigration = !!(onboarding.migratedLegacyItems || onboarding.blankMigration);
+    if (!reachedViaMigration && !hasRealProgress(items)) return;
+    tourDone = true;
+    persistLocalTourDone();
+    if (uid) {
+      adapter.saveMeta(uid, { tourDone: true }).catch(error => {
+        console.error('Failed to backfill tour state', error);
+      });
+    }
+  }
+
   // Determines, once per sign-in, whether this user has already picked a starter
   // template (Issue #51) and which templates they've started (Issue #58). New
   // accounts are routed to /onboarding by main.js; everyone else (including every
@@ -918,6 +966,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       customRoadmaps = fresh.customRoadmaps;
       startedTemplateIds = fresh.startedTemplateIds;
       favoriteRoadmapIds = fresh.favoriteRoadmapIds;
+      tourDone = fresh.tourDone;
       roadmapCache = fresh.roadmapCache;
       pendingCustomSeeds = fresh.pendingCustomSeeds;
       dirty = fresh.dirty;
@@ -934,6 +983,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
 
     if (!uid) {
       onboardingDone = null;
+      tourDone = null;
       notify({ saveState: 'idle' });
       return;
     }
@@ -952,6 +1002,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     persistLocalCustomRoadmaps();
     favoriteRoadmapIds = metaExtras.favoriteRoadmapIds;
     persistLocalFavoriteRoadmaps();
+    tourDone = metaExtras.tourDone;
+    persistLocalTourDone();
 
     const onboarding = await determineOnboardingAndActiveRoadmap({ uid, adapter, remoteMeta, localFallback, customRoadmaps, isStale });
     if (onboarding === STALE) return;
@@ -986,6 +1038,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     recentFlushedStrs = [];
     persistLocal();
     roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
+
+    backfillTourDoneIfNeeded(onboarding);
 
     attachRoadmapListener(activeTemplateId);
     if (dirty) queueSave();
@@ -1186,6 +1240,35 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       }
     }
     return { ok: true, capped: false };
+  }
+
+  // Issue #17 — persists local + remote, same setHiddenTemplateIds()/
+  // toggleFavoriteRoadmap() shape: mutate in-memory, persist locally, notify,
+  // then best-effort sync to Firebase for a signed-in user.
+  async function setTourDone(value) {
+    tourDone = value;
+    persistLocalTourDone();
+    notify();
+    if (uid) {
+      try {
+        await adapter.saveMeta(uid, { tourDone: value });
+      } catch (error) {
+        console.error('Failed to save tour state', error);
+      }
+    }
+  }
+
+  function completeTour() {
+    return setTourDone(true);
+  }
+
+  // Manual "Take a tour" replay — in-memory only, per the issue's own spec:
+  // does not persist until the tour is skipped/completed again, so a reload
+  // mid-replay (before the user finishes or skips) doesn't leave tourDone
+  // stuck false for an account that had already genuinely completed it.
+  function resetTour() {
+    tourDone = false;
+    notify();
   }
 
   function hideTemplate(idToHide) {
@@ -1680,6 +1763,8 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     hideTemplate,
     unhideTemplate,
     toggleFavoriteRoadmap,
+    completeTour,
+    resetTour,
     isCustomRoadmapId,
     createCustomRoadmap,
     deleteCustomRoadmap,

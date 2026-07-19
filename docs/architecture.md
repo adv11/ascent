@@ -4130,6 +4130,29 @@ manual step, documented in `CLAUDE.md`'s "Verifying changes" section and
 `CONTRIBUTING.md`, and is expected to run cleanly locally (no reported local failures
 of this check, only in CI).
 
+### 2026-07-19 — Issue #17 — First-time feature tour
+
+Added `src/ui/components/featureTour.js` — a one-time, sequential spotlight
+walkthrough of the dashboard, gated behind a new `tourDone` field on `roadmapStore.js`
+(resolved the same remote-then-local way `onboardingDone` already is, not the array
+precedent `hiddenTemplateIds`/`favoriteRoadmapIds` use — see `.claude/rules/
+roadmap-store.md`'s "First-time feature tour" entry for the full contract, backfill
+rule, and why `resetTour()` is deliberately in-memory-only). The original 2026-era spec
+targeted a `.header-top` action row and a `.progress-card` dashboard widget that no
+longer exist — every spotlight target was re-mapped against the current DOM before
+implementation (`.phase-card`, `.check-item`/`.resource-count`, the sidebar's Progress
+and My Roadmaps nav items, the top bar's theme toggle) and a 6th step (the already-wired
+Ctrl/Cmd+K command palette) was added as a natural capstone. The spotlight/ring/popover
+implementation reuses two existing conventions rather than inventing new ones —
+`attachFocusTrap()` (`modal.js`) per step, and this app's "every floating/positioned
+element is a portal" rule — see `.claude/rules/ui-styling.md`'s `featureTour.js` entry
+for the box-shadow-as-spotlight technique and the new `z-index: 1100+` tier (above every
+other floating element in the app, since the tour can be re-triggered mid-session over
+an already-open modal). `dashboard.js` starts it once, only when
+`onboardingDone === true && tourDone === false`; a "Take a tour" item in the sidebar's
+account menu (dashboard's own instance only — every spotlight target is dashboard-only)
+replays it anytime via `store.resetTour()`.
+
 ### 2026-07-19 — Issue #239 — Corrected stale "current product stage" narrative
 
 §1's "Current product stage" line still read "Phase 0 complete, working through

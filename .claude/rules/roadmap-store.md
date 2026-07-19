@@ -738,6 +738,47 @@ closes the guide and calls the same `handleImport()` the "Import roadmap" card u
 do not let it drift back to describing a manual copy-paste-into-an-AI-chat workflow now
 that real automated import exists.
 
+**First-time feature tour — `tourDone` (issue #17).** A single per-user boolean,
+resolved the same remote-then-local way `onboardingDone` itself is (not the array
+precedent `hiddenTemplateIds`/`favoriteRoadmapIds` use below): `resolveMetaExtras()`
+returns `tourDone: remoteMeta?.tourDone === true || readLocalTourDone()`, and `setUser()`
+assigns it alongside the other meta-extras fields, persisting the local fallback
+(`KEYS.TOUR_DONE`, `localStorageKeys.js`) the same "only ever write a positive value"
+way `persistLocalOnboarding()` does — there's nothing useful to write on the `false`
+path, since a missing key already means "not done." `completeTour()`/`resetTour()`
+(exported from the store) follow `toggleFavoriteRoadmap()`'s mutate → persist-local →
+`notify()` → best-effort `saveMeta()` shape; `resetTour()` is the one deliberate
+exception — it's in-memory only (no `persistLocalTourDone()`/`saveMeta()` call at all),
+since a manual "Take a tour" replay (`sidebar.js`'s account-menu item, dashboard-only —
+see below) shouldn't flip a genuinely-completed account back to "never toured" until the
+replay itself is skipped or finished, at which point the tour's own `onEnd` callback
+calls `completeTour()` again to re-persist `true`.
+
+**Backfill for existing accounts — never auto-fire the tour for someone who already
+has a roadmap.** Every account that existed before this shipped would otherwise default
+`tourDone` to `false` (a missing meta field, same as any brand-new field) and see the
+tour auto-start the next time they open the dashboard — wrong for anyone who's already
+past onboarding. `backfillTourDoneIfNeeded(onboarding)` runs once per sign-in, right
+after `setUser()` finishes loading the active roadmap's items (needs `items` in memory
+to check `hasRealProgress()`), and sets `tourDone = true` (persisting local + remote,
+same as `completeTour()`) whenever either condition holds: the account already has real
+progress in the roadmap that just loaded (`hasRealProgress(items)` — a `custom` or
+`done` item, the exact same check `isAlreadyOnboardedLegacy()` uses elsewhere in this
+file), or `onboardingDone` was itself reached via a legacy migration path this sign-in
+(`onboarding.migratedLegacyItems` or `onboarding.blankMigration` truthy) rather than a
+genuine fresh template pick made from here forward. Only an account that both starts
+with zero real progress *and* reached `onboardingDone` via a real fresh pick keeps
+`tourDone`'s honest `false` default — that's the only shape that should ever auto-start.
+**Gating and manual replay live in `dashboard.js`, not the store**: `renderDashboard()`
+calls `startTour()` (`featureTour.js`) once, only when `store.getSnapshot()` shows
+`onboardingDone === true && tourDone === false`, right after the dashboard's first
+render (never on `/onboarding` itself). Only the dashboard's own `createSidebar()` call
+passes an `onStartTour` prop (wiring the account menu's "Take a tour" item) — every
+other page's sidebar instance (`progress.js`/`settings.js`/`onboarding.js`) omits it,
+since every one of the tour's spotlight `querySelector` targets is dashboard-only and
+would resolve to nothing anywhere else. See `.claude/rules/ui-styling.md`'s
+`featureTour.js` entry for the spotlight/portal/focus-trap implementation itself.
+
 **Favorite roadmaps — `favoriteRoadmapIds` (issue #177).** A parallel per-user array,
 same shape/persistence precedent as `hiddenTemplateIds` immediately above: up to
 `MAX_FAVORITE_ROADMAPS` (3, exported from `roadmapStore.js`) roadmap ids, no distinction

@@ -30,6 +30,7 @@ import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/c
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
 import { triggerConfetti } from '../components/confetti.js';
 import { openBadgeShareModal } from '../components/shareModal.js';
+import { startTour } from '../components/featureTour.js';
 
 // Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
 // "most valuable" type (a video worth watching over a plain article, etc.)
@@ -254,6 +255,60 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
   });
 }
 
+// Issue #17 — the feature tour's step list. Every target is a live
+// querySelector call against the real, current DOM (re-mapped from the
+// issue's original, now-stale spec — see the issue's own re-audit comment):
+// `.phase-card`/`.check-item`/`.resource-count` are unchanged, but "Switch
+// template" moved to the sidebar's "My Roadmaps" nav item, the old
+// `.progress-card` header widget became a full `/progress` page reached via
+// the sidebar's "Progress" nav item, and the theme toggle now lives in the
+// topbar's icon group. A 6th step (the already-wired Ctrl/Cmd+K command
+// palette) was added on top of the original 5 — a natural "power user"
+// capstone the issue's own re-audit flagged as worth including since the
+// palette exists and works today; sidebar-collapse/notification-bell/Daily
+// Todo-badge were deliberately left out to keep this a tight, day-one-only
+// walkthrough (ongoing discovery is the changelog "New" badge system's job,
+// not this feature's, per that same re-audit).
+function buildTourSteps() {
+  return [
+    {
+      // The first phase is open by default on a fresh roadmap (openPhases
+      // defaults to Set([0])) — prefer a still-collapsed card so this step
+      // actually demonstrates "click to expand" instead of spotlighting an
+      // already-open, potentially very tall card and scrolling into its
+      // middle (found via manual testing, not a hypothetical).
+      target: () => document.querySelector('.phase-card:not(.open)') || document.querySelector('.phase-card'),
+      title: 'Expand a phase',
+      body: 'Click any phase to expand it and see the topics inside.'
+    },
+    {
+      target: () => document.querySelector('.check-item'),
+      title: 'Track a topic',
+      body: 'Click a topic to mark it done. Click the resources badge to view or add links without toggling it.'
+    },
+    {
+      target: () => document.querySelector('.app-sidebar-nav a[href="#/progress"]'),
+      title: 'See your progress',
+      body: 'Streaks, charts, and your full history live on the Progress page.'
+    },
+    {
+      target: () => document.querySelector('.app-topbar .theme-toggle'),
+      title: 'Switch themes',
+      body: 'Switch between light and dark anytime in the top bar — it’s remembered across visits.'
+    },
+    {
+      target: () => document.querySelector('.app-sidebar-nav a[href="#/onboarding"]'),
+      title: 'Manage your roadmaps',
+      body: 'Manage and switch between all your roadmaps anytime — your progress stays intact.'
+    },
+    {
+      target: () => document.querySelector('.app-topbar-command-btn'),
+      title: 'Jump anywhere, fast',
+      body: 'Press Ctrl+K (or Cmd+K on Mac) anytime to jump to any page.'
+    }
+  ];
+}
+
 // Reads a duration/easing straight off the live CSS custom property instead
 // of hardcoding a second copy of the value here, so Phase 1's token stays the
 // single source of truth for both the CSS-driven animations and this
@@ -472,6 +527,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   let openPhases = new Set(Array.isArray(ui.openPhases) ? ui.openPhases : [0]);
   let saveBadgeTimer;
   let lastStructuralVersion = null;
+  // Issue #17 — set while a feature tour is on screen (auto-started or a
+  // manual "Take a tour" replay), so the route's own cleanup return can tear
+  // it down if the user navigates away mid-tour.
+  let activeTourCleanup = null;
   // Issue #6 Phase 4.4 — set inside updateSaveBadge() whenever a save
   // actually completes; feeds formatLastSynced() in the roadmap-header meta
   // row. Purely a UI-layer freshness read, not persisted anywhere.
@@ -1232,6 +1291,22 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     dailyTodoNavBadge.setAttribute('aria-label', `Today's Todos — "${soonest.title}", ${formatRemaining(ms)}${active.length > 1 ? `, ${active.length} active todos` : ''}`);
   }
 
+  // Issue #17 — (re)starts the tour. `resetTour()` is only meaningful for a
+  // manual "Take a tour" replay (in-memory only, per the store's own
+  // contract) — the auto-start call site below never needs it, since
+  // tourDone is already false there. Any tour already on screen is torn down
+  // first so a stray double-invocation can't leave two sets of listeners
+  // running.
+  function runFeatureTour() {
+    activeTourCleanup?.();
+    activeTourCleanup = startTour(buildTourSteps(), {
+      onEnd: () => {
+        activeTourCleanup = null;
+        store.completeTour();
+      }
+    });
+  }
+
   // Issue #6 Phase 2 — app shell (sidebar + topbar) replaces the old
   // single `.header-top` action row. Identity/sign-out/delete-account now
   // live in the sidebar footer; "Switch template" is superseded by the
@@ -1244,7 +1319,14 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     user,
     store,
     dailyTodoStore,
-    onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
+    onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal(),
+    // Issue #17 — only the dashboard's own sidebar instance offers this
+    // (progress.js/settings.js/onboarding.js's sidebars don't pass it) since
+    // every spotlight target above only exists on this page.
+    onStartTour: () => {
+      store.resetTour();
+      runFeatureTour();
+    }
   });
   const topbar = createTopbar({
     breadcrumb: `Roadmaps / ${currentTemplate.name}`,
@@ -1329,6 +1411,18 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   applyScrollToPhaseSignal();
   maybeShowGuestDataRiskNudge({ user, store });
 
+  // Issue #17 — auto-starts once, only for an account that has genuinely
+  // finished onboarding but never seen the tour (a freshly-backfilled
+  // existing account never reaches this, since backfillTourDoneIfNeeded()
+  // in roadmapStore.js already resolved tourDone to true for it before this
+  // page ever mounted).
+  {
+    const tourSnapshot = store.getSnapshot();
+    if (tourSnapshot.onboardingDone === true && tourSnapshot.tourDone === false) {
+      runFeatureTour();
+    }
+  }
+
   // 30s resolution matches dailyTodoPanel.js's own countdown tick — enough
   // for hour/minute-granularity text without a busier interval.
   const unsubDailyTodo = dailyTodoStore ? dailyTodoStore.subscribe(updateDailyTodoBadge) : null;
@@ -1342,6 +1436,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   setOnlineState();
 
   return () => {
+    activeTourCleanup?.();
     themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();

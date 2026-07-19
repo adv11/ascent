@@ -38,7 +38,7 @@ function readCollapsed() {
 // identity, including an anonymous guest session — local-only progress is
 // exactly the data most at risk of being lost, so it isn't gated behind
 // `!user.isAnonymous` the way "Delete account" is.
-function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount }) {
+function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour }) {
   const importInput = el('input', {
     type: 'file',
     accept: '.json,application/json',
@@ -51,14 +51,22 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
   });
 
   const dropdownItems = [
-    { text: 'Settings', onClick: () => navigate('/settings') },
+    { text: 'Settings', onClick: () => navigate('/settings') }
+  ];
+  // Issue #17 — only offered where the tour's spotlight targets actually
+  // exist (dashboard.js is the only caller that passes this), never on
+  // Progress/Settings/onboarding's own sidebar instance, where every
+  // querySelector target would resolve to null and the tour would end
+  // immediately with no explanation.
+  if (onStartTour) dropdownItems.push({ text: 'Take a tour', onClick: onStartTour });
+  dropdownItems.push(
     { text: 'My reports', onClick: () => openMyReports({ user }) },
     { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
     { text: 'Import backup…', onClick: () => importInput.click() },
     { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
-  ];
+  );
   if (dailyTodoStore) {
     dropdownItems.push({ text: 'Export to calendar (.ics)', onClick: () => exportTodosIcs(dailyTodoStore) });
   }
@@ -77,7 +85,7 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
 // `dailyTodoStore` is optional too (issue #143) — passed straight through to
 // confirmAndSignOut() so a dirty Daily Todos list gets the same
 // flush-before-sign-out protection the roadmap store already has.
-export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDeleteAccount }) {
+export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDeleteAccount, onStartTour }) {
   const navEl = el('nav', { className: 'app-sidebar-nav', 'aria-label': 'Primary' },
     NAV_ITEMS.map(item => el('a', {
       href: `#${item.route}`,
@@ -118,7 +126,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     guestRiskIndicator
   ]);
 
-  const { identity, importInput } = buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount });
+  const { identity, importInput } = buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour });
 
   const footer = el('div', { className: 'app-sidebar-footer' }, [
     identity,
