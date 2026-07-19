@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Docs
+- **`README.md` and the repo's GitHub description were written as if Ascent were Java-backend-only, when the app has offered 8 starter templates (Java Backend, GenAI/Agentic AI, Frontend, Data Science, Math, Piano, Marketing, and a blank slate) for a while.** Rewrote `README.md` with a badges/logo header, a template comparison table, a features list, and two real Alpenglow-themed screenshots (`docs/screenshots/issue-206/`) covering the dashboard, onboarding template picker, and progress analytics — the old README had no screenshots at all. Also corrected every remaining `adv11/SwitchPrep` URL (pre-rename repo name) to `adv11/ascent` in `package.json`, `docs/roadmap.md`, `docs/architecture.md`, and two `.claude/skills/*.md` files, and broadened `package.json`'s `keywords` beyond a Java-only list.
+
 ### Fixed
 - **`public/favicon.svg` and every PNG generated from it (`favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `og-image.png`) still showed the old teal/cyan gradient mark, out of sync with the app's own solid-gold `.brand-mark` (issue #206).** `index.html`, `public/offline.html`, and `public/manifest.json` also still hard-coded the retired `#0f766e` teal as `theme-color`. Updated `favicon.svg` to a flat `#D9A441` fill (matching `--color-brand-gold`) with a cream triangle, regenerated the PNGs/OG image via `scripts/generate-brand-assets.mjs`, and updated all three `theme-color` references to `#D9A441` so the browser chrome, home-screen icon, and offline page match the in-app brand mark.
 

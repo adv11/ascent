@@ -1,6 +1,6 @@
 ---
 name: raise-issue
-description: Use when raising a new GitHub issue in this repo (adv11/SwitchPrep) — covers the required label taxonomy, body sections, and the tracker-update step that must happen immediately after gh issue create.
+description: Use when raising a new GitHub issue in this repo (adv11/ascent) — covers the required label taxonomy, body sections, and the tracker-update step that must happen immediately after gh issue create.
 ---
 
 # Raising a new GitHub issue

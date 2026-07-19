@@ -21,18 +21,21 @@
   "description": "Ascent is a personal roadmap tracker for learning, revising, and tracking progress toward any goal.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/adv11/SwitchPrep.git"
+    "url": "https://github.com/adv11/ascent.git"
   },
   "bugs": {
-    "url": "https://github.com/adv11/SwitchPrep/issues"
+    "url": "https://github.com/adv11/ascent/issues"
   },
   "keywords": [
-    "java",
-    "spring-boot",
-    "system-design",
-    "genai",
     "roadmap",
-    "firebase"
+    "learning-tracker",
+    "career",
+    "progress-tracker",
+    "firebase",
+    "java",
+    "frontend",
+    "data-science",
+    "genai"
   ],
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

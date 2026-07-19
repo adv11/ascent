@@ -31,7 +31,7 @@ request, driver script not committed." Stop doing that whenever the template's
 
 1. Capture real PNGs (a throwaway Playwright script against `npm run dev` calling `page.screenshot()` is fine — the script itself still doesn't need to be committed, only the images do).
 2. Commit them under `docs/screenshots/issue-<N>/*.png` (or `pr-<N>` if there's no single driving issue) on the PR branch itself.
-3. Push, then reference each one in the PR body as `![caption](https://raw.githubusercontent.com/adv11/SwitchPrep/<branch>/docs/screenshots/issue-<N>/<file>.png)` — a repo-relative markdown path does not render inline in a PR *description*, so it must be the `raw.githubusercontent.com` form, and the branch must already be pushed before the images resolve.
+3. Push, then reference each one in the PR body as `![caption](https://raw.githubusercontent.com/adv11/ascent/<branch>/docs/screenshots/issue-<N>/<file>.png)` — a repo-relative markdown path does not render inline in a PR *description*, so it must be the `raw.githubusercontent.com` form, and the branch must already be pushed before the images resolve.
 4. If the PR is edited after opening (`gh pr edit --body-file`), the images stay live as long as the branch/commit they point at isn't force-pushed away — prefer plain (non-force) pushes for screenshot-only follow-up commits once the PR is open.
 
 Also confirm the "Docs that must ship with every code PR" table in root `CLAUDE.md` is

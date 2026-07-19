@@ -20,7 +20,7 @@ side-project-level.
 **Current product stage (2026-07):** Feature-complete through Step 7 of the build-out
 (bug fixes, CI, hosting, auth, core architecture, the full UI/UX revamp, and feature
 expansion — analytics, sharing, exports, PWA, and more). Step 8 (Launch) is in its
-final stretch. [Issue #11](https://github.com/adv11/SwitchPrep/issues/11) is the
+final stretch. [Issue #11](https://github.com/adv11/ascent/issues/11) is the
 single source of truth for current status; check it rather than this paragraph for
 what's still open.
 

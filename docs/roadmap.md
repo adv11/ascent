@@ -1,6 +1,6 @@
 # Ascent — Planned Features
 
-Features are tracked as GitHub issues. [Issue #11](https://github.com/adv11/SwitchPrep/issues/11)
+Features are tracked as GitHub issues. [Issue #11](https://github.com/adv11/ascent/issues/11)
 is the single source of truth for status — it lists every step, every issue, and
 whether each is done, in progress, or not planned. Keeping a second, manually-maintained
 summary here is exactly what let this file go stale for months while the tracker itself

@@ -1,32 +1,89 @@
-# Ascent
+<p align="center">
+  <img src="public/icon-192.png" width="72" alt="Ascent logo">
+</p>
 
-*Engineer your next move.* A roadmap tracker for anyone learning, revising, or working
-toward a goal — students, professionals, and career switchers alike. New sign-ups pick
-one of 8 starter templates — Java Backend Engineer, GenAI/Agentic AI Engineer, Frontend
-Developer, Data Scientist, 12th Grade Mathematics, Learning Piano, Marketing, or a blank
-slate to build your own — all in one editable, syncable checklist. Any template except
-the blank one can be hidden from your own picker if you don't want it cluttering the
-list; hiding is per-account and never affects anyone else.
+<h1 align="center">Ascent</h1>
+<p align="center"><strong>Engineer your next move.</strong></p>
 
-- Sign in with email/password or start instantly as a guest.
-- Progress syncs across devices via Firebase, with an offline/local fallback.
-- Every topic can carry its own resource links, priority, and custom notes.
-- Light and dark themes, following your system preference by default.
+<p align="center">
+  A personal roadmap tracker for anyone learning, revising, or working toward a goal —
+  students, professionals, and career switchers alike.
+</p>
+
+<p align="center">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-1228%20passing-15803d?style=flat-square">
+  <img alt="Stack" src="https://img.shields.io/badge/stack-vanilla%20JS%20%C2%B7%20no%20build%20step-D9A441?style=flat-square">
+  <img alt="Firebase" src="https://img.shields.io/badge/backend-Firebase-FFA000?style=flat-square">
+  <img alt="License" src="https://img.shields.io/badge/license-all%20rights%20reserved-333333?style=flat-square">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/issue-206/dashboard-dark.png" alt="Ascent dashboard" width="100%">
+</p>
+
+---
+
+## What it is
+
+New sign-ups pick a starter template and get an editable, syncable checklist —
+organized into phases and sections, each topic carrying its own resource links,
+priority, and notes — instead of a wiki page or a spreadsheet that goes stale.
+
+| Template | Focus |
+|---|---|
+| **Java Backend Engineer** | Java, Spring Boot, microservices, system design |
+| **GenAI / Agentic AI Engineer** | LLMs, agent frameworks, RAG, prompt engineering |
+| **Frontend Developer** | HTML/CSS/JS, frameworks, accessibility, performance |
+| **Data Scientist** | Statistics, ML, Python tooling, model deployment |
+| **12th Grade Mathematics** | Exam-focused syllabus tracker |
+| **Learning Piano** | Structured practice roadmap |
+| **Marketing** | Growth, content, analytics fundamentals |
+| **Blank slate** | Build your own from scratch, or generate one with AI import |
+
+Any template except the blank one can be hidden from your own picker without
+affecting anyone else's account, and you can run more than one roadmap at a time —
+switching between them never overwrites another's progress.
+
+## Features
+
+- **Sign in with email/password, or start instantly as a guest** — no signup wall
+  between you and your first roadmap.
+- **Cross-device sync via Firebase**, with a `localStorage` offline fallback so the
+  app still works with no connection.
+- **Progress analytics** — completion streaks, a GitHub-style activity heatmap,
+  7-day velocity, and a cumulative-progress projection chart.
+- **Daily Todos** — pull specific topics into a lightweight daily list with optional
+  reminders, linked back to their source roadmap topic.
+- **AI-assisted roadmap import** — paste a generated roadmap from your assistant of
+  choice and it's validated and imported automatically.
+- **Share a read-only snapshot** of your roadmap or progress via a public link, or
+  export a branded PDF/print view.
+- **First-time guided tour**, a command palette (`Cmd/Ctrl+K`), and full light/dark
+  theming that follows your system preference by default.
+- **Installable as a PWA** with offline support.
+
+<p align="center">
+  <img src="docs/screenshots/issue-206/onboarding-light.png" alt="Starter template picker" width="49%">
+  <img src="docs/screenshots/issue-206/progress-dark.png" alt="Progress analytics" width="49%">
+</p>
 
 ## Tech stack
 
 Vanilla JavaScript over native ES modules — **no build step, no bundler, no
-framework**. Firebase Authentication + Realtime Database for sync, with
-`localStorage` as an offline fallback. See [`docs/architecture.md`](docs/architecture.md)
-for the full data model and file layout, and [`CLAUDE.md`](CLAUDE.md) /
-[`AGENTS.md`](AGENTS.md) for the conventions this codebase follows.
+framework.** Firebase Authentication + Realtime Database for sync, with
+`localStorage` as an offline fallback. Vitest for unit/integration tests, Playwright
+for E2E.
+
+See [`docs/architecture.md`](docs/architecture.md) for the full data model and file
+layout, and [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) for the conventions
+this codebase follows.
 
 ## Getting started
 
 1. **Clone and install** — there are no dependencies to install; this is a static
    site.
    ```bash
-   git clone <this-repo-url>
+   git clone https://github.com/adv11/ascent.git
    cd ascent
    ```
 2. **Set up Firebase.** Create a project at [console.firebase.google.com](https://console.firebase.google.com),
@@ -74,14 +131,14 @@ for the required GitHub secrets (`FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_CONFIG`,
 ## Project status
 
 Feature-complete through Step 7 of the build-out; Step 8 (Launch) is in its final
-stretch. [Issue #11](https://github.com/adv11/SwitchPrep/issues/11) is the single
+stretch. [Issue #11](https://github.com/adv11/ascent/issues/11) is the single
 source of truth for current status — see it for the full, up-to-date list of what's
 left. See [`CHANGELOG.md`](CHANGELOG.md) for the detailed change history and
 [`docs/roadmap.md`](docs/roadmap.md) for a pointer to the same tracker.
 
-Tests run via `npm test` (Vitest unit + integration) and `npm run test:e2e` (Playwright).
-Run `npm run lint` to check for security and quality issues. See the "Verifying changes"
-section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
+Tests run via `npm test` (Vitest unit + integration, 1228 tests) and `npm run test:e2e`
+(Playwright). Run `npm run lint` to check for security and quality issues. See the
+"Verifying changes" section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
 
 ## Contributing
 
