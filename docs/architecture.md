@@ -725,7 +725,7 @@ adapters`.
 `.github/workflows/db-backup.yml` (issue #130) runs a daily scheduled export (09:00 UTC
 cron, plus `workflow_dispatch` for manual/on-demand runs) of the entire Firebase
 Realtime Database via `firebase database:get /`, authenticated with the same
-`FIREBASE_SERVICE_ACCOUNT` secret already used by `deploy.yml` — evaluated against a
+the `FIREBASE_SERVICE_ACCOUNT_<PROJECT_ID>` secret already used by `deploy.yml` — evaluated against a
 narrower-scoped service account and kept as the existing one since it already has the
 Realtime Database read access a backup needs, and provisioning a second credential
 would be extra secret-rotation surface for no real isolation benefit (a backup job
@@ -736,7 +736,7 @@ Daily Todos, activity log, and feedback-report data. The snapshot is therefore
 AES-256-CBC encrypted (`openssl enc -pbkdf2`) with a dedicated `BACKUP_ENCRYPTION_KEY`
 secret before upload, and the plaintext JSON is deleted from the runner immediately
 after encryption; only the `.enc` ciphertext is ever uploaded. `BACKUP_ENCRYPTION_KEY`
-is a separate secret from `FIREBASE_SERVICE_ACCOUNT` (a long random passphrase, e.g.
+is a separate secret from the deploy service-account secret (a long random passphrase, e.g.
 `openssl rand -base64 32`, set once in repo → Settings → Secrets and variables →
 Actions) — anyone with that passphrase plus a downloaded artifact can read a full
 database dump, so treat it with the same care as a production credential and rotate it
@@ -957,9 +957,11 @@ migration path if bandwidth grows.
 
 **`.github/workflows/deploy.yml`** added: `FirebaseExtended/action-hosting-deploy@v0`
 triggered on push to `main` (live channel) and on PRs (temporary channel, expires 7d). Deploy
-steps are guarded by a readiness check — if `FIREBASE_SERVICE_ACCOUNT` is not set, the
+steps are guarded by a readiness check — if the service-account secret is not set, the
 workflow prints instructions and exits cleanly rather than failing. Required setup:
-- `FIREBASE_SERVICE_ACCOUNT` (secret) — service account JSON from Firebase Console
+- `FIREBASE_SERVICE_ACCOUNT_<PROJECT_ID>` (secret) — service account JSON, created and
+  uploaded automatically by `firebase init hosting:github` (the secret name is derived
+  from the linked project ID, not the bare literal `FIREBASE_SERVICE_ACCOUNT`)
 - `FIREBASE_CONFIG` (secret) — production `firebase.config.js` contents
 - `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive)
 
@@ -3944,7 +3946,7 @@ cron + `workflow_dispatch`) that exports the entire Firebase Realtime Database v
 `firebase database:get /`. Closes the operational gap where the only existing backup
 path was issue #18's user-initiated, per-user export — there was no operator-side
 recovery mechanism for accidental rules deploys, compromised credentials, or platform
-incidents. Reuses the existing `FIREBASE_SERVICE_ACCOUNT` deploy secret rather than
+incidents. Reuses the existing deploy service-account secret rather than
 provisioning a second one (see §6a for the reasoning). Because this repo is public,
 the export is AES-256 encrypted with a new `BACKUP_ENCRYPTION_KEY` secret before being
 uploaded as a build artifact — an earlier plaintext-artifact version of this workflow

@@ -22,7 +22,15 @@
       "vitest.config.js",
       ".github/**",
       ".claude/**",
-      "node_modules/**"
+      "node_modules/**",
+      ".git/**",
+      "coverage/**",
+      "test-results/**",
+      ".playwright-mcp/**",
+      "graphify-out/**",
+      ".firebase/**",
+      "*.log",
+      "scripts/**"
     ],
     "rewrites": [
       { "source": "**", "destination": "/index.html" }

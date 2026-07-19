@@ -29,7 +29,7 @@ jobs:
       - name: Check backup readiness
         id: ready
         env:
-          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
           ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
         run: |
           if [ -n "$SERVICE_ACCOUNT" ] && [ -n "$ENCRYPTION_KEY" ] && [ -n "${{ vars.FIREBASE_PROJECT_ID }}" ]; then
@@ -42,7 +42,7 @@ jobs:
       - name: Write service account key
         if: steps.ready.outputs.ok == 'true'
         env:
-          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
         run: echo "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
 
       - name: Install Firebase CLI

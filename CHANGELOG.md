@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- **First production deploy to Firebase Hosting (`switchprep-adv26`) uploaded ~6,300 files, including the entire `.git` history, `coverage/`, `test-results/`, `.playwright-mcp/`, and `graphify-out/`.** `firebase.json`'s custom `hosting.ignore` list replaces Firebase's built-in defaults rather than extending them, so only the entries explicitly listed were actually excluded — `node_modules/**` was already there, but `.git/**` and the other dev-artifact directories weren't, so they were served as public static files. Added the missing entries; a redeploy dropped the upload from 6,310 files to 153.
+- CI's `deploy.yml` and `db-backup.yml` referenced a bare `FIREBASE_SERVICE_ACCOUNT` secret that was never actually created under that name — `firebase init hosting:github` names the secret it uploads after the linked project ID (`FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26`), so both workflows would have silently skipped every deploy/backup. Updated both workflows (and the two doc references in `CLAUDE.md`/`docs/architecture.md`) to the real secret name.
+
+### Added
+- Set the deploy-time GitHub configuration for the live Firebase project: `FIREBASE_CONFIG` secret, `FIREBASE_PROJECT_ID` variable, GitHub repo topics/homepage URL, and `index.html`'s `canonical`/`og:url` tags now point at the real hosting URL.
+
+### Fixed
 - **`.github/workflows/graph-update.yml` failed on every single push to `main`.** Its `add-paths` list for the auto-PR step included `graphify-out/wiki`, a path that has never existed in this repo — `graphify update .` doesn't generate it and it isn't gitignored, it's just stale. `git add` treats a nonexistent pathspec as a hard error, which aborted the staging command entirely, left nothing staged, and made `create-pull-request` fail with "Unexpected error" in ~15-19s every run. Removed the dead path.
 
 ### Docs

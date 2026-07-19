@@ -147,7 +147,7 @@ firebase deploy --only database
 **`firebase.config.js` is gitignored on purpose.** It holds client-side Firebase identifiers (`apiKey`, `authDomain`, etc.) that are visible to any user who opens DevTools — they are not secrets in the traditional sense, but keeping the file out of git prevents accidental commitment of production credentials during local development. CI injects the production config from the `FIREBASE_CONFIG` GitHub Secret at deploy time.
 
 **Required GitHub secrets/variables** (set in repo → Settings → Secrets and variables → Actions):
-- `FIREBASE_SERVICE_ACCOUNT` (secret) — Firebase service account JSON for deploy auth
+- `FIREBASE_SERVICE_ACCOUNT_<PROJECT_ID>` (secret) — Firebase service account JSON for deploy auth; named this way (not the bare `FIREBASE_SERVICE_ACCOUNT`) because `firebase init hosting:github` mints the secret name from the linked project ID automatically — `deploy.yml` references whatever name was actually created
 - `FIREBASE_CONFIG` (secret) — contents of `src/services/firebase.config.js` for production
 - `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive; use GitHub Variables, not Secrets)
 - `BACKUP_ENCRYPTION_KEY` (secret) — passphrase for the daily database-backup workflow; this repo is public, so the exported snapshot is encrypted before being uploaded as a build artifact

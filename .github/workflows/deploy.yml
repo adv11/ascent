@@ -49,7 +49,7 @@ jobs:
       - name: Check deploy readiness
         id: ready
         env:
-          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
         run: |
           if [ -n "$SERVICE_ACCOUNT" ]; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
@@ -84,7 +84,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
           projectId: ${{ vars.FIREBASE_PROJECT_ID }}
           channelId: pr-${{ github.event.number }}
           expires: 7d
@@ -95,7 +95,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
           projectId: ${{ vars.FIREBASE_PROJECT_ID }}
           channelId: live
 
@@ -114,7 +114,7 @@ jobs:
       - name: Deploy database rules (main)
         if: steps.ready.outputs.ok == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
