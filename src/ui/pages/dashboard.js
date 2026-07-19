@@ -1446,6 +1446,36 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   window.addEventListener('offline', setOnlineState);
   setOnlineState();
 
+  // Issue #254 — a native browser/OS print action (bypassing printRoadmap.js's
+  // own dedicated .print-mode flow, which builds a fresh full-content DOM
+  // snapshot regardless of expand state) prints the live dashboard as-is, so a
+  // collapsed .phase-card's `.phase-body { display: none }` means its topics
+  // are genuinely absent from the printed page, not just visually hidden.
+  // Force every phase open for the duration of the print — directly toggling
+  // the class/aria-expanded rather than animatePhaseBody()'s Element.animate()
+  // path, since nothing needs to visibly transition for a print render — then
+  // restore exactly the phases that were open beforehand once printing ends.
+  let openPhasesBeforePrint = null;
+  function handleBeforePrint() {
+    openPhasesBeforePrint = new Set(openPhases);
+    content.querySelectorAll('.phase-card').forEach(phaseCardEl => {
+      phaseCardEl.classList.add('open');
+      phaseCardEl.querySelector('.phase-head')?.setAttribute('aria-expanded', 'true');
+    });
+  }
+  function handleAfterPrint() {
+    if (!openPhasesBeforePrint) return;
+    content.querySelectorAll('.phase-card').forEach(phaseCardEl => {
+      const pi = Number(phaseCardEl.dataset.phase);
+      const wasOpen = openPhasesBeforePrint.has(pi);
+      phaseCardEl.classList.toggle('open', wasOpen);
+      phaseCardEl.querySelector('.phase-head')?.setAttribute('aria-expanded', String(wasOpen));
+    });
+    openPhasesBeforePrint = null;
+  }
+  window.addEventListener('beforeprint', handleBeforePrint);
+  window.addEventListener('afterprint', handleAfterPrint);
+
   return () => {
     activeTourCleanup?.();
     themeToggleBtn._cleanup?.();
@@ -1456,6 +1486,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     if (dailyTodoTickTimer) clearInterval(dailyTodoTickTimer);
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);
+    window.removeEventListener('beforeprint', handleBeforePrint);
+    window.removeEventListener('afterprint', handleAfterPrint);
     clearTimeout(saveBadgeTimer);
   };
 }
