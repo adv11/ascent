@@ -242,8 +242,14 @@ function buildPreferencesSection() {
     text: 'Install app',
     onClick: async () => {
       dismissFeatureBadge('pwa-install');
+      setButtonLoading(installBtn, true, 'Installing…');
       const outcome = await promptInstall();
-      if (outcome === 'accepted') showToast('Ascent installed.', 'success');
+      setButtonLoading(installBtn, false);
+      if (outcome === 'accepted') {
+        showToast('Ascent installed.', 'success');
+      } else if (outcome === 'unavailable' || outcome === null) {
+        showToast('Could not open the install dialog. Reload the page and try again.', 'error');
+      }
       installRow.hidden = !isInstallable();
     }
   });

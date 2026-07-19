@@ -50,4 +50,33 @@ describe('pwaInstall', () => {
     dismissInstallPrompt();
     expect(isInstallable()).toBe(false);
   });
+
+  it('promptInstall does not persist dismissal when the user declines', async () => {
+    const { promptInstall } = await import('../../src/services/pwaInstall.js');
+    fireBeforeInstallPrompt({ outcome: 'dismissed' });
+    const outcome = await promptInstall();
+    expect(outcome).toBe('dismissed');
+    expect(localStorage.getItem(KEYS.PWA_INSTALL_DISMISSED)).toBeNull();
+  });
+
+  it('promptInstall returns "unavailable" and clears the stale prompt if prompt() rejects', async () => {
+    const { promptInstall, isInstallable } = await import('../../src/services/pwaInstall.js');
+    const event = new Event('beforeinstallprompt', { cancelable: true });
+    event.prompt = vi.fn().mockRejectedValue(new DOMException('stale', 'InvalidStateError'));
+    event.userChoice = Promise.resolve({ outcome: 'accepted' });
+    window.dispatchEvent(event);
+
+    const outcome = await promptInstall();
+    expect(outcome).toBe('unavailable');
+    expect(isInstallable()).toBe(false);
+  });
+
+  it('promptInstall clears the captured event even before it resolves, so it is never reused', async () => {
+    const { promptInstall, isInstallable } = await import('../../src/services/pwaInstall.js');
+    fireBeforeInstallPrompt({ outcome: 'accepted' });
+    expect(isInstallable()).toBe(true);
+    const pending = promptInstall();
+    expect(isInstallable()).toBe(false);
+    await pending;
+  });
 });

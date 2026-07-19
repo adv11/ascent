@@ -31,11 +31,23 @@ export function onInstallabilityChange(fn) {
 
 export async function promptInstall() {
   if (!deferredPrompt) return null;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
+  const prompt = deferredPrompt;
+  // A captured beforeinstallprompt event can only be used once, and on some
+  // mobile Chrome builds it silently goes stale (no dialog, no rejection) if
+  // too much time has passed since it was captured. Clear it up front so a
+  // second tap after a failed/stale attempt doesn't retry the same dead
+  // event — the caller re-checks isInstallable()/onInstallabilityChange for
+  // a fresh one instead.
   deferredPrompt = null;
-  if (outcome === 'accepted') localStorage.setItem(KEYS.PWA_INSTALL_DISMISSED, 'true');
-  return outcome;
+  try {
+    await prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === 'accepted') localStorage.setItem(KEYS.PWA_INSTALL_DISMISSED, 'true');
+    return outcome;
+  } catch (error) {
+    console.error('PWA install prompt failed:', error);
+    return 'unavailable';
+  }
 }
 
 export function dismissInstallPrompt() {
