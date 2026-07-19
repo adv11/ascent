@@ -1,31 +1,20 @@
 # Ascent — Planned Features
 
-Features are tracked as GitHub issues. This document summarises planned work by phase.
-See the master tracker (issue #11) for current status of every item.
+Features are tracked as GitHub issues. [Issue #11](https://github.com/adv11/SwitchPrep/issues/11)
+is the single source of truth for status — it lists every step, every issue, and
+whether each is done, in progress, or not planned. Keeping a second, manually-maintained
+summary here is exactly what let this file go stale for months while the tracker itself
+stayed current, so this file no longer re-describes phase-by-phase status: check the
+tracker instead.
 
-## In progress / next up
+## What's still open
 
-- **#7** — Product rename / brand system (Ascent) — name confirmed, rollout in progress
-- **#37** — Firebase Emulator wired into E2E CI (branch protection gate)
-- **#3** — Enterprise architecture, coverage, and AI-agent coding standards
+As of this writing, per issue #11's Step 8 (Launch — the last step):
 
-## Upcoming
+- **#17** — First-time onboarding flow (welcome screen, feature tour) — PR open
+- **#240** — Refresh the in-app "What's New" changelog with the last ~2 months of
+  shipped features — not started
 
-- **#25 / #28** — Firebase Hosting + GitHub Actions auto-deploy (Step 3)
-- **#13 / #14 / #26** — Auth improvements: forgot-password, email verification,
-  confirm-password field, password strength meter (Step 4)
-
-## Future
-
-- **#36** — Cross-device / responsive consistency — `priority:critical` for v1.0;
-  real breakpoints, touch targets, iOS input zoom fix, safe-area insets
-- **#4** — Multi-roadmap support (custom roadmaps + AI import)
-- **#15** — Notes field per roadmap topic
-- **#6** — Full UI/UX revamp (design system, sidebar, modals, component library)
-- **#12B** — Resource panel revamp (smart link detection + UI)
-- **#21** — Accessibility audit (keyboard nav, screen reader, WCAG 2.1 AA)
-- **#18** — Data export / backup (JSON + CSV) + `completedAt` timestamp
-- **#9** — In-app feedback and bug reporting widget
-- **#19** — PWA (offline, installable)
-- **#20** — "What's New" changelog with bell notification
-- **#10** — Launch: repo rename, README, branch protection, licence, live URL
+Everything else — Steps 1 through 7 (bug fixes, CI, hosting, auth, core architecture,
+the full UI/UX revamp, and feature expansion) plus the rest of Step 8 — is done. See
+issue #11 for the complete list, including closed/not-planned items.
