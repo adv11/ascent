@@ -177,6 +177,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
   });
 
   node._toggleMobile = toggleMobile;
+  node._closeMobile = closeMobile;
   node._backdrop = backdrop;
   node._cleanup = () => identity._cleanup?.();
   return node;
