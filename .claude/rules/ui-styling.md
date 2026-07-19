@@ -59,10 +59,14 @@ browser window resized by a mouse user). `.check-actions` (the per-row Edit/reso
 controls, hidden via `opacity: 0` and revealed on `:hover`/`:focus-within`) is forced
 visible under `@media (hover: none), (pointer: coarse)` — not under a `max-width` query.
 Any future hover-reveal control must follow the same pattern. Touch targets
-(`.btn-icon`, `.btn-sm`, `.filter-chip`, `.check-item`) are raised to a ~44×44px minimum
-(WCAG 2.5.5) under `@media (pointer: coarse)` for the same reason — a mouse user at a
-narrow window shouldn't get oversized targets, and a touch user at a wide one should.
-See `docs/adr/ADR-006-responsive-breakpoints-touch-hover.md`.
+(`.btn-icon`, `.btn-sm`, `.filter-chip`, `.check-item`) are raised to a 46×46px minimum
+(WCAG 2.5.5's ~44px floor plus 2px of rounding headroom, issue #233 — sizing exactly at
+44px let sub-pixel/DPI layout rounding measure real elements fractionally under it,
+e.g. `43.999996px`, flaking the CI touch-target assertion) under `@media (pointer:
+coarse)` for the same reason — a mouse user at a narrow window shouldn't get oversized
+targets, and a touch user at a wide one should. Never size a new touch target to exactly
+44px for this reason; use 46px (or higher) so real-browser rounding can't push it back
+under the WCAG floor. See `docs/adr/ADR-006-responsive-breakpoints-touch-hover.md`.
 
 **No focusable field may render under 16px font-size on a phone/tablet viewport
 (`≤1024px`, issue #36).** iOS Safari auto-zooms the whole page when a focused input's

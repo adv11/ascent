@@ -4587,14 +4587,20 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 
 /* Touch targets — WCAG 2.5.5 / platform guidance recommend ~44x44px minimum.
    Gated on actual pointer capability, not viewport width (see the note atop
-   the breakpoint scale above). */
+   the breakpoint scale above). Sized to 46px, not exactly 44px (issue #233):
+   sub-pixel/DPI layout rounding in real browsers (and headless Chromium under
+   CI) can measure an element sitting exactly on the 44px boundary as
+   fractionally under it (e.g. 43.999996px), failing a strict `>= 44`
+   assertion — reproduced live in PR #231's CI run, which passed only on
+   Playwright retry. 2px of headroom absorbs that rounding without changing
+   the visual intent of "~44px minimum". */
 @media (pointer: coarse) {
-  .btn-icon { width: 44px; height: 44px; }
-  .btn-sm { min-height: 44px; }
-  .filter-chip { min-height: 44px; }
-  .check-item { min-height: 44px; }
-  .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 44px; height: 44px; }
-  .feedback-widget-trigger { min-height: 44px; }
+  .btn-icon { width: 46px; height: 46px; }
+  .btn-sm { min-height: 46px; }
+  .filter-chip { min-height: 46px; }
+  .check-item { min-height: 46px; }
+  .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
+  .feedback-widget-trigger { min-height: 46px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
