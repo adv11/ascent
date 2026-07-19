@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/issue-206/dashboard-dark.png" alt="Ascent dashboard" width="100%">
+  <img src="docs/screenshots/issue-256/dashboard-dark.png" alt="Ascent dashboard" width="100%">
 </p>
 
 <p align="center">
@@ -93,8 +93,8 @@ roadmap in one click.
 - **Installable as a PWA** with offline support.
 
 <p align="center">
-  <img src="docs/screenshots/issue-206/onboarding-light.png" alt="Starter template picker" width="49%">
-  <img src="docs/screenshots/issue-206/progress-dark.png" alt="Progress analytics" width="49%">
+  <img src="docs/screenshots/issue-256/onboarding-light.png" alt="Starter template picker" width="49%">
+  <img src="docs/screenshots/issue-256/progress-dark.png" alt="Progress analytics" width="49%">
 </p>
 
 ## Architecture at a glance
