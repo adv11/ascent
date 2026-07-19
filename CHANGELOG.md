@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **`main.js`'s post-sign-in redirect could silently bounce a user away from a deliberate `/onboarding` navigation — a real, reproduced (not flaky) bug, issue #234.** `authApi.onChange`'s handler read the current route only *after* awaiting `store.setUser()`'s Firebase round trip; if the user navigated to `/onboarding` (e.g. "Switch template") while that round trip was still in flight, the handler read the now-current `/onboarding` route and force-navigated back to `/app`, clobbering the deliberate navigation with no error shown. Found while root-causing a consistent (6/6 runs, both in CI and locally against a real Firebase emulator) failure of `tests/e2e/customRoadmapRace.test.js`. Fixed by capturing the route *before* the await and only auto-redirecting if it hasn't changed since — see `.claude/rules/roadmap-store.md`'s "stateCallId" staleness-guard precedent this follows.
+
 ### Changed
 - **Local dev setup assumed a macOS/Python dev machine, breaking `npm run dev`/`start` outright on Windows machines without Python installed (issue #211).** `package.json`'s `dev`/`start` scripts shelled out to `python3 -m http.server 4173` — unavailable by default on Windows, and inconsistently named (`python3` vs `python`/`py`) even where present. Both scripts now run a small zero-dependency Node static server (`scripts/dev-server.mjs`), so `npm run dev` behaves identically on macOS, Linux, and Windows with nothing beyond the Node/npm already required for `npm test`/`npm run lint`. `README.md`'s "Getting started" now calls out the one genuinely OS-specific step (copying `firebase.config.example.js`) with both a macOS/Linux and a Windows (PowerShell) command.
 
