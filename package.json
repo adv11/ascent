@@ -18,6 +18,13 @@
     "generate:brand-assets": "node scripts/generate-brand-assets.mjs"
   },
   "description": "Ascent is a personal roadmap tracker for learning, revising, and tracking progress toward any goal.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adv11/SwitchPrep.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adv11/SwitchPrep/issues"
+  },
   "keywords": [
     "java",
     "spring-boot",

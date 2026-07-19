@@ -166,6 +166,8 @@ Manual browser check: sign in as guest, toggle several checklist items across ph
 
 **If your change touches `app.css`, `index.html`, or any page/component layout**, also run the full cross-device/responsive/touch matrix — see `.claude/skills/verify-changes/`. Don't skip it for "just a small CSS tweak"; that's exactly how the bugs it exists to catch get shipped.
 
+**Lighthouse perf budget is a manual, local-only check, not a CI gate** (removed from CI in #231 — headless Chrome under GitHub Actions' shared runners hit an unfixable `NO_FCP` flake; see the CHANGELOG and `docs/architecture.md`'s Build Log for the investigation). Run it yourself before opening a perf-sensitive PR: `npx serve . -p 4173 -s &` then `npx @lhci/cli autorun --config=./lighthouserc.json` (assertions live in root `lighthouserc.json`).
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

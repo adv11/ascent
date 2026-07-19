@@ -91,6 +91,11 @@ function preloadDashboardModule() {
 authApi.onChange(async user => {
   currentUser = user;
   feedbackWidget._setUser(user);
+  // Captured *before* the await below, specifically to detect whether the
+  // user (or, in a test, an explicit page.goto) navigated elsewhere while
+  // this auth resolution was still in flight — see the staleness check
+  // below for why this matters.
+  const routeAtAuthChange = getRoute();
   await Promise.all([store.setUser(user), dailyTodoStore.setUser(user), activityLogStore.setUser(user)]);
 
   const route = getRoute();
@@ -112,7 +117,20 @@ authApi.onChange(async user => {
     if (route !== '/onboarding') navigate('/onboarding', true);
     return;
   }
-  if (publicRoutes.includes(route) || route === '/onboarding') {
+  // Only auto-redirect an already-onboarded user off a public route or the
+  // onboarding picker if the route hasn't changed since this callback
+  // started — a real, reproduced race (found reproducing tests/e2e/
+  // customRoadmapRace.test.js locally): store.setUser()'s Firebase round
+  // trip can still be in flight after signIn.js's own success handler has
+  // already navigated to '/app', and if the user (or a test) then
+  // deliberately re-enters '/onboarding' — e.g. the dashboard's "Switch
+  // template" link — while this callback is still awaiting, it used to read
+  // the *current* route once the await resolved and force-navigate back to
+  // '/app', silently clobbering that deliberate navigation. `route ===
+  // routeAtAuthChange` means nothing navigated away during the await, so
+  // this is still the original "just landed here from sign-in" case the
+  // redirect exists for.
+  if (route === routeAtAuthChange && (publicRoutes.includes(route) || route === '/onboarding')) {
     preloadDashboardModule();
     navigate('/app', true);
   }
