@@ -1196,7 +1196,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-brand-gold); outline-offs
    top-right corner slot the old standalone hide/delete button used to
    occupy — only one button now, so no `right: 44px` favorite-offset variant
    is needed. */
-.template-card-overflow { position: absolute; top: 12px; right: 12px; }
+/* `.dropdown.template-card-overflow` (two classes), not `.template-card-overflow`
+   alone — `.dropdown`'s own `position: relative` (below) is a single-class selector
+   at equal specificity, declared later in this file, so a single-class override here
+   would lose the cascade regardless of source order and silently fall back to
+   `position: relative`. That's a real bug this was found from: it knocked the ⋯
+   trigger out of its absolute corner slot into the card's normal flex flow, which fed
+   a wrong trigger rect into `positionMenu()` (dropdown.js) and rendered the portaled
+   menu partly off-screen — reported live as a blank white box overlapping the cards. */
+.dropdown.template-card-overflow { position: absolute; top: 12px; right: 12px; }
 .template-card-overflow-btn {
   width: 24px;
   height: 24px;
