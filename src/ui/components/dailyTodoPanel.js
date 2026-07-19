@@ -10,6 +10,7 @@ import { getTemplate } from '../../data/templates/index.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { remindersEnabled, enableReminders, disableReminders } from '../../services/reminderScheduler.js';
 import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
+import { createFeatureBadge } from './featureBadge.js';
 
 const CUSTOM_VALUE = 'custom';
 const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms || DURATION_PRESETS[0].ms;
@@ -385,6 +386,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
       el('span', { className: 'daily-todo-icon' }, [createIcon('timer', { size: 'sm' })]),
       el('h2', { className: 'daily-todo-heading', text: "Today's Todos" }),
       countBadge,
+      createFeatureBadge('daily-todo-reminders'),
       reminderBtn,
       el('button', {
         type: 'button',

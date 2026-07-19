@@ -73,10 +73,11 @@ for the required GitHub secrets (`FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_CONFIG`,
 
 ## Project status
 
-Phase 0 (Foundation & Standards) is complete. Phase 1 work (hosting, auth, core
-architecture hardening) is in progress. See [`CHANGELOG.md`](CHANGELOG.md) for the
-detailed change history and [`docs/roadmap.md`](docs/roadmap.md) for the planned
-feature list.
+Feature-complete through Step 7 of the build-out; Step 8 (Launch) is in its final
+stretch. [Issue #11](https://github.com/adv11/SwitchPrep/issues/11) is the single
+source of truth for current status — see it for the full, up-to-date list of what's
+left. See [`CHANGELOG.md`](CHANGELOG.md) for the detailed change history and
+[`docs/roadmap.md`](docs/roadmap.md) for a pointer to the same tracker.
 
 Tests run via `npm test` (Vitest unit + integration) and `npm run test:e2e` (Playwright).
 Run `npm run lint` to check for security and quality issues. See the "Verifying changes"

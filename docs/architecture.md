@@ -17,9 +17,12 @@ or a blank slate to fill in themselves. It started as a personal tool and is mov
 toward a sellable product. Correctness and polish are treated as customer-facing, not
 side-project-level.
 
-**Current product stage (2026-07):** Phase 0 (Foundation & Standards) complete.
-Working through Phase 1 (hosting ✅, auth improvements ✅, brand rename ✅, starter
-templates + onboarding ✅ — core architecture hardening continues).
+**Current product stage (2026-07):** Feature-complete through Step 7 of the build-out
+(bug fixes, CI, hosting, auth, core architecture, the full UI/UX revamp, and feature
+expansion — analytics, sharing, exports, PWA, and more). Step 8 (Launch) is in its
+final stretch. [Issue #11](https://github.com/adv11/SwitchPrep/issues/11) is the
+single source of truth for current status; check it rather than this paragraph for
+what's still open.
 
 ---
 
@@ -4149,3 +4152,20 @@ an already-open modal). `dashboard.js` starts it once, only when
 `onboardingDone === true && tourDone === false`; a "Take a tour" item in the sidebar's
 account menu (dashboard's own instance only — every spotlight target is dashboard-only)
 replays it anytime via `store.resetTour()`.
+
+### 2026-07-19 — Issue #239 — Corrected stale "current product stage" narrative
+
+§1's "Current product stage" line still read "Phase 0 complete, working through
+Phase 1" — accurate when first written but never updated since, even as the project
+went on to finish Phases 1–3 and reach the final stretch of Phase 4 (Launch). Found
+during a pre-launch audit cross-referencing this doc, `README.md`, and
+`docs/roadmap.md` against the master tracker (issue #11), which had itself stayed
+current the whole time. Rewrote §1 to state the actual stage (feature-complete through
+Step 7, Step 8 in its final stretch) and, rather than re-describing every phase in
+prose again, point directly at issue #11 as the single source of truth — the
+duplicated, manually-maintained summary in these three docs is exactly what let them
+go stale with no CI signal (none of the existing `pr-checklist` doc-sync checks look
+at prose "status" summaries). Same treatment applied to `README.md`'s "Project status"
+section and `docs/roadmap.md`, which now lists only the genuinely open tracker items
+(#17, #240) instead of a snapshot from when the file was first written. No application
+code changed.

@@ -20,5 +20,74 @@
         "description": "Priority badges and filter chips are easier to read in dark theme."
       }
     ]
+  },
+  {
+    "version": 2,
+    "date": "2026-06-20",
+    "items": [
+      {
+        "type": "feat",
+        "title": "Share a read-only link to your roadmap",
+        "description": "Publish a snapshot of your roadmap and share the link with anyone — they can view your progress without signing in, and your notes are never included."
+      },
+      {
+        "type": "feat",
+        "title": "Export your roadmap to your calendar",
+        "description": "Export to a calendar file (.ics) so your Daily Todos show up alongside the rest of your schedule."
+      },
+      {
+        "type": "feat",
+        "title": "Print or save your roadmap as a PDF",
+        "description": "Print your roadmap or save it as a branded PDF, with your progress and priorities laid out clearly on every page."
+      },
+      {
+        "type": "feat",
+        "title": "Review reminders for topics you've completed",
+        "description": "Completed topics resurface for review after two weeks — a new \"Review\" filter shows what's due, and you can mark a topic reviewed to reset its clock."
+      },
+      {
+        "type": "feat",
+        "title": "Group review reminders by tag",
+        "description": "Add tags to a topic from its edit panel, and topics due for review get grouped by shared tag so related material comes back to you together."
+      },
+      {
+        "type": "feat",
+        "title": "Favorite your most-used roadmaps",
+        "description": "Star up to three roadmaps to pin them to the top of your roadmap picker."
+      },
+      {
+        "type": "feat",
+        "title": "Streak freeze",
+        "description": "Miss a single day and your streak is automatically protected once every 7 days — no action needed."
+      },
+      {
+        "type": "feat",
+        "title": "Track time spent per topic",
+        "description": "Start and pause a timer on any topic to track how long you've spent on it, with a running total on your Progress page.",
+        "featureKey": "time-tracking"
+      },
+      {
+        "type": "feat",
+        "title": "Local reminders for Daily Todos",
+        "description": "Turn on reminders to get a notification 15 minutes before a Daily Todo is due.",
+        "featureKey": "daily-todo-reminders"
+      },
+      {
+        "type": "feat",
+        "title": "Celebrate finishing a phase or roadmap",
+        "description": "Complete every topic in a phase or roadmap and you'll get a short celebration — a fun way to mark the milestone."
+      }
+    ]
+  },
+  {
+    "version": 3,
+    "date": "2026-07-18",
+    "items": [
+      {
+        "type": "improvement",
+        "title": "A new look — Alpenglow",
+        "description": "Ascent has a new visual design across every page: warm neutrals, a refreshed gold-and-rose accent, and clearer cards and checklists."
+      }
+    ]
   }
 ]
