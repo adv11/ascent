@@ -3,7 +3,17 @@
 Thanks for your interest in Ascent. This file covers how to get set up locally,
 the conventions this codebase follows, and how to report a bug or suggest a feature.
 
+**Not a developer, or don't want to set anything up?** You can still contribute —
+open a [GitHub issue](../../issues/new/choose) for a bug or idea, or use the in-app
+feedback widget (floating button, bottom corner of the deployed app) which captures
+a screenshot automatically. Docs/wording fixes are welcome as PRs too, and don't
+require running the app locally to write.
+
 ## Local setup
+
+Prerequisites: [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org)
+v20+ (this project has no build step — Node only runs the dev server and tests),
+and a free [Firebase](https://console.firebase.google.com) project.
 
 1. Clone the repo and `cd` into it — there's nothing to install; this is a static
    site with no build step.

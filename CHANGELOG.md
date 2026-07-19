@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Docs
+- **README made more engaging and more accessible to non-technical readers.** Added a table of contents, a Mermaid "How it works" user-journey diagram and a Mermaid architecture diagram (both render natively on GitHub, no external image needed), open-issues/last-commit/PRs-welcome badges, a contributors graph (`contrib.rocks`) and a star-history chart, and collapsible `<details>` sections for install prerequisites and common first-run troubleshooting. `CONTRIBUTING.md` gained an explicit "not a developer?" path (issues, feedback widget, docs PRs) and a prerequisites list up front, so contribution isn't framed as code-only.
 - **`README.md` and the repo's GitHub description were written as if Ascent were Java-backend-only, when the app has offered 8 starter templates (Java Backend, GenAI/Agentic AI, Frontend, Data Science, Math, Piano, Marketing, and a blank slate) for a while.** Rewrote `README.md` with a badges/logo header, a template comparison table, a features list, and two real Alpenglow-themed screenshots (`docs/screenshots/issue-206/`) covering the dashboard, onboarding template picker, and progress analytics — the old README had no screenshots at all. Also corrected every remaining `adv11/SwitchPrep` URL (pre-rename repo name) to `adv11/ascent` in `package.json`, `docs/roadmap.md`, `docs/architecture.md`, and two `.claude/skills/*.md` files, and broadened `package.json`'s `keywords` beyond a Java-only list.
 
 ### Fixed
