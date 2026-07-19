@@ -1324,6 +1324,17 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     // (progress.js/settings.js/onboarding.js's sidebars don't pass it) since
     // every spotlight target above only exists on this page.
     onStartTour: () => {
+      // Issue #17 mobile follow-up — "Take a tour" is reached through the
+      // sidebar's own account menu, which on a phone-width viewport only
+      // opens by first opening the fixed-position mobile drawer (see
+      // `.claude/rules/ui-styling.md`'s six-tier breakpoint scale, <640px
+      // tier). The tour's own scrim/ring/popover render at a higher
+      // z-index than the drawer's backdrop, so leaving the drawer open
+      // stranded it pinned on screen with no way to tap through to close
+      // it — closing it here before the tour starts is what the drawer's
+      // own backdrop-click handler would have done had the tour not been
+      // sitting on top of it.
+      sidebar._closeMobile?.();
       store.resetTour();
       runFeatureTour();
     }
