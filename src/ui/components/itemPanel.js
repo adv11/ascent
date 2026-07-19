@@ -6,6 +6,7 @@ import { createSelect } from './select.js';
 import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, MAX_TAG_LENGTH, MAX_TAGS_PER_ITEM } from '../../core/roadmap/limits.js';
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
+import { createFeatureBadge } from './featureBadge.js';
 
 // Issue #15 — plain-string notes field, capped at 5000 chars (enforced both
 // here via the textarea's native maxlength and in roadmapStore/schema docs).
@@ -303,7 +304,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
         tagsHint
       ]),
       el('div', { className: 'field' }, [
-        el('span', { className: 'field-label', text: 'Time tracked' }),
+        el('span', { className: 'field-label' }, [
+          el('span', { text: 'Time tracked' }),
+          createFeatureBadge('time-tracking')
+        ].filter(Boolean)),
         el('div', { className: 'timer-row' }, [timerToggleBtn, timerDisplay, timerResetBtn])
       ]),
       el('div', { className: 'field' }, [
