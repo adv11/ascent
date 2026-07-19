@@ -10,6 +10,27 @@ const HTML2CANVAS_URL = `https://cdn.jsdelivr.net/npm/html2canvas@${HTML2CANVAS_
 export const MAX_SCREENSHOT_BYTES = 500 * 1024;
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
+// html2canvas's foreignObjectRendering mode (required by this app's CSP — see the
+// comment on captureScreenshot() below) has a well-documented WebKit/mobile Safari bug
+// where rendering can hang indefinitely instead of resolving or rejecting, leaving the
+// capture button permanently disabled with no error ever shown (reported live: "Got
+// hanged" on mobile, issue tracked via the in-app feedback tool itself). There is no
+// fix for the underlying WebKit bug from here, so the capture is raced against a hard
+// timeout instead — this guarantees captureScreenshot() always settles, surfacing the
+// existing "Could not capture the screen" fallback (which points the user at Upload
+// image, a working alternative) rather than hanging the UI forever.
+export const CAPTURE_TIMEOUT_MS = 10000;
+
+function withCaptureTimeout(promise, ms = CAPTURE_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Screenshot capture timed out')), ms);
+    promise.then(
+      value => { clearTimeout(timer); resolve(value); },
+      err => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
 // Elements that can show a user's email or other identity info anywhere in
 // the app — scanned and blurred before the canvas is exported, per the
 // in-widget privacy notice (issue #9 §4.1). Not just `.user-chip` (the
@@ -103,7 +124,7 @@ export const DEFAULT_EXCLUDE_SELECTOR = '.feedback-widget-trigger, .modal-overla
 // the cap after resizing attempts and should not be attached.
 export async function captureScreenshot({ excludeSelector = DEFAULT_EXCLUDE_SELECTOR } = {}) {
   const html2canvas = await loadHtml2Canvas();
-  const canvas = await html2canvas(document.body, {
+  const canvas = await withCaptureTimeout(html2canvas(document.body, {
     useCORS: true,
     scale: Math.min(window.devicePixelRatio || 1, 2),
     // html2canvas's default cloning strategy copies each cloned node's
@@ -119,7 +140,7 @@ export async function captureScreenshot({ excludeSelector = DEFAULT_EXCLUDE_SELE
     // el.matches() supports the full multi-selector string above — the
     // previous classList.contains(single-class-only) hack couldn't.
     ignoreElements: el => el.matches?.(excludeSelector) ?? false
-  });
+  }));
   blurSensitiveRegions(canvas, document.body);
   const dataUrl = resizeUntilUnderLimit(canvas, MAX_SCREENSHOT_BYTES);
   const byteLength = dataUrl.length * 0.75;
