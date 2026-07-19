@@ -67,4 +67,3 @@ jobs:
             graphify-out/graph.html
             graphify-out/GRAPH_REPORT.md
             graphify-out/manifest.json
-            graphify-out/wiki
