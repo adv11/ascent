@@ -1434,24 +1434,31 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     if (cached?.items) {
       if (!cached.items[itemId] || cached.items[itemId].deleted) return { ok: false, title: null };
       const wasDone = cached.items[itemId].done;
-      const patchedItem = {
-        ...cached.items[itemId],
-        done,
-        ...todoCompletionFields(done),
-        updatedAt: Date.now()
-      };
+      const patch = { done, ...todoCompletionFields(done), updatedAt: Date.now() };
+      const patchedItem = { ...cached.items[itemId], ...patch };
       const nextItems = { ...cached.items, [itemId]: patchedItem };
       cached.items = nextItems;
       persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: cached.phases });
       if (uid) {
         try {
-          await adapter.saveRoadmap(uid, templateId, {
-            version: ROADMAP_VERSION,
-            updatedAt: adapter.now(),
-            templateId,
-            items: nextItems,
-            phases: cached.phases
-          });
+          // Scoped per-item write (issue #232, same fix #184 applied to the
+          // cold branch below) — a full saveRoadmap({ items: nextItems })
+          // here would race with a concurrent update to a *different* itemId
+          // in the same cached-but-not-active roadmap, silently reverting
+          // whichever write lands second. updateRoadmapItemFields() resolves
+          // null (writing nothing) if the item has never been synced to
+          // Firebase for this roadmap at all, so we fall back to a full
+          // write only in that case — no existing remote node to merge into.
+          const scoped = await adapter.updateRoadmapItemFields(uid, templateId, itemId, patch);
+          if (!scoped) {
+            await adapter.saveRoadmap(uid, templateId, {
+              version: ROADMAP_VERSION,
+              updatedAt: adapter.now(),
+              templateId,
+              items: nextItems,
+              phases: cached.phases
+            });
+          }
         } catch (error) {
           console.error('Failed to save cross-roadmap item update', error);
           return { ok: false, title: null };

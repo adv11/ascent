@@ -2147,6 +2147,47 @@ describe('setItemDoneInTemplate — issue #56 follow-up', () => {
     expect(dbApi.getRoadmap).not.toHaveBeenCalled();
   });
 
+  it('two concurrent setItemDoneInTemplate calls for different items on a cached (visited this session, not active) roadmap both persist via scoped per-item writes instead of racing a full items overwrite (issue #232)', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend', 'frontend'] });
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'u1' });
+
+    await store.switchRoadmap('frontend'); // caches frontend
+    const ids = Object.keys(store.getSnapshot().allItems);
+    const [itemA, itemB] = ids;
+    await store.switchRoadmap('java-backend'); // frontend cached but no longer active
+    dbApi.saveRoadmap.mockClear();
+
+    // Simulates the race: updateRoadmapItemFields resolves on a later
+    // microtask tick (not a real timer — a stray real setTimeout here can
+    // collide with an unrelated test's leftover 500ms queueSave debounce
+    // firing mid-assertion) so both calls' scoped writes are genuinely in
+    // flight at once — against the old code (a full saveRoadmap({ items:
+    // nextItems }) built from the shared cached.items snapshot) whichever
+    // call's write landed last would silently drop the other item's completion.
+    dbApi.updateRoadmapItemFields.mockImplementation((uid, templateId, itemId, fields) =>
+      Promise.resolve().then(() => Promise.resolve()).then(() => ({ id: itemId, ...fields }))
+    );
+
+    const [resultA, resultB] = await Promise.all([
+      store.setItemDoneInTemplate('frontend', itemA, true),
+      store.setItemDoneInTemplate('frontend', itemB, true)
+    ]);
+
+    expect(resultA.ok).toBe(true);
+    expect(resultB.ok).toBe(true);
+    expect(dbApi.saveRoadmap).not.toHaveBeenCalled();
+    expect(dbApi.updateRoadmapItemFields).toHaveBeenCalledWith('u1', 'frontend', itemA, expect.objectContaining({ done: true }));
+    expect(dbApi.updateRoadmapItemFields).toHaveBeenCalledWith('u1', 'frontend', itemB, expect.objectContaining({ done: true }));
+
+    // Both items retain their done:true state after the race resolves.
+    dbApi.getRoadmap.mockClear();
+    await store.switchRoadmap('frontend');
+    expect(store.getSnapshot().allItems[itemA].done).toBe(true);
+    expect(store.getSnapshot().allItems[itemB].done).toBe(true);
+    expect(dbApi.getRoadmap).not.toHaveBeenCalled();
+  });
+
   it('cold (never visited this session): one-shot reads Firebase, patches, and saves back', async () => {
     vi.useFakeTimers();
     dbApi.getRoadmap.mockImplementation((_uid, templateId) => (templateId === 'piano'
