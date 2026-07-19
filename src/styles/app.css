@@ -4763,6 +4763,45 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      opaque table background would paint over `.print-watermark` (below),
      which needs to show through from underneath the flowing content. */
   body.print-mode > *:not(.print-roadmap):not(.print-watermark) { display: none !important; }
+
+  /* Fallback for a native browser/OS print invoked directly (mobile Chrome's
+     own three-dot "Print…", Ctrl/Cmd+P, a print button outside this app's
+     own "Print roadmap…" flow) — i.e. `body.print-mode` was never toggled.
+     Without this, `.app-sidebar` (`position: sticky; height: 100dvh;
+     overflow-y: auto`) and `.app-topbar` (`position: sticky`) get paginated
+     as their own single viewport-height slice by the print engine, while
+     `.app-shell-main`'s actual content — a sibling grid column, not a
+     descendant of the scroll-clipped sidebar — renders empty on every page:
+     real bug, reported live from a phone, printing the onboarding page
+     showed two near-blank pages containing only the sidebar nav labels.
+     Hide the app chrome and reset every height/overflow constraint so
+     whatever page is on screen flows and paginates normally instead. */
+  body:not(.print-mode) .app-sidebar,
+  body:not(.print-mode) .app-sidebar-backdrop,
+  body:not(.print-mode) .app-topbar-hamburger,
+  body:not(.print-mode) .command-palette,
+  body:not(.print-mode) .feedback-widget-trigger,
+  body:not(.print-mode) .save-badge,
+  body:not(.print-mode) .toast-stack,
+  body:not(.print-mode) .tour-scrim,
+  body:not(.print-mode) .tour-ring,
+  body:not(.print-mode) .tour-popover {
+    display: none !important;
+  }
+  body:not(.print-mode) .app-shell-2,
+  body:not(.print-mode) .app-shell-main,
+  body:not(.print-mode) .app-topbar,
+  body:not(.print-mode) .dashboard-content,
+  body:not(.print-mode) .progress-content,
+  body:not(.print-mode) .onboarding-page,
+  body:not(.print-mode) .onboarding-inner {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   body.print-mode .print-roadmap {
     display: table;
     width: 100%;
