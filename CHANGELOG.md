@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **`public/favicon.svg` and every PNG generated from it (`favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `og-image.png`) still showed the old teal/cyan gradient mark, out of sync with the app's own solid-gold `.brand-mark` (issue #206).** `index.html`, `public/offline.html`, and `public/manifest.json` also still hard-coded the retired `#0f766e` teal as `theme-color`. Updated `favicon.svg` to a flat `#D9A441` fill (matching `--color-brand-gold`) with a cream triangle, regenerated the PNGs/OG image via `scripts/generate-brand-assets.mjs`, and updated all three `theme-color` references to `#D9A441` so the browser chrome, home-screen icon, and offline page match the in-app brand mark.
+
 ### Docs
 - **`README.md`'s "Project status", `docs/architecture.md` §1's "Current product stage", and `docs/roadmap.md` were all severely stale (issue #239).** All three still described the product as early Phase 0/1 work-in-progress, months after the project actually became feature-complete through Step 7 of the master tracker (issue #11), with Step 8 (Launch) nearly done. Rewrote all three to state the actual current state and point at issue #11 as the single source of truth instead of re-describing phase-by-phase status in prose — the duplicated, manually-maintained summary is exactly what caused the drift in the first place. `docs/roadmap.md` now lists only the genuinely open items (#17, #240) instead of a stale snapshot.
 

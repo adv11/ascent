@@ -1,12 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-  <defs>
-    <linearGradient id="ascent-brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f766e"/>
-      <stop offset="100%" stop-color="#22d3ee"/>
-    </linearGradient>
-  </defs>
-  <rect width="40" height="40" rx="12" fill="url(#ascent-brand-gradient)"/>
+  <rect width="40" height="40" rx="12" fill="#D9A441"/>
   <g transform="translate(10,10) scale(0.8333)">
-    <path d="M12 4 L20 18 L4 18 Z" fill="#ffffff"/>
+    <path d="M12 4 L20 18 L4 18 Z" fill="#fdf6ec"/>
   </g>
 </svg>
