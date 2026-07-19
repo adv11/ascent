@@ -39,6 +39,13 @@ npm run lint     # must exit 0
 npm test         # must exit 0
 ```
 
+If your change is perf-sensitive, also run the Lighthouse perf budget locally
+(it's not a CI check — see `CLAUDE.md`'s "Verifying changes" section for why):
+```bash
+npx serve . -p 4173 -s &
+npx @lhci/cli autorun --config=./lighthouserc.json
+```
+
 ## Branch naming
 
 `feat/`, `fix/`, `refactor/`, `docs/`, `chore/` followed by a short slug, e.g.

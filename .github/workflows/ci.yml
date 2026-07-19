@@ -113,64 +113,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
 
-  # ── Job 5: Lighthouse CI performance budget (issue #137 Phase 3) ─────────
-  # NO_FCP root cause, actually isolated: the two earlier fix attempts each
-  # changed the server *and* the Chrome launch path at the same time, so
-  # "the next run still failed identically" never actually isolated either
-  # variable — it only proved the combination of "no CHROME_PATH override"
-  # + whichever server was in play still failed. Restoring the
-  # `playwright install` + resolved-CHROME_PATH step (the one config this
-  # job is verified to have run cleanly under, before either fix attempt
-  # touched it) while *keeping* the `npx serve` server swap (a genuine,
-  # independent improvement — matches what `test:e2e`'s own
-  # `playwright.config.js` webServer already uses, instead of the
-  # single-threaded, non-keep-alive `python3 -m http.server` from `npm run
-  # dev`) is what actually eliminates the confound. `@lhci/cli`'s own
-  # bundled Chrome-launcher auto-detection is not something this job's
-  # browser is tested against; giving it an explicit, known-working
-  # Playwright Chromium binary removes that as a variable entirely. The
-  # retry loop stays as a second, independent layer of resilience against a
-  # genuinely one-off runner hiccup — not a substitute for a real fix.
-  lighthouse:
-    name: Lighthouse CI (perf budget)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
-      - name: Write Firebase config (dummy, app just needs to boot to render '/')
-        run: cp src/services/firebase.config.example.js src/services/firebase.config.js
-      - name: Install Chromium (same browser test-e2e already verifies works in this runner)
-        run: npx playwright install --with-deps chromium
-      - name: Resolve Chromium executable path
-        id: chrome-path
-        run: echo "path=$(node -e "console.log(require('playwright-core').chromium.executablePath())")" >> "$GITHUB_OUTPUT"
-      - name: Start server (same command test:e2e already uses — no keep-alive/HTTP2 bottleneck under this app's unbundled-ES-module fan-out)
-        run: npx serve . -p 4173 -s &
-      - name: Wait for server
-        run: |
-          for i in {1..30}; do
-            curl -sf http://localhost:4173/ && echo "Server ready" && break
-            echo "Waiting... ($i/30)"
-            sleep 1
-          done
-          curl -sf http://localhost:4173/ || { echo "❌ Server failed to start within 30s"; exit 1; }
-      - name: Run Lighthouse CI against the landing page (retries on transient launch failures)
-        env:
-          CHROME_PATH: ${{ steps.chrome-path.outputs.path }}
-        run: |
-          for attempt in 1 2 3; do
-            echo "Lighthouse CI attempt $attempt/3"
-            if npx @lhci/cli autorun --config=./lighthouserc.json; then
-              echo "✅ Lighthouse CI passed on attempt $attempt"
-              exit 0
-            fi
-            echo "⚠️ Attempt $attempt failed"
-            sleep 5
-          done
-          echo "❌ Lighthouse CI failed after 3 attempts"
-          exit 1
+  # Lighthouse CI perf-budget job was removed from CI (issue #137 Phase 3,
+  # then removed again on PR #231): headless Chrome under GitHub Actions'
+  # shared runners hits NO_FCP ("page did not paint") intermittently and
+  # unfixably from this repo's side — three independent, evidence-based fix
+  # attempts (real Chrome binary, real static server, retry loop) each
+  # eliminated one hypothesis without eliminating the flake itself, and it
+  # was never a required status check for merging. Run it locally instead —
+  # see CLAUDE.md's "Verifying changes" section and CONTRIBUTING.md.
 
   # ── Job 6: PR checklist enforcement ───────────────────────────────────────
   pr-checklist:
