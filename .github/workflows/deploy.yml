@@ -1,7 +1,21 @@
 name: Deploy to Firebase Hosting
 
+# Issue #266 — this used to trigger the production deploy on its own `push:
+# branches: [main]`, running fully in parallel with `ci.yml`'s own push-triggered
+# run on the same commit and with no dependency between them. That meant CI
+# passing only gated whether the PR merge *button* was clickable, not whether the
+# resulting commit was safe to deploy — a direct push, an admin override, or
+# simply CI finishing slower than this workflow could ship an untested commit to
+# production with zero automated gating. Now the production-deploy job triggers
+# on `workflow_run` keyed off "CI — PR Quality Gate" (ci.yml) *completing* on
+# main, and only proceeds if that run's `conclusion` was `success` — see the
+# `production-deploy` job below. Preview-channel PR deploys are unaffected: they
+# still trigger directly off `pull_request` so reviewers see in-progress work
+# regardless of check status.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI — PR Quality Gate"]
+    types: [completed]
     branches: [main]
   pull_request:
     branches: [main]
@@ -13,8 +27,68 @@ permissions:
   pull-requests: write
 
 jobs:
-  deploy:
-    name: Firebase Hosting deploy
+  # ── PR preview deploy — unchanged, still fires regardless of check status ──
+  preview-deploy:
+    name: Firebase Hosting deploy (preview)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deploy readiness
+        id: ready
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
+        run: |
+          if [ -n "$SERVICE_ACCOUNT" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  FIREBASE_SERVICE_ACCOUNT secret not set — deploy steps skipped"
+            echo "   Add the secret in GitHub → Settings → Secrets and variables → Actions"
+            echo "   See docs/architecture.md#cicd for setup instructions"
+          fi
+
+      - name: Write Firebase client config
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+          DEPLOY_READY: ${{ steps.ready.outputs.ok }}
+        run: |
+          if [ -n "$FIREBASE_CONFIG" ]; then
+            echo "$FIREBASE_CONFIG" > src/services/firebase.config.js
+          elif [ "$DEPLOY_READY" = "true" ]; then
+            echo "::error::FIREBASE_CONFIG secret not set — refusing to deploy with placeholder Firebase config. Add the secret in GitHub → Settings → Secrets and variables → Actions (see docs/architecture.md#cicd)."
+            exit 1
+          else
+            echo "⚠️  FIREBASE_CONFIG secret not set — using placeholder config (no deploy will run, FIREBASE_SERVICE_ACCOUNT is also unset)"
+            cp src/services/firebase.config.example.js src/services/firebase.config.js
+          fi
+
+      # PR → deploy to a temporary preview channel (expires in 7 days).
+      # The action posts the preview URL as a PR comment automatically.
+      - name: Deploy preview channel (PR)
+        if: steps.ready.outputs.ok == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          channelId: pr-${{ github.event.number }}
+          expires: 7d
+
+  # ── Production deploy — gated on ci.yml passing on this exact commit ──────
+  production-deploy:
+    name: Firebase Hosting + database rules deploy (production)
+    # Scoped tightly, not just to conclusion == 'success': a workflow_run event fires for
+    # ANY run of a same-named workflow, including one triggered by a fork PR — restrict to
+    # a push-triggered run, on this repo's own main branch, from this repo (not a fork).
+    if: >
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     # Issue #189 — without this, two rapid pushes to main can trigger
     # overlapping deploy runs with no ordering guarantee: the
@@ -27,7 +101,11 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      # Check out the exact commit CI just passed on, not whatever the
+      # default ref resolves to for a workflow_run event.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       # Check whether the deploy secrets are available.
       # Secrets cannot be read in `if:` expressions directly, so we probe
@@ -77,21 +155,9 @@ jobs:
             cp src/services/firebase.config.example.js src/services/firebase.config.js
           fi
 
-      # PR → deploy to a temporary preview channel (expires in 7 days).
-      # The action posts the preview URL as a PR comment automatically.
-      - name: Deploy preview channel (PR)
-        if: steps.ready.outputs.ok == 'true' && github.event_name == 'pull_request'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
-          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
-          channelId: pr-${{ github.event.number }}
-          expires: 7d
-
-      # main push → deploy to the live production channel.
+      # main push, CI green → deploy to the live production channel.
       - name: Deploy to production (main)
-        if: steps.ready.outputs.ok == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.ready.outputs.ok == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -112,7 +178,7 @@ jobs:
       # GOOGLE_APPLICATION_CREDENTIALS pointing at the same service-account
       # JSON already used for the hosting deploy above, no new secret needed.
       - name: Deploy database rules (main)
-        if: steps.ready.outputs.ok == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.ready.outputs.ok == 'true'
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json

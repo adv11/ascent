@@ -4171,3 +4171,26 @@ at prose "status" summaries). Same treatment applied to `README.md`'s "Project s
 section and `docs/roadmap.md`, which now lists only the genuinely open tracker items
 (#17, #240) instead of a snapshot from when the file was first written. No application
 code changed.
+
+### 2026-07-20 — Issue #266 — Gated production deploy on CI passing
+
+`deploy.yml` and `ci.yml` both triggered independently on `push: branches: [main]`
+with no dependency between them — `deploy.yml`'s production-deploy step ran in
+parallel with `ci.yml`'s own push-triggered re-run on the same commit, and didn't
+wait for it, let alone check that it passed. Combined with `main`'s branch protection
+having no "require PR before merging" rule (required status checks only gated the PR
+merge *button*, not a plain `git push origin main`), a direct push or a slow-CI race
+could ship an untested commit straight to production hosting and database rules with
+zero automated gating. Split `deploy.yml`'s single `deploy` job into two:
+`preview-deploy` (unchanged — still triggers directly on `pull_request` so reviewers
+see in-progress work regardless of check status) and `production-deploy`, which now
+triggers on `workflow_run` keyed off `ci.yml` ("CI — PR Quality Gate") *completing* on
+`main`, gated with `if: github.event.workflow_run.conclusion == 'success'`, and checks
+out `github.event.workflow_run.head_sha` explicitly so it deploys the exact commit CI
+just passed rather than whatever `main` resolves to when the event fires. Also enabled
+"Require a pull request before merging" on `main`'s branch protection (via `gh api`,
+same `required_status_checks` contexts as before, plus a new
+`required_pull_request_reviews` block with `required_approving_review_count: 0` —
+this repo has one active contributor, so a review-count requirement isn't practical
+yet, but a PR is now mandatory), closing the direct-push bypass. No application code
+changed — `.github/workflows/deploy.yml` and repo branch-protection settings only.
