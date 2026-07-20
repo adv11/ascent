@@ -11,6 +11,16 @@ import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
 import { registerServiceWorker } from './services/serviceWorkerRegistration.js';
 import { initReminderScheduler } from './services/reminderScheduler.js';
 import { showToast } from './ui/components/toast.js';
+// Eager, side-effect-only import (issue #261) — registers pwaInstall.js's
+// module-top-level `beforeinstallprompt`/`appinstalled` listeners at app
+// boot, before any route-specific code loads. It used to only load behind
+// settings.js's dynamic import() on the /settings route, which meant the
+// browser's one-shot `beforeinstallprompt` event was missed for good on any
+// page load that didn't visit /settings first (the common case). No export
+// from this module is used here — settings.js still imports and calls
+// isInstallable()/onInstallabilityChange()/promptInstall() exactly as
+// before; only the import timing/site changed.
+import './services/pwaInstall.js';
 
 migrateLocalStorageKeys();
 initTheme();
