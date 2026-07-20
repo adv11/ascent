@@ -103,7 +103,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     'aria-label': 'Collapse sidebar'
   }, [createIcon('collapse', { size: 'sm' })]);
 
-  const userLabel = user.isAnonymous ? 'Guest session' : (user.email || 'Signed in');
+  const userLabel = user.isAnonymous ? 'Guest session' : (user.displayName || user.email || 'Signed in');
   // Issue #123 — a persistent, unobtrusive risk indicator next to the "Guest
   // session" label, since nothing anywhere in the app previously told a guest
   // their roadmap is local-only and can be silently lost (cleared browser

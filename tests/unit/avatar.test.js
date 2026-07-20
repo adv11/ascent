@@ -22,6 +22,18 @@ describe('initialsFor', () => {
   it('returns "?" for an empty email local part', () => {
     expect(initialsFor({ email: '@example.com' })).toBe('?');
   });
+
+  it('prefers displayName over the email local part when set (issue #267)', () => {
+    expect(initialsFor({ displayName: 'Jane Doe', email: 'admin@example.com' })).toBe('JD');
+  });
+
+  it('derives a single initial doubled when displayName has only one word', () => {
+    expect(initialsFor({ displayName: 'Cher', email: 'admin@example.com' })).toBe('CH');
+  });
+
+  it('falls back to email-based logic when displayName is empty', () => {
+    expect(initialsFor({ displayName: '', email: 'jane.doe@example.com' })).toBe('JD');
+  });
 });
 
 describe('createAvatar', () => {

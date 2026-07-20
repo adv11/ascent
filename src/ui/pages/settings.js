@@ -187,7 +187,55 @@ function buildChangePasswordForm(onDone) {
   ]);
 }
 
+function buildChangeNameForm(user, valueEl, onDone) {
+  const message = el('p', { className: 'form-message', text: '' });
+  const nameInput = el('input', {
+    className: 'field-input',
+    type: 'text',
+    placeholder: 'Your name',
+    autocomplete: 'name',
+    value: user.displayName || ''
+  });
+  const saveBtn = el('button', { type: 'submit', className: 'btn btn-primary btn-sm', text: 'Save name' });
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    message.textContent = '';
+    message.className = 'form-message';
+    const nameVal = nameInput.value.trim();
+    if (!nameVal) {
+      message.textContent = 'Enter a name.';
+      message.className = 'form-message error';
+      return;
+    }
+    setButtonLoading(saveBtn, true, 'Saving…');
+    try {
+      await authApi.updateProfile(nameVal);
+      user.displayName = nameVal;
+      valueEl.textContent = nameVal;
+      showToast('Name updated.', 'success');
+      onDone();
+    } catch (error) {
+      message.textContent = authErrorMessage(error);
+      message.className = 'form-message error';
+      setButtonLoading(saveBtn, false);
+    }
+  }
+
+  return el('form', { className: 'settings-inline-form-body', onSubmit: handleSubmit }, [
+    el('label', { className: 'field' }, [el('span', { className: 'field-label', text: 'Name' }), nameInput]),
+    message,
+    saveBtn
+  ]);
+}
+
 function buildProfileSection(user) {
+  const { row: nameRow, valueEl: nameValueEl } = buildToggleRow({
+    label: 'Name',
+    value: user.displayName || 'Not set',
+    buttonText: 'Change name',
+    buildForm: onDone => buildChangeNameForm(user, nameValueEl, onDone)
+  });
   const { row: emailRow } = buildToggleRow({
     label: 'Email',
     value: user.email || '',
@@ -212,6 +260,7 @@ function buildProfileSection(user) {
 
   return el('section', { className: 'settings-section' }, [
     el('h2', { className: 'settings-section-title', text: 'Profile' }),
+    nameRow,
     emailRow,
     passwordRow,
     verifiedRow

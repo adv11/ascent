@@ -519,7 +519,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // trigger sits in the top-right corner, not a bottom-left footer). Every
   // item mirrors `buildAccountMenu()`'s own list/gating exactly, so a user
   // gets identical account actions regardless of which page they're on.
-  const userLabel = user.isAnonymous ? 'Guest session' : (user.email || 'Signed in');
+  const userLabel = user.isAnonymous ? 'Guest session' : (user.displayName || user.email || 'Signed in');
   const importInput = el('input', {
     type: 'file',
     accept: '.json,application/json',

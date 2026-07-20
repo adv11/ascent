@@ -17,6 +17,7 @@ import {
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
   updatePassword,
+  updateProfile,
   connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import {
@@ -116,6 +117,14 @@ export const authApi = {
     const cred = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, cred);
     await updatePassword(user, newPassword);
+  },
+  // Issue #267 — Firebase Auth's own displayName field, no reauth required
+  // (unlike updateEmail/updatePassword above, this isn't considered a
+  // "sensitive" operation by Firebase) and no new database schema: no RTDB
+  // write, no photoURL/blob field, just the client-side Auth profile update.
+  async updateProfile(displayName) {
+    const user = auth.currentUser;
+    await updateProfile(user, { displayName });
   }
 };
 

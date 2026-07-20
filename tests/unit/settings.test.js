@@ -5,6 +5,7 @@ vi.mock('../../src/services/firebase.js', () => ({
   authApi: {
     updateEmail: vi.fn(),
     updatePassword: vi.fn(),
+    updateProfile: vi.fn(),
     deleteAccount: vi.fn(),
   },
   authErrorMessage: e => e?.message || 'error',
@@ -59,8 +60,30 @@ describe('renderSettings — signed-in view (issue #16)', () => {
 
   it('shows the current email and an unverified badge', async () => {
     const app = await freshSettings(user);
-    expect(app.querySelector('.settings-row-value').textContent).toBe('jane@example.com');
+    const values = Array.from(app.querySelectorAll('.settings-row-value')).map(el => el.textContent);
+    expect(values).toContain('jane@example.com');
     expect(app.querySelector('.settings-unverified')).not.toBeNull();
+  });
+
+  it('shows "Not set" when there is no display name yet', async () => {
+    const app = await freshSettings(user);
+    const values = Array.from(app.querySelectorAll('.settings-row-value')).map(el => el.textContent);
+    expect(values).toContain('Not set');
+  });
+
+  it('expanding "Change name" and submitting calls authApi.updateProfile and updates the row value', async () => {
+    const { authApi } = await import('../../src/services/firebase.js');
+    authApi.updateProfile.mockResolvedValue();
+    const app = await freshSettings(user);
+    const toggleBtn = Array.from(app.querySelectorAll('button')).find(b => b.textContent === 'Change name');
+    toggleBtn.click();
+    app.querySelector('.settings-inline-form-body input[type="text"]').value = 'Jane Doe';
+    app.querySelector('.settings-inline-form-body').requestSubmit();
+    await vi.waitFor(() => expect(authApi.updateProfile).toHaveBeenCalledWith('Jane Doe'));
+    await vi.waitFor(() => {
+      const values = Array.from(app.querySelectorAll('.settings-row-value')).map(el => el.textContent);
+      expect(values).toContain('Jane Doe');
+    });
   });
 
   it('expanding "Change email" and submitting calls authApi.updateEmail', async () => {
