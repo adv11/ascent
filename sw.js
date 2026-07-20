@@ -7,10 +7,10 @@
 // mirrors ROADMAP_VERSION's "bump on incompatible change" convention in
 // src/data/templates/java-backend.js. Bumping it busts every cache name
 // below, so `activate` deletes the old ones on next load.
-import { isFirebaseApiRequest, cacheFirst, networkFirst } from './src/services/sw/cacheStrategies.js';
+import { isFirebaseApiRequest, isRealtimeDbStreamingRequest, cacheFirst, networkFirst } from './src/services/sw/cacheStrategies.js';
 import { findClientToFocus, getReminderTargetUrl } from './src/services/sw/notificationHelpers.js';
 
-const CACHE_VERSION = 20;
+const CACHE_VERSION = 21;
 const STATIC_CACHE = `ascent-static-v${CACHE_VERSION}`;
 const DATA_CACHE = `ascent-data-v${CACHE_VERSION}`;
 const OFFLINE_URL = '/public/offline.html';
@@ -51,6 +51,10 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return; // never intercept Firebase writes
   const url = new URL(request.url);
   if (url.origin !== self.location.origin && !isFirebaseApiRequest(request.url)) return;
+
+  // issue #264 — never intercept RTDB's long-polling streaming fallback;
+  // let it pass straight to the network like a write.
+  if (isRealtimeDbStreamingRequest(request.url)) return;
 
   if (isFirebaseApiRequest(request.url)) {
     event.respondWith(
