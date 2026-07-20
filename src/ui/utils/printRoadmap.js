@@ -136,33 +136,57 @@ function renderPrintItem(item, includeNotes) {
   return el('li', { className: 'print-item' }, children);
 }
 
-function printSnapshot(store, includeNotes) {
+// Shared by both print entry points — the app's own "Print roadmap…" menu
+// item (below) and dashboard.js's native/OS-print fallback (issue #254/#255)
+// — so the printed output is visually identical no matter how print was
+// triggered or which device it's on. Building the clean `.print-roadmap`
+// snapshot is what makes the browser's own chrome-hiding CSS unnecessary:
+// once this table (plus the watermark) is the only thing `.print-mode`
+// shows, there's nothing left of the live dashboard — checkboxes, Edit
+// buttons, "Add a custom topic…" inputs — for a native/OS print trigger to
+// leak through, which is exactly what issue #262 found happening when the
+// native fallback only reset layout via CSS instead of mounting this same
+// snapshot. Also sets `document.title` to the roadmap's own name for the
+// duration of the print/PDF-save so the browser's "Save as PDF" filename
+// reflects the roadmap, not the app's own always-"Ascent" `<title>`.
+export function mountPrintSnapshot(store, includeNotes) {
   const snapshot = store.getSnapshot();
   const watermark = buildPrintWatermark();
   const node = buildPrintNode(snapshot, { includeNotes });
+  const previousTitle = document.title;
   // Watermark first so it paints underneath the roadmap table in DOM/paint
   // order — `.print-watermark`'s own `z-index` (app.css) is the real
   // guarantee, this ordering is just belt-and-suspenders.
   document.body.appendChild(watermark);
   document.body.appendChild(node);
   document.body.classList.add('print-mode');
+  document.title = resolveRoadmapTitle(snapshot);
 
-  // `afterprint` alone is unreliable on mobile: `window.print()` blocks
-  // synchronously on desktop until the OS dialog is dismissed, so `afterprint`
-  // only fires once the print engine has already captured the page — but on
-  // Android Chrome, printing hands off to the OS's print framework
-  // asynchronously and `afterprint` fires almost immediately, well before the
-  // real snapshot is taken. Tearing down `.print-mode` at that point strips
-  // the print table before the OS has actually captured it, so the printed
-  // output shows the live dashboard instead. `matchMedia('print')` reflects
-  // the browser's actual print-media state rather than a hook Chromium can
-  // fire early, so cleanup only runs once print media has genuinely stopped
-  // matching.
-  const printMediaQuery = window.matchMedia('print');
-  function cleanup() {
+  return function unmount() {
     watermark.remove();
     node.remove();
     document.body.classList.remove('print-mode');
+    document.title = previousTitle;
+  };
+}
+
+// `afterprint` alone is unreliable on mobile: `window.print()` blocks
+// synchronously on desktop until the OS dialog is dismissed, so `afterprint`
+// only fires once the print engine has already captured the page — but on
+// Android Chrome, printing hands off to the OS's print framework
+// asynchronously and `afterprint` fires almost immediately, well before the
+// real snapshot is taken. Tearing down the print DOM at that point strips it
+// before the OS has actually captured it, so the printed output shows the
+// live dashboard instead. `matchMedia('print')` reflects the browser's
+// actual print-media state rather than a hook Chromium can fire early, so
+// `unmount` only runs once print media has genuinely stopped matching.
+export function attachPrintCleanup(unmount) {
+  const printMediaQuery = window.matchMedia('print');
+  let done = false;
+  function cleanup() {
+    if (done) return;
+    done = true;
+    unmount();
     window.removeEventListener('afterprint', handleAfterPrint);
     printMediaQuery.removeEventListener('change', handlePrintMediaChange);
   }
@@ -174,6 +198,11 @@ function printSnapshot(store, includeNotes) {
   }
   printMediaQuery.addEventListener('change', handlePrintMediaChange);
   window.addEventListener('afterprint', handleAfterPrint);
+}
+
+function printSnapshot(store, includeNotes) {
+  const unmount = mountPrintSnapshot(store, includeNotes);
+  attachPrintCleanup(unmount);
   window.print();
 }
 
