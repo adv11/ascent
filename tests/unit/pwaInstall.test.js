@@ -15,6 +15,21 @@ function fireBeforeInstallPrompt(userChoice = { outcome: 'accepted' }) {
 }
 
 describe('pwaInstall', () => {
+  it('registers the beforeinstallprompt listener as soon as the module is imported, independent of any route/page state (issue #261)', async () => {
+    // Simulates main.js's eager, side-effect-only import at app boot — no
+    // route has rendered, no page-specific module (e.g. settings.js) has
+    // been touched, and nothing has called any exported function yet.
+    await import('../../src/services/pwaInstall.js');
+    const event = fireBeforeInstallPrompt();
+    expect(event.defaultPrevented).toBe(true);
+
+    // Only after the module import above do we ask for isInstallable() —
+    // confirming the listener was live purely from the import, not from any
+    // subsequent call into the module's API.
+    const { isInstallable } = await import('../../src/services/pwaInstall.js');
+    expect(isInstallable()).toBe(true);
+  });
+
   it('is not installable until beforeinstallprompt fires', async () => {
     const { isInstallable } = await import('../../src/services/pwaInstall.js');
     expect(isInstallable()).toBe(false);
