@@ -28,6 +28,7 @@ import { KEYS } from '../../services/localStorageKeys.js';
 import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag } from '../../core/roadmap/reviewSchedule.js';
 import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/completionCelebration.js';
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
+import { mountPrintSnapshot, attachPrintCleanup } from '../utils/printRoadmap.js';
 import { triggerConfetti } from '../components/confetti.js';
 import { openBadgeShareModal } from '../components/shareModal.js';
 import { startTour } from '../components/featureTour.js';
@@ -1446,35 +1447,26 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   window.addEventListener('offline', setOnlineState);
   setOnlineState();
 
-  // Issue #254 — a native browser/OS print action (bypassing printRoadmap.js's
-  // own dedicated .print-mode flow, which builds a fresh full-content DOM
-  // snapshot regardless of expand state) prints the live dashboard as-is, so a
-  // collapsed .phase-card's `.phase-body { display: none }` means its topics
-  // are genuinely absent from the printed page, not just visually hidden.
-  // Force every phase open for the duration of the print — directly toggling
-  // the class/aria-expanded rather than animatePhaseBody()'s Element.animate()
-  // path, since nothing needs to visibly transition for a print render — then
-  // restore exactly the phases that were open beforehand once printing ends.
-  let openPhasesBeforePrint = null;
+  // Issue #254/#262 — a native browser/OS print action (Ctrl/Cmd+P, mobile
+  // Chrome's own "Print…" menu item — bypassing this app's own "Print
+  // roadmap…" menu item entirely) used to print the live dashboard as-is
+  // with just a chrome-hiding CSS pass (app.css's `body:not(.print-mode)`
+  // fallback rules), which left interactive controls (checkboxes, Edit
+  // buttons, "Add a custom topic…" inputs) visible in the output and had no
+  // watermark/footer, since those only ever existed in printRoadmap.js's own
+  // `.print-mode` flow. Mounting that exact same clean snapshot here — via
+  // `mountPrintSnapshot()`/`attachPrintCleanup()`, the same helpers
+  // `printRoadmap.js`'s own "Print roadmap…" menu item uses — makes any
+  // print trigger produce identical, fully-branded output regardless of how
+  // it was invoked or which device it's on, and also builds full content
+  // from the store directly (not the visible DOM), so a collapsed
+  // `.phase-card` no longer needs a temporary force-open/restore workaround.
+  let unmountPrintSnapshot = null;
   function handleBeforePrint() {
-    openPhasesBeforePrint = new Set(openPhases);
-    content.querySelectorAll('.phase-card').forEach(phaseCardEl => {
-      phaseCardEl.classList.add('open');
-      phaseCardEl.querySelector('.phase-head')?.setAttribute('aria-expanded', 'true');
-    });
-  }
-  function handleAfterPrint() {
-    if (!openPhasesBeforePrint) return;
-    content.querySelectorAll('.phase-card').forEach(phaseCardEl => {
-      const pi = Number(phaseCardEl.dataset.phase);
-      const wasOpen = openPhasesBeforePrint.has(pi);
-      phaseCardEl.classList.toggle('open', wasOpen);
-      phaseCardEl.querySelector('.phase-head')?.setAttribute('aria-expanded', String(wasOpen));
-    });
-    openPhasesBeforePrint = null;
+    unmountPrintSnapshot = mountPrintSnapshot(store, false);
+    attachPrintCleanup(unmountPrintSnapshot);
   }
   window.addEventListener('beforeprint', handleBeforePrint);
-  window.addEventListener('afterprint', handleAfterPrint);
 
   return () => {
     activeTourCleanup?.();
@@ -1487,7 +1479,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);
     window.removeEventListener('beforeprint', handleBeforePrint);
-    window.removeEventListener('afterprint', handleAfterPrint);
+    unmountPrintSnapshot?.();
     clearTimeout(saveBadgeTimer);
   };
 }
