@@ -72,6 +72,34 @@ describe('triggerRoadmapPrint', () => {
     expect(document.querySelector('.print-roadmap')).toBeNull();
   });
 
+  it('does not tear down the print DOM on a premature afterprint (mobile race) — waits for print media to actually stop matching', () => {
+    vi.spyOn(window, 'print').mockImplementation(() => {});
+    let printMediaListener = null;
+    const mediaQueryList = {
+      matches: true,
+      addEventListener: (event, fn) => { if (event === 'change') printMediaListener = fn; },
+      removeEventListener: vi.fn()
+    };
+    vi.spyOn(window, 'matchMedia').mockReturnValue(mediaQueryList);
+
+    triggerRoadmapPrint(fakeStore());
+    const printBtn = capturedContent.find(n => n.tagName === 'DIV' && n.className === 'confirm-dialog-actions')
+      .querySelector('.btn-primary');
+    printBtn.click();
+    expect(document.body.classList.contains('print-mode')).toBe(true);
+
+    // afterprint fires early, as on Android Chrome, while print media still matches
+    window.dispatchEvent(new Event('afterprint'));
+    expect(document.body.classList.contains('print-mode')).toBe(true);
+    expect(document.querySelector('.print-roadmap')).not.toBeNull();
+
+    // print media genuinely stops matching once the OS print job actually finishes
+    mediaQueryList.matches = false;
+    printMediaListener({ matches: false });
+    expect(document.body.classList.contains('print-mode')).toBe(false);
+    expect(document.querySelector('.print-roadmap')).toBeNull();
+  });
+
   it('includes notes when the checkbox is checked before printing', () => {
     vi.spyOn(window, 'print').mockImplementation(() => {});
     triggerRoadmapPrint(fakeStore());

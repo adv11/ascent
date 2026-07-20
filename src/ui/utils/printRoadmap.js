@@ -147,13 +147,33 @@ function printSnapshot(store, includeNotes) {
   document.body.appendChild(node);
   document.body.classList.add('print-mode');
 
+  // `afterprint` alone is unreliable on mobile: `window.print()` blocks
+  // synchronously on desktop until the OS dialog is dismissed, so `afterprint`
+  // only fires once the print engine has already captured the page — but on
+  // Android Chrome, printing hands off to the OS's print framework
+  // asynchronously and `afterprint` fires almost immediately, well before the
+  // real snapshot is taken. Tearing down `.print-mode` at that point strips
+  // the print table before the OS has actually captured it, so the printed
+  // output shows the live dashboard instead. `matchMedia('print')` reflects
+  // the browser's actual print-media state rather than a hook Chromium can
+  // fire early, so cleanup only runs once print media has genuinely stopped
+  // matching.
+  const printMediaQuery = window.matchMedia('print');
   function cleanup() {
     watermark.remove();
     node.remove();
     document.body.classList.remove('print-mode');
-    window.removeEventListener('afterprint', cleanup);
+    window.removeEventListener('afterprint', handleAfterPrint);
+    printMediaQuery.removeEventListener('change', handlePrintMediaChange);
   }
-  window.addEventListener('afterprint', cleanup);
+  function handlePrintMediaChange(e) {
+    if (!e.matches) cleanup();
+  }
+  function handleAfterPrint() {
+    if (!printMediaQuery.matches) cleanup();
+  }
+  printMediaQuery.addEventListener('change', handlePrintMediaChange);
+  window.addEventListener('afterprint', handleAfterPrint);
   window.print();
 }
 
