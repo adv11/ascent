@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isFirebaseApiRequest, cacheFirst, networkFirst } from '../../src/services/sw/cacheStrategies.js';
+import { isFirebaseApiRequest, isRealtimeDbStreamingRequest, cacheFirst, networkFirst } from '../../src/services/sw/cacheStrategies.js';
 
 function makeMockCache(matchResult = undefined) {
   return {
@@ -17,6 +17,18 @@ describe('isFirebaseApiRequest', () => {
   it('does not match first-party or unrelated hosts', () => {
     expect(isFirebaseApiRequest('https://ascent.app/src/main.js')).toBe(false);
     expect(isFirebaseApiRequest('https://cdn.jsdelivr.net/npm/chart.js')).toBe(false);
+  });
+});
+
+describe('isRealtimeDbStreamingRequest', () => {
+  it('matches RTDB long-poll and websocket-fallback channel paths', () => {
+    expect(isRealtimeDbStreamingRequest('https://s-usc1c-nss-1.firebaseio.com/.lp?ver=5&ns=ascent-app')).toBe(true);
+    expect(isRealtimeDbStreamingRequest('https://ascent-app.firebaseio.com/.ws?ver=5')).toBe(true);
+  });
+
+  it('does not match a normal RTDB REST GET or a non-firebaseio host', () => {
+    expect(isRealtimeDbStreamingRequest('https://ascent-app.firebaseio.com/roadmap.json')).toBe(false);
+    expect(isRealtimeDbStreamingRequest('https://identitytoolkit.googleapis.com/v1/accounts')).toBe(false);
   });
 });
 

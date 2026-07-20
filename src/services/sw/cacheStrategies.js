@@ -14,6 +14,24 @@ export function isFirebaseApiRequest(url) {
   return FIREBASE_API_HOSTS.some(host => hostname.endsWith(host));
 }
 
+// Realtime Database's `onValue`/`onDisconnect` listeners normally stream over
+// a `wss://` WebSocket, invisible to `fetch`/service-worker interception —
+// but when WebSockets are unavailable (corporate proxies, some mobile
+// carriers/VPNs, certain privacy modes) the SDK transparently falls back to
+// long-polling: repeated GETs to a `/.lp` channel that the server
+// intentionally holds open for ~25-30s waiting for data. `networkFirst()`
+// `await`s the full response and clones/caches it — fine for a normal GET,
+// but it buffers/interferes with a deliberately-held-open streaming
+// response, so the SDK's transport layer never gets the chunk it's waiting
+// for: no error (so `onError` never fires) and no data (so the success
+// callback never fires either) — a silent, permanent hang. Route these
+// straight to the network with no caching, same as a Firebase write.
+export function isRealtimeDbStreamingRequest(url) {
+  const { hostname, pathname } = new URL(url);
+  if (!hostname.endsWith('firebaseio.com')) return false;
+  return pathname.startsWith('/.lp') || pathname.startsWith('/.ws');
+}
+
 // Cache-first: static, first-party assets (JS/CSS/fonts/icons) rarely change
 // mid-session, and a cache hit avoids a network round-trip entirely. Falls
 // back to network + caches the response for next time.
