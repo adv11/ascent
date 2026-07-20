@@ -4194,3 +4194,21 @@ same `required_status_checks` contexts as before, plus a new
 this repo has one active contributor, so a review-count requirement isn't practical
 yet, but a PR is now mandatory), closing the direct-push bypass. No application code
 changed — `.github/workflows/deploy.yml` and repo branch-protection settings only.
+
+### 2026-07-20 — Issue #270 — Fixed graph-update.yml's permanent PR-creation failure
+
+`.github/workflows/graph-update.yml` (issue #210) had failed on every single run since
+it was introduced — the `Regenerate graph (incremental)` step always succeeded, but the
+final `peter-evans/create-pull-request@v6` step always failed with "GitHub Actions is
+not permitted to create or approve pull requests." The workflow's own `permissions:
+{ contents: write, pull-requests: write }` block was correct; the actual blocker was a
+separate, repo-wide setting — Settings → Actions → General → Workflow permissions →
+"Allow GitHub Actions to create and approve pull requests" — which GitHub enforces as a
+stricter gate on top of whatever a workflow declares for itself, and which was off.
+Fixed with `gh api -X PUT repos/adv11/ascent/actions/permissions/workflow -F
+can_approve_pull_request_reviews=true`; left `default_workflow_permissions` at `read`
+since every workflow in this repo already declares its own explicit `permissions:`
+block, so widening the *default* wasn't necessary. No workflow YAML changed. Worth
+knowing for any future "workflow X can't create/approve a PR despite `permissions:
+pull-requests: write`" report — check this repo setting before re-diagnosing the
+workflow file itself.
