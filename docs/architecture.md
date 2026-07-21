@@ -4264,3 +4264,25 @@ a regression test using a controllable `roadmapStoreSetUser` mock (reconfigurabl
 test, since `main.js`'s `const store = createRoadmapStore(...)` runs at module-import
 time, before a test body could otherwise swap the mock's return value) — verified to
 fail against the pre-fix code and pass against the fix.
+
+**Follow-up the same day**: the `authChangeCallId` fix above was necessary but not
+sufficient — a second CI run of the same PR (already carrying that fix) reproduced the
+identical bounce-to-`/app` symptom via its own captured trace. The real shape is
+simpler and more direct than the overlapping-invocation theory: a *single* `onChange`
+invocation's own `store.setUser()` await can itself span the user picking a roadmap
+(→ `/app`) and deliberately returning to `/onboarding` (→ the exact route string that
+invocation started on) — trivially still "the latest" invocation, so `authChangeCallId`
+alone never engages. No route-string comparison, however staleness-guarded, can
+distinguish "never left" from "left and came back" when the destination string matches.
+Fixed with a real navigation-generation counter: `router.js` exports `getNavGeneration()`,
+bumped once per route the router actually processes (initial load or `hashchange`), and
+`main.js` checks `getNavGeneration() === navGenAtAuthChange` instead of the route string.
+Both guards are kept — `authChangeCallId` still correctly handles a genuinely newer
+invocation superseding a stale one; `getNavGeneration()` independently handles any actual
+navigation happening mid-await, single invocation or not. `tests/unit/main.test.js` gained
+a second regression test for this exact single-invocation shape, using explicit
+`getNavGeneration()` polling via `vi.waitFor` rather than counting render-mock calls —
+jsdom's `location.hash` setter queues its own async `hashchange` dispatch independent of
+an explicit one, so call counts are unreliable in this test file (a pattern its own
+earlier tests already flag). Verified to fail against the intermediate (call-id-only)
+fix and pass against the final one.

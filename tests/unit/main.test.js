@@ -153,4 +153,53 @@ describe('main.js lazy route registration (issue #137)', () => {
 
     expect(window.location.hash).toBe('#/onboarding');
   });
+
+  it('a single onChange invocation must not force-navigate away from a route the user round-tripped back to during its own await (issue #294, real CI repro)', async () => {
+    // Unlike the test above (two overlapping invocations), this is the
+    // *single*-invocation shape that actually reproduced in CI: one
+    // onChange call starts while on '/onboarding', and its own
+    // store.setUser() await simply takes long enough to span the user
+    // picking a roadmap (-> '/app') and deliberately going back to
+    // '/onboarding' — the exact same route string this call started on,
+    // with no second onChange invocation involved at all. The
+    // authChangeCallId guard alone (previous test) does nothing here, since
+    // this is trivially still "the latest" call — only the router's
+    // navigation-generation counter can tell "round-tripped" apart from
+    // "never left."
+    const { authApi } = await import('../../src/services/firebase.js');
+    const { getNavGeneration } = await import('../../src/ui/router.js');
+    let resolveSetUser;
+    roadmapStoreSetUser.mockImplementation(() => new Promise(resolve => { resolveSetUser = resolve; }));
+
+    window.location.hash = '#/signin';
+    await import('../../src/main.js');
+    await vi.waitFor(() => expect(renderSignIn).toHaveBeenCalled());
+
+    const onAuthChange = authApi.onChange.mock.calls[0][0];
+
+    window.location.hash = '#/onboarding';
+    await vi.waitFor(() => expect(renderOnboarding).toHaveBeenCalled());
+    const call = onAuthChange({ uid: 'test-uid' });
+
+    // Round-trip away and back to the exact same route string while the
+    // call's own await is still pending. jsdom's own `location.hash` setter
+    // queues its own async 'hashchange' dispatch (this file's other tests
+    // already note it can fire more than once per assignment), so rather
+    // than count render calls (unreliable here — see those tests' own
+    // comments), wait directly on the router's real nav-generation counter
+    // actually increasing past where it started before moving to the next
+    // step.
+    const genBeforeRoundTrip = getNavGeneration();
+    window.location.hash = '#/app';
+    await vi.waitFor(() => expect(getNavGeneration()).toBeGreaterThan(genBeforeRoundTrip));
+
+    const genBeforeReturn = getNavGeneration();
+    window.location.hash = '#/onboarding';
+    await vi.waitFor(() => expect(getNavGeneration()).toBeGreaterThan(genBeforeReturn));
+
+    resolveSetUser();
+    await call;
+
+    expect(window.location.hash).toBe('#/onboarding');
+  });
 });

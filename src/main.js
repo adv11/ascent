@@ -4,7 +4,7 @@ import { createDailyTodoStore } from './services/dailyTodoStore.js';
 import { createActivityLogStore } from './services/activityLogStore.js';
 import { initTheme } from './services/theme.js';
 import { migrateLocalStorageKeys } from './services/migration.js';
-import { startRouter, registerRoute, navigate, getRoute } from './ui/router.js';
+import { startRouter, registerRoute, navigate, getRoute, getNavGeneration } from './ui/router.js';
 import { renderLanding } from './ui/pages/landing.js';
 import { renderSharedRoadmapView } from './ui/pages/sharedRoadmapView.js';
 import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
@@ -129,8 +129,15 @@ authApi.onChange(async user => {
   // Captured *before* the await below, specifically to detect whether the
   // user (or, in a test, an explicit page.goto) navigated elsewhere while
   // this auth resolution was still in flight — see the staleness check
-  // below for why this matters.
-  const routeAtAuthChange = getRoute();
+  // below for why this matters. `navGenAtAuthChange` (not just the route
+  // string) is the real signal: router.js's getNavGeneration() bumps on
+  // *every* processed navigation, so a round trip back to the exact same
+  // route string (e.g. /onboarding -> /app -> /onboarding, the second half
+  // of issue #294's repro — a single onChange invocation's own await can
+  // span this whole round trip with no second invocation involved at all)
+  // still registers as "something navigated," where a bare route-string
+  // comparison would wrongly read it as "nothing changed."
+  const navGenAtAuthChange = getNavGeneration();
   await Promise.all([store.setUser(user), dailyTodoStore.setUser(user), activityLogStore.setUser(user)]);
   // A newer onChange invocation already started (and will make its own,
   // fresher navigation decision) — this one's view of the world is stale,
@@ -158,19 +165,23 @@ authApi.onChange(async user => {
     return;
   }
   // Only auto-redirect an already-onboarded user off a public route or the
-  // onboarding picker if the route hasn't changed since this callback
-  // started — a real, reproduced race (found reproducing tests/e2e/
-  // customRoadmapRace.test.js locally): store.setUser()'s Firebase round
-  // trip can still be in flight after signIn.js's own success handler has
-  // already navigated to '/app', and if the user (or a test) then
-  // deliberately re-enters '/onboarding' — e.g. the dashboard's "Switch
-  // template" link — while this callback is still awaiting, it used to read
-  // the *current* route once the await resolved and force-navigate back to
-  // '/app', silently clobbering that deliberate navigation. `route ===
-  // routeAtAuthChange` means nothing navigated away during the await, so
-  // this is still the original "just landed here from sign-in" case the
-  // redirect exists for.
-  if (route === routeAtAuthChange && (publicRoutes.includes(route) || route === '/onboarding')) {
+  // onboarding picker if *no navigation of any kind* happened since this
+  // callback started — a real, reproduced race (tests/e2e/
+  // customRoadmapRace.test.js): store.setUser()'s Firebase round trip can
+  // still be in flight after signIn.js's own success handler has already
+  // navigated to '/app', and if the user (or a test) then deliberately
+  // re-enters '/onboarding' — e.g. the dashboard's "Switch template" link —
+  // while this callback is still awaiting, it used to read the *current*
+  // route once the await resolved and force-navigate back to '/app',
+  // silently clobbering that deliberate navigation. Checking
+  // `getNavGeneration() === navGenAtAuthChange` (not just `route ===
+  // routeAtAuthChange`) is what actually closes this: a route string alone
+  // can't tell "nothing navigated" apart from "navigated away and back to
+  // this same string," which is exactly the shape issue #294's repro takes
+  // (picked a roadmap, landed on '/app', deliberately went back to
+  // '/onboarding' — same string this callback started on, but very much
+  // navigated).
+  if (getNavGeneration() === navGenAtAuthChange && (publicRoutes.includes(route) || route === '/onboarding')) {
     preloadDashboardModule();
     navigate('/app', true);
   }
