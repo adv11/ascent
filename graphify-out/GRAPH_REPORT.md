@@ -1,16 +1,16 @@
 # Graph Report - ascent  (2026-07-21)
 
 ## Corpus Check
-- 331 files · ~333,425 words
+- 332 files · ~339,493 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1495 nodes · 3230 edges · 134 communities (89 shown, 45 thin omitted)
+- 1510 nodes · 3245 edges · 127 communities (85 shown, 42 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.7)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e29eb964`
+- Built from commit: `f91f5256`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -63,7 +63,6 @@
 - Brand Asset Generation Script
 - Icon Lint Script
 - Responsive Breakpoint ADR-006
-- CI Workflow Jobs
 - Backup Actions Tests
 - Chart Wrapper Tests
 - Storage Adapter Agent Rules
@@ -76,11 +75,9 @@
 - Marketing Template
 - Math Grade 12 Template
 - Piano Template
-- Tabs Component
 - Backup Reminder Banner Tests
 - Daily Todo Panel Tests
 - Animation/Overflow Styling Rules
-- Issue Tracker Sync Workflow
 - Blank Template
 - AI Import Test Fixtures
 - main.js Tests
@@ -92,7 +89,6 @@
 - Print/PDF Export Agent Rules
 - Test Setup Helpers
 - Manifest Tests
-- Shared Roadmap View Tests
 - Theme Bootstrap Tests
 - Password Reset & Error Toast Rules
 - Focus Trap Accessibility Rules
@@ -127,12 +123,9 @@
 - Contributing to Ascent
 - Theming, layout, and responsive/touch conventions
 - check-cache-version.mjs
-- navigate
-- roadmap.js
 - dev-server.mjs
 - auth-security.md
 - roadmap-store.md
-- sharedRoadmapView.test.js
 
 ## God Nodes (most connected - your core abstractions)
 1. `el()` - 161 edges
@@ -172,31 +165,31 @@
 - **Backup export/validate/restore pipeline** — docs_api_backupschema, docs_api_backupvalidator, docs_api_importbackupmodal [INFERRED 0.80]
 - **Considered monetization model options** — concept_monetization_freemium, concept_monetization_subscription, concept_monetization_one_time_purchase [EXTRACTED 1.00]
 
-## Communities (134 total, 45 thin omitted)
+## Communities (127 total, 42 thin omitted)
 
 ### Community 0 - "Analytics Engine"
 Cohesion: 0.06
 Nodes (59): buildDerivedLogFromItems(), buildEffectiveActivityLog(), computeAnalytics(), computeOverview(), computePhaseBreakdown(), computePriorityBreakdown(), effectiveCompletedAt(), ADR-0009 (+51 more)
 
 ### Community 1 - "Backup/Export Schema + ICS Export"
-Cohesion: 0.12
-Nodes (16): RFC-4180, buildRoadmapCsv(), buildRoadmapExport(), CSV_COLUMNS, csvField(), toExportItem(), diffBackupItems(), parseBackupJson() (+8 more)
+Cohesion: 0.22
+Nodes (18): dismissInstallPrompt(), isInstallable(), listeners, onInstallabilityChange(), promptInstall(), openDeleteAccountModal(), createIcon(), createTopbar() (+10 more)
 
 ### Community 2 - "Roadmap Templates Registry"
-Cohesion: 0.10
-Nodes (27): isValidResource(), isValidTags(), applyRemoteSnapshot(), backfillLegacyOnboardingMeta(), determineOnboardingAndActiveRoadmap(), fetchLegacyRoadmapSafely(), fetchStoredBlankRoadmap(), freshStateForNewUid() (+19 more)
+Cohesion: 0.06
+Nodes (43): isValidResource(), isValidTags(), MAX_CUSTOM_ROADMAP_TITLE_LENGTH, buildSeedItems(), getLegacyBlankTemplateData(), getTemplate(), getTemplatePhases(), LOADERS (+35 more)
 
 ### Community 3 - "Feedback Report Schema + Share Schema"
-Cohesion: 0.07
-Nodes (30): buildReportPayload(), buildReportSummary(), isNonEmptyString(), REPORT_TYPES, SEVERITIES, USAGE_FREQUENCIES, validateBugReport(), validateFeatureRequest() (+22 more)
+Cohesion: 0.09
+Nodes (19): buildReportPayload(), buildReportSummary(), isNonEmptyString(), REPORT_TYPES, SEVERITIES, USAGE_FREQUENCIES, validateBugReport(), validateFeatureRequest() (+11 more)
 
 ### Community 4 - "Import Validation & Corruption Detection"
 Cohesion: 0.07
-Nodes (41): ADR-008: Backup export/import schema versioning strategy, Exact-match-or-reject schema versioning (EXPORT_SCHEMA_VERSION), buildEffectiveActivityLog() backfill for pre-existing history, CORRUPTION_MARKERS, extractItemTitleText(), findCorruptedResourceIndex(), findItemCorruption(), isValidItem() (+33 more)
+Nodes (42): ADR-008: Backup export/import schema versioning strategy, Exact-match-or-reject schema versioning (EXPORT_SCHEMA_VERSION), activityLog day-count map vs item.completedAt distinction, ADR-009: Progress analytics data model (completedAt vs activityLog), buildEffectiveActivityLog() backfill for pre-existing history, onCompletionToggle(delta) dependency-injected hook, CORRUPTION_MARKERS, extractItemTitleText() (+34 more)
 
 ### Community 5 - "Feedback Metadata & Rate Limiting"
-Cohesion: 0.08
-Nodes (27): Client-side feedback rate limiting (localStorage timestamp log), ADR-010: In-app feedback storage (Firebase write-only reports/), reports/{reportId} write-only, creation-only Firebase path, firebase/database.rules.json, collectCurrentMetadata(), collectMetadata(), parseBrowser(), parseOs() (+19 more)
+Cohesion: 0.07
+Nodes (35): collectCurrentMetadata(), collectMetadata(), parseBrowser(), parseOs(), canSubmit(), getSubmitLog(), msUntilNextSubmit(), recordSubmit() (+27 more)
 
 ### Community 6 - "E2E Test Suite"
 Cohesion: 0.05
@@ -204,19 +197,19 @@ Nodes (10): CONTRAST_FALSE_POSITIVE_SELECTORS, runAxe(), seriousOrCritical(), cr
 
 ### Community 7 - "Review Scheduling & Celebration State"
 Cohesion: 0.08
-Nodes (39): getReviewDueItems(), groupReviewDueItemsByTag(), isReviewDue(), hasShownPhaseCelebration(), hasShownRoadmapCelebration(), markPhaseCelebrationShown(), markRoadmapCelebrationShown(), read() (+31 more)
+Nodes (33): getReviewDueItems(), groupReviewDueItemsByTag(), isReviewDue(), buildRoadmapShareSnapshot(), toShareItem(), hasShownPhaseCelebration(), hasShownRoadmapCelebration(), markPhaseCelebrationShown() (+25 more)
 
 ### Community 8 - "Package Dependencies"
 Cohesion: 0.11
 Nodes (19): @axe-core/playwright, eslint, @eslint/js, firebase-tools, globals, jsdom, devDependencies, @axe-core/playwright (+11 more)
 
 ### Community 9 - "Brand & Auth Marketing Panel"
-Cohesion: 0.08
-Nodes (32): ICONS, iconSvg(), VALUE_PROPS, brandGlyph(), createBrandIcon(), createBrandMark(), createBrandWordmark(), DECORATIVE_ICON_SHAPES (+24 more)
+Cohesion: 0.06
+Nodes (60): getSharedRoadmap(), ICONS, iconSvg(), VALUE_PROPS, brandGlyph(), createBrandIcon(), createBrandMark(), createBrandWordmark() (+52 more)
 
 ### Community 10 - "Auth & Account Guards"
-Cohesion: 0.18
-Nodes (26): RFC-5322, authErrorMessage(), createAuthMarketingPanel(), authShell(), openDeleteAccountModal(), el(), buildChangeEmailForm(), buildChangeNameForm() (+18 more)
+Cohesion: 0.20
+Nodes (15): RFC-5322, authErrorMessage(), createAuthMarketingPanel(), authShell(), buildChangeEmailForm(), buildChangePasswordForm(), buildSignInForm(), renderSignIn() (+7 more)
 
 ### Community 11 - "Changelog & Feature Badges"
 Cohesion: 0.14
@@ -231,8 +224,12 @@ Cohesion: 0.15
 Nodes (24): cssVar(), drawAttribution(), drawBackground(), drawBadgeGlyph(), drawBadgeHeadline(), drawBadgeLabel(), drawCondensedHeatmap(), drawDate() (+16 more)
 
 ### Community 15 - "Component Library (avatar/empty state/skeleton/sidebar)"
-Cohesion: 0.18
-Nodes (14): onThemeChange(), createEmptyState(), createIcon(), ICON_SHAPES, VALID_SIZES, createSidebar(), readCollapsed(), ariaLabel() (+6 more)
+Cohesion: 0.29
+Nodes (4): createEmptyState(), ICON_SHAPES, VALID_SIZES, ICON_NAMES
+
+### Community 16 - "Time Tracking & Daily Todo Panel"
+Cohesion: 0.21
+Nodes (15): apply(), getTheme(), hasExplicitPreference(), initTheme(), media, onThemeChange(), setTheme(), subscribers (+7 more)
 
 ### Community 17 - "Auth/Roadmap-Store Agent Rules"
 Cohesion: 0.09
@@ -240,19 +237,19 @@ Nodes (18): Anonymous Firebase Auth User Cleanup (issue #24), confirmAndSignOut(
 
 ### Community 18 - "Command Palette & Router"
 Cohesion: 0.21
-Nodes (8): openBuildYourOwnGuide(), openChangelogDrawer(), renderEntryItem(), renderVersionGroup(), TYPE_LABELS, attachFocusTrap(), openModal(), ENTRIES
+Nodes (9): Brand rules — createBrandMark()/createBrandWordmark()/createBrandIcon(), themeBootstrap.js external-script extraction rationale (no-inline-script CSP), Brand component consolidation (createBrandMark/createBrandIcon/createBrandWordmark), localStorage key migration (switchprep-* to ascent-*), ADR-004: Product rename to Ascent, favicon.svg — Ascent brand mark (gradient triangle icon), migrateLocalStorageKeys(), RENAMES (+1 more)
 
 ### Community 19 - "Daily Todo Limits & Activity Log Store"
-Cohesion: 0.15
-Nodes (10): activityLog day-count map vs item.completedAt distinction, ADR-009: Progress analytics data model (completedAt vs activityLog), onCompletionToggle(delta) dependency-injected hook, createActivityLogStore(), DEFAULT_STREAK_FREEZES, ADR-0009, pruneOldEntries(), createDailyTodoStore() (+2 more)
+Cohesion: 0.18
+Nodes (10): 1. Identity, 2. Color tokens (the only colors allowed), 3. Type scale, 4. Structure, 5. Components, 6. Interaction states, 7. Motion, 8. Long-tail surfaces (+2 more)
 
 ### Community 20 - "LocalStorage Keys & Filter Preferences"
 Cohesion: 0.06
-Nodes (32): Brand rules — createBrandMark()/createBrandWordmark()/createBrandIcon(), themeBootstrap.js external-script extraction rationale (no-inline-script CSP), Brand component consolidation (createBrandMark/createBrandIcon/createBrandWordmark), localStorage key migration (switchprep-* to ascent-*), ADR-004: Product rename to Ascent, favicon.svg — Ascent brand mark (gradient triangle icon), backupFirstSeenAtKey(), backupReminderDismissedAtKey() (+24 more)
+Nodes (31): createActivityLogStore(), DEFAULT_STREAK_FREEZES, ADR-0009, pruneOldEntries(), createDailyTodoStore(), backupFirstSeenAtKey(), backupReminderDismissedAtKey(), guestRiskNudgeShownKey() (+23 more)
 
 ### Community 21 - "Public API Docs"
-Cohesion: 0.16
-Nodes (20): createActivityLogStore() — activityLogStore.js, computeAnalytics() and analytics engine — src/core/analytics/, backupSchema.js — backup export format, backupValidator.js — backup JSON validation, changelog.js / changelog.json — What's New data, chartWrapper.js — lazy Chart.js loader, createRoadmapStore() — roadmapStore.js, featureBadge.js / core/changelog/featureBadge.js — 'New' pill eligibility (+12 more)
+Cohesion: 0.18
+Nodes (19): createActivityLogStore() — activityLogStore.js, computeAnalytics() and analytics engine — src/core/analytics/, backupSchema.js — backup export format, backupValidator.js — backup JSON validation, changelog.js / changelog.json — What's New data, chartWrapper.js — lazy Chart.js loader, createRoadmapStore() — roadmapStore.js, featureBadge.js / core/changelog/featureBadge.js — 'New' pill eligibility (+11 more)
 
 ### Community 22 - "Roadmap Store Agent Rules (multi-roadmap)"
 Cohesion: 0.12
@@ -267,20 +264,20 @@ Cohesion: 0.17
 Nodes (14): apis.google.com / frame-src allowlist entry (issue #168, gapi cross-tab auth iframe), Background sync rejected (Firebase SDK bypasses service worker fetch), Cache-first strategy for static assets, Network-first with stale-cache fallback for Firebase requests, ADR-011: PWA offline caching strategy, cacheFirst(), FIREBASE_API_HOSTS, isFirebaseApiRequest() (+6 more)
 
 ### Community 25 - "Reminder Scheduling"
-Cohesion: 0.07
-Nodes (37): RFC-5545, buildEvent(), buildTodosIcs(), escapeIcsText(), foldLine(), formatIcsDate(), pad(), clampDurationMs() (+29 more)
+Cohesion: 0.08
+Nodes (27): clampDurationMs(), DURATION_PRESETS, computeReminderFireAt(), shouldScheduleReminder(), accumulateElapsed(), computeElapsedSeconds(), formatTimeSpent(), cancelTimer() (+19 more)
 
 ### Community 26 - "Guide & Changelog Drawer Components"
 Cohesion: 0.24
 Nodes (11): CDN loading exceptions (Chart.js jsdelivr, no SRI on dynamic import), Content Security Policy (CSP), ADR-002: CSP + SRI security hardening, Firebase SDK upgrade process (sync import URL + SRI hash x3), Subresource Integrity (SRI), index.html (CSP meta tag, SRI modulepreload, viewport meta), index.html Content-Security-Policy meta tag, WebApplication JSON-LD structured data block (+3 more)
 
 ### Community 27 - "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)"
-Cohesion: 0.16
-Nodes (14): CLAUDE.md (root agent instructions), confirmDialog() — styled confirm/cancel modal, el(tag, attrs, children) — DOM-construction helper, GitHub issue label taxonomy (type/priority/domain), ADR-001: Current flat module architecture (pre-restructure baseline), Target folder restructure (core/services/ui/data/utils/styles), docs/architecture.md (living architecture guide), docs/roadmap.md (planned features) (+6 more)
+Cohesion: 0.50
+Nodes (4): Issue template config (contact links), Sync master tracker workflow, Tracker-sync concurrency group fix (issue #56 race condition), Master Tracker issue #11
 
 ### Community 28 - "CSP/SRI Security ADRs"
-Cohesion: 0.17
-Nodes (9): assertAccountDeletable(), assertHasPasswordCredential(), signOutWithCleanup(), app, auth, authApi, inResetView(), setup() (+1 more)
+Cohesion: 0.24
+Nodes (7): assertAccountDeletable(), assertHasPasswordCredential(), signOutWithCleanup(), app, auth, inResetView(), setup()
 
 ### Community 29 - "Chart Wrapper Component"
 Cohesion: 0.26
@@ -295,28 +292,28 @@ Cohesion: 0.25
 Nodes (13): APP_CSS_PATH, BUTTON_COLOR_ALLOWLIST, classHasExplicitColor(), findColorLiteralViolations(), findCustomButtonClasses(), findMissingButtonColors(), findRootBlockRanges(), isInsideAnyRange() (+5 more)
 
 ### Community 32 - "App Bootstrap (main.js)"
-Cohesion: 0.07
-Nodes (32): activityLogStore, app, dailyTodoStore, feedbackWidget, guardApp(), lazyGuard(), store, dismissInstallPrompt() (+24 more)
+Cohesion: 0.12
+Nodes (19): activityLogStore, app, dailyTodoStore, feedbackWidget, guardApp(), lazyGuard(), NO_UID_SEEN_YET, store (+11 more)
 
 ### Community 33 - "Confirm Dialog & Sign-out Utils"
-Cohesion: 0.15
-Nodes (26): exportFileBaseName(), createAvatar(), initialsFor(), createDropdown(), openMyReports(), activeRoadmapTitle(), copyToClipboard(), openShareRoadmapModal() (+18 more)
+Cohesion: 0.05
+Nodes (58): RFC-4180, RFC-5545, buildEvent(), buildTodosIcs(), escapeIcsText(), foldLine(), formatIcsDate(), pad() (+50 more)
 
 ### Community 34 - "AI Import Corruption-Fix Agent Rules"
 Cohesion: 0.17
 Nodes (11): adaptImportToRoadmap(), AI-Assisted Roadmap Creation (issues #4/#64/#100), ChatGPT Corruption Confirmed via Real Payload (issue #121 item 1), Corruption Copy-Guidance Reversal (issue #121 item 1 follow-up), Cross-Provider/Edge-Case Test Matrix (issue #121 item 2), droppedResourceCount Signal (issue #121 item 3), looksCorrupted() Corrupted-Text Detection (issue #100), Malformed Resource URL / Priority Casing Fix (issue #100) (+3 more)
 
 ### Community 35 - "Hosting/Anonymous-User/Feedback ADRs"
-Cohesion: 0.28
-Nodes (9): Firebase Hosting security headers (HSTS, X-Frame-Options, etc.), Hosting cache-control strategy (index.html no-cache, src/** immutable), Cloudflare Pages migration path (fallback if bandwidth exceeded), ADR-003: Firebase Hosting as production platform, ADR-005: Anonymous Firebase Auth user lifecycle, Delete anonymous Auth user + data on unlinked sign-out, docs/architecture.md (living architecture guide + Build Log), firebase.json (Hosting headers + emulator config) (+1 more)
+Cohesion: 0.16
+Nodes (14): Firebase Hosting security headers (HSTS, X-Frame-Options, etc.), Hosting cache-control strategy (index.html no-cache, src/** immutable), Cloudflare Pages migration path (fallback if bandwidth exceeded), ADR-003: Firebase Hosting as production platform, docs/architecture.md (living architecture guide + Build Log), firebase.json (Hosting headers + emulator config), CI — PR Quality Gate workflow, CI Lighthouse performance budget job (+6 more)
 
 ### Community 36 - "Issue Templates & Docs Index"
-Cohesion: 0.29
-Nodes (9): docs/api.md (public store/service contracts), Bug report issue template, Chore/Refactor issue template, Documentation issue template, Feature request issue template, PR template, Issue #122 — server-side Firebase data caps, Issue #155 v2 redefinition — lime/near-black design pass (+1 more)
+Cohesion: 0.24
+Nodes (10): docs/api.md (public store/service contracts), reviewSchedule.js — spaced-repetition review reminders, Bug report issue template, Chore/Refactor issue template, Documentation issue template, Feature request issue template, Issue label check workflow, Issue #122 — server-side Firebase data caps (+2 more)
 
 ### Community 37 - "Theme Service"
-Cohesion: 0.29
-Nodes (9): listenMyReports(), createDecorativeIcon(), openFeedbackModal(), createFeedbackWidget(), buildMyReportsView(), buildReportRow(), formatDate(), STATUS_LABEL (+1 more)
+Cohesion: 0.27
+Nodes (5): ensureRoot(), showToast(), createVerificationBanner(), setup(), freshShowToast()
 
 ### Community 38 - "Graphify Skill References"
 Cohesion: 0.24
@@ -343,8 +340,8 @@ Cohesion: 0.25
 Nodes (8): Onboarding Card Delete vs Hide Affordance (issue #61), pickCustomRoadmapIcon(), createDecorativeIcon() (decorativeIcon.js, issue #136 Phase 2), Icon System (issue #107), icons.js createIcon() Factory, scripts/lint-icons.mjs, Same-Row Icon-Button Size Consistency, svg.js (svgEl/svgIcon)
 
 ### Community 44 - "Product Rename Migration"
-Cohesion: 0.20
-Nodes (5): MAX_CUSTOM_ROADMAP_TITLE_LENGTH, createRoadmapStore(), isCustomRoadmapId(), migrateLocalRoadmapsShape(), setupCustomRoadmap()
+Cohesion: 0.33
+Nodes (6): ADR-005: Anonymous Firebase Auth user lifecycle, Delete anonymous Auth user + data on unlinked sign-out, Client-side feedback rate limiting (localStorage timestamp log), ADR-010: In-app feedback storage (Firebase write-only reports/), reports/{reportId} write-only, creation-only Firebase path, firebase/database.rules.json
 
 ### Community 45 - "Brand Asset Generation Script"
 Cohesion: 0.29
@@ -355,12 +352,8 @@ Cohesion: 0.43
 Nodes (7): EXEMPT_FILES, findEmojiViolations(), main(), ROOT, SCAN_DIRS, stripJsComments(), walk()
 
 ### Community 47 - "Responsive Breakpoint ADR-006"
-Cohesion: 0.18
-Nodes (13): AGENTS.md (pointer file), 100vh + 100dvh progressive-enhancement pairing, hover/pointer media-feature detection (never viewport width), iOS input auto-zoom fix (16px min font-size, width-scoped), ADR-006: Responsive breakpoint scale and touch/hover detection strategy, Safe-area insets via viewport-fit=cover / env(safe-area-inset-*), Six-tier breakpoint scale (375/480/768/1024/base/1600), ADR-007: Agent memory architecture (split CLAUDE.md into rules + skills) (+5 more)
-
-### Community 48 - "CI Workflow Jobs"
-Cohesion: 0.29
-Nodes (7): CI — PR Quality Gate workflow, CI Lighthouse performance budget job, CI lint job (ESLint, theme lint, icon lint), CI pr-checklist job (doc-sync enforcement), CI security scan job (gitleaks, firebase.config.js check), CI Playwright E2E test job (Firebase emulator), CI Vitest unit/integration test job
+Cohesion: 0.12
+Nodes (23): AGENTS.md (pointer file), CLAUDE.md (root agent instructions), confirmDialog() — styled confirm/cancel modal, el(tag, attrs, children) — DOM-construction helper, GitHub issue label taxonomy (type/priority/domain), ADR-001: Current flat module architecture (pre-restructure baseline), Target folder restructure (core/services/ui/data/utils/styles), 100vh + 100dvh progressive-enhancement pairing (+15 more)
 
 ### Community 49 - "Backup Actions Tests"
 Cohesion: 0.29
@@ -406,29 +399,21 @@ Nodes (3): PHASES, RESOURCE_LIBRARY, TOPIC_RESOURCES
 Cohesion: 0.40
 Nodes (3): PHASES, RESOURCE_LIBRARY, TOPIC_RESOURCES
 
-### Community 61 - "Tabs Component"
-Cohesion: 0.70
-Nodes (3): createTabs(), makeTabs(), panel()
-
 ### Community 62 - "Backup Reminder Banner Tests"
 Cohesion: 0.40
 Nodes (3): exportBackupJson, guestUser, user
 
 ### Community 63 - "Daily Todo Panel Tests"
-Cohesion: 0.31
-Nodes (5): bindCommandPaletteShortcut(), fuzzyMatch(), openCommandPalette(), createTopbar(), navigationItems()
+Cohesion: 0.21
+Nodes (6): bindCommandPaletteShortcut(), fuzzyMatch(), openCommandPalette(), navigationItems(), debounce(), escapeHtml()
 
 ### Community 64 - "Animation/Overflow Styling Rules"
 Cohesion: 0.50
 Nodes (4): triggerConfetti() One-Shot Animation Pattern (issue #181), overflow:hidden Hijacks position:sticky Context, .phase-body-animating Fix, Sticky Section Headers Reuse --topbar-h
 
-### Community 65 - "Issue Tracker Sync Workflow"
-Cohesion: 0.47
-Nodes (6): buildSeedItems(), getLegacyBlankTemplateData(), getTemplate(), getTemplatePhases(), LOADERS, TEMPLATES
-
 ### Community 68 - "main.js Tests"
-Cohesion: 0.50
-Nodes (3): renderDashboard, renderSignIn, signInCleanup
+Cohesion: 0.33
+Nodes (5): renderDashboard, renderOnboarding, renderSignIn, roadmapStoreSetUser, signInCleanup
 
 ### Community 72 - "Verification Banner Tests"
 Cohesion: 0.50
@@ -454,14 +439,6 @@ Nodes (6): Branded print/PDF export (issue #160, restructured onto `<thead>`/`<t
 Cohesion: 0.33
 Nodes (6): base, changedFiles, git(), resolveBase(), srcChanged, swVersionChanged
 
-### Community 127 - "navigate"
-Cohesion: 0.42
-Nodes (5): confirmDialog(), navigate(), confirmAndSignOut(), confirmSignOutDespiteFailedFlush(), flushDirtyStores()
-
-### Community 128 - "roadmap.js"
-Cohesion: 0.60
-Nodes (4): buildSeedItems(), PHASES, RESOURCE_LIBRARY, TOPIC_RESOURCES
-
 ### Community 129 - "dev-server.mjs"
 Cohesion: 0.40
 Nodes (3): MIME_TYPES, ROOT, server
@@ -473,9 +450,9 @@ Nodes (3): MIME_TYPES, ROOT, server
   docs/adr/ADR-006-responsive-breakpoints-touch-hover.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **263 isolated node(s):** `name`, `version`, `private`, `license`, `type` (+258 more)
+- **275 isolated node(s):** `name`, `version`, `private`, `license`, `type` (+270 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **45 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **42 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -484,13 +461,13 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: references) - confidence is low._
 - **What is the exact relationship between `ADR-006: Responsive breakpoint scale and touch/hover detection strategy` and `ADR-007: Agent memory architecture (split CLAUDE.md into rules + skills)`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `el()` connect `Auth & Account Guards` to `Analytics Engine`, `Backup/Export Schema + ICS Export`, `Feedback Report Schema + Share Schema`, `Import Validation & Corruption Detection`, `Feedback Metadata & Rate Limiting`, `Review Scheduling & Celebration State`, `Brand & Auth Marketing Panel`, `Changelog & Feature Badges`, `Share Card Canvas Rendering`, `Component Library (avatar/empty state/skeleton/sidebar)`, `Time Tracking & Daily Todo Panel`, `Command Palette & Router`, `LocalStorage Keys & Filter Preferences`, `Reminder Scheduling`, `Chart Wrapper Component`, `App Bootstrap (main.js)`, `Confirm Dialog & Sign-out Utils`, `Theme Service`, `Tabs Component`, `Daily Todo Panel Tests`, `navigate`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Why does `CLAUDE.md (root agent instructions)` connect `Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)` to `Issue Templates & Docs Index`, `Responsive Breakpoint ADR-006`, `CI Workflow Jobs`, `LocalStorage Keys & Filter Preferences`, `Public API Docs`, `Guide & Changelog Drawer Components`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **Why does `ADR-004: Product rename to Ascent` connect `LocalStorage Keys & Filter Preferences` to `Brand & Auth Marketing Panel`?**
-  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+- **Why does `el()` connect `Brand & Auth Marketing Panel` to `App Bootstrap (main.js)`, `Confirm Dialog & Sign-out Utils`, `Backup/Export Schema + ICS Export`, `Analytics Engine`, `Import Validation & Corruption Detection`, `Feedback Metadata & Rate Limiting`, `Theme Service`, `Review Scheduling & Celebration State`, `Auth & Account Guards`, `Changelog & Feature Badges`, `Share Card Canvas Rendering`, `Component Library (avatar/empty state/skeleton/sidebar)`, `Time Tracking & Daily Todo Panel`, `LocalStorage Keys & Filter Preferences`, `Reminder Scheduling`, `Chart Wrapper Component`, `Daily Todo Panel Tests`?**
+  _High betweenness centrality (0.103) - this node is a cross-community bridge._
+- **Why does `CLAUDE.md (root agent instructions)` connect `Responsive Breakpoint ADR-006` to `Hosting/Anonymous-User/Feedback ADRs`, `Issue Templates & Docs Index`, `Command Palette & Router`, `Public API Docs`, `Guide & Changelog Drawer Components`, `Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)`?**
+  _High betweenness centrality (0.045) - this node is a cross-community bridge._
+- **Why does `ADR-004: Product rename to Ascent` connect `Command Palette & Router` to `Brand & Auth Marketing Panel`, `LocalStorage Keys & Filter Preferences`?**
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `private` to the rest of the system?**
-  _263 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _275 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Analytics Engine` be split into smaller, more focused modules?**
   _Cohesion score 0.05660945498343872 - nodes in this community are weakly interconnected._
