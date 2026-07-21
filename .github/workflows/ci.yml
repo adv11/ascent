@@ -112,6 +112,17 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+      # playwright-report/ (above) is the HTML report shell; the actual
+      # screenshots/videos/traces it links to live under test-results/ —
+      # upload both, or the HTML report 404s on every embedded asset when
+      # downloaded and opened locally (found alongside issue #294).
+      - name: Upload Playwright raw traces/screenshots/videos on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: test-results/
+          if-no-files-found: ignore
 
   # Lighthouse CI perf-budget job was removed from CI (issue #137 Phase 3,
   # then removed again on PR #231): headless Chrome under GitHub Actions'

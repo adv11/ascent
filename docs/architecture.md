@@ -4236,3 +4236,132 @@ not something the app loads. No component, page, or `app.css` rule changed in th
 that intentionally starts in Phase 1, so this PR carries zero visual or behavioral risk
 while still making the ruleset enforceable immediately for any UI work that happens to
 land before Phase 1 merges.
+
+### 2026-07-21 — Issue #294 — `main.js`'s auth-redirect staleness guard was route-string-based, not call-identity-based
+
+Root-caused via a real captured Playwright trace (made possible by this same issue's
+artifact-capture fix, `playwright.config.js`/`ci.yml`) after `tests/e2e/
+customRoadmapRace.test.js` flaked on ~5/6 CI runs across three unrelated PRs. The
+trace's page snapshot at the moment of failure showed the app sitting on `/app`
+(dashboard) instead of the `/onboarding` page the test had just deliberately navigated
+to — `main.js`'s `authApi.onChange` handler had force-navigated back. The existing
+staleness guard (`route === routeAtAuthChange`, added for issue #234) only detects
+"nothing navigated during my own await" by comparing route *strings* — it cannot
+distinguish that from "something navigated away and back to the same string, or a
+different `onChange` invocation captured this same string at a different time." A
+second `onChange` invocation (Firebase can fire `onAuthStateChanged` more than once for
+one conceptual sign-in — already anticipated by `tests/unit/main.test.js`'s prior "token
+refresh" test) captured `routeAtAuthChange='/onboarding'` during signup, then resolved
+its own `store.setUser()` await only after the test had picked a roadmap, moved to
+`/app`, and deliberately gone back to `/onboarding` — at which point the string
+comparison was coincidentally true again, and the stale callback won the race. Fixed
+with `authChangeCallId`, an incrementing counter checked after the await — the same
+`stateCallId` pattern `roadmapStore.js` already documents (`.claude/rules/
+roadmap-store.md`) for the identical class of problem — so only the most recently
+*started* invocation can act; every earlier one abandons its decision once superseded,
+regardless of what route string it happens to land on. `tests/unit/main.test.js` gained
+a regression test using a controllable `roadmapStoreSetUser` mock (reconfigurable per
+test, since `main.js`'s `const store = createRoadmapStore(...)` runs at module-import
+time, before a test body could otherwise swap the mock's return value) — verified to
+fail against the pre-fix code and pass against the fix.
+
+**Follow-up the same day**: the `authChangeCallId` fix above was necessary but not
+sufficient — a second CI run of the same PR (already carrying that fix) reproduced the
+identical bounce-to-`/app` symptom via its own captured trace. The real shape is
+simpler and more direct than the overlapping-invocation theory: a *single* `onChange`
+invocation's own `store.setUser()` await can itself span the user picking a roadmap
+(→ `/app`) and deliberately returning to `/onboarding` (→ the exact route string that
+invocation started on) — trivially still "the latest" invocation, so `authChangeCallId`
+alone never engages. No route-string comparison, however staleness-guarded, can
+distinguish "never left" from "left and came back" when the destination string matches.
+Fixed with a real navigation-generation counter: `router.js` exports `getNavGeneration()`,
+bumped once per route the router actually processes (initial load or `hashchange`), and
+`main.js` checks `getNavGeneration() === navGenAtAuthChange` instead of the route string.
+Both guards are kept — `authChangeCallId` still correctly handles a genuinely newer
+invocation superseding a stale one; `getNavGeneration()` independently handles any actual
+navigation happening mid-await, single invocation or not. `tests/unit/main.test.js` gained
+a second regression test for this exact single-invocation shape, using explicit
+`getNavGeneration()` polling via `vi.waitFor` rather than counting render-mock calls —
+jsdom's `location.hash` setter queues its own async `hashchange` dispatch independent of
+an explicit one, so call counts are unreliable in this test file (a pattern its own
+earlier tests already flag). Verified to fail against the intermediate (call-id-only)
+fix and pass against the final one.
+
+**Second follow-up, same day — the actual fix.** A *third* captured trace, from a CI
+run already carrying both the `authChangeCallId` and `getNavGeneration()` fixes above,
+reproduced the identical bounce-to-`/app` symptom again. Both prior fixes were genuinely
+correct for the races they targeted and are both kept, but neither was the real repro:
+the invocation causing the damage isn't stale (a newer call hasn't superseded it) and
+isn't racing a navigation (nothing moved during its own await) — it's a perfectly
+*current* re-fire of `onChange` for a uid that was already signed in (a token refresh,
+or an emulator/SDK double-emission), landing while the user is simply, currently sitting
+on `/onboarding` with no navigation involved anywhere in the sequence. The
+"already-onboarded, redirect off `/onboarding`/a public route" logic had never
+distinguished a genuine sign-in transition from any other re-fire for the same uid — by
+design, until this fix, *any* `onChange` resolving while camped on `/onboarding` bounced
+the user to `/app`, staleness guards notwithstanding. Fixed with `isSignInTransition`: a
+module-level `lastAuthUid` (a `Symbol()` sentinel distinguishes "never seen a uid yet"
+from a genuine `null`/signed-out state) captured synchronously at the top of each
+invocation, before any `await` — the redirect block now additionally requires
+`isSignInTransition` to be true, so a same-uid re-fire can never trigger it regardless of
+route, navigation generation, or call ordering. `tests/unit/main.test.js` gained a third
+regression test for this exact shape (a genuine sign-in, then a deliberate navigation to
+`/onboarding`, then a second same-uid `onChange` call with no intervening navigation) —
+verified to fail against the two-guards-but-no-`isSignInTransition` code and pass against
+the final fix. All three guards (`authChangeCallId`, `getNavGeneration()`,
+`isSignInTransition`) are independently necessary and are all kept — each closes a
+genuinely different variant of "should this invocation be allowed to force-navigate,"
+and removing any one of them reopens exactly the race its own regression test exists to
+catch.
+
+**Third follow-up, same day — the actual root cause, found by leaving CI traces behind
+and reproducing locally against a real Firebase emulator.** A *fourth* CI run,
+already carrying `authChangeCallId`, `getNavGeneration()`, and `isSignInTransition`,
+reproduced the identical symptom yet again. At this point continuing to theorize from
+static trace excerpts had stopped being productive, so debug logging was added
+temporarily to every candidate call site (`authApi.onChange`, `router.js`'s `navigate()`
+and `run()`) and the exact failing test was run locally against a real `firebase
+emulators:start` instance, repeatedly, until it reproduced (first try, as it turned out).
+The captured console log was unambiguous: `router run()` correctly processed both the
+`/app` and `/onboarding` transitions (nav generation reached the expected value), and
+**no `navigate()` call and no `onChange` invocation happened anywhere near the failure**
+— ruling out all three `authApi.onChange` guards at once. The actual bug was one level
+lower: `main.js`'s `guardApp()`, the wrapper every guarded route (`registerRoute('/app',
+lazyGuard(...))` etc.) renders through, had no staleness guard of its own.
+`router.js`'s own `currentCleanup` tracking turns out to be a no-op for every guarded
+route — a guarded route's `renderFn` is `async` and never synchronously returns its
+cleanup to `run()`'s `const maybeCleanup = await renderFn(route);` line (it resolves to
+`undefined`, since `guardApp`'s wrapper only ever assigns to its own closure-scoped
+`routeCleanup`, never returns it) — so the *real* mount/cleanup bookkeeping lives
+entirely inside `guardApp`'s closure, decoupled from `router.js`'s own sequencing.
+Two overlapping `guardApp` invocations (one per route render) could race: if route A's
+render (`/app`, mid `lazyGuard`'s `import('./ui/pages/dashboard.js')` — a genuinely slow,
+first-ever fetch of dashboard.js's whole module graph) was still awaiting when route B's
+render (`/onboarding`, its own module already cached, resolving fast) started and
+finished first, route A's *later*-resolving continuation still ran to completion
+afterward — calling `renderDashboard(app, ...)`, which unconditionally
+`app.replaceChildren(...)`s, silently clobbering route B's already-mounted DOM. No
+`navigate()` call, no `hashchange`, nothing `router.js`'s own event-driven sequencing
+could ever observe — exactly why the trace showed nothing after the second `router
+run()`. Fixed with `routeRenderCallId` (the same `stateCallId`-family pattern as every
+other guard in this investigation), but checked in a different place than the other
+three: *before* the actual page render function is ever called, not after — every page
+render function (`renderDashboard`/`renderOnboarding`/etc.) mutates the DOM
+*synchronously* the instant it's invoked, so checking staleness after `await renderFn()`
+resolves is already too late (the clobbering already happened as an unavoidable side
+effect of the call itself). `lazyGuard` now receives an `isStale()` callback from
+`guardApp` and checks it immediately after its dynamic `import()` resolves, *before*
+calling `module[renderKey](...)` — a superseded route's import is still allowed to
+finish (no way to cancel a `import()` call), but the real render function backing it is
+simply never invoked, so it can never touch the DOM. Verified two ways: a fourth
+regression test in `tests/unit/main.test.js` (a controllable `dashboardImportGate`
+promise delays dashboard.js's mocked dynamic import specifically, reproducing the exact
+overlap shape — fails against the pre-fix `guardApp`, passes against the fix), and
+directly against a real local Firebase emulator (`npm run test:e2e` isolated to this one
+test, `--repeat-each=5`): the pre-fix code reproduced the failure on the very first local
+attempt; the fix ran 5/5 clean, consistently faster (~8.5s vs. hitting the full 30s
+timeout). All four guards from this investigation (`authChangeCallId`,
+`getNavGeneration()`, `isSignInTransition`, `routeRenderCallId`) are independently real
+fixes for genuinely different races and are all kept — only the last one was the actual
+cause of this specific test's flake, but the other three close races that could still
+strike some other flow later if left unfixed.
