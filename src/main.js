@@ -54,13 +54,58 @@ let routeCleanup = null;
 const feedbackWidget = createFeedbackWidget({ user: null });
 document.body.appendChild(feedbackWidget);
 
+// The actual root cause of issue #294's CI flake (tests/e2e/
+// customRoadmapRace.test.js), found by adding temporary debug logging and
+// reproducing locally against a real Firebase emulator — every previous fix
+// attempt on authApi.onChange (below) was chasing a real but unrelated
+// class of bug. router.js's own `run()` tracks a `currentCleanup`, but a
+// guarded route's renderFn (this function's return value) is `async` and
+// never itself returns a cleanup synchronously reachable by `run()` — the
+// real cleanup lives in this closure's own `routeCleanup` variable instead,
+// entirely decoupled from router.js's sequencing. Nothing here guarded
+// against two overlapping invocations: if route A's render (e.g. `/app`,
+// mid a slow first-ever dynamic import() of dashboard.js's whole module
+// graph) is still awaiting when route B's render (e.g. `/onboarding`, from
+// a deliberate second visit, its own module already cached and fast) starts
+// and finishes first, route A's *later*-resolving continuation would still
+// run to completion afterward — calling `app.replaceChildren(...)` inside
+// route B's already-mounted page and silently overwriting it, with no
+// `navigate()` call and no router.js `hashchange` involved at all, which is
+// exactly why every guard added to authApi.onChange had zero effect: the
+// bug was never there. `routeRenderCallId` is the same `stateCallId`
+// pattern used throughout this codebase for this exact class of problem
+// (`.claude/rules/roadmap-store.md`) — only the most recently *started*
+// guarded render is allowed to mount or assign `routeCleanup`; an earlier,
+// slower one recognizes it's been superseded and abandons itself entirely
+// once its own await resolves, never touching the DOM.
+let routeRenderCallId = 0;
+
+// `renderFn` receives an extra `isStale()` argument — every actual page
+// render function (renderDashboard/renderOnboarding/etc.) mutates the DOM
+// *synchronously* the moment it's called, so the only safe place to check
+// staleness is *before* that call, not after (by then the clobbering
+// already happened as an unavoidable side effect of calling it at all).
+// lazyGuard below is the only real caller and is the one place with an
+// async gap (the dynamic import) between "this call started" and "it's
+// about to mutate the DOM."
 function guardApp(renderFn) {
   return async ctx => {
+    const callId = ++routeRenderCallId;
     if (routeCleanup) {
       routeCleanup();
       routeCleanup = null;
     }
-    routeCleanup = (await renderFn(app, { ...ctx, user: currentUser, store, dailyTodoStore, activityLogStore })) || null;
+    const result = await renderFn(app, { ...ctx, user: currentUser, store, dailyTodoStore, activityLogStore }, () => callId !== routeRenderCallId);
+    if (callId !== routeRenderCallId) {
+      // Superseded while resolving. renderFn (lazyGuard) is expected to
+      // have already skipped calling the real page render function once it
+      // saw isStale() — result should be undefined here — but tear down
+      // defensively if it somehow returned a live cleanup anyway, and never
+      // touch routeCleanup (a newer render already owns it).
+      if (typeof result === 'function') result();
+      return;
+    }
+    routeCleanup = result || null;
   };
 }
 
@@ -71,9 +116,16 @@ function guardApp(renderFn) {
 // modules instead of a third-party one. loadModule() is only invoked the
 // first time the route is actually navigated to.
 function lazyGuard(loadModule, renderKey) {
-  return guardApp(async (...args) => {
+  return guardApp(async (appEl, ctx, isStale) => {
     const module = await loadModule();
-    return module[renderKey](...args);
+    // A newer route render already started while this dynamic import() was
+    // in flight — the only async gap in this whole call chain, and
+    // therefore the only place a stale invocation can still be caught
+    // before it mutates the DOM. Skip calling the real page render
+    // function entirely; returning undefined here means guardApp's own
+    // staleness check (redundant but harmless) has nothing to tear down.
+    if (isStale()) return undefined;
+    return module[renderKey](appEl, ctx);
   });
 }
 

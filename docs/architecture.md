@@ -4313,3 +4313,55 @@ the final fix. All three guards (`authChangeCallId`, `getNavGeneration()`,
 genuinely different variant of "should this invocation be allowed to force-navigate,"
 and removing any one of them reopens exactly the race its own regression test exists to
 catch.
+
+**Third follow-up, same day — the actual root cause, found by leaving CI traces behind
+and reproducing locally against a real Firebase emulator.** A *fourth* CI run,
+already carrying `authChangeCallId`, `getNavGeneration()`, and `isSignInTransition`,
+reproduced the identical symptom yet again. At this point continuing to theorize from
+static trace excerpts had stopped being productive, so debug logging was added
+temporarily to every candidate call site (`authApi.onChange`, `router.js`'s `navigate()`
+and `run()`) and the exact failing test was run locally against a real `firebase
+emulators:start` instance, repeatedly, until it reproduced (first try, as it turned out).
+The captured console log was unambiguous: `router run()` correctly processed both the
+`/app` and `/onboarding` transitions (nav generation reached the expected value), and
+**no `navigate()` call and no `onChange` invocation happened anywhere near the failure**
+— ruling out all three `authApi.onChange` guards at once. The actual bug was one level
+lower: `main.js`'s `guardApp()`, the wrapper every guarded route (`registerRoute('/app',
+lazyGuard(...))` etc.) renders through, had no staleness guard of its own.
+`router.js`'s own `currentCleanup` tracking turns out to be a no-op for every guarded
+route — a guarded route's `renderFn` is `async` and never synchronously returns its
+cleanup to `run()`'s `const maybeCleanup = await renderFn(route);` line (it resolves to
+`undefined`, since `guardApp`'s wrapper only ever assigns to its own closure-scoped
+`routeCleanup`, never returns it) — so the *real* mount/cleanup bookkeeping lives
+entirely inside `guardApp`'s closure, decoupled from `router.js`'s own sequencing.
+Two overlapping `guardApp` invocations (one per route render) could race: if route A's
+render (`/app`, mid `lazyGuard`'s `import('./ui/pages/dashboard.js')` — a genuinely slow,
+first-ever fetch of dashboard.js's whole module graph) was still awaiting when route B's
+render (`/onboarding`, its own module already cached, resolving fast) started and
+finished first, route A's *later*-resolving continuation still ran to completion
+afterward — calling `renderDashboard(app, ...)`, which unconditionally
+`app.replaceChildren(...)`s, silently clobbering route B's already-mounted DOM. No
+`navigate()` call, no `hashchange`, nothing `router.js`'s own event-driven sequencing
+could ever observe — exactly why the trace showed nothing after the second `router
+run()`. Fixed with `routeRenderCallId` (the same `stateCallId`-family pattern as every
+other guard in this investigation), but checked in a different place than the other
+three: *before* the actual page render function is ever called, not after — every page
+render function (`renderDashboard`/`renderOnboarding`/etc.) mutates the DOM
+*synchronously* the instant it's invoked, so checking staleness after `await renderFn()`
+resolves is already too late (the clobbering already happened as an unavoidable side
+effect of the call itself). `lazyGuard` now receives an `isStale()` callback from
+`guardApp` and checks it immediately after its dynamic `import()` resolves, *before*
+calling `module[renderKey](...)` — a superseded route's import is still allowed to
+finish (no way to cancel a `import()` call), but the real render function backing it is
+simply never invoked, so it can never touch the DOM. Verified two ways: a fourth
+regression test in `tests/unit/main.test.js` (a controllable `dashboardImportGate`
+promise delays dashboard.js's mocked dynamic import specifically, reproducing the exact
+overlap shape — fails against the pre-fix `guardApp`, passes against the fix), and
+directly against a real local Firebase emulator (`npm run test:e2e` isolated to this one
+test, `--repeat-each=5`): the pre-fix code reproduced the failure on the very first local
+attempt; the fix ran 5/5 clean, consistently faster (~8.5s vs. hitting the full 30s
+timeout). All four guards from this investigation (`authChangeCallId`,
+`getNavGeneration()`, `isSignInTransition`, `routeRenderCallId`) are independently real
+fixes for genuinely different races and are all kept — only the last one was the actual
+cause of this specific test's flake, but the other three close races that could still
+strike some other flow later if left unfixed.
