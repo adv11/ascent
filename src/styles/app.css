@@ -600,10 +600,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    an <a> (landing.js's "Start for free"/"Sign in" links use
    .btn-primary/.btn-ghost/.btn-secondary, not just the old CTA class) is
    covered by construction instead of needing its own per-variant override. */
+/* issue #309 — `justify-content` removed from the base rule: design-system.md
+   §4's "flush-left everything... never center hero copy or button labels" is
+   a binding, repeated rule that this base class violated for every `.btn`
+   variant app-wide since Phase 1. Flex's default `normal` value resolves to
+   `flex-start` for a row container, so a label now starts at the left
+   padding edge same as the spec's own "a wide button starts its label at the
+   left padding edge" wording. A future trailing icon (none exist today —
+   checked every `.btn`-classed call site) should use `margin-left: auto` on
+   itself per that same spec line, not lean on this rule being centered.
+   `.btn-icon` (below) explicitly re-centers itself, since a square icon-only
+   button has no "label" for this rule to apply to. */
 .btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: var(--space-2);
   min-height: 40px;
   padding: 10px var(--space-4);
@@ -688,7 +698,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .btn-block { width: 100%; }
 .btn-sm { min-height: 34px; padding: 6px 12px; font-size: var(--text-sm); }
 .btn-lg { min-height: 48px; padding: 12px 24px; font-size: var(--text-base); }
-.btn-icon { width: 36px; height: 36px; padding: 0; font-size: 22px; line-height: 1; }
+/* Re-centers explicitly (issue #309) — `.btn`'s own base rule no longer
+   centers, but a square icon-only button has no text "label" for the
+   flush-left rule to apply to; its icon should stay centered in the box. */
+.btn-icon { width: 36px; height: 36px; padding: 0; font-size: 22px; line-height: 1; justify-content: center; }
 
 .link { color: var(--color-accent-700); font-weight: 700; text-decoration: none; }
 /* issue #155 v2 Phase D3 (full completion pass) — the app's generic inline-link class;
@@ -772,7 +785,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border-radius: 4px;
+  border-radius: 0;
   line-height: 1;
 }
 .password-toggle:hover { color: var(--color-text); }
@@ -974,7 +987,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  border-radius: 11px;
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
 }
@@ -1019,7 +1032,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 
@@ -1743,6 +1755,21 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-overflow: ellipsis;
 }
 .app-topbar-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+/* Real, reported bug (issue #309): the guest/sync pill (32px, padding-driven),
+   the "Create account" `.btn-sm` (34px), and `.icon-btn-group` (~44-48px,
+   padding+border around its 36px icon buttons) had three different heights
+   with no shared convention, reading as visibly out-of-sync in this one row.
+   Scoped to this row specifically (not a global `.sync-pill`/`.btn-sm`
+   change) since both classes are used elsewhere with their own, independently
+   fine sizing — 36px matches the icon buttons' own natural size, the
+   "anchor" control already appearing three times over in this same row. */
+.app-topbar-actions .sync-pill,
+.app-topbar-actions > .btn,
+.app-topbar-actions .icon-btn-group {
+  height: 36px;
+  box-sizing: border-box;
+}
+.app-topbar-actions .sync-pill { display: inline-flex; align-items: center; }
 /* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
    bare unstyled-until-hover button (matches .app-topbar-hamburger's
    treatment) since it sits among icon-only topbar actions, not a filled
@@ -2371,7 +2398,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
 }
 
 .stat-tile-icon {
@@ -2645,7 +2671,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-base);
-  box-shadow: var(--shadow-sm);
   transition: width var(--duration-base) var(--ease-out), border-color var(--duration-fast) ease;
 }
 /* Issue #6 Phase 4.3 — grows toward (not literally to) full toolbar width on
@@ -2819,6 +2844,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .daily-todo-panel.collapsed .daily-todo-heading-row { margin-bottom: 0; }
 .daily-todo-panel.collapsed .daily-todo-count-badge { display: inline-flex; }
+/* Real, reported mismatch (issue #309, same shape as .app-topbar-actions'
+   fix above): the "Add a todo" `.field-input.compact` (39px) and its "Add"
+   `.btn-sm` (35px) sat 4px apart in the same row. */
+.daily-todo-add-row > .field-input,
+.daily-todo-add-row > .btn {
+  height: 39px;
+  box-sizing: border-box;
+}
 .daily-todo-add-row {
   display: flex;
   flex-wrap: wrap;
@@ -2962,7 +2995,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-left-width: 3px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
 /* Issue #6 Phase 4.2 — left-border priority accent, reusing the same
@@ -3208,6 +3240,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-surface);
   transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
+/* A real, reported gap (issue #309): `.check-box` is a genuinely focusable
+   `role="checkbox"` element (`tabindex="0"`, `dashboard.js`) — every checklist
+   row's checkbox had no visible keyboard-focus indicator at all. Same 2px
+   accent outline every other interactive element in the app already uses. */
+.check-box:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 /* issue #206 §5 follow-up — real feedback (screenshots, twice): the checked
    fill kept reading as an out-of-family green no matter how much the
    `--color-success` token itself was warmed, since it's still a genuinely
@@ -3395,7 +3432,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .add-row-standalone {
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
   padding: 12px 16px;
 }
 
@@ -3638,18 +3674,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 /* Component library (issue #6 Phase 3) */
 
-/* 3.1 Skeleton loaders */
-@keyframes shimmer {
-  from { background-position: -200% 0; }
-  to { background-position: 200% 0; }
+/* 3.1 Skeleton loaders — design-system.md §7: "flat neutral-200 blocks, no
+   shimmer gradients — a simple opacity pulse" (issue #309; this used to be a
+   `background-position`-animated `linear-gradient`, both a §2 "no gradients
+   anywhere" violation and, now moot, a redundant one — its three color stops
+   had all converged on the same `--color-surface-raised` value during an
+   earlier token migration, so it hadn't even been visibly shimmering). */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 .skeleton {
-  background: linear-gradient(90deg, var(--color-surface-raised) 25%, var(--color-surface-raised) 50%, var(--color-surface-raised) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
+  background: var(--color-neutral-200);
+  animation: skeleton-pulse 1.4s ease infinite;
   border-radius: var(--radius-md);
 }
-.skeleton-text { height: 14px; border-radius: 4px; }
+.skeleton-text { height: 14px; }
 .skeleton-card { height: 72px; }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
@@ -3667,7 +3707,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--neutral-900);
   color: #fff;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: var(--text-xs);
   white-space: nowrap;
   pointer-events: none;
@@ -4035,7 +4075,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-8);
   display: grid;
   gap: var(--space-3);
@@ -4070,13 +4109,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .progress-header h1 { margin: 0; font-size: var(--text-xl); }
 .progress-header-subtitle { margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-sm); }
 .progress-header-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+/* Real, reported mismatch (issue #309, same shape as .app-topbar-actions'
+   fix above): the "This Week/This Month/All Time" `.filter-chip`s (36px)
+   and the "Share progress" `.btn-sm` (34px) sat 2px apart in the same row. */
+.progress-header-actions .filter-chip,
+.progress-header-actions > .btn {
+  height: 36px;
+  box-sizing: border-box;
+}
 .progress-range-toggle { display: flex; gap: var(--space-2); }
 
 .progress-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-6);
   /* .progress-content has no explicit grid-template-columns, so its single
      implicit column defaults to `auto` sizing — a grid item's own default
@@ -4369,17 +4415,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
   overflow: hidden;
 }
 .landing-mock-head { display: flex; gap: 6px; padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border); }
 .landing-mock-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border-strong); }
 .landing-mock-body { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-6); }
 .landing-mock-row { display: flex; align-items: center; gap: var(--space-3); }
+/* Square, matching the real .check-box's shape (design-system.md §5:
+   "Checkboxes: squares") — this decorative landing-page mockup had its own
+   stray radius (issue #309). */
 .landing-mock-check {
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: 0;
   border: 2px solid var(--color-accent);
   background: var(--color-warning-bg);
   flex-shrink: 0;
@@ -4424,7 +4472,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-8);
 }
 .feature-card-icon {
@@ -4461,7 +4508,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-8) var(--space-6) var(--space-6);
 }
 .step-card-number {
@@ -4572,10 +4618,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   .auth-page { grid-template-columns: 1fr; }
   .auth-marketing { display: none; }
   /* issue #6 Phase 6/8 — hero collapses to a single column; mock preview
-     drops below the copy instead of sitting beside it. */
-  .landing-hero { grid-template-columns: 1fr; text-align: center; }
-  .landing-hero-subtitle { margin-left: auto; margin-right: auto; }
-  .landing-hero-actions { justify-content: center; }
+     drops below the copy instead of sitting beside it. Flush-left, not
+     centered (issue #309) — design-system.md §4's "never center hero copy
+     or button labels" applies at every width, not just desktop. */
+  .landing-hero { grid-template-columns: 1fr; }
+  .landing-hero-actions { justify-content: flex-start; }
   .landing-hero-mock { order: -1; }
 }
 

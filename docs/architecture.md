@@ -4399,3 +4399,36 @@ every fix, not duplicated here.
 
 Closes out issue #289 in full — every phase (0 rules, 1 tokens, 2 app shell, 3 first
 impressions, 4 analytics/settings, 5 overlays/long tail) has now merged.
+
+### 2026-07-23 — Issue #309 — v2 "Modernist" final compliance sweep
+
+After all 6 phases of issue #289 merged, a full read-only audit against
+`.claude/rules/design-system.md`'s own binding checklist (radius, gradients, shadows,
+centering, fonts, focus states, stray hex literals) found 9 violations none of the 5
+phases had explicitly named — a reminder that a phased rollout's own per-phase scope
+lists are not automatically exhaustive, even with a written checklist, unless something
+actually re-runs it against the whole codebase at the end. The two largest were
+systemic: `.btn`'s shared base rule centered every button label app-wide (a direct §4
+violation since Phase 1, affecting every button variant), and `box-shadow` elevation was
+still applied to ~9 flat, non-overlay cards (§4 reserves elevation for overlays only).
+The rest were contained: a shimmer-gradient skeleton loader (whose gradient had,
+unnoticed, gone fully inert during an earlier token migration — all three color stops
+had converged on the same value, so "fixing" it was really removing dead code that
+happened to still violate the "no gradients" rule on paper), three stray non-zero
+`border-radius` values, and a missing `:focus-visible` rule on `.check-box` — a real
+keyboard-accessibility gap on every checklist row, not just a style nit.
+
+A second class of bug surfaced only while doing this PR's own required responsive
+verification pass (`.claude/skills/verify-changes/`), reported live rather than found by
+grep: three places where a chip/pill and a button/input shared a row but had never been
+given a common height (the topbar's guest pill/"Create account" button/icon-button
+group; the Progress page's time-range chips vs. "Share progress"; the Daily Todos add
+row's input vs. its "Add" button). Each was fixed with a small scoped override on the
+specific row rather than a global class change, since the underlying classes (`.sync-pill`,
+`.btn-sm`, `.filter-chip`) are each used elsewhere with their own correct sizing — a
+global height change would have been higher-blast-radius than the bug it was fixing. A
+systematic DOM scan (every page, 390/768/1024/1920px) confirmed no further instances of
+this bug shape anywhere else in the app.
+
+See `CHANGELOG.md`'s own entry for this issue for the full per-selector list and
+before/after detail — not duplicated here.
