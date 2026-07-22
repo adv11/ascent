@@ -63,15 +63,22 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     const phaseBody = secondCard.locator('.phase-body');
 
     await secondCard.locator('.phase-head').click();
-    await expect(secondCard).toHaveClass(/open/);
     // Deterministic check, not a wall-clock race — see the comment on the
-    // collapse test above for why.
+    // collapse test above for why. Read immediately after click() resolves,
+    // same as the collapse test — an intermediate `await
+    // expect(...).toHaveClass(/open/)` here (an earlier version of this fix)
+    // reintroduced the identical race: its own polling round-trip could
+    // itself take long enough on a loaded CI runner for the 200ms animation
+    // to already finish before this evaluate() ever ran, reproducing the
+    // exact flake this rewrite was meant to eliminate (confirmed failing
+    // 3/3 attempts on CI with that intermediate wait in place).
     const isAnimating = await phaseBody.evaluate(el => {
       const anim = el.getAnimations()[0];
       return !!anim && anim.playState === 'running';
     });
     expect(isAnimating).toBe(true);
 
+    await expect(secondCard).toHaveClass(/open/);
     await expect(phaseBody).toBeVisible();
   });
 
