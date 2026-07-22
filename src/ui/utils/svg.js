@@ -10,14 +10,16 @@ export function svgEl(tag, attrs = {}) {
 }
 
 // Builds a 24x24 line-icon <svg> from a list of shape descriptors, each
-// `{ tag = 'path', ...attrs }`. `stroke`/`fill`/`stroke-width` default to the
-// app's one shared icon style (currentColor stroke, no fill, 1.8 stroke
-// width) so call sites only need to specify the geometry — pass any of
-// those keys per-shape to override (e.g. a filled dot). `viewBox` defaults to
-// `24 24` (this app's hand-drawn line icons) but is overridable per call —
-// issue #136 Phase 2's Phosphor-sourced icons ship in their native `256 256`
-// viewBox as filled paths (`fill: 'currentColor', stroke: 'none'` per shape),
-// not this module's stroke-icon defaults.
+// `{ tag = 'path', ...attrs }`. `stroke`/`fill`/`stroke-width`/`stroke-linecap`/
+// `stroke-linejoin` default to Lucide's own native rendering style (currentColor
+// stroke, no fill, 2px stroke width, round caps/joins — design-system.md §5's
+// "Icons: Lucide only... stroke-width 2") so call sites only need to specify the
+// geometry — pass any of those keys per-shape to override. Bumped from the
+// pre-Lucide 1.8 default in issue #301 (Phase 5's icon migration) — Lucide's own
+// shapes are drawn assuming round caps/joins at stroke-width 2; rendering them
+// without those produces subtly wrong (jagged-joint, thin) icons. `viewBox`
+// defaults to `24 24`, Lucide's native viewBox — overridable per call for any
+// non-Lucide decorative SVG that still needs a different one.
 export function svgIcon(shapes, { size = 24, viewBox = '0 0 24 24' } = {}) {
   const svg = svgEl('svg', {
     viewBox,
@@ -29,7 +31,9 @@ export function svgIcon(shapes, { size = 24, viewBox = '0 0 24 24' } = {}) {
   shapes.forEach(({ tag = 'path', ...attrs }) => svg.append(svgEl(tag, {
     fill: 'none',
     stroke: 'currentColor',
-    'stroke-width': '1.8',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
     ...attrs
   })));
   return svg;

@@ -93,12 +93,17 @@
   /* Priority mapping — design-system.md §2: "P0 = accent tint, P1 = lighter
      accent tint or outline, P2 = neutral tint." The v2 spec has only three
      priority tiers (P0/P1/P2); this app's data model has a fourth (P3).
-     Judgment call: every old --color-p3/--color-p3-ink call site was
-     repointed directly to --color-p2/--color-p2-ink (the lowest/neutral
-     tier) rather than keeping a separate --color-p3 alias token — P3 is now
-     visually identical to P2, which reads correctly for "lowest priority,
-     de-emphasized" and avoids inventing a token outside the spec's exact
-     list. */
+     A prior pass here repointed every --color-p3/--color-p3-ink call site
+     directly to --color-p2/--color-p2-ink, making P3 visually identical to
+     P2 — reported live (screenshot) as "priority filter colors are missing"
+     once someone actually clicked through P0-P3 in sequence and P2/P3 read
+     as the exact same chip. Restored as its own token pair instead: a
+     lighter neutral tint (--color-neutral-300, one step lighter than P2's
+     -500) so P3 reads as "even more de-emphasized than P2," not identical to
+     it — live-verified contrast (relative-luminance calc, this file's usual
+     discipline): --color-p3-ink on its own 15%-tint background clears
+     5.23:1 light / 6.89:1 dark, both comfortably passing WCAG AA for the
+     9px badge text this pairs with. */
   --color-p0:     var(--color-accent);
   --color-p0-ink: var(--color-accent-800);
   --color-p0-bg:  var(--color-accent-100);
@@ -108,6 +113,9 @@
   --color-p2:     var(--color-neutral-500);
   --color-p2-ink: var(--color-neutral-800);
   --color-p2-bg:  var(--color-neutral-200);
+  --color-p3:     var(--color-neutral-300);
+  --color-p3-ink: var(--color-neutral-700);
+  --color-p3-bg:  var(--color-neutral-100);
 
   /* Text on solid accent fills (buttons, filled badges) — replaces
      --color-ink-on-gold. */
@@ -263,8 +271,10 @@
   /* DELETED (do not reintroduce, issue #297): --color-brand-gold,
      --color-brand-rose, --gradient-alpenglow, --color-brand-gold-ink,
      --color-warning-ink, --color-brand-rose-ink, --color-ink-on-gold,
-     old --accent-50/400/500 (orange set), --color-p3/--color-p3-ink,
-     bg-grid-glow / text-gradient-brand classes. */
+     old --accent-50/400/500 (orange set), bg-grid-glow / text-gradient-brand
+     classes. --color-p3/--color-p3-ink were also removed here at the time,
+     then reinstated in issue #301 (Phase 5) as their own token pair — see
+     the priority-mapping comment above `:root`'s --color-p0 block for why. */
 }
 
 :root[data-theme='dark'] {
@@ -315,6 +325,9 @@
   --color-p2:     var(--color-neutral-500);
   --color-p2-ink: var(--color-neutral-800);
   --color-p2-bg:  var(--color-neutral-200);
+  --color-p3:     var(--color-neutral-300);
+  --color-p3-ink: var(--color-neutral-700);
+  --color-p3-bg:  var(--color-neutral-100);
 
   --color-ink-on-accent: #141312;
 
@@ -637,10 +650,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .btn-ghost { background: transparent; border-color: transparent; color: var(--color-text-muted); }
 .btn-ghost:hover:not(:disabled) { background: var(--color-surface-raised); }
 
-/* Danger — filled, same lift treatment as primary. */
+/* Danger — filled, same lift treatment as primary. `--color-danger` is
+   `--color-accent-700` (design-system.md's "danger reuses the accent ramp"
+   rule) — a dark red in light theme, a light pink in dark theme (it's tuned
+   for use as *text*, not a button fill). `color: var(--color-text)` here
+   measured 2.32:1 light / 1.32:1 dark against that fill — both catastrophic
+   contrast failures, found via a real relative-luminance check (issue #301
+   follow-up). `--color-ink-on-accent` (the same text token `.btn-primary`
+   already uses against the base `--color-accent` fill) clears 6.41:1 light /
+   12.23:1 dark instead. */
 .btn-danger {
   background: var(--color-danger);
-  color: var(--color-text);
+  color: var(--color-ink-on-accent);
   border-color: var(--color-danger);
   box-shadow: var(--shadow-sm);
 }
@@ -1814,6 +1835,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      hamburger becomes visible here too, and opening it expands the rail into
      the same full overlay drawer instead of staying icon-only. */
   .app-topbar-hamburger { display: inline-flex; }
+  /* `.app-topbar`'s base `align-items: center` (desktop) centers every flex
+     child against the row's own height — harmless there since nothing
+     wraps. Below 1024px, `.app-topbar-actions` (Local only/Create account +
+     the search/bell/theme icon group) has to `flex-wrap` onto a second line
+     once the hamburger + breadcrumb + all those controls no longer fit one
+     row, making that one flex item roughly twice as tall as the hamburger
+     button next to it — `align-items: center` then centers the hamburger
+     against that *combined* two-row height, so it visually floats between
+     the two wrapped rows instead of sitting level with the first one (real,
+     reported: screenshotted at 390px looking "crowded"/misaligned — issue
+     #301 follow-up). `flex-start` keeps every child's top edge level
+     regardless of how tall its neighbor grows once wrapped. */
+  .app-topbar { align-items: flex-start; }
   /* `position: fixed` takes the sidebar out of grid flow the moment the
      drawer opens — without the `.app-shell-2` override above locking the
      grid's first column to a fixed 56px, the `auto`-sized column it used to
@@ -1965,11 +1999,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   width: 100%;
   max-width: 420px;
 }
+/* design-system.md §5 — "modal/dialog... 2px title rules" (issue #301
+   follow-up; this modal title previously had no rule at all, just a margin
+   gap). */
 .modal-title {
   font-size: 18px;
   font-weight: 800;
   color: var(--color-text);
+  padding-bottom: 16px;
   margin-bottom: 20px;
+  border-bottom: 2px solid var(--color-divider);
 }
 .delete-modal-body {
   font-size: var(--text-base);
@@ -2190,7 +2229,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: 12px;
   font-weight: 800;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--color-success);
   background: var(--color-success-bg);
   color: var(--color-success);
@@ -2225,7 +2264,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   text-decoration: none;
   border: 1px solid var(--color-success);
   background: var(--color-success-bg);
@@ -2252,7 +2291,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
   border: 1px solid var(--color-warning);
   background: var(--color-warning-bg);
@@ -2285,7 +2324,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-accent-700);
   background: var(--color-warning-bg);
   border: 1px solid var(--color-border-strong);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 6px 12px;
   margin-bottom: 10px;
 }
@@ -2532,7 +2571,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .filter-chip[data-p="P0"].active { background: color-mix(in srgb, var(--color-p0) 15%, transparent); border-color: var(--color-p0); color: var(--color-p0-ink); }
 .filter-chip[data-p="P1"].active { background: color-mix(in srgb, var(--color-p1) 15%, transparent); border-color: var(--color-p1); color: var(--color-p1-ink); }
 .filter-chip[data-p="P2"].active { background: color-mix(in srgb, var(--color-p2) 15%, transparent); border-color: var(--color-p2); color: var(--color-p2-ink); }
-.filter-chip[data-p="P3"].active { background: color-mix(in srgb, var(--color-p2) 15%, transparent); border-color: var(--color-p2); color: var(--color-p2-ink); }
+.filter-chip[data-p="P3"].active { background: color-mix(in srgb, var(--color-p3) 15%, transparent); border-color: var(--color-p3); color: var(--color-p3-ink); }
 .chip-count { opacity: 0.75; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
 
 /* Issue #6 Phase 4.3 — subtle hover shimmer: a diagonal highlight band swept
@@ -2751,7 +2790,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border-strong);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 3px 9px;
   white-space: nowrap;
 }
@@ -2831,7 +2870,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 700;
   color: var(--color-accent-700);
   background: var(--color-warning-bg);
-  border-radius: 999px;
+  border-radius: 0;
   padding: 2px 8px;
   white-space: nowrap;
 }
@@ -2932,7 +2971,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .phase-card[data-priority="P0"] { border-left-color: var(--color-p0); }
 .phase-card[data-priority="P1"] { border-left-color: var(--color-p1); }
 .phase-card[data-priority="P2"] { border-left-color: var(--color-p2); }
-.phase-card[data-priority="P3"] { border-left-color: var(--color-p2); }
+.phase-card[data-priority="P3"] { border-left-color: var(--color-p3); }
 
 .phase-head {
   width: 100%;
@@ -3045,7 +3084,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .badge.P0 { background: color-mix(in srgb, var(--color-p0) 15%, transparent); color: var(--color-p0-ink); }
 .badge.P1 { background: color-mix(in srgb, var(--color-p1) 15%, transparent); color: var(--color-p1-ink); }
 .badge.P2 { background: color-mix(in srgb, var(--color-p2) 15%, transparent); color: var(--color-p2-ink); }
-.badge.P3 { background: color-mix(in srgb, var(--color-p2) 15%, transparent); color: var(--color-p2-ink); }
+.badge.P3 { background: color-mix(in srgb, var(--color-p3) 15%, transparent); color: var(--color-p3-ink); }
 
 /* Checklist items */
 .check-item {
@@ -3258,7 +3297,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .priority-tag.P0 { color: var(--color-p0-ink); opacity: 1; }
 .priority-tag.P1 { color: var(--color-p1-ink); opacity: 1; }
 .priority-tag.P2 { color: var(--color-p2-ink); opacity: 1; }
-.priority-tag.P3 { color: var(--color-p2-ink); opacity: 1; }
+.priority-tag.P3 { color: var(--color-p3-ink); opacity: 1; }
 
 /* issue #136 Phase 1 — recolored from --color-warning-bg/--color-brand-gold to a
    neutral pill: a resource count is metadata, not a status, and doesn't need
@@ -3448,7 +3487,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-transform: uppercase;
   letter-spacing: 0.03em;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--color-accent);
   color: #fff;
 }
@@ -3532,7 +3571,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: var(--text-xs);
   font-weight: 700;
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
@@ -3669,7 +3708,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      highlighted target. Not clip-path'ing a separate overlay, per the
      issue's own spec — cheaper to keep in sync on resize/scroll, since
      repositioning is just two style writes rather than a recomputed path. */
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); /* intentional: theme-agnostic dim layer, same reasoning as .modal-overlay's own scrim */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* intentional: theme-agnostic dim layer, same reasoning as .modal-overlay's own scrim; design-system.md §7 specifies "ink scrim at 50%" exactly (issue #301 follow-up — was 0.6) */
   pointer-events: none;
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -3720,12 +3759,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: 32px 28px 28px;
   width: 100%;
   max-width: 420px;
-  text-align: center;
 }
-.tour-welcome-brand { display: flex; justify-content: center; margin-bottom: 12px; }
+/* Flush-left, not centered — design-system.md §4's "flush-left everything...
+   never center hero copy or button labels" rule (issue #301 follow-up). This
+   card was the one remaining centered modal in the app. */
+.tour-welcome-brand { display: flex; justify-content: flex-start; margin-bottom: 12px; }
 .tour-welcome-title { font-size: var(--text-lg); margin: 0 0 8px; color: var(--color-text); }
 .tour-welcome-body { color: var(--color-text-muted); margin: 0 0 20px; }
-.tour-welcome-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.tour-welcome-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
 
 /* 3.6 Tabs */
 .tabs { display: flex; border-bottom: 1px solid var(--color-border); gap: 0; }
@@ -3783,7 +3824,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font: inherit;
   font-size: var(--text-base);
   border: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 2px solid var(--color-divider); /* design-system.md §5's "2px input rule" (issue #301 follow-up; was 1px) */
   padding: var(--space-4) var(--space-6);
   background: transparent;
   color: var(--color-text);
@@ -3807,7 +3848,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-md);
   cursor: pointer;
 }
-.command-palette-item.active { background: var(--color-surface-raised); }
+/* design-system.md §5 — "selected row = 3px accent bar + accent-100 fill
+   (same pattern as sidebar's active nav item)" (issue #301 follow-up; this
+   was still the pre-#301 neutral `--color-surface-raised` hover-style fill,
+   `.nav-item.active`'s own exact treatment just below). */
+.command-palette-item.active { background: var(--color-accent-100); box-shadow: inset 3px 0 0 var(--color-accent); }
+.command-palette-item.active .command-palette-item-title { color: var(--color-accent-700); }
 .command-palette-item-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-text); }
 .command-palette-item-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); }
 .command-palette-footer {
@@ -3840,7 +3886,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text);
   border: 1px solid var(--color-border);
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: 0;
   font-size: var(--text-sm);
   font-weight: 700;
   box-shadow: var(--shadow-md);
@@ -4188,7 +4234,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .phase-breakdown-dot[data-priority="P0"] { background: var(--color-p0); }
 .phase-breakdown-dot[data-priority="P1"] { background: var(--color-p1); }
 .phase-breakdown-dot[data-priority="P2"] { background: var(--color-p2); }
-.phase-breakdown-dot[data-priority="P3"] { background: var(--color-p2); }
+.phase-breakdown-dot[data-priority="P3"] { background: var(--color-p3); }
 .phase-breakdown-main { display: grid; gap: 4px; min-width: 0; }
 .phase-breakdown-name { font-weight: 600; font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .phase-breakdown-count { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -4342,8 +4388,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    should match the real dashboard checklist it's depicting, now that
    .check-item.done .check-box is lime in dark theme too. */
 :root[data-theme='dark'] .landing-mock-check { border-color: var(--color-accent); background: var(--color-warning-bg); }
-.landing-mock-bar { flex: 1; height: 10px; border-radius: 999px; background: var(--color-border-strong); overflow: hidden; }
-.landing-mock-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--color-accent); }
+/* Flat, not a pill — design-system.md §5 "Progress: flat bars (6-8px)... accent fill" (issue #301 follow-up). */
+.landing-mock-bar { flex: 1; height: 10px; background: var(--color-border-strong); overflow: hidden; }
+.landing-mock-bar-fill { display: block; height: 100%; background: var(--color-accent); }
 :root[data-theme='dark'] .landing-mock-bar-fill { background: var(--color-accent); }
 .landing-mock-fill-1 { width: 92%; }
 .landing-mock-fill-2 { width: 68%; }
@@ -4584,6 +4631,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    spec. Fixed to the viewport corner, so it needs the same safe-area-inset
    treatment every other fixed edge element in this app gets
    (.claude/rules/ui-styling.md). */
+/* design-system.md §5 — "Feedback widget: solid accent square." Was a
+   neutral --color-surface pill with a border (issue #301 follow-up); now a
+   flat solid --color-accent fill with ground-colored text/icon, matching
+   .btn-primary's own fill/text pairing. */
 .feedback-widget-trigger {
   position: fixed;
   bottom: max(24px, env(safe-area-inset-bottom));
@@ -4593,20 +4644,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   align-items: center;
   gap: 8px;
   padding: 12px 18px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border-radius: 0;
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-ink-on-accent);
   font-weight: 700;
   font-size: var(--text-sm);
   box-shadow: var(--shadow-lg);
   cursor: pointer;
   opacity: 0;
   transform: scale(0.85);
-  transition: transform 220ms var(--ease-spring, ease), opacity 220ms ease, box-shadow 160ms ease;
+  transition: transform 220ms var(--ease-spring, ease), opacity 220ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 .feedback-widget-trigger.feedback-widget-visible { opacity: 1; transform: scale(1); }
-.feedback-widget-trigger:hover { box-shadow: var(--shadow-xl); border-color: var(--color-border-strong); }
+.feedback-widget-trigger:hover { box-shadow: var(--shadow-xl); background: var(--color-accent-600); }
 .feedback-widget-trigger:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 :root[data-theme='dark'] .feedback-widget-trigger:focus-visible { outline-color: var(--color-accent); }
 .feedback-widget-emoji { font-size: var(--text-lg); line-height: 1; }
@@ -4730,16 +4781,19 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .my-report-title-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .my-report-title { flex: 1; }
 .my-report-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
-.my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--color-danger-bg); color: var(--color-danger); }
+.my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: 0; background: var(--color-danger-bg); color: var(--color-danger); }
 .my-report-severity-low, .my-report-severity-medium { background: var(--color-warning-bg); color: var(--color-warning); }
 .my-report-details { padding: 0 14px 14px; font-size: var(--text-sm); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
 
 /* Collapse the feedback trigger to icon-only below 480px (issue #9 §2.1) —
-   the full "💬 Feedback" pill is wide enough to crowd a phone-width corner
-   otherwise. */
+   the full "Feedback" pill is wide enough to crowd a phone-width corner
+   otherwise. Stays a square (radius 0), not a circular FAB — design-system.md
+   §5's "solid accent square" rule applies at every width, not just desktop
+   (issue #301 follow-up; this was a leftover circular-FAB treatment from
+   before that rule existed). */
 @media (max-width: 480px) {
   .feedback-widget-label { display: none; }
-  .feedback-widget-trigger { padding: 12px; border-radius: 50%; }
+  .feedback-widget-trigger { padding: 12px; }
 }
 
 @media (max-width: 375px) {
@@ -4807,15 +4861,31 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
    theme-independent print output — a printed page always renders on
    assumed-white paper/PDF viewer background regardless of the app's active
    on-screen theme, so none of these should ever read from a --token that
-   could resolve to a dark-theme value. The phase/priority accent hues below
-   are the same P0-P3 hues the on-screen light theme uses (--color-p0..--color-p3,
+   could resolve to a dark-theme value. The phase/priority hues below are the
+   same P0-P3 hues the on-screen light theme uses (--color-p0..--color-p3,
    :root), copied as literals rather than tokens since a print stylesheet
    must never resolve to the dark-theme values of those same custom
-   properties — each pairing (white text on a solid accent fill, or accent
-   text on white) was re-verified against actual white paper, not the
-   on-screen panel background it's copied from: #dc2626/#b45309/#2563eb/
-   #15803d all clear 4.5:1+ for white text at this weight/size, and clear
-   4.5:1+ again as text directly on white. */
+   properties.
+   Retuned in issue #301 (Phase 5) — the previous literals here (#dc2626
+   red/#b45309 amber/#2563eb blue/#15803d green) were a leftover four-hue
+   rainbow palette from well before the v2 "Modernist" single-accent+neutral
+   redesign; the comment claiming they "matched --color-p0..--color-p3" had
+   gone stale the moment Phase 1 (#297) repointed those tokens to
+   accent/accent-400/neutral-500/neutral-300, and nothing print-specific was
+   touched in any phase since. A solid-fill-plus-white-text badge (the old
+   approach) cannot work with the new palette at all — re-verified via a real
+   relative-luminance calculation, white text on these current tokens'
+   literal hex values (#EC3013/#FF9783/#9B9797/#D7D3D3) measures only
+   4.20/2.10/2.89/1.48:1, all failing WCAG AA. Print badges now follow this
+   app's own on-screen `.badge` pattern instead — a light ~15% tint
+   background with full-opacity ink-variant text, not a solid fill — which is
+   exactly what already makes the on-screen badges contrast-safe: text in
+   #7C1405/#AE1800/#444141/#605D5D (the light theme's --color-p0-ink through
+   --color-p3-ink) on their own literal ~15%-tint-on-white background
+   (#fce0dc/#ffefec/#f0efef/#f9f8f8) measures 10.72/7.17/10.10/6.52:1, all
+   comfortably passing. Phase border-left accents (no text-contrast concern,
+   just a colored rule) use the base hue directly:
+   #EC3013/#FF9783/#9B9797/#D7D3D3. */
 @media print {
   /* `@page { margin: 0 }` removes the blank margin band Chrome/Firefox
      otherwise reserve for their own browser-injected print chrome — the
@@ -4979,10 +5049,10 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
     border-left: 4px solid #94a3b8; /* intentional: fixed neutral print accent, phase priority unmapped */
     page-break-inside: avoid;
   }
-  .print-phase-P0 { border-left-color: #dc2626; } /* intentional: fixed print accent, matches --color-p0 (light theme) */
-  .print-phase-P1 { border-left-color: #b45309; } /* intentional: fixed print accent, matches --color-p1 (light theme) */
-  .print-phase-P2 { border-left-color: #2563eb; } /* intentional: fixed print accent, matches --color-p2 (light theme) */
-  .print-phase-P3 { border-left-color: #15803d; } /* intentional: fixed print accent, matches --color-p3 (light theme) */
+  .print-phase-P0 { border-left-color: #EC3013; } /* intentional: fixed print accent, matches --color-p0 (light theme) */
+  .print-phase-P1 { border-left-color: #FF9783; } /* intentional: fixed print accent, matches --color-p1 (light theme) */
+  .print-phase-P2 { border-left-color: #9B9797; } /* intentional: fixed print accent, matches --color-p2 (light theme) */
+  .print-phase-P3 { border-left-color: #D7D3D3; } /* intentional: fixed print accent, matches --color-p3 (light theme) */
   .print-phase-title { font-size: 18px; margin: 20px 0 8px; }
   .print-section-title {
     font-size: 12px;
@@ -4997,17 +5067,16 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .print-item { margin: 6px 0; page-break-inside: avoid; }
   .print-priority-badge {
     display: inline-block;
-    color: #fff; /* intentional: fixed print badge text, see block comment above */
     font-size: 11px;
     font-weight: 700;
     padding: 1px 8px;
-    border-radius: 999px;
     margin-left: 6px;
+    /* radius 0 — design-system.md §4, matches every on-screen chip/badge */
   }
-  .print-priority-badge.print-priority-P0 { background: #dc2626; } /* intentional: fixed print accent, matches --color-p0 (light theme) */
-  .print-priority-badge.print-priority-P1 { background: #b45309; } /* intentional: fixed print accent, matches --color-p1 (light theme) */
-  .print-priority-badge.print-priority-P2 { background: #2563eb; } /* intentional: fixed print accent, matches --color-p2 (light theme) */
-  .print-priority-badge.print-priority-P3 { background: #15803d; } /* intentional: fixed print accent, matches --color-p3 (light theme) */
+  .print-priority-badge.print-priority-P0 { background: #fce0dc; color: #7C1405; } /* intentional: fixed print tint+ink, matches --color-p0-bg/-ink (light theme) */
+  .print-priority-badge.print-priority-P1 { background: #ffefec; color: #AE1800; } /* intentional: fixed print tint+ink, matches --color-p1-bg/-ink (light theme) */
+  .print-priority-badge.print-priority-P2 { background: #f0efef; color: #444141; } /* intentional: fixed print tint+ink, matches --color-p2-bg/-ink (light theme) */
+  .print-priority-badge.print-priority-P3 { background: #f9f8f8; color: #605D5D; } /* intentional: fixed print tint+ink, matches --color-p3-bg/-ink (light theme) */
   .print-item-notes { font-size: 12px; color: #333; margin: 2px 0 2px 24px; white-space: pre-wrap; /* intentional: fixed print text color */ }
   .print-resource { font-size: 12px; color: #333; margin: 2px 0 2px 24px; font-style: italic; /* intentional: fixed print text color */ }
 }

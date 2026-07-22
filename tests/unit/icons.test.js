@@ -8,13 +8,12 @@ const ICON_NAMES = [
 ];
 
 describe('icons.js', () => {
-  // issue #136 Phase 2 — re-drawn onto real Phosphor Icons (Regular weight)
-  // source paths, which ship in a native 256x256 viewBox, not this app's
-  // previous hand-drawn line icons' 24x24.
-  it.each(ICON_NAMES)('createIcon("%s") returns a valid 256x256 <svg> node', name => {
+  // issue #301 Phase 5 — migrated from Phosphor Icons (Regular weight) to
+  // real Lucide source paths, which ship in a native 24x24 viewBox.
+  it.each(ICON_NAMES)('createIcon("%s") returns a valid 24x24 <svg> node', name => {
     const svg = createIcon(name);
     expect(svg.tagName).toBe('svg');
-    expect(svg.getAttribute('viewBox')).toBe('0 0 256 256');
+    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
     expect(svg.getAttribute('aria-hidden')).toBe('true');
     expect(svg.classList.contains('icon')).toBe(true);
     expect(svg.children.length).toBeGreaterThan(0);

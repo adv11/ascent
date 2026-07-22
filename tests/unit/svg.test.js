@@ -19,7 +19,7 @@ describe('svg.js', () => {
     expect(svg.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('svgIcon defaults each shape to currentColor stroke / no fill / 1.8 width, per-shape overridable', () => {
+  it('svgIcon defaults each shape to currentColor stroke / no fill / 2px width with round caps and joins (Lucide\'s own style, issue #301), per-shape overridable', () => {
     const svg = svgIcon([
       { d: 'M0 0h24v24H0z' },
       { tag: 'circle', cx: '12', cy: '12', r: '2', fill: 'currentColor', stroke: 'none' }
@@ -27,7 +27,9 @@ describe('svg.js', () => {
     const [path, circle] = svg.children;
     expect(path.getAttribute('fill')).toBe('none');
     expect(path.getAttribute('stroke')).toBe('currentColor');
-    expect(path.getAttribute('stroke-width')).toBe('1.8');
+    expect(path.getAttribute('stroke-width')).toBe('2');
+    expect(path.getAttribute('stroke-linecap')).toBe('round');
+    expect(path.getAttribute('stroke-linejoin')).toBe('round');
     expect(circle.tagName).toBe('circle');
     expect(circle.getAttribute('fill')).toBe('currentColor');
     expect(circle.getAttribute('stroke')).toBe('none');

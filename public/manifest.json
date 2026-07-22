@@ -4,8 +4,8 @@
   "description": "Engineer your next move.",
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#0a0f1a",
-  "theme_color": "#D9A441",
+  "background_color": "#141312",
+  "theme_color": "#EC3013",
   "icons": [
     { "src": "/public/favicon-32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "/public/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },

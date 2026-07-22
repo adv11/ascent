@@ -14,9 +14,14 @@ function fakeCtx() {
   const ctx = {
     fillRect: vi.fn(), fillText: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(),
     lineTo: vi.fn(), closePath: vi.fn(), fill: vi.fn(), arcTo: vi.fn(),
+    rect: vi.fn(), stroke: vi.fn(), strokeRect: vi.fn(),
     createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
     set fillStyle(v) { calls.fillStyle.push(v); },
     get fillStyle() { return calls.fillStyle[calls.fillStyle.length - 1]; },
+    set strokeStyle(v) { calls.strokeStyle = v; },
+    get strokeStyle() { return calls.strokeStyle; },
+    set lineWidth(v) { calls.lineWidth = v; },
+    get lineWidth() { return calls.lineWidth; },
     set font(v) { calls.font.push(v); },
     get font() { return calls.font[calls.font.length - 1]; },
     set textAlign(v) { calls.textAlign = v; },
@@ -63,10 +68,10 @@ describe('generateShareCard', () => {
     expect(canvas.height).toBe(630);
   });
 
-  it('draws the brand name (never a hardcoded literal elsewhere)', async () => {
+  it('draws the brand name (never a hardcoded literal elsewhere) — uppercase per design-system.md\'s wordmark rule', async () => {
     await generateShareCard(fakeAnalytics(), {}, Date.now());
     const texts = calls.fillTextArgs.map(args => args[0]);
-    expect(texts.some(t => t.includes(BRAND_NAME))).toBe(true);
+    expect(texts.some(t => t.includes(BRAND_NAME.toUpperCase()))).toBe(true);
   });
 
   it('draws the completion stats and streak', async () => {

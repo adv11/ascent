@@ -36,23 +36,32 @@ async function main() {
     console.log(`wrote public/${file}`);
   }
 
+  // Rebuilt in issue #301 (Phase 5) as a red "poster statement" — the one
+  // pattern design-system.md §2 permits a full-bleed solid accent fill,
+  // matching landing.js's closing CTA banner (--color-accent bg,
+  // --color-ink-on-accent text). Archivo 800 uppercase wordmark, no gradient,
+  // no dark-navy background — those were the pre-v2 Alpenglow/ZeBeyond look.
   await page.setViewportSize({ width: 1200, height: 630 });
-  await page.setContent(`<!doctype html><html><head><style>
+  await page.setContent(`<!doctype html><html><head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
     html, body { margin: 0; padding: 0; }
     body {
-      width: 1200px; height: 630px; background: #0a0f1a;
+      width: 1200px; height: 630px; background: #EC3013;
       display: flex; align-items: center; justify-content: center; gap: 32px;
-      font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    .name { color: #fff; font-weight: 800; font-size: 72px; letter-spacing: -0.02em; }
-    .tagline { color: #94a3b8; font-weight: 600; font-size: 26px; margin-top: 6px; }
+    .name { color: #F3F2F2; font-weight: 800; font-size: 72px; letter-spacing: 0.02em; text-transform: uppercase; }
+    .tagline { color: #F3F2F2; opacity: 0.85; font-weight: 600; font-size: 26px; margin-top: 6px; }
   </style></head><body>
     ${sizedSvg(120)}
     <div>
-      <div class="name">ascent</div>
+      <div class="name">Ascent</div>
       <div class="tagline">Engineer your next move.</div>
     </div>
   </body></html>`);
+  await page.waitForTimeout(200); // let the webfont finish loading before the screenshot
   const ogBuffer = await page.screenshot();
   writeFileSync(path.join(publicDir, 'og-image.png'), ogBuffer);
   console.log('wrote public/og-image.png');

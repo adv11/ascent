@@ -14,15 +14,18 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
-// Plus Jakarta Sans is already loaded for the DOM (index.html's Google Fonts
-// link), but a <canvas> only picks up a font once the Font Loading API
-// confirms it's ready — `ctx.fillText()` silently falls back to the default
-// UI font otherwise, with no error. Safe to call every time: `fonts.load()`
-// resolves immediately from cache once the font's already loaded.
+// Archivo is index.html's only loaded webfont as of the v2 "Modernist"
+// redesign (issue #297) — `ensureFontLoaded()` used to load "Plus Jakarta
+// Sans", a font this app stopped fetching from Google Fonts entirely back in
+// that same phase, silently falling back to the canvas default font ever
+// since (no error surfaced anywhere — the same "stale asset nobody noticed"
+// bug class #307's chartWrapper.js fix and this file's own background
+// rewrite below both hit). `document.fonts.load()` resolves immediately from
+// cache once the font's already loaded, so this is safe to call every time.
 async function ensureFontLoaded() {
   try {
-    await document.fonts.load('700 40px "Plus Jakarta Sans"');
-    await document.fonts.load('600 24px "Plus Jakarta Sans"');
+    await document.fonts.load('800 40px "Archivo"');
+    await document.fonts.load('600 24px "Archivo"');
   } catch {
     // Font Loading API unsupported or the font failed to load — canvas text
     // still renders, just in a fallback font. Not worth failing the whole
@@ -30,68 +33,79 @@ async function ensureFontLoaded() {
   }
 }
 
-function roundedRect(ctx, { x, y, width, height, radius }) {
+function rect(ctx, { x, y, width, height }) {
   ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + width, y, x + width, y + height, radius);
-  ctx.arcTo(x + width, y + height, x, y + height, radius);
-  ctx.arcTo(x, y + height, x, y, radius);
-  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.rect(x, y, width, height);
   ctx.closePath();
 }
 
-// Alpenglow gold→rose (issue #155 v2/#206), replacing the old pre-Alpenglow
-// teal `--brand-500/600/700` gradient this card had kept using on its own —
-// real feedback (screenshot): the share card was the one remaining surface
-// still showing the retired teal identity after the rest of the app moved
-// to gold/rose. Uses `--color-brand-gold-ink`/`--color-brand-rose-ink` (the
-// same darkened variants `.template-card-ai-badge` etc. already use for
-// text-on-light-fill contrast), not the base `--color-brand-gold`/
-// `--color-brand-rose` tokens — this card hosts white text throughout, and
-// the base tokens are light/mid-toned (tuned for hosting *dark* ink text,
-// e.g. `.btn-primary`), which would fail contrast for white text the same
-// way the old dark teal-700→teal-500 stops never did. The `-ink` variants
-// are dark enough to preserve that same white-on-dark contrast while still
-// reading unmistakably as this app's actual brand gradient, not a
-// coincidentally similar dark color.
+// Rewritten in issue #301 (Phase 5) — this card had kept its own Alpenglow
+// gold->rose gradient background (`--color-brand-gold-ink`/
+// `--color-brand-rose-ink`) long after both tokens were removed in Phase 1
+// (#297)'s token migration; `cssVar()`'s fallback meant it had silently kept
+// rendering the old hardcoded gold/rose hex literals ever since, unnoticed
+// because nothing ever throws when a custom property resolves to an empty
+// string. Per design-system.md's explicit "no gradients anywhere" rule and
+// issue #301's own scope ("shareCard.js/printRoadmap.js: same tokens on
+// white... accent only for the triangle and priority tags"), the card is now
+// a flat light-theme surface (`--color-bg`, literal — a canvas has no CSS
+// cascade to inherit dark-theme values from, so this always renders the same
+// regardless of the user's active site theme, matching `printRoadmap.js`'s
+// own "always assumed-light-background" precedent) with dark ink text and
+// the accent reserved for the triangle glyph and the streak figure — never a
+// full-bleed color fill.
 function drawBackground(ctx) {
-  const gradient = ctx.createLinearGradient(0, 0, CARD_WIDTH, CARD_HEIGHT);
-  gradient.addColorStop(0, cssVar('--color-brand-gold-ink', '#775a24'));
-  gradient.addColorStop(1, cssVar('--color-brand-rose-ink', '#6a333b'));
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = cssVar('--color-bg', '#F3F2F2');
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+  ctx.strokeStyle = cssVar('--color-divider', 'rgba(32,30,29,0.4)');
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, CARD_WIDTH - 2, CARD_HEIGHT - 2);
 }
 
 function drawWordmark(ctx) {
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = cssVar('--color-accent', '#EC3013');
   ctx.beginPath();
   ctx.moveTo(64, 76);
   ctx.lineTo(84, 108);
   ctx.lineTo(44, 108);
   ctx.closePath();
   ctx.fill();
-  ctx.font = '700 30px "Plus Jakarta Sans", sans-serif';
+  ctx.font = '800 30px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text', '#201E1D');
   ctx.textBaseline = 'middle';
-  ctx.fillText(BRAND_NAME, 100, 92);
+  ctx.fillText(BRAND_NAME.toUpperCase(), 100, 92);
 }
 
 function drawDate(ctx, now) {
   const label = new Date(now).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  ctx.font = '600 22px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '600 22px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text-muted', 'rgba(32,30,29,0.6)');
   ctx.textAlign = 'right';
   ctx.fillText(label, CARD_WIDTH - 64, 92);
   ctx.textAlign = 'left';
 }
 
+function drawHeaderRule(ctx) {
+  ctx.strokeStyle = cssVar('--color-divider', 'rgba(32,30,29,0.4)');
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(64, 132);
+  ctx.lineTo(CARD_WIDTH - 64, 132);
+  ctx.stroke();
+}
+
 function drawStats(ctx, analytics) {
   const { overview, streaks } = analytics;
-  ctx.font = '700 48px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 48px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text', '#201E1D');
   ctx.fillText(`${overview.done} items complete · ${overview.pct}%`, 64, 200);
 
-  ctx.font = '700 32px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = '#fbbf7a';
+  // Streak figure is the one other accent-colored element besides the
+  // triangle — paragraph-size accent text must read --color-accent-700 for
+  // contrast (design-system.md §2), not the raw --color-accent this card's
+  // triangle/heatmap use for icon/large-numeral-scale content.
+  ctx.font = '700 32px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-accent-700', '#AE1800');
   ctx.textAlign = 'right';
   ctx.fillText(`🔥 ${streaks.current}-day streak`, CARD_WIDTH - 64, 200);
   ctx.textAlign = 'left';
@@ -101,19 +115,22 @@ function drawProgressBar(ctx, pct) {
   const x = 64;
   const y = 236;
   const width = CARD_WIDTH - 128;
-  const height = 22;
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  roundedRect(ctx, { x, y, width, height, radius: height / 2 });
+  const height = 8; // design-system.md §5 — "flat bars (6-8px)", not a pill
+  ctx.fillStyle = cssVar('--color-neutral-200', '#EAE7E7');
+  rect(ctx, { x, y, width, height });
   ctx.fill();
-  const fillWidth = Math.max(height, (Math.max(0, Math.min(100, pct)) / 100) * width);
-  ctx.fillStyle = '#ffffff';
-  roundedRect(ctx, { x, y, width: fillWidth, height, radius: height / 2 });
+  const fillWidth = Math.max(0, (Math.max(0, Math.min(100, pct)) / 100) * width);
+  ctx.fillStyle = cssVar('--color-accent', '#EC3013');
+  rect(ctx, { x, y, width: fillWidth, height });
   ctx.fill();
 }
 
 // Last 16 weeks x 7 days, condensed to ~48px tall total (per spec) —
 // derived from the same heatmapData shape the full page's heatmap uses,
-// just sliced to the most recent 112 cells instead of the full 364.
+// just sliced to the most recent 112 cells instead of the full 364. Hard-
+// edged squares (radius 0) using the app's real 5-step heat ramp
+// (design-system.md §5), not an opacity scale over white — this card has no
+// dark background left to scale opacity against.
 function drawCondensedHeatmap(ctx, activityLog, now) {
   const fullYear = computeHeatmap(activityLog, now);
   const cells = fullYear.slice(-CONDENSED_WEEKS * 7);
@@ -121,13 +138,19 @@ function drawCondensedHeatmap(ctx, activityLog, now) {
   const gap = 2;
   const startX = 64;
   const startY = 292;
-  const levelColors = ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.4)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.8)', '#ffffff'];
+  const levelColors = [
+    cssVar('--heat-0', '#EAE7E7'),
+    cssVar('--heat-1', '#FFC4B8'),
+    cssVar('--heat-2', '#FF9783'),
+    cssVar('--heat-3', '#FF563C'),
+    cssVar('--heat-4', '#DD2B0F')
+  ];
 
   cells.forEach((cell, i) => {
     const col = Math.floor(i / 7);
     const row = i % 7;
     ctx.fillStyle = levelColors[cell.level];
-    roundedRect(ctx, { x: startX + col * (cellSize + gap), y: startY + row * (cellSize + gap), width: cellSize, height: cellSize, radius: 1 });
+    rect(ctx, { x: startX + col * (cellSize + gap), y: startY + row * (cellSize + gap), width: cellSize, height: cellSize });
     ctx.fill();
   });
 }
@@ -135,14 +158,14 @@ function drawCondensedHeatmap(ctx, activityLog, now) {
 function drawPhaseTags(ctx, phaseBreakdown) {
   const tags = phaseBreakdown.slice(0, 4).map(p => p.phase).filter(Boolean).join('  ·  ');
   if (!tags) return;
-  ctx.font = '600 20px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.font = '600 20px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text-muted', 'rgba(32,30,29,0.6)');
   ctx.fillText(tags, 64, CARD_HEIGHT - 56);
 }
 
 function drawAttribution(ctx) {
-  ctx.font = '600 20px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '600 20px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text-muted', 'rgba(32,30,29,0.6)');
   ctx.textAlign = 'right';
   ctx.fillText(`${BRAND_NAME.toLowerCase()}.dev`, CARD_WIDTH - 64, CARD_HEIGHT - 56);
   ctx.textAlign = 'left';
@@ -161,6 +184,7 @@ export async function generateShareCard(analytics, activityLog, now = Date.now()
   drawBackground(ctx);
   drawWordmark(ctx);
   drawDate(ctx, now);
+  drawHeaderRule(ctx);
   drawStats(ctx, analytics);
   drawProgressBar(ctx, analytics.overview.pct);
   drawCondensedHeatmap(ctx, activityLog, now);
@@ -171,25 +195,25 @@ export async function generateShareCard(analytics, activityLog, now = Date.now()
 }
 
 function drawBadgeGlyph(ctx) {
-  ctx.font = '700 96px "Plus Jakarta Sans", sans-serif';
+  ctx.font = '700 96px "Archivo", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = cssVar('--color-accent', '#EC3013');
   ctx.fillText('🏆', CARD_WIDTH / 2, 220);
   ctx.textAlign = 'left';
 }
 
 function drawBadgeHeadline(ctx, kind) {
   const headline = kind === 'roadmap' ? 'Roadmap complete!' : 'Phase complete!';
-  ctx.font = '700 56px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 56px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text', '#201E1D');
   ctx.textAlign = 'center';
   ctx.fillText(headline, CARD_WIDTH / 2, 340);
   ctx.textAlign = 'left';
 }
 
 function drawBadgeLabel(ctx, label) {
-  ctx.font = '600 32px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '600 32px "Archivo", sans-serif';
+  ctx.fillStyle = cssVar('--color-text-muted', 'rgba(32,30,29,0.6)');
   ctx.textAlign = 'center';
   ctx.fillText(label, CARD_WIDTH / 2, 400);
   ctx.textAlign = 'left';
@@ -210,6 +234,7 @@ export async function generateBadgeCard(kind, label, now = Date.now()) {
   drawBackground(ctx);
   drawWordmark(ctx);
   drawDate(ctx, now);
+  drawHeaderRule(ctx);
   drawBadgeGlyph(ctx);
   drawBadgeHeadline(ctx, kind);
   drawBadgeLabel(ctx, label);

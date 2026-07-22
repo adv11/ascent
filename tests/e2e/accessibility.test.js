@@ -141,15 +141,40 @@ import { test, expect } from './fixtures.js';
 // (scoped, not the bare `.small`/`.muted` utility classes, to avoid blinding this list
 // to a real future contrast bug on either generic class elsewhere) read `--color-text-
 // muted`, live-verified at 6.05:1 against `.item-panel`'s white background.
+// `.landing-footer-copy`/`.landing-nav-link` (issue #301 follow-up) — both
+// read the identical `--color-text-muted` token over a flat `--color-bg`
+// background with no override (confirmed via `getComputedStyle()`: same
+// `color(srgb 0.125 0.118 0.114 / 0.64)` value, same `rgb(243,242,242)`
+// background, on both elements), so both get the same live-verified figure:
+// axe reported 4.27:1/3.52:1 with two different (and mutually inconsistent)
+// sampled foreground colors, neither matching the real computed one. The
+// actual composited color (`color-mix(in srgb, #201E1D 64%, transparent)`
+// over `--color-bg`) is #6c6a6a, measuring 4.81:1 light / 6.38:1 dark
+// (dark: `color-mix(in srgb, #F1EFED 60%, transparent)` over `#141312` =
+// #999795) — both comfortably passing, the same sampler-misattribution shape
+// as every other entry in this list.
+// `.btn-danger` removed from this list in issue #301 (Phase 5) — its original entry
+// above (issue #124) verified white text on the *old* `--danger` value
+// (`#dc2626`, ~4.83:1), which was a genuine sampler false positive at the time. The v2
+// "Modernist" redesign later repointed `--color-danger` to `--color-accent-700` (a
+// token tuned for use as *text*, not a button fill — `#AE1800` light / `#FFC4B8` dark)
+// without re-verifying this exemption against the new value, and `.btn-danger`'s own
+// text color was `--color-text` (plain ink), not `--color-ink-on-accent` — a real
+// relative-luminance check found 2.32:1 light / 1.32:1 dark, both catastrophic
+// failures the exemption had been silently hiding ever since the token repoint. Fixed
+// at the source (`.btn-danger` now reads `--color-ink-on-accent`, 6.41:1 light /
+// 12.23:1 dark) rather than re-added here — an exemption is for a sampler artifact,
+// never a substitute for verifying a real color pairing actually passes.
 const CONTRAST_FALSE_POSITIVE_SELECTORS = [
   '.phase-name', '.badge', '.phase-index',
   '.nav-item', '.app-sidebar-user-email', '.btn-primary', '.btn-secondary',
   '.stat-tile', '.priority-table-wrap td', '.brand-name', '.import-step-heading',
-  '.panel-kicker', '.link-badge', '.btn-danger', '.resource-count', '.btn-ghost',
+  '.panel-kicker', '.link-badge', '.resource-count', '.btn-ghost',
   '.field-label', '.priority-tag', '.section-label', '.kpi-tile', '.kpi-tile-hero',
   '.kpi-tile-label', '.auth-page-bg', 'body', '.app-topbar', '.app-topbar-breadcrumb',
   '.settings-header h1', '.settings-guest-card h2', '.progress-header-subtitle',
-  '.heatmap-day-label', '.timer-display', '.item-panel .small.muted'
+  '.heatmap-day-label', '.timer-display', '.item-panel .small.muted',
+  '.landing-footer-copy', '.landing-nav-link'
 ];
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
@@ -180,7 +205,14 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
   test('landing page has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/');
     await expect(page.locator('.landing-page')).toBeVisible({ timeout: 10_000 });
-    const violations = await runAxe(page);
+    // issue #301 follow-up — this call never opted into the false-positive
+    // exclusion list before; running the full suite against a real emulator
+    // (rather than the guest-session-only local checks earlier phases were
+    // limited to) newly surfaced the same sampler bug this list documents at
+    // length on `.landing-nav-link`/`.btn-ghost` here specifically (both
+    // live-verified as real passes, not real failures — `.btn-ghost`'s own
+    // entry above already documents this).
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 

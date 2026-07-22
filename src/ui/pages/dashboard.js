@@ -1417,9 +1417,17 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
               toggleAllBtn
             ])
           ]),
-          el('div', { className: 'toolbar-block' }, [
-            el('span', { className: 'toolbar-label', text: 'Tags' }),
-            tagFilterContainer
+          // Wrapped in `.toolbar` (not a bare `.toolbar-block`) so this row
+          // gets the exact same `max-width`/centered-margin treatment as the
+          // Priority row above it — a bare `.toolbar-block` here had no width
+          // constraint of its own and spanned the full (wider) `.dashboard-header`
+          // padding box, misaligning the "Tags" label ~55px left of "Priority"
+          // (issue #301 Phase 5 follow-up, found via live screenshot review).
+          el('div', { className: 'toolbar' }, [
+            el('div', { className: 'toolbar-block' }, [
+              el('span', { className: 'toolbar-label', text: 'Tags' }),
+              tagFilterContainer
+            ])
           ]),
           reviewTagGroupBanner
         ]),

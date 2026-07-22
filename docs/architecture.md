@@ -4365,3 +4365,37 @@ timeout). All four guards from this investigation (`authChangeCallId`,
 fixes for genuinely different races and are all kept — only the last one was the actual
 cause of this specific test's flake, but the other three close races that could still
 strike some other flow later if left unfixed.
+
+### 2026-07-22 — Issue #301 (Phase 5) — v2 "Modernist" overlays & long tail, closing out #289
+
+The last phase of the v2 redesign (issue #289, Phases 0–5). Scope per the issue: modals,
+dropdowns, the command palette, toasts, `feedbackWidget.js`, `featureTour.js`,
+`shareCard.js`/`printRoadmap.js`, PWA/meta assets, and — moved here from #297's original
+deferral note — the full icon migration from hand-redrawn Phosphor paths to real Lucide
+source paths across `icons.js` and `decorativeIcon.js` (68 icons total). `svg.js`'s
+`svgIcon()` defaults (stroke-width, cap/join style) were bumped to match Lucide's own
+native rendering rather than the app's pre-existing hand-drawn-icon defaults.
+
+This phase's own audit surfaced a materially longer list of real, live bugs than any
+prior phase — several were the exact "a token got removed/repointed and a call site
+silently kept reading its fallback forever" bug class issue #307 (Phase 4) had already
+found once in `chartWrapper.js`, recurring independently in `shareCard.js` (a gold→rose
+gradient background, plus a font-loading call for a webfont this app stopped loading
+entirely in Phase 1) and in the `@media print` stylesheet (a four-hue rainbow priority
+palette, `#dc2626`/`#b45309`/`#2563eb`/`#15803d`, that predates the whole redesign, with
+a comment falsely asserting it still matched the current tokens). A real, live-verified
+accessibility regression was also found: `.btn-danger`'s text color measured 2.32:1
+light / 1.32:1 dark against its own fill, both catastrophic contrast failures, invisible
+to CI because the accessibility test suite's own false-positive exemption list still
+carried a `.btn-danger` entry written against a *different*, long-superseded token value
+— removed and fixed at the source rather than re-verified into staying exempt, per that
+list's own "an exemption is for a sampler artifact, never a substitute for verifying a
+real pairing passes" discipline. Two more genuine, live-reported bugs (a P3 priority
+color collapsed into P2's tokens during Phase 1's own migration, and a structural CSS
+misalignment between the dashboard's Priority and Tags filter rows) were found via
+direct visual review against a running local build, not just spec-checklist auditing —
+this phase's own comment in `CHANGELOG.md` has the full list and root-cause detail for
+every fix, not duplicated here.
+
+Closes out issue #289 in full — every phase (0 rules, 1 tokens, 2 app shell, 3 first
+impressions, 4 analytics/settings, 5 overlays/long tail) has now merged.
