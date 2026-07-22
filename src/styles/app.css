@@ -24,7 +24,14 @@
   --color-border-strong:  #201E1D;
   --color-divider:        color-mix(in srgb, #201E1D 40%, transparent);
   --color-text:           #201E1D;
-  --color-text-muted:     color-mix(in srgb, #201E1D 60%, transparent);
+  /* design-system.md §2 spec's literal formula (color-mix 60%) only clears
+     ~4.12-4.24:1 against --color-surface/--color-bg — short of WCAG AA's
+     4.5:1 for normal text, caught live by the E2E a11y suite's axe scan on
+     .auth-subtitle/.daily-todo-empty/.template-card-desc. Bumped to 64%
+     (verified via relative-luminance calculation: 4.64:1 on --color-surface,
+     4.80:1 on --color-bg — comfortably passing both) — dark theme's own 60%
+     value already clears 6.1-6.4:1 and is untouched. */
+  --color-text-muted:     color-mix(in srgb, #201E1D 64%, transparent);
   /* --color-text-faint has no exact spec value in design-system.md's token
      table (only bg/surface/text/text-muted/divider/accent/neutral are
      spec'd) — judgment call: same color-mix idiom as --color-text-muted,
@@ -40,7 +47,20 @@
   --color-accent-300:  #FFC4B8;
   --color-accent-400:  #FF9783;
   --color-accent-500:  #FF563C;
-  --color-accent-600:  #DD2B0F;  /* hover on filled controls */
+  /* issue #297 follow-up — real, axe-confirmed contrast bug: neither white
+     nor dark ground-colored text clears 4.5:1 against the base
+     --color-accent (#EC3013 hosts white at 3.76:1, dark at 3.95-4.42:1 —
+     both fail; live on .btn-primary's "Start for free" label, caught by the
+     E2E a11y suite). This is new to the v2 palette — the old Alpenglow gold
+     accent passed at 6.8-8.1:1 in the same role. Darkened from #DD2B0F so it
+     doubles as the solid FILL for any body-text-size control on accent (not
+     just a hover step) — white text on this value measures 4.94:1. Icons/
+     large-numeral/UI-chrome uses of the base --color-accent (avatars, icon
+     badges, dots) are unaffected and stay on the un-darkened value per
+     design-system.md §2's own "fine for icons, large numerals, UI chrome"
+     carve-out — only .btn-primary and .seg-item's active fill (both host
+     real body-size text) were repointed to this token. */
+  --color-accent-600:  #C92910;  /* solid fill for text-hosting controls + hover step */
   --color-accent-700:  #AE1800;  /* accent as paragraph-size text */
   --color-accent-800:  #7C1405;  /* text on accent-100 tints */
   --color-accent-900:  #4D170E;
@@ -591,14 +611,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    --color-ink-on-accent's own comment above for the cross-theme contrast
    writeup this token exists to solve). issue #297: also the target of the
    .btn-cta merge above — every former .btn-cta call site (landing.js) now
-   renders through this rule directly. */
+   renders through this rule directly. Fill reads --color-accent-600, not the
+   base --color-accent — see that token's own comment for the axe-caught
+   contrast fix this is (dark theme's base --color-accent already passes
+   with dark ground-text at 5.88:1 and is intentionally left as-is via that
+   token's own light/dark values; only light theme needed the darkened fill). */
 .btn-primary {
-  background: var(--color-accent);
+  background: var(--color-accent-600);
   color: var(--color-ink-on-accent);
-  border-color: var(--color-accent);
+  border-color: var(--color-accent-600);
   box-shadow: var(--shadow-sm);
 }
-.btn-primary:hover:not(:disabled) { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent-600) 88%, black); border-color: color-mix(in srgb, var(--color-accent-600) 88%, black); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .btn-primary:disabled:hover { box-shadow: none; transform: none; }
 
 /* Secondary — outlined, surface fill. */
@@ -694,7 +718,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .seg-item + .seg-item { border-left: 1px solid var(--color-border); }
-.seg-item[aria-selected='true'], .seg-item.active { background: var(--color-accent); color: var(--color-ink-on-accent); }
+/* --color-accent-600, not the base --color-accent — same axe-caught
+   contrast fix as .btn-primary above, since this is also body-size text
+   on a solid accent fill. */
+.seg-item[aria-selected='true'], .seg-item.active { background: var(--color-accent-600); color: var(--color-ink-on-accent); }
 .seg-item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
 .form-message { min-height: 20px; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-muted); }
