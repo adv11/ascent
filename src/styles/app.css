@@ -1517,20 +1517,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .app-sidebar-backdrop.show { display: block; }
 
-/* intentional: fixed white initial on a --color-brand-gold-colored circle, same in both themes (issue #116) */
+/* issue #299 — design-system.md §8: "Avatars: square, ink fill, ground-colored
+   initial." Was a circular, accent-filled, fixed-white-text avatar left over
+   from the pre-#297 direction (both fill and shape). */
 .avatar {
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-bg);
   font-weight: 800;
   flex-shrink: 0;
 }
-/* issue #155 v2 Phase D3 (full completion pass) — the reference explicitly calls out
-   "avatar-ring accents" as one of its lime use cases. Same white-text-fails-on-lime
-   swap as .import-step-badge/.reset-success-icon — both fill and text change. */
-:root[data-theme='dark'] .avatar { background: var(--color-accent); }
 .avatar-sm { width: 28px; height: 28px; font-size: var(--text-xs); }
 .avatar-md { width: 36px; height: 36px; font-size: var(--text-sm); }
 .avatar-lg { width: 56px; height: 56px; font-size: var(--text-lg); }
@@ -3759,6 +3756,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 /* 3.8 Notification badge */
 /* intentional: fixed white text on a solid --color-danger background, same in both themes (issue #116) */
+/* issue #299 — design-system.md §8: "Notification badge: square accent dot,
+   no pill." Was a pill-shaped, danger-colored badge left over from the
+   pre-#297 direction. */
 .notification-badge {
   display: inline-flex;
   align-items: center;
@@ -3766,9 +3766,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 999px;
-  background: var(--color-danger);
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-ink-on-accent);
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
@@ -4250,21 +4249,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .landing-page { min-height: 100vh; min-height: 100dvh; background: var(--color-bg); overflow-x: hidden; }
 
-/* issue #155 (ZeBeyond direction) — floating, bordered, rounded-rect bar
-   (the reference's contained pill-shaped nav, not a full-width bar), rather
-   than a flat full-width header. */
+/* issue #299 — design-system.md's flat "2px-ruled header bar" nav, replacing
+   the pre-#297 floating/bordered/blurred pill-shaped bar (chip-radius, glass
+   surface, backdrop-filter — none of which fit the flat Modernist identity). */
 .landing-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   max-width: 1160px;
-  margin: var(--space-4) auto 0;
-  padding: 10px 10px 10px var(--space-6);
-  border-radius: var(--chip-radius);
-  border: 1px solid var(--border-glass);
-  background: var(--surface-glass);
-  backdrop-filter: blur(14px);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 2px solid var(--color-divider);
+  background: var(--color-bg);
 }
 .landing-nav-links { display: flex; gap: var(--space-6); }
 .landing-nav-link {
@@ -4448,11 +4445,21 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #155 v2 Phase C — landing-only, recolored; falls back to mint in light theme. */
 :root[data-theme='dark'] .landing-proof-text { color: var(--color-accent-700); }
 
-/* issue #155 (ZeBeyond direction) — same bg-grid-glow treatment as .landing-hero above. */
+/* issue #299 — design-system.md §2: "the accent runs as a field in exactly
+   one pattern: poster statements (landing closing banner). Nowhere else."
+   Was a bordered, page-background card (a leftover pre-#297 treatment) —
+   now a genuine full-bleed solid-accent poster. Heading text is large
+   (--text-3xl, ~39px, weight 800 — comfortably WCAG "large text," only
+   needs 3:1) so --color-ink-on-accent on the raw --color-accent field is
+   safe at 3.76:1 light / 5.88:1 dark (verified via relative-luminance
+   calculation); the button inside inverts to a ground-colored fill so it
+   reads as a cutout against the field rather than a same-hue-on-same-hue
+   button (accent-700 text on ink-on-accent bg measures 6.41:1 light /
+   12.23:1 dark). */
 .landing-cta {
   text-align: center;
-  max-width: 720px;
-  margin: var(--space-8) auto;
+  width: 100%;
+  margin: var(--space-8) 0 0;
   padding: var(--space-16) var(--space-6);
   display: flex;
   flex-direction: column;
@@ -4460,11 +4467,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   gap: var(--space-6);
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
+  background: var(--color-accent);
 }
-.landing-cta-title { font-family: var(--font-display); font-weight: 800; font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); margin: 0; color: var(--color-text); position: relative; z-index: 1; }
-.landing-cta .btn-primary { position: relative; z-index: 1; }
+.landing-cta-title { font-family: var(--font-display); font-weight: 800; font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); margin: 0; color: var(--color-ink-on-accent); position: relative; z-index: 1; max-width: 20ch; }
+.landing-cta .btn-primary {
+  position: relative;
+  z-index: 1;
+  background: var(--color-ink-on-accent);
+  color: var(--color-accent-700);
+  border-color: var(--color-ink-on-accent);
+}
+.landing-cta .btn-primary:hover:not(:disabled) { background: var(--color-ink-on-accent); border-color: var(--color-ink-on-accent); opacity: 0.9; }
 
 .landing-footer {
   display: flex;
