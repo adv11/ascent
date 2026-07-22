@@ -434,26 +434,26 @@ body {
 a.brand:hover { opacity: 0.85; }
 a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: var(--radius-md); }
 
-/* intentional: fixed solid brand gold + white text/glow, same in both themes (issue #116).
-   issue #206 §7 originally moved this to var(--gradient-alpenglow); a later user
-   decision in the same PR reverted every gradient app-wide back to solid color, so
-   this is a flat var(--color-accent) fill again — the logo and the progress ring
-   still agree with each other, both solid now instead of both gradient. */
+/* intentional: fixed white glyph on solid accent fill, same in both themes (issue
+   #116) — design-system.md §1's "triangle glyph, flat accent fill" brand mark. issue
+   #298 — radius0'd (was a stray 12px rounded-square left over from Phase 1's token
+   pass, since this file is component-level, not a token) and the glow shadow
+   removed entirely (§2: "No glows, no drop-shadows on flat surfaces" — this was a
+   leftover fixed gold-tinted rgba() glow from the pre-#297 Alpenglow direction). */
 .brand-mark {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
   background: var(--color-accent);
   color: #fff;
   font-weight: 900;
   font-size: 20px;
   display: grid;
   place-items: center;
-  /* intentional: fixed gold-tinted shadow matching the always-gradient brand mark, not a themed surface shadow */
-  box-shadow: 0 12px 28px rgba(217, 164, 65, 0.25);
 }
 
-.brand-name { font-weight: 800; font-size: var(--text-xl); }
+/* issue #298 — design-system.md §1: "wordmark ASCENT in Archivo 800 uppercase
+   +0.05em". Was missing the uppercase/tracking transform since Phase 1. */
+.brand-name { font-weight: 800; font-size: var(--text-xl); text-transform: uppercase; letter-spacing: 0.05em; }
 .brand-tagline { font-size: 12px; color: var(--color-text-muted); font-weight: 600; }
 
 /* ============================================================
@@ -1371,7 +1371,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: width var(--duration-base) var(--ease-out);
 }
 
-.app-sidebar-brand { padding: 0 var(--space-2) var(--space-4); }
+/* issue #298 — design-system.md §4's 2px major-section rule, under the brand block. */
+.app-sidebar-brand { padding: 0 var(--space-2) var(--space-4); margin-bottom: var(--space-2); border-bottom: 2px solid var(--color-divider); }
 
 .app-sidebar-nav { display: flex; flex-direction: column; gap: var(--space-1); }
 
@@ -1399,7 +1400,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    an edge-indicator pattern. Flagging this shape change from the pre-#206
    pill treatment. */
 .nav-item.active {
-  background: var(--color-surface-raised);
+  background: var(--color-accent-100);
   color: var(--color-accent-700);
   border-radius: var(--radius-md);
   box-shadow: inset 3px 0 0 var(--color-accent);
@@ -1693,14 +1694,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    dense form. */
 .custom-select.compact .custom-select-trigger { padding: 8px 10px; font-size: var(--text-sm); }
 
+/* issue #298 — design-system.md §1/§4: flat surfaces, 2px rules for major
+   section boundaries (was a translucent/blurred "glass" surface + 1px rule,
+   a decorative effect the "alignment and rules do the organising — never
+   decoration" identity rule doesn't allow). */
 .app-topbar {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-6);
-  background: var(--surface-glass);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border-glass);
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-divider);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -2176,12 +2180,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   .import-column-paste .import-paste-area { min-height: 260px; flex: 1; }
 }
 
+/* issue #298 — same flat-surface/2px-rule fix as .app-topbar above. */
 .dashboard-header {
-  background: var(--surface-glass);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border-glass);
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-divider);
   padding: max(18px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 20px max(20px, env(safe-area-inset-left));
-  box-shadow: var(--shadow-sm);
 }
 
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -2626,15 +2629,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    Distinct from --color-brand-rose, reserved specifically for AI-related
    affordances. No hover-lift: this panel isn't itself clickable, only the
    todo rows inside it are. */
+/* issue #298 — design-system.md §4: "Elevation only for overlays... Flat
+   surfaces otherwise" (dropped the --shadow-sm this flat card had) and a 2px
+   rule for a major section boundary (was a 1px colored border). */
 .daily-todo-panel {
   max-width: 1160px;
   margin: 0 auto 18px;
   width: 100%;
   box-sizing: border-box;
   background: var(--color-surface);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-divider);
   padding: var(--space-6);
 }
 /* On the onboarding "all roadmaps" page, .onboarding-inner already caps
@@ -3193,7 +3197,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-color: transparent;
 }
 .check-item.done .check-mark { transform: scale(1); opacity: 1; }
-.check-item.done .check-title { color: var(--color-text-muted); }
+/* issue #298 — design-system.md §5: "done row text = line-through at 50% opacity".
+   Was only a color-mute (--color-text-muted, a 64% mix per issue #297's contrast
+   fix) with no line-through at all. */
+.check-item.done .check-title { text-decoration: line-through; opacity: 0.5; }
 
 /* issue #206 §5 — checkbox check micro-animation: a scale(1)->scale(1.15)->
    scale(1) pop on the checkbox itself, layered on top of (not replacing) the
