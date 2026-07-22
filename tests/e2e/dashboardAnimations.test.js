@@ -25,13 +25,25 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     const phaseBody = firstCard.locator('.phase-body');
 
     await firstCard.locator('.phase-head').click();
-    // Mid-animation: still visible (not yet display:none) and partway collapsed.
-    await page.waitForTimeout(80);
-    const midHeight = await phaseBody.evaluate(el => el.getBoundingClientRect().height);
-    expect(midHeight).toBeGreaterThan(0);
+    // A real, reported CI flake: this used to be `await page.waitForTimeout(80)`
+    // then read `getBoundingClientRect().height`, racing wall-clock time against
+    // the 200ms animation. On a loaded/shared CI runner, the CDP round-trip for
+    // the timeout + the follow-up evaluate() can itself take well over 120ms, so
+    // by the time the height was actually sampled the (short) animation had
+    // already finished — reading a legitimate 0 and failing an assertion whose
+    // premise (mid-flight) no longer held, on every retry, since the same
+    // machine load caused the same overrun each time. Querying `getAnimations()`
+    // for a `running` WAAPI animation right after `click()` resolves is
+    // deterministic instead — a fresh `Element.animate()` call is synchronously
+    // `running`, independent of frame timing or how long the round-trip to read
+    // it back takes.
+    const isAnimating = await phaseBody.evaluate(el => {
+      const anim = el.getAnimations()[0];
+      return !!anim && anim.playState === 'running';
+    });
+    expect(isAnimating).toBe(true);
 
     await expect(firstCard).not.toHaveClass(/open/);
-    await page.waitForTimeout(300);
     await expect(phaseBody).toBeHidden();
   });
 
@@ -52,11 +64,14 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
 
     await secondCard.locator('.phase-head').click();
     await expect(secondCard).toHaveClass(/open/);
-    await page.waitForTimeout(80);
-    const midHeight = await phaseBody.evaluate(el => el.getBoundingClientRect().height);
-    expect(midHeight).toBeGreaterThan(0);
+    // Deterministic check, not a wall-clock race — see the comment on the
+    // collapse test above for why.
+    const isAnimating = await phaseBody.evaluate(el => {
+      const anim = el.getAnimations()[0];
+      return !!anim && anim.playState === 'running';
+    });
+    expect(isAnimating).toBe(true);
 
-    await page.waitForTimeout(300);
     await expect(phaseBody).toBeVisible();
   });
 

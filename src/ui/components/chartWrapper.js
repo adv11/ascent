@@ -42,16 +42,22 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
-const BRAND_FILL_TOP = 'rgba(217, 164, 65, 0.3)';
-const BRAND_FILL_BOTTOM = 'rgba(217, 164, 65, 0)';
-const AVERAGE_LINE_COLOR = '#f97316';
-
+// issue #300 — `--color-brand-gold` no longer exists as a CSS custom property
+// (removed in Phase 1's #297 token migration; design-system.md's mapping
+// table repoints every old "primary accent" token, this one included, to
+// --color-accent). cssVar() silently returned its hardcoded fallback for
+// every call once the real property stopped resolving, which meant every
+// Progress-page chart had been rendering in the pre-#297 Alpenglow gold
+// (#d9a441) since Phase 1 merged — a real, live regression, not just a
+// stale reference. Now reads --color-accent directly. The area-fill
+// gradient is also removed per design-system.md §5: "single accent line...
+// no area fills, no gradients."
 function axisOptions() {
   const tickColor = cssVar('--color-text-muted', '#6b6156');
-  const gridColor = cssVar('--color-border', '#e4dfd8');
+  const gridColor = cssVar('--color-divider', '#e4dfd8');
   return {
-    x: { ticks: { color: tickColor }, grid: { color: gridColor } },
-    y: { ticks: { color: tickColor }, grid: { color: gridColor } }
+    x: { ticks: { color: tickColor }, grid: { color: gridColor, lineWidth: 0.5 } },
+    y: { ticks: { color: tickColor }, grid: { color: gridColor, lineWidth: 0.5 } }
   };
 }
 
@@ -60,10 +66,7 @@ function axisOptions() {
 export async function createLineChart(canvas, { labels, totals }) {
   const Chart = await loadChartModule();
   const ctx = canvas.getContext('2d');
-  const brandColor = cssVar('--color-brand-gold', '#d9a441');
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height || 260);
-  gradient.addColorStop(0, BRAND_FILL_TOP);
-  gradient.addColorStop(1, BRAND_FILL_BOTTOM);
+  const accentColor = cssVar('--color-accent', '#EC3013');
 
   const { x, y } = axisOptions();
   return new Chart(ctx, {
@@ -73,9 +76,8 @@ export async function createLineChart(canvas, { labels, totals }) {
       datasets: [{
         label: 'Total completed',
         data: totals,
-        borderColor: brandColor,
-        backgroundColor: gradient,
-        fill: true,
+        borderColor: accentColor,
+        fill: false,
         tension: 0.35,
         pointRadius: 0,
         pointHoverRadius: 4
@@ -91,10 +93,13 @@ export async function createLineChart(canvas, { labels, totals }) {
 }
 
 // createBarChart(canvas, { labels, counts, rollingAverage }) — B5's daily
-// velocity bars plus a 7-day rolling-average overlay line.
+// velocity bars plus a 7-day rolling-average overlay line. The overlay is a
+// dashed accent line (design-system.md §5's "dashed accent projection"),
+// distinguishing it visually from the solid-accent bars beneath it.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
-  const brandColor = cssVar('--color-brand-gold', '#d9a441');
+  const accentColor = cssVar('--color-accent', '#EC3013');
+  const accent700Color = cssVar('--color-accent-700', '#AE1800');
   const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
     data: {
@@ -104,16 +109,16 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
           type: 'bar',
           label: 'Items completed',
           data: counts,
-          backgroundColor: brandColor,
-          borderRadius: 3
+          backgroundColor: accentColor
         },
         {
           type: 'line',
           label: '7-day avg',
           data: rollingAverage,
-          borderColor: AVERAGE_LINE_COLOR,
-          backgroundColor: AVERAGE_LINE_COLOR,
+          borderColor: accent700Color,
+          backgroundColor: accent700Color,
           borderWidth: 2,
+          borderDash: [6, 4],
           pointRadius: 0,
           tension: 0.3
         }
@@ -132,8 +137,10 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
 // floating custom tooltip (a small white rounded-rect card, dark text, pointing down
 // at the hovered bar) + legend row (dot + label). Built and visually verified in
 // isolation this phase; no page calls this yet — Phase C/D wires it into a real chart.
-const BUCKET_TOKENS = { high: '--color-brand-gold', medium: '--color-text-faint', low: '--color-border-strong' };
-const BUCKET_FALLBACKS = { high: '#d9a441', medium: '#9c9184', low: '#d3ccc0' };
+// issue #300 — --color-brand-gold no longer exists (see createLineChart's
+// own comment above); repointed to --color-accent, same as the live charts.
+const BUCKET_TOKENS = { high: '--color-accent', medium: '--color-text-faint', low: '--color-border-strong' };
+const BUCKET_FALLBACKS = { high: '#EC3013', medium: '#9c9184', low: '#d3ccc0' };
 export const BUCKET_LEGEND = [
   { bucket: 'high', label: 'High' },
   { bucket: 'medium', label: 'Medium' },

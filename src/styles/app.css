@@ -2398,6 +2398,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    isolation this phase — no page wires it in yet, that's Phase C/D's job. Composes
    with the shared `.card-arrow-badge` corner affordance below (also used by Phase D's
    planned person/customer cards, per the issue's spec). */
+/* issue #300 — design-system.md §4: "Elevation only for overlays... Flat
+   surfaces otherwise" (dropped the --shadow-sm this flat stat cell had). */
 .kpi-tile {
   position: relative;
   display: flex;
@@ -2405,12 +2407,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   gap: 10px;
   padding: var(--space-6);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
 }
 .kpi-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.kpi-tile-label { font-size: var(--text-sm); font-weight: 700; color: var(--color-text-muted); }
+/* issue #300 — spec's "uppercase kickers" for the progress stat row. */
+.kpi-tile-label { font-size: var(--text-xs); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); }
 .kpi-tile-number { display: flex; align-items: baseline; gap: 4px; font-size: var(--text-3xl); font-weight: 900; color: var(--color-text); font-variant-numeric: tabular-nums; }
 /* issue #206 §6 — de-emphasized "still at zero" state: smaller, muted, less bold than
    a real earned number, so a fresh roadmap's stat strip doesn't read as a wall of loud
@@ -2423,16 +2424,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    the optional mini progress bar (Items complete tile) below the number, mirroring
    the spacing .stat-tile-bar already used for the same visual role. */
 .kpi-tile-total { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-/* issue #155 v2 Phase D1 follow-up — CI's real Firebase-emulator-backed axe run caught
-   a contrast bug this environment's local verification couldn't (no emulator access):
-   `opacity: 0.75` on top of `color: var(--color-text)` measured only 3.6:1 in light theme,
-   where `.kpi-tile-hero` falls back to `--color-brand-gold` teal (not lime) — near-white at 75%
-   opacity over a mid-saturation teal doesn't have the same headroom near-black-at-75%
-   has over bright lime. Fixed by dropping the opacity dim entirely and reusing the
-   already-verified full-opacity --color-bg-on-accent pairing every other hero-tile text
-   element uses: 5.09:1 in light theme (--color-bg on --color-brand-gold), 17.48:1 in dark theme
-   (--color-bg on --color-brand-gold). */
-.kpi-tile-hero .kpi-tile-total { color: var(--color-text); }
 .kpi-tile-bar { margin-top: 2px; }
 
 /* The reference's "exactly one hero-highlighted tile per screen" pattern (issue #155 v2
@@ -2441,14 +2432,26 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    dead code by the time #297 touched this file — both arguments resolved identically,
    a leftover from the lime/gold token collapse during #206 — so it's simplified to a
    single --color-accent read rather than carrying the redundant fallback forward. */
+/* issue #300 — real, live contrast bug found auditing this component post-#297:
+   --color-text on the raw --color-accent fill measures 3.95:1 light / 2.75:1
+   dark (dark theme fails even the large-text 3:1 floor) — the old lime/mint
+   accent this was tuned against passed at 5-17:1 in the same role, and the
+   axe CONTRAST_FALSE_POSITIVE_SELECTORS exemption for .kpi-tile-label/
+   .kpi-tile-hero (ui-styling.md) predates the #297 token swap, so CI's a11y
+   suite was never going to re-flag this. Fixed the same way .btn-primary was
+   in Phase 1: fill reads the darkened --color-accent-600, text reads
+   --color-ink-on-accent (4.94:1 light / 6.69:1 dark, verified) — the
+   .kpi-tile-delta opacity dim is also dropped (0.75 opacity dropped it to
+   3.33:1 light, still failing) rather than layering a second contrast risk
+   on top of the fill/text fix. */
 .kpi-tile-hero {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--color-accent-600);
+  border-color: var(--color-accent-600);
 }
 .kpi-tile-hero .kpi-tile-label,
 .kpi-tile-hero .kpi-tile-number,
-.kpi-tile-hero .kpi-tile-delta { color: var(--color-text); }
-.kpi-tile-hero .kpi-tile-delta { opacity: 0.75; }
+.kpi-tile-hero .kpi-tile-delta,
+.kpi-tile-hero .kpi-tile-total { color: var(--color-ink-on-accent); }
 
 /* Shared circular corner-badge affordance (issue #155 v2 Phase B) — used by `.kpi-tile`
    above and, per the issue's Phase D scope, planned for person/customer-style cards
@@ -3943,11 +3946,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .settings-sections { display: grid; gap: var(--space-6); }
 
+/* issue #300 — design-system.md §4: flat surfaces, no shadow (was --shadow-sm). */
 .settings-section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-6);
   display: grid;
   gap: var(--space-4);

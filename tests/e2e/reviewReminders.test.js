@@ -40,6 +40,13 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     await firstRow.locator('.check-box').click();
     await expect(firstRow).toHaveClass(/done/);
 
+    // Wait for roadmapStore.js's 500ms debounced queueSave() to actually flush
+    // before directly rewriting localStorage below — otherwise that pending
+    // timer can fire in the gap before page.reload() and clobber the
+    // artificial aging back to "just completed" (a real, reported CI flake;
+    // see reviewTagGrouping.test.js's identical fix for the full explanation).
+    await expect(page.locator('.save-badge')).toContainText('Saved', { timeout: 5_000 });
+
     await ageFirstItemCompletion(page, 'java-backend', REVIEW_INTERVAL_DAYS + 6);
     await page.reload();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });

@@ -45,6 +45,21 @@ test.describe('review-due tag grouping (issue #182)', () => {
       await expect(page.locator('.item-panel')).toBeHidden();
     }
 
+    // A real, reported CI flake: `roadmapStore.js`'s `queueSave()` debounces
+    // every store mutation (including the two "Save changes" clicks above) by
+    // 500ms before writing the in-memory `items` back to localStorage. If that
+    // pending timer is still alive when `ageItemsCompletion()` below directly
+    // overwrites localStorage with an artificially-aged `completedAt`, and it
+    // then fires in the gap between that write and `page.reload()`, it silently
+    // clobbers the aging back to "just completed" — the debounced flush has no
+    // idea the test just rewrote localStorage out from under it. On a loaded CI
+    // runner the ~500ms window reliably elapses before `reload()` is even
+    // called (every intervening Playwright command adds real latency); locally
+    // it's a coin flip. Waiting for the save badge to confirm the debounce has
+    // already flushed guarantees the direct localStorage write below is the
+    // last one before reload, with no dangling timer left to undo it.
+    await expect(page.locator('.save-badge')).toContainText('Saved', { timeout: 5_000 });
+
     const itemIds = await page.evaluate(() => {
       const all = JSON.parse(localStorage.getItem('ascent-roadmaps-v1') || '{}');
       return Object.keys(all['java-backend'].items).slice(0, 2);
