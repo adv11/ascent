@@ -308,4 +308,71 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
     });
     expect(compliant.ok, 'a compliant shared item within every cap should still succeed').toBe(true);
   });
+
+  // Issue #275 — three subtrees under users/{uid} (the legacy singular
+  // `roadmap/items/{itemId}` path, `dailyTodos/{todoId}`, and
+  // `streakFreezes`) were missing the `$other: { ".validate": "false" }`
+  // catch-all every sibling subtree (`roadmaps/{templateId}`, `meta`,
+  // `sharedRoadmaps/{shareId}/items/{itemId}`) already had, so a field not
+  // named in any of their explicit validators could be written with no
+  // constraint at all. These cases prove an unexpected extra field on each
+  // path is now rejected, and that a real, otherwise-legitimate write
+  // (roadmap item toggle, daily-todo create/complete, streak-freeze
+  // grant/use) still succeeds unchanged.
+  test('users/{uid}/roadmap/items/{itemId} (legacy path) rejects an unexpected extra field; accepts a compliant item', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+
+    const extraField = await writeAtPath(page, `users/${uid}/roadmap`, {
+      version: 1, items: { item1: { title: 'Learn Java', done: true } }
+    });
+    expect(extraField.ok, 'an unvalidated field (done) on the legacy roadmap item path should be rejected').toBe(false);
+
+    const compliant = await writeAtPath(page, `users/${uid}/roadmap`, {
+      version: 1,
+      items: { item1: { title: 'Learn Java', notes: 'short note', resources: { 0: { label: 'Docs', url: 'https://x.com' } } } }
+    });
+    expect(compliant.ok, 'a compliant legacy roadmap item write (title/notes/resources only) should still succeed').toBe(true);
+  });
+
+  test('users/{uid}/dailyTodos/{todoId} rejects an unexpected extra field; accepts a create and a complete', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+    const now = Date.now();
+
+    const extraField = await writeAtPath(page, `users/${uid}/dailyTodos/todo-1`, {
+      id: 'todo-1', title: 'Practice DSA', createdAt: now, expiresAt: now + 86400000, done: false, notARealField: 'nope'
+    });
+    expect(extraField.ok, 'an undeclared dailyTodos field should be rejected').toBe(false);
+
+    const created = await writeAtPath(page, `users/${uid}/dailyTodos/todo-1`, {
+      id: 'todo-1', title: 'Practice DSA', createdAt: now, expiresAt: now + 86400000, done: false
+    });
+    expect(created.ok, 'creating a compliant daily todo should still succeed').toBe(true);
+
+    const completed = await writeAtPath(page, `users/${uid}/dailyTodos/todo-1`, {
+      id: 'todo-1', title: 'Practice DSA', createdAt: now, expiresAt: now + 86400000, done: true, doneAt: now
+    });
+    expect(completed.ok, 'completing a compliant daily todo should still succeed').toBe(true);
+  });
+
+  test('users/{uid}/streakFreezes rejects an unexpected extra field; accepts a grant and a use', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+
+    const extraField = await writeAtPath(page, `users/${uid}/streakFreezes`, {
+      available: 1, notARealField: 'nope'
+    });
+    expect(extraField.ok, 'an undeclared streakFreezes field should be rejected').toBe(false);
+
+    const granted = await writeAtPath(page, `users/${uid}/streakFreezes`, {
+      available: 1, lastGrantedAt: Date.now()
+    });
+    expect(granted.ok, 'a compliant streak-freeze grant should still succeed').toBe(true);
+
+    const used = await writeAtPath(page, `users/${uid}/streakFreezes`, {
+      available: 0, lastGrantedAt: Date.now(), usedDates: { 0: '2026-07-16' }
+    });
+    expect(used.ok, 'a compliant streak-freeze use should still succeed').toBe(true);
+  });
 });

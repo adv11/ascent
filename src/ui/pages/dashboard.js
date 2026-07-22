@@ -1483,12 +1483,36 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   // it was invoked or which device it's on, and also builds full content
   // from the store directly (not the visible DOM), so a collapsed
   // `.phase-card` no longer needs a temporary force-open/restore workaround.
+  //
+  // Issue #292 — `beforeprint` alone still missed a real mobile print path:
+  // iOS Safari's Share Sheet "Print" (AirPrint) doesn't reliably dispatch
+  // `beforeprint` on the page at all, since it's a different WebKit code path
+  // than a page-triggered `window.print()`/Ctrl+P. `matchMedia('print')`
+  // reflects actual print-media state rather than an event a given trigger
+  // may or may not fire, and `attachPrintCleanup()` already uses it for
+  // teardown — this adds the matching mount-side listener so *entering*
+  // print media is enough to mount the snapshot, independent of whether
+  // `beforeprint` ever fires for a given trigger. `alreadyMounted` guards
+  // against mounting twice when both `beforeprint` and this listener fire
+  // for the same print (the common desktop/Android case).
   let unmountPrintSnapshot = null;
-  function handleBeforePrint() {
+  function mountForPrint() {
+    if (unmountPrintSnapshot) return;
     unmountPrintSnapshot = mountPrintSnapshot(store, false);
-    attachPrintCleanup(unmountPrintSnapshot);
+    attachPrintCleanup(() => {
+      unmountPrintSnapshot?.();
+      unmountPrintSnapshot = null;
+    });
+  }
+  function handleBeforePrint() {
+    mountForPrint();
+  }
+  const printMediaQuery = window.matchMedia('print');
+  function handlePrintMediaChange(e) {
+    if (e.matches) mountForPrint();
   }
   window.addEventListener('beforeprint', handleBeforePrint);
+  printMediaQuery.addEventListener('change', handlePrintMediaChange);
 
   return () => {
     activeTourCleanup?.();
@@ -1501,6 +1525,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);
     window.removeEventListener('beforeprint', handleBeforePrint);
+    printMediaQuery.removeEventListener('change', handlePrintMediaChange);
     unmountPrintSnapshot?.();
     clearTimeout(saveBadgeTimer);
   };
