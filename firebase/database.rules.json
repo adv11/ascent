@@ -20,6 +20,9 @@
                   "label": { ".validate": "newData.isString() && newData.val().length <= 120" },
                   "url": { ".validate": "newData.isString() && newData.val().length <= 2048" }
                 }
+              },
+              "$other": {
+                ".validate": "false"
               }
             }
           }
@@ -130,7 +133,10 @@
             "doneAt": { ".validate": "newData.isNumber() || newData.val() === null" },
             "linkedTemplateId": { ".validate": "newData.isString() || newData.val() === null" },
             "linkedItemId": { ".validate": "newData.isString() || newData.val() === null" },
-            "linkedItemTitle": { ".validate": "newData.isString() || newData.val() === null" }
+            "linkedItemTitle": { ".validate": "newData.isString() || newData.val() === null" },
+            "$other": {
+              ".validate": "false"
+            }
           }
         },
         "activityLog": {
@@ -146,7 +152,10 @@
               ".validate": "newData.isString()"
             }
           },
-          "lastGrantedAt": { ".validate": "newData.isNumber() || newData.val() === null" }
+          "lastGrantedAt": { ".validate": "newData.isNumber() || newData.val() === null" },
+          "$other": {
+            ".validate": "false"
+          }
         },
         "reports": {
           "$reportId": {
