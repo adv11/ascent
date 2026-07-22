@@ -6,7 +6,7 @@ import { signOutWithCleanup } from '../../src/services/authCleanup.js';
 // in the real Firebase SDK and a gitignored firebase.config.js that doesn't
 // exist in CI, so the branching logic was extracted into a dependency-free
 // helper (authCleanup.js) specifically to make it unit-testable.
-describe('signOutWithCleanup — anonymous cleanup (issue #24)', () => {
+describe('authCleanup.js — signOutWithCleanup anonymous cleanup (issue #24)', () => {
   it('deletes the database node and the anonymous auth user instead of a plain sign-out', async () => {
     const removeUserData = vi.fn(() => Promise.resolve());
     const deleteAuthUser = vi.fn(() => Promise.resolve());
