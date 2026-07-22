@@ -85,7 +85,7 @@ function buildNav() {
     el('nav', { className: 'landing-nav-links', 'aria-label': 'Page sections' }, [featuresLink, stepsLink]),
     el('div', { className: 'landing-nav-actions' }, [
       el('a', { className: 'btn btn-ghost', href: '#/signin', text: 'Sign in' }),
-      el('a', { className: 'btn-primary', href: '#/signup', text: 'Start for free' })
+      el('a', { className: 'btn btn-primary', href: '#/signup', text: 'Start for free' })
     ])
   ]);
 }
@@ -129,7 +129,7 @@ function buildHero() {
       ]),
       el('p', { className: 'landing-hero-subtitle', text: 'The roadmap tracker for anyone learning, revising, or leveling up. Pick a starting point, track every topic, and always know what’s next.' }),
       el('div', { className: 'landing-hero-actions' }, [
-        el('a', { className: 'btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
+        el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
         el('a', { className: 'btn btn-secondary btn-lg', href: '#/signin', text: 'Sign in' })
       ]),
       el('p', { className: 'landing-hero-stat', text: landingProofLine() })
@@ -174,7 +174,7 @@ function buildCta() {
   return el('section', { className: 'landing-cta' }, [
     el('div', { className: 'bg-grid-glow', 'aria-hidden': 'true' }),
     el('h2', { className: 'landing-cta-title', text: 'Ready to engineer your next move?' }),
-    el('a', { className: 'btn-primary btn-lg', href: '#/signup', text: 'Start for free' })
+    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' })
   ]);
 }
 

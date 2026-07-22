@@ -562,7 +562,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 /* Buttons (issue #206 §3.1 — Alpenglow redesign). Base rule is
    variant-agnostic layout only; each variant below sets its own bg/text/
-   border/hover/shadow. */
+   border/hover/shadow. issue #297 — text-decoration: none moved here (was
+   only ever set on the now-removed .btn-cta) so every .btn variant used on
+   an <a> (landing.js's "Start for free"/"Sign in" links use
+   .btn-primary/.btn-ghost/.btn-secondary, not just the old CTA class) is
+   covered by construction instead of needing its own per-variant override. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -572,6 +576,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: 10px var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid transparent;
+  text-decoration: none;
   font: inherit;
   font-weight: var(--font-weight-bold);
   font-size: var(--text-base);
