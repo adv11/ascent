@@ -933,3 +933,20 @@ left border against white for the phase card) was verified against actual white
 paper specifically, not the dark-theme panel background the hue is visually copied
 from — see the block comment above the print media query in `app.css` for the exact
 contrast figures.
+
+**The native/mobile print snapshot mounts on either `beforeprint` or `matchMedia('print')`
+entering print — never `beforeprint` alone (issue #292).** #259/#262 wired
+`dashboard.js`'s native-print fallback (mounting `mountPrintSnapshot()`/
+`attachPrintCleanup()` for any print trigger, not just the app's own "Print roadmap…"
+menu item) to a single `window.addEventListener('beforeprint', ...)` listener. That's
+correct for Ctrl/Cmd+P and Android Chrome's own "Print…" menu, both of which do fire
+`beforeprint`, but iOS Safari's Share Sheet "Print" (AirPrint) doesn't reliably dispatch
+`beforeprint` on the page at all — a different WebKit code path than a page-triggered
+`window.print()`. `dashboard.js` now also mounts on a `matchMedia('print')` `change`
+listener when `e.matches` is true, the same API `attachPrintCleanup()` already reads for
+teardown — reflecting actual print-media state instead of an event a given trigger may or
+may not fire. A `mountForPrint()` wrapper guards against mounting twice when both fire for
+the same print job (the common desktop/Android case: `beforeprint` fires first, the
+media-query listener then sees the snapshot already mounted and no-ops). If you ever add
+a third print-triggering surface to this app, wire it through the same `mountForPrint()`
+pattern rather than adding another bespoke listener.
