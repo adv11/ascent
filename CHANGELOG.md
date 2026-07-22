@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Test coverage for `shareStore.js`** (issue #277) — `tests/unit/shareStore.test.js` covers `publishRoadmapShare`/`listMyShares`/`revokeRoadmapShare`/`getSharedRoadmap` (success and Firebase-write-rejects failure paths), the one Firebase-backed store in the roadmap-sharing feature with no prior unit coverage. Test-only, no behavior change.
 ### Fixed
 - **Mobile print/PDF export could still show the raw dashboard DOM instead of the branded print snapshot on triggers that don't fire `beforeprint` (issue #292).** #259/#262 already fixed this for Android Chrome's own "Print…" menu item by mounting `mountPrintSnapshot()` on `beforeprint`, but iOS Safari's Share Sheet "Print" (AirPrint) doesn't reliably dispatch `beforeprint` on the page at all — a different WebKit code path than a page-triggered `window.print()`/Ctrl+P. `dashboard.js` now also mounts the print snapshot on a `matchMedia('print')` "entering print" listener (the same API `attachPrintCleanup()` already uses for teardown), alongside the existing `beforeprint` listener — whichever fires first mounts the snapshot, and a guard prevents a redundant second mount when both fire for the same print job. Regression-checked: the app's own "Print roadmap…" menu item and Android Chrome's native print (#259) both still produce identical output.
 
