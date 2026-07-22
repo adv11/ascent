@@ -322,6 +322,47 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
+  // Issue #280 — the Daily Todos panel (onboarding.js) and its "Add to
+  // Today's Todos" modal (dashboard.js's per-row ⏱ button) had zero axe
+  // coverage despite being one of the most-interacted-with surfaces in the
+  // app (reminders, duration pickers, collapse state, per-todo actions).
+  // The panel itself lives on /onboarding, not /app — see roadmap-store.md's
+  // "Placement" note — and renders expanded by default (no
+  // KEYS.DAILY_TODOS_COLLAPSED set), so no extra interaction is needed to
+  // reach its open state before scanning.
+  test('the Daily Todos panel has zero critical/serious axe violations', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 10_000 });
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.daily-todo-panel' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  // The "Add to Today's Todos" modal is reached from a roadmap checklist
+  // row's ⏱ button (dashboard.js's renderItemRow, data-action="add-todo"),
+  // so this scenario needs a started roadmap first, same setup as the item
+  // edit panel test above. Scoped to the modal's own DOM subtree via
+  // `include`, same "avoid axe still sampling the covered page behind the
+  // overlay" reasoning as every other modal test in this file — this also
+  // covers the duration/reminder picker control (`.todo-duration-select`,
+  // a createSelect() instance) inside the modal, since it's part of the
+  // included subtree.
+  test('the "Add to Today\'s Todos" modal has zero critical/serious axe violations', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await page.locator('[data-action="add-todo"]').nth(0).click();
+    const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
+    await expect(modal).toBeVisible();
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Add to Today\'s Todos"]' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
   test('a confirmDialog instance has zero critical/serious axe violations', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
@@ -414,6 +455,36 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     await expect(page.locator('.progress-page')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  // Issue #280 — dark-theme counterparts of the two new Daily Todos
+  // scenarios above, same "light-mode-only would never have caught a
+  // dark-theme-only bug" reasoning issue #116 established for this whole
+  // describe block.
+  test('the Daily Todos panel has zero critical/serious axe violations in dark theme', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.daily-todo-panel' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('the "Add to Today\'s Todos" modal has zero critical/serious axe violations in dark theme', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await page.locator('[data-action="add-todo"]').nth(0).click();
+    const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
+    await expect(modal).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Add to Today\'s Todos"]' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 });
