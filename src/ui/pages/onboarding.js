@@ -206,6 +206,20 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       picking = false;
       setBusy(false);
       createCardEl?.classList.remove('picking');
+      // Issue #324 — a capped/rate-limited creation is a real, expected limit
+      // the user needs to actually notice and act on (delete something,
+      // wait a moment), not a transient failure — a toast alone is easy to
+      // miss and disappears before it's read in full. Every other failure
+      // (network error, etc.) keeps the existing toast.
+      if (error.code === 'capped' || error.code === 'rate_limited') {
+        confirmDialog({
+          title: error.code === 'capped' ? 'Custom roadmap limit reached' : 'Please wait a moment',
+          message: error.message,
+          confirmText: 'Got it',
+          cancelText: null
+        });
+        return;
+      }
       showToast('Could not create your roadmap. Try again.', 'error');
     }
   }

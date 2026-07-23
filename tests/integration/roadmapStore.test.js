@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createRoadmapStore, applyRemoteSnapshot } from '../../src/services/roadmapStore.js';
 import { buildSeedItems } from '../../src/data/roadmap.js';
 import { dbApi, getStorageAdapter } from '../../src/services/storage/adapterFactory.js';
-import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH } from '../../src/core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH, MAX_CUSTOM_ROADMAPS } from '../../src/core/roadmap/limits.js';
 
 // Mocks the adapter roadmapStore.js gets from getStorageAdapter() (issue #5) —
 // still named/shaped like the old `dbApi` fake so the 60+ tests below that
@@ -1629,6 +1629,40 @@ describe('custom roadmaps — creation and identity (issue #4)', () => {
 
     await expect(store.createCustomRoadmap({ title: '   ' })).rejects.toThrow();
     expect(store.getSnapshot().customRoadmaps).toBe(before);
+  });
+
+  // Issue #324 — createCustomRoadmap() previously had no cap at all on how
+  // many custom roadmaps one account could create.
+  it('createCustomRoadmap rejects once MAX_CUSTOM_ROADMAPS is reached, tagging the error "capped"', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'creator-user-cap' });
+
+    for (let i = 0; i < MAX_CUSTOM_ROADMAPS; i++) {
+      await store.createCustomRoadmap({ title: `Roadmap ${i}` });
+    }
+    expect(store.getSnapshot().customRoadmaps).toHaveLength(MAX_CUSTOM_ROADMAPS);
+
+    const before = store.getSnapshot().customRoadmaps;
+    let caught;
+    try {
+      await store.createCustomRoadmap({ title: 'One too many' });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught?.code).toBe('capped');
+    expect(store.getSnapshot().customRoadmaps).toBe(before);
+  });
+
+  // Issue #324 — the cap must count only user-created custom roadmaps, never
+  // the fixed set of built-in starter templates a user may have started.
+  it('createCustomRoadmap\'s cap ignores started built-in templates entirely', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'creator-user-builtin' });
+    await store.switchRoadmap('frontend');
+    await store.switchRoadmap('data-science');
+
+    expect(store.getSnapshot().startedTemplateIds.length).toBeGreaterThanOrEqual(2);
+    await expect(store.createCustomRoadmap({ title: 'Still allowed' })).resolves.toBeDefined();
   });
 
   // Issue #122 — firebase/database.rules.json now caps meta.customRoadmaps'
