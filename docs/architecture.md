@@ -4540,3 +4540,20 @@ silently burning that week's one allowed appearance on an empty sentence.
 (already threaded through by `main.js`, no wiring change needed there). No new
 subscription or timer — same one-shot render-on-mount shape as its two banner
 neighbors, so no `_cleanup()`/route-cleanup wiring was needed either.
+
+### 2026-07-23 — Issue #330 — ADR-012: in-app AI roadmap generation backend (proposed, docs only)
+
+No code changed. Issue #330 proposed moving AI roadmap generation in-app via a
+server-side proxy to a real LLM API, replacing (well, supplementing) the manual
+copy-prompt/paste-JSON flow — but the issue's own body flags itself as a design/analysis
+issue, not a ready-to-code ticket, since it would introduce this app's first-ever
+server-compute dependency and first per-user-action billing surface. This PR adds
+`docs/adr/ADR-012-ai-generation-backend.md`, **Status: Proposed** (not Accepted) — it
+lays out the options (Firebase Cloud Functions vs. Cloudflare Workers vs. others),
+restates the issue's hard requirements (API key never reaches the client, reuse the
+existing `validateImportPayload()`/`adaptImportToRoadmap()` pair, server-side rate
+limiting/cost control, prompt-injection awareness, keep the manual flow available), and
+explicitly declines to pick a provider/platform or write any Cloud Functions code —
+that decision is left to the repo owner, per the issue's own "treat this as a design
+discussion first" recommendation. No `functions/` directory, no new dependency, no
+`firebase.json`/`.firebaserc` change.
