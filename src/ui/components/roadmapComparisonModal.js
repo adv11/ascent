@@ -115,25 +115,29 @@ export function openRoadmapComparisonModal({ store }) {
   const activeLabel = roadmapLabel(activeId, labelCtx);
   const resultSlot = el('div', { className: 'comparison-result-slot' });
 
+  const templateModeBtn = el('button', {
+    type: 'button',
+    className: `filter-chip ${mode === MODE_TEMPLATE ? 'active' : ''}`,
+    dataset: { mode: MODE_TEMPLATE },
+    'aria-pressed': String(mode === MODE_TEMPLATE),
+    text: 'Starter template',
+    onClick: () => { mode = MODE_TEMPLATE; renderAll(); }
+  });
+  templateModeBtn.disabled = activeIsCustom;
+
+  const roadmapModeBtn = el('button', {
+    type: 'button',
+    className: `filter-chip ${mode === MODE_ROADMAP ? 'active' : ''}`,
+    dataset: { mode: MODE_ROADMAP },
+    'aria-pressed': String(mode === MODE_ROADMAP),
+    text: 'Another roadmap',
+    onClick: () => { mode = MODE_ROADMAP; renderAll(); }
+  });
+  roadmapModeBtn.disabled = otherIds.length === 0;
+
   const modeChips = el('div', { className: 'comparison-mode-toggle', role: 'group', 'aria-label': 'Compare against' }, [
-    el('button', {
-      type: 'button',
-      className: `filter-chip ${mode === MODE_TEMPLATE ? 'active' : ''}`,
-      dataset: { mode: MODE_TEMPLATE },
-      'aria-pressed': String(mode === MODE_TEMPLATE),
-      disabled: activeIsCustom,
-      text: 'Starter template',
-      onClick: () => { mode = MODE_TEMPLATE; renderAll(); }
-    }),
-    el('button', {
-      type: 'button',
-      className: `filter-chip ${mode === MODE_ROADMAP ? 'active' : ''}`,
-      dataset: { mode: MODE_ROADMAP },
-      'aria-pressed': String(mode === MODE_ROADMAP),
-      disabled: otherIds.length === 0,
-      text: 'Another roadmap',
-      onClick: () => { mode = MODE_ROADMAP; renderAll(); }
-    })
+    templateModeBtn,
+    roadmapModeBtn
   ]);
 
   const otherSelect = otherIds.length

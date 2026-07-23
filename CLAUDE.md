@@ -70,7 +70,7 @@ src/services/roadmapStore.js  in-memory roadmap store — see .claude/rules/road
 src/services/dailyTodoStore.js  in-memory Daily Todos store — see .claude/rules/roadmap-store.md
 src/services/activityLogStore.js  daily completed-item counts, feeds analytics (issue #8) — see .claude/rules/roadmap-store.md
 src/services/storage/         storage backend interface + FirebaseAdapter (+ withTimeout.js) + LocalStorageAdapter + adapterFactory — see .claude/rules/roadmap-store.md
-src/core/analytics/           pure analytics engine (streaks/velocity/heatmap/projection), no DOM/store access — see .claude/rules/roadmap-store.md
+src/core/analytics/           pure analytics engine (streaks/velocity/heatmap/projection/progressDigest), no DOM/store access — see .claude/rules/roadmap-store.md
 src/core/roadmap/roadmapComparison.js  pure roadmap-comparison diff engine (issue #285) — no DOM/store access, matches topics by (phase, title); src/ui/components/roadmapComparisonModal.js  "Compare roadmaps" modal (vs. starter template or vs. another started roadmap), opened from progress.js — see .claude/rules/roadmap-store.md
 src/services/theme.js         dark/light theme state — see .claude/rules/ui-styling.md
 src/services/themeBootstrap.js  synchronous classic script, no-FOUC — see .claude/rules/ui-styling.md
@@ -84,7 +84,7 @@ src/ui/pages/landing.js       marketing page at route: / for signed-out visitors
 src/ui/pages/settings.js      account settings (route: /settings, issue #16) — change email/password, preferences, delete account; guest sees a CTA-only view
 src/ui/pages/progress.js      analytics dashboard (route: /progress, issue #8) — stat cards, heatmap, charts, phase/priority breakdowns, projection — see .claude/rules/roadmap-store.md and ui-styling.md
 src/ui/pages/sharedRoadmapView.js  unauthenticated-reachable read-only view (route: /shared?id=..., issue #131) — see .claude/rules/roadmap-store.md; src/ui/components/shareRoadmapModal.js  "Share this roadmap…" publish/list/revoke modal (sidebar.js account menu); src/services/shareStore.js, src/core/roadmap/shareSchema.js  Firebase write + pure snapshot schema
-src/ui/components/heatmap.js, chartWrapper.js  activity heatmap + lazy Chart.js loader (issue #8) — see .claude/rules/ui-styling.md; shareCard.js, shareModal.js  canvas social share card + preview modal (issue #8)
+src/ui/components/heatmap.js, chartWrapper.js  activity heatmap + lazy Chart.js loader (issue #8) — see .claude/rules/ui-styling.md; shareCard.js, shareModal.js  canvas social share card + preview modal (issue #8); progressDigestBanner.js  dismissible once-per-week progress-digest banner on the dashboard (issue #284), paired with src/ui/utils/progressDigest.js's shown/dismissed guard logic
 src/ui/components/authShell.js   shared chrome for signIn/signUp — split layout (issue #6 Phase 5) + authMarketingPanel.js left panel
 src/ui/components/brand.js       canonical brand mark/wordmark — createBrandMark()/createBrandIcon()
 src/ui/components/themeToggle.js reusable dark/light toggle button

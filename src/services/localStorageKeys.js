@@ -138,3 +138,17 @@ export function guestRiskNudgeShownKey(uid) {
 export function celebrationShownKey(uid) {
   return `ascent-celebration-shown-${uid}`;
 }
+
+// Weekly progress digest (issue #284) — the timestamp the digest banner was
+// last shown, same per-uid keyed pattern as the backup-reminder timestamps
+// above (one value per account, not per device). Device-level, not synced to
+// Firebase: re-showing the digest once more on a different device is
+// harmless, same reasoning every other "already shown" flag in this file
+// uses. Written both when the banner renders (so a reload within the same
+// period doesn't show it again) and left untouched if there was nothing
+// worth summarizing that week (see `hasDigestContent()` in
+// `src/core/analytics/progressDigest.js`), so the banner can still appear
+// the moment there's real activity to report.
+export function progressDigestLastShownKey(uid) {
+  return `ascent-progress-digest-last-shown-${uid}`;
+}
