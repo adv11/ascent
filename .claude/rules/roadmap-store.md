@@ -415,6 +415,23 @@ icon, across sessions and devices, with no new UI and no `customRoadmaps` schema
 change. If a real icon-picker UI is ever built, this hash-based default is what an
 unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
+**Draft autosave for the "Create your own roadmap" modal — mirrors `KEYS.FEEDBACK_DRAFT`
+(issue #328).** `importRoadmapModal.js`'s topic textarea and its five customization
+inputs (experience level, timeframe, goal, weekly time commitment, resource types,
+"already know") persist to `KEYS.CREATE_ROADMAP_DRAFT` on every field change and are
+read back once on modal open to prefill every field — the exact same precedent this
+file's own "Draft autosave, not a queued-offline-write" entry (below, under "In-app
+feedback & bug reporting") documents for `feedbackModal.js`'s `KEYS.FEEDBACK_DRAFT`:
+device-level, never synced to Firebase, cleared only on a successful submit/import,
+never on Cancel/Escape/outside-click. The one deliberate difference from that precedent:
+the pasted AI-response textarea (`pasteArea`) is never persisted — it's regenerable from
+the same draft's topic/options by re-running the external AI, and persisting arbitrary
+large pasted text risks silently hitting the browser's storage quota. Chip-group fields
+(experience level, timeframe, weekly time, resource types) and the goal `<select>` read
+the restored draft's values *before* their controls are constructed, so each control's
+own initial "active"/selected state reflects the loaded draft with no separate rehydration
+step needed.
+
 **AI-assisted roadmap creation (`src/data/importPrompt.js`, `src/core/roadmap/`, issues
 #4/#64, redesigned in #100).** Since issue #100 retired manual "start truly blank"
 creation and merged onboarding's two cards into one, this is the *only* way to start a
@@ -483,6 +500,25 @@ calling `switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes) it i
 returning the usual empty seed for a custom id. From that point on a created roadmap is
 indistinguishable from any other custom roadmap — same Firebase path, same phase/section
 rename/delete controls, same `deleteCustomRoadmap` cleanup.
+
+**Oversized-paste guard, `MAX_IMPORT_TEXT_LENGTH` (issue #325).** Before any of the above
+validation runs, `parseImportJson()` checks `rawText.length` against
+`MAX_IMPORT_TEXT_LENGTH` (300,000 characters, `importValidator.js` — same "own,
+dependency-free constant" precedent as `MAX_TITLE_LENGTH`/`MAX_RESOURCE_LABEL_LENGTH` in
+`limits.js`, though this one lives directly in `importValidator.js` since nothing else
+needs to import it) and returns a dedicated error — "This is too large to import — check
+you copied only the roadmap JSON, not the whole conversation." — instead of ever calling
+`JSON.parse()`. This exists because the paste textarea's `input` handler debounces only
+300ms, not per-keystroke-skips-while-large; a several-MB accidental paste (a whole chat
+transcript, a full webpage's HTML) run through `JSON.parse()` synchronously on the main
+thread on every keystroke (backspacing/re-pasting re-triggers it) can visibly freeze the
+tab, with no upfront size ceiling to stop it before this issue. 300,000 characters is
+comfortably above any real roadmap's JSON size even at the `MAX_ITEMS` (500) cap with
+resources on every item — `tests/unit/fixtures/aiProviderPayloads.js`'s near-cap fixture
+serializes to well under 100,000 characters, leaving generous headroom. Deliberately
+**not** an HTML `maxlength` attribute on the textarea itself — that would silently
+truncate a legitimate large-but-valid paste mid-character, corrupting otherwise-good
+JSON; the fix is a length check before parsing, not a truncating input constraint.
 
 **A single malformed resource URL or oddly-cased priority must never fail the whole
 roadmap (issue #100 follow-up, found via real-world testing).** Early real-world use of
@@ -568,6 +604,33 @@ either silently importing garbage or the previous generic "item is invalid". Pha
 and section titles get the identical check. This is a heuristic, not a formal grammar —
 if you ever need a sixth marker, add it to `CORRUPTION_MARKERS` rather than writing a new
 detection path.
+
+**Unfilled placeholder / AI refusal detection — a sibling heuristic to corrupted-text
+detection above, same file, same treatment (issue #326).** A payload can be schema-shaped
+and non-empty at every field yet still not be a real roadmap: `buildImportPrompt()`
+(`src/data/importPrompt.js`) uses its own literal placeholder strings (`<roadmap title>`,
+`<phase title>`, `<section title>`, `<item title>`, `<https:// link>`, `<short resource
+name>`) as schema illustrations inside the prompt template it hands the user to copy — a
+weaker model can echo the template's shape back with these left unfilled, and every check
+`looksCorrupted()` performs accepts that as valid, since every field is still a non-empty
+string under the length cap. The sibling failure mode is an AI refusal ("I'm sorry, but I
+can't help with that…") wrapped just enough to satisfy the schema. `importValidator.js`'s
+`placeholderOrRefusalError(text, fieldPath)` checks a title against `PLACEHOLDER_MARKERS`
+(the exact literal strings above — never a generic `<...>` regex, so a legitimate title
+containing angle brackets, e.g. "Intro to `<T>` generics in Java," can never
+false-positive) and `REFUSAL_OPENERS` (a short list of recognizable multi-word openers —
+`"i cannot"`, `"i'm sorry, but"`, `"as an ai language model"` — matched case-insensitively
+against the trimmed string's start, never a bare "I" prefix, so a legitimate title
+starting with "I," e.g. "Iterators in Python," can never false-positive either). Called
+from the same three places `looksCorrupted()`/`findItemCorruption()` are — the top-level
+`title`, `validateTitledNodeTitle()` (shared by phase and section titles), and
+`findItemCorruption()` (every item shape's title) — and checked *first*, before
+`looksCorrupted()`, since an unfilled placeholder or a wrapped refusal is a more specific,
+more actionable problem than either "looks corrupted" or a bare "is invalid"/"is
+required". This is a heuristic over exact literal strings and recognizable phrase
+openers, not a general content-quality/plausibility model (detecting a roadmap that's
+schema-valid but nonsensical or off-topic requires real semantic understanding this app
+has no backend LLM call to provide) — deliberately out of scope, see the issue.
 
 **Corrupted-text detection, confirmed against a real ChatGPT payload (issue #121 item 1).**
 Issue #100's hypothesis above was confirmed, not disproven, by a live captured payload: a

@@ -9,6 +9,19 @@ const MAX_ITEMS = 500;
 const MAX_RESOURCES_PER_ITEM = 5;
 export const SUPPORTED_SCHEMA_VERSION = 1;
 
+// Issue #325 — the paste textarea (importRoadmapModal.js) has no upfront size
+// guard before this module's JSON.parse() runs, synchronously, on every
+// debounced keystroke. A large accidental paste (a whole chat transcript, a
+// full webpage) can be several MB and visibly freeze the tab. 300,000
+// characters is comfortably above any real roadmap's JSON size even at the
+// MAX_ITEMS (500) cap with resources on every item — the near-500-item
+// fixture in tests/unit/fixtures/aiProviderPayloads.js serializes to well
+// under 100,000 characters, so this leaves generous headroom for a
+// legitimate large roadmap while still catching an obviously-wrong paste
+// before ever attempting to parse it.
+export const MAX_IMPORT_TEXT_LENGTH = 300000;
+const TOO_LARGE_ERROR = 'This is too large to import — check you copied only the roadmap JSON, not the whole conversation.';
+
 // Many AI assistants wrap JSON output in a fenced code block (```json ... ```)
 // even when explicitly told not to — this is the single most common reason a
 // pasted payload fails to parse. Strip one leading/trailing fence (with or
@@ -20,6 +33,9 @@ function stripFencedCodeBlock(rawText) {
 }
 
 export function parseImportJson(rawText) {
+  if (typeof rawText === 'string' && rawText.length > MAX_IMPORT_TEXT_LENGTH) {
+    return { data: null, error: TOO_LARGE_ERROR };
+  }
   try {
     return { data: JSON.parse(stripFencedCodeBlock(rawText)), error: null };
   } catch {
@@ -52,6 +68,41 @@ function looksCorrupted(text) {
 // normalization when it re-reads a field this function already accepted.
 export function normalizePriority(value) {
   return typeof value === 'string' ? value.trim().toUpperCase() : value;
+}
+
+// Issue #326 — a payload can be schema-shaped and non-empty at every field yet
+// still not be a real roadmap: buildImportPrompt() (src/data/importPrompt.js)
+// uses these exact literal strings as its own schema-illustration placeholders,
+// and a weaker model can echo the template's shape back with them still
+// unfilled — every check above accepts that as valid, since every field is a
+// non-empty string under the length cap. Exact literal strings only (not a
+// generic "<...>" regex), so a legitimate title that happens to contain angle
+// brackets — "Intro to <T> generics in Java" — can never false-positive.
+const PLACEHOLDER_MARKERS = ['<roadmap title>', '<phase title>', '<section title>', '<item title>', '<https:// link>', '<short resource name>'];
+
+// An AI refusal ("I'm sorry, but I can't help with that...") wrapped just
+// enough to satisfy the schema is the sibling failure mode this issue closes —
+// matched as recognizable multi-word openers, never a bare "I" prefix, so a
+// legitimate title starting with "I" ("Iterators in Python") never
+// false-positives.
+const REFUSAL_OPENERS = ['i cannot', "i'm sorry, but", 'as an ai language model'];
+
+// Checked before looksCorrupted()/normal shape validation, same priority as
+// the corruption check it sits alongside — an unfilled placeholder or a
+// wrapped refusal is a more specific, more actionable problem than a bare
+// "is invalid"/"is required". `fieldPath` is the full dotted field path
+// (e.g. "title" or "phases[0].sections[1].items[2].title") so the returned
+// message matches this file's existing structured/technical convention.
+function placeholderOrRefusalError(text, fieldPath) {
+  if (typeof text !== 'string') return null;
+  if (PLACEHOLDER_MARKERS.some(marker => text.includes(marker))) {
+    return `${fieldPath} looks like unfilled placeholder text — make sure you pasted the AI's actual generated roadmap, not the prompt template`;
+  }
+  const lower = text.trim().toLowerCase();
+  if (REFUSAL_OPENERS.some(opener => lower.startsWith(opener))) {
+    return `${fieldPath} looks like an AI refusal or explanation, not real roadmap content — ask the AI to generate the roadmap JSON and paste its actual output`;
+  }
+  return null;
 }
 
 // A resource entry mirrors the app's own { label, url } shape (limits.js's
@@ -110,7 +161,10 @@ function itemTitleTooLong(item) {
 // corrupted item gets this actionable message instead of a bare "is
 // invalid" — same path prefix (`phases[i].sections[j].items[k]`) either way.
 function findItemCorruption(item, path) {
-  if (looksCorrupted(extractItemTitleText(item))) {
+  const titleText = extractItemTitleText(item);
+  const placeholderError = placeholderOrRefusalError(titleText, `${path}.title`);
+  if (placeholderError) return placeholderError;
+  if (looksCorrupted(titleText)) {
     return `${path}.title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`;
   }
   const isObjectItem = item && typeof item === 'object' && !Array.isArray(item);
@@ -158,7 +212,10 @@ function isValidItem(item) {
 // section-title checks below since both follow the identical three-way
 // branch, just against a different `path` prefix.
 function validateTitledNodeTitle(title, path, errors) {
-  if (looksCorrupted(title)) {
+  const placeholderError = placeholderOrRefusalError(title, `${path}.title`);
+  if (placeholderError) {
+    errors.push(placeholderError);
+  } else if (looksCorrupted(title)) {
     errors.push(`${path}.title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
   } else if (typeof title !== 'string' || !title.trim()) {
     errors.push(`${path}.title is required`);
@@ -242,7 +299,10 @@ export function validateImportPayload(data) {
   if (data.schemaVersion !== SUPPORTED_SCHEMA_VERSION) {
     errors.push('Unsupported schema version');
   }
-  if (typeof data.title !== 'string' || !data.title.trim()) {
+  const titlePlaceholderError = placeholderOrRefusalError(data.title, 'title');
+  if (titlePlaceholderError) {
+    errors.push(titlePlaceholderError);
+  } else if (typeof data.title !== 'string' || !data.title.trim()) {
     errors.push('title is required');
   }
   if (!Array.isArray(data.phases) || data.phases.length === 0) {

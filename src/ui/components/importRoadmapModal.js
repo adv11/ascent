@@ -4,12 +4,44 @@ import { createSelect } from './select.js';
 import { buildImportPrompt, buildImportFixPrompt } from '../../data/importPrompt.js';
 import { validateImportText, findDuplicateTitles } from '../../core/roadmap/importValidator.js';
 import { adaptImportToRoadmap } from '../../core/roadmap/schemaAdapter.js';
+import { KEYS } from '../../services/localStorageKeys.js';
 
 const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 const TIMEFRAMES = ['No deadline', '1 month', '3 months', '6 months', '1 year'];
 const GOALS = ['Interview prep', 'On-the-job upskilling', 'Academic or exam prep', 'Personal project or hobby'];
 const WEEKLY_TIME_OPTIONS = ['< 2 hrs/week', '2–5 hrs/week', '5–10 hrs/week', '10+ hrs/week'];
 const RESOURCE_TYPES = ['YouTube videos', 'Articles & blogs', 'Official docs', 'Online courses'];
+
+// Draft autosave (issue #328) — mirrors feedbackModal.js's KEYS.FEEDBACK_DRAFT
+// precedent exactly (see .claude/rules/roadmap-store.md's "Draft autosave"
+// entry): written on every field change, read once on modal open to prefill,
+// cleared only on a successful import. Deliberately excludes the pasted
+// AI-response textarea (`pasteArea`) — it's regenerable from the same draft's
+// topic/options by re-running the external AI, and persisting arbitrary large
+// pasted text in localStorage risks silently hitting browser storage quota.
+function readDraft() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEYS.CREATE_ROADMAP_DRAFT) || 'null');
+    return raw && typeof raw === 'object' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+// Not itself debounced — refreshPrompt() (the sole caller of persistDraft(),
+// below) is already reached via a 150ms-debounced handler for the two free-text
+// inputs (topicInput/alreadyKnowInput) and directly, with no debounce at all,
+// for every chip/select control — a second debounce layered on top would only
+// ever add latency, never reduce write frequency, and would compound the
+// existing debounce's delay before a test (or a real close-before-it-settles
+// race) ever sees the draft actually persisted.
+function saveDraft(fields) {
+  localStorage.setItem(KEYS.CREATE_ROADMAP_DRAFT, JSON.stringify(fields));
+}
+
+function clearDraft() {
+  localStorage.removeItem(KEYS.CREATE_ROADMAP_DRAFT);
+}
 
 function countItems(data) {
   return data.phases.reduce((total, phase) => (
@@ -110,22 +142,38 @@ export function openCreateRoadmapModal() {
     }
 
     // --- Left column: build your prompt ---
+    const draft = readDraft();
+
     const topicInput = el('textarea', {
       className: 'field-input',
       rows: '2',
       placeholder: 'e.g. Kubernetes for backend engineers'
     });
+    if (draft?.topic) topicInput.value = draft.topic;
 
-    let experienceLevel = '';
-    let timeframe = '';
-    let goal = '';
-    let weeklyTime = '';
-    let resourceTypes = [];
+    let experienceLevel = draft?.experienceLevel || '';
+    let timeframe = draft?.timeframe || '';
+    let goal = draft?.goal || '';
+    let weeklyTime = draft?.weeklyTime || '';
+    let resourceTypes = Array.isArray(draft?.resourceTypes) ? draft.resourceTypes : [];
     const alreadyKnowInput = el('input', {
       className: 'field-input',
       type: 'text',
       placeholder: 'e.g. already comfortable with Docker and basic networking'
     });
+    if (draft?.alreadyKnow) alreadyKnowInput.value = draft.alreadyKnow;
+
+    function persistDraft() {
+      saveDraft({
+        topic: topicInput.value,
+        experienceLevel,
+        timeframe,
+        goal,
+        weeklyTime,
+        resourceTypes,
+        alreadyKnow: alreadyKnowInput.value
+      });
+    }
 
     // Issue #124 — a fixed-height, overflow-y-scrollable block needs its own
     // tab stop (WCAG 2.1.1 "scrollable-region-focusable") so a keyboard-only
@@ -151,6 +199,7 @@ export function openCreateRoadmapModal() {
         alreadyKnow: alreadyKnowInput.value
       });
       refreshCopyState();
+      persistDraft();
     }
     const debouncedRefresh = debounce(refreshPrompt, 150);
     topicInput.addEventListener('input', debouncedRefresh);
@@ -174,7 +223,7 @@ export function openCreateRoadmapModal() {
     });
     const goalSelect = createSelect(
       [{ value: '', label: 'No preference' }, ...GOALS.map(value => ({ value, label: value }))],
-      { value: '', ariaLabel: 'Goal / context' }
+      { value: goal, ariaLabel: 'Goal / context' }
     );
     goalSelect.addEventListener('change', () => {
       goal = goalSelect.value;
@@ -377,6 +426,7 @@ export function openCreateRoadmapModal() {
     importBtn.addEventListener('click', () => {
       if (!lastValidData) return;
       const { phases, items, droppedResourceCount, duplicateTitleCount } = adaptImportToRoadmap(lastValidData);
+      clearDraft();
       close({ title: lastValidData.title, phases, items, droppedResourceCount, duplicateTitleCount });
     });
 

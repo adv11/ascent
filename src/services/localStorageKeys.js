@@ -101,7 +101,16 @@ export const KEYS = {
   // actually granted. Device-level (a single-device, best-effort reminder,
   // no cross-device push — see .claude/rules/roadmap-store.md), same
   // pattern as DAILY_TODOS_COLLAPSED.
-  DAILY_TODO_REMINDERS_ENABLED: 'ascent-daily-todo-reminders-enabled'
+  DAILY_TODO_REMINDERS_ENABLED: 'ascent-daily-todo-reminders-enabled',
+  // "Create your own roadmap" draft autosave (issue #328) — mirrors
+  // FEEDBACK_DRAFT's exact precedent: written on every field change, read once
+  // on modal open to prefill, cleared only on a successful import (never on
+  // Cancel/Escape/outside-click, which is the whole point of this fix).
+  // Device-level (not synced to Firebase, not cleared on sign-out) — a
+  // half-finished creation draft isn't account data, same reasoning as
+  // FEEDBACK_DRAFT. Deliberately excludes the pasted AI-response textarea —
+  // see importRoadmapModal.js's own comment for why.
+  CREATE_ROADMAP_DRAFT: 'ascent-create-roadmap-draft'
 };
 
 export function verifyDismissedKey(uid) {
