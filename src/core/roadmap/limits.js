@@ -31,6 +31,18 @@ export const MAX_TAGS_PER_ITEM = 5;
 export const MAX_CUSTOM_ROADMAP_TITLE_LENGTH = MAX_TITLE_LENGTH;
 export const MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH = 1000;
 
+// Issue #324 — at most this many custom roadmaps (AI-created or manual, no
+// distinction) a single account may accumulate. Before this, the only limit
+// was firebase/database.rules.json's meta.customRoadmaps index-shape rule,
+// which allows indices 0-999 (i.e. up to 1,000) — a shape constraint against
+// stray keys, never a deliberate product-level cap. No real account has
+// organically approached anywhere near this many distinct roadmaps; mirrors
+// the reasoning already used for MAX_ITEMS_PER_ROADMAP's 800-item cap ("no
+// real roadmap organically approaches even 800 topics"). Also enforced
+// server-side — see database.rules.json's meta.customRoadmaps.$index rule,
+// which must stay in sync with this value.
+export const MAX_CUSTOM_ROADMAPS = 25;
+
 export function isValidResource(resource) {
   return !!resource
     && typeof resource.label === 'string' && resource.label.length <= MAX_RESOURCE_LABEL_LENGTH

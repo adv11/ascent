@@ -819,6 +819,36 @@ pick), followed by every pickable card with favorited ones first (`Array#sort`, 
 so order is otherwise unchanged). Toggling re-renders the whole visible grid rather than
 patching a single card in place, since a toggle can also move where the card sits.
 
+**Custom-roadmap count cap — `MAX_CUSTOM_ROADMAPS` (issue #324).** Before this,
+`createCustomRoadmap()` had no upper bound at all on how many custom roadmaps a single
+account could accumulate — the only other constraint was `database.rules.json`'s
+`meta.customRoadmaps` index-shape rule, which allows indices `0`-`999` (up to 1,000
+entries), a shape constraint against stray keys rather than a deliberate product cap. Each
+of those could independently hold up to 500 items (`MAX_ITEMS`, `importValidator.js`) —
+a real, unmitigated storage/cost exposure once this became a live, public product.
+`MAX_CUSTOM_ROADMAPS` (25, `core/roadmap/limits.js`) is checked against
+`customRoadmaps.length` specifically, **never** `startedTemplateIds.length` — the 7
+built-in starter templates are never added to `customRoadmaps` and must never count
+toward this limit. `createCustomRoadmap()` throws a tagged `Error` (`error.code =
+'capped'`) rather than returning `{ ok: false }`, matching the existing "throws on
+invalid input" contract the empty-title check right above it already has — a caller that
+doesn't care about the distinction can keep treating this like any other rejected
+creation. `onboarding.js`'s `handleCreate()` catches `error.code === 'capped'` and shows a
+dedicated `confirmDialog()` popup (not a toast — a hard limit the user needs to actually
+notice and act on, not something that can quietly disappear before it's read) explaining
+the limit and pointing at deleting an older/unused custom roadmap. This reuses
+`confirmDialog()`'s new `cancelText: null` info-only mode (`confirmDialog.js`) — a single
+"Got it" button, no Cancel, for a purely informational pop-up with nothing to actually
+decline. `database.rules.json`'s `meta.customRoadmaps.$index` rule is tightened to match
+(`$index.matches(/^([0-9]|1[0-9]|2[0-4])$/)`, indices `0`-`24`) — if `MAX_CUSTOM_ROADMAPS`
+is ever retuned, this regex must be updated in lockstep, the same "client and server caps
+must stay in sync" discipline `favoriteRoadmapIds`' own cap above already documents.
+Deliberately **no accompanying creation-rate cooldown** alongside this count cap: two
+legitimate custom roadmaps created back-to-back is already a real, tested scenario
+(issue #153's overlapping-`createCustomRoadmap()` race-condition fix, see the "lost-update
+race" section below) — a time-based cooldown would reject the second one outright instead
+of handling it correctly, which is what that fix exists to do.
+
 **"blank" template retirement and migration (`roadmapStore.js`, `src/data/templates/`,
 issue #4 follow-up).** Once manual roadmap creation (CRUD, above) and AI-assisted import
 (above) both existed, the "Start blank" built-in template — four fixed, uneditable
