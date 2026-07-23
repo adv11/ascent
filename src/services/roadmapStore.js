@@ -136,6 +136,84 @@ function todoCompletionFields(done) {
   return { completedViaTodoAt: timestamp, completedAt: timestamp };
 }
 
+// Shared by setItemDoneInTemplate()'s cached/cold branches (issue #276 —
+// extracted to bring that function's cyclomatic complexity down from 33).
+// Returns the item if it's present and not soft-deleted (removeItem()) —
+// null in either case, matching the "treat a soft-deleted item as missing"
+// guard documented above todoCompletionFields().
+function findLiveTemplateItem(itemsMap, itemId) {
+  const item = itemsMap?.[itemId];
+  if (!item || item.deleted) return null;
+  return item;
+}
+
+// The done/not-done patch shape shared by the cached and cold branches —
+// the active-template branch instead folds completedViaTodoAt into
+// updateItem()'s own patch, so it doesn't use this helper.
+function buildCrossRoadmapDonePatch(done) {
+  return { done, ...todoCompletionFields(done), updatedAt: Date.now() };
+}
+
+// Merges `patch` into `itemsMap[itemId]`, returning both the patched item
+// and the new items map — the cached/cold branches each need both: the
+// patched item's title for the resolved `{ ok, title }`, and the new map to
+// persist locally/remotely.
+function applyCrossRoadmapPatch(itemsMap, itemId, patch) {
+  const patchedItem = { ...itemsMap[itemId], ...patch };
+  const nextItems = { ...itemsMap, [itemId]: patchedItem };
+  return { patchedItem, nextItems };
+}
+
+// Tries a scoped per-item Firebase write first (issue #232/#184's
+// lost-update race fix — see .claude/rules/roadmap-store.md), falling back
+// to a full saveRoadmap() only when there's no existing remote node to
+// merge fields into. `attemptScoped` lets the cold branch skip the scoped
+// call entirely when it already knows (from its own remote read) that the
+// item was never synced to Firebase for this roadmap — same behavior the
+// original inline ternary had. Throws on failure so the caller's own
+// try/catch can log and resolve `{ ok: false }` — this function never
+// swallows an error itself.
+async function writeCrossRoadmapPatch(adapter, { uid, templateId, itemId, patch, nextItems, phases, attemptScoped }) {
+  const scoped = attemptScoped ? await adapter.updateRoadmapItemFields(uid, templateId, itemId, patch) : null;
+  if (!scoped) {
+    await adapter.saveRoadmap(uid, templateId, {
+      version: ROADMAP_VERSION,
+      updatedAt: adapter.now(),
+      templateId,
+      items: nextItems,
+      phases
+    });
+  }
+}
+
+// Fires onCompletionToggle exactly once per genuine done-transition — the
+// same completionDelta() computation the cached/cold branches each repeated
+// inline.
+function applyCrossRoadmapCompletionDelta(onCompletionToggle, done, wasDone) {
+  const delta = completionDelta({ done }, wasDone);
+  if (delta !== 0) onCompletionToggle(delta);
+}
+
+// The cold branch's one-shot read: Firebase first (best-effort — a failed
+// read just falls through to the local blob, same as before), then the
+// local blob for whichever of items/phases the remote read didn't provide.
+// Extracted out of setColdTemplateItemDone() to keep its own complexity
+// under the eslint `complexity` gate (root CLAUDE.md, issue #276).
+async function fetchColdTemplateBase(adapter, uid, templateId) {
+  let remote = null;
+  if (uid) {
+    try {
+      remote = await adapter.getRoadmap(uid, templateId);
+    } catch (error) {
+      console.error('Failed to load roadmap for cross-roadmap item update', error);
+    }
+  }
+  const localBlob = readLocalRoadmaps()[templateId];
+  const baseItems = remote?.items || localBlob?.items;
+  const basePhases = normalizeStringArray(remote?.phases) || normalizeStringArray(localBlob?.phases) || [];
+  return { remote, baseItems, basePhases };
+}
+
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim() ? value : '';
 }
@@ -1553,106 +1631,104 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // source topic or its whole roadmap was deleted after the todo was linked
   // to it) — callers must check `ok` and surface that gracefully rather
   // than assuming success.
-  async function setItemDoneInTemplate(templateId, itemId, done) {
-    if (templateId === activeTemplateId) {
-      // A soft-deleted item (removeItem()) still exists in the map — never
-      // rendered again, but present — so without this check updateItem()
-      // would happily "succeed" on it: a linked todo could be completed
-      // against a topic the user can no longer see or interact with,
-      // reporting ok:true for an update with zero visible effect. Treat it
-      // the same as genuinely missing.
-      if (!items[itemId] || items[itemId].deleted) return { ok: false, title: null };
-      const patch = { done, completedViaTodoAt: done ? Date.now() : null };
-      const ok = updateItem(itemId, patch);
-      return { ok, title: ok ? items[itemId].title : null };
-    }
+  // Case 1 (see setItemDoneInTemplate's own comment below): items are
+  // already in memory, so this is just updateItem() with completedViaTodoAt
+  // folded into the same patch.
+  function setActiveTemplateItemDone(itemId, done) {
+    // A soft-deleted item (removeItem()) still exists in the map — never
+    // rendered again, but present — so without this check updateItem()
+    // would happily "succeed" on it: a linked todo could be completed
+    // against a topic the user can no longer see or interact with,
+    // reporting ok:true for an update with zero visible effect. Treat it
+    // the same as genuinely missing.
+    if (!findLiveTemplateItem(items, itemId)) return { ok: false, title: null };
+    const patch = { done, completedViaTodoAt: done ? Date.now() : null };
+    const ok = updateItem(itemId, patch);
+    return { ok, title: ok ? items[itemId].title : null };
+  }
 
-    const cached = roadmapCache[templateId];
-    if (cached?.items) {
-      if (!cached.items[itemId] || cached.items[itemId].deleted) return { ok: false, title: null };
-      const wasDone = cached.items[itemId].done;
-      const patch = { done, ...todoCompletionFields(done), updatedAt: Date.now() };
-      const patchedItem = { ...cached.items[itemId], ...patch };
-      const nextItems = { ...cached.items, [itemId]: patchedItem };
-      cached.items = nextItems;
-      persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: cached.phases });
-      if (uid) {
-        try {
-          // Scoped per-item write (issue #232, same fix #184 applied to the
-          // cold branch below) — a full saveRoadmap({ items: nextItems })
-          // here would race with a concurrent update to a *different* itemId
-          // in the same cached-but-not-active roadmap, silently reverting
-          // whichever write lands second. updateRoadmapItemFields() resolves
-          // null (writing nothing) if the item has never been synced to
-          // Firebase for this roadmap at all, so we fall back to a full
-          // write only in that case — no existing remote node to merge into.
-          const scoped = await adapter.updateRoadmapItemFields(uid, templateId, itemId, patch);
-          if (!scoped) {
-            await adapter.saveRoadmap(uid, templateId, {
-              version: ROADMAP_VERSION,
-              updatedAt: adapter.now(),
-              templateId,
-              items: nextItems,
-              phases: cached.phases
-            });
-          }
-        } catch (error) {
-          console.error('Failed to save cross-roadmap item update', error);
-          return { ok: false, title: null };
-        }
-      }
-      const delta = completionDelta({ done }, wasDone);
-      if (delta !== 0) onCompletionToggle(delta);
-      return { ok: true, title: patchedItem.title };
-    }
-
-    let remote = null;
+  // Case 2: patch roadmapCache in place and persist (local + Firebase)
+  // directly, without touching activeTemplateId/items/dirty/
+  // structuralVersion, since this template isn't on screen right now.
+  async function setCachedTemplateItemDone(templateId, cached, itemId, done) {
+    if (!findLiveTemplateItem(cached.items, itemId)) return { ok: false, title: null };
+    const wasDone = cached.items[itemId].done;
+    const patch = buildCrossRoadmapDonePatch(done);
+    const { patchedItem, nextItems } = applyCrossRoadmapPatch(cached.items, itemId, patch);
+    cached.items = nextItems;
+    persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: cached.phases });
     if (uid) {
       try {
-        remote = await adapter.getRoadmap(uid, templateId);
-      } catch (error) {
-        console.error('Failed to load roadmap for cross-roadmap item update', error);
-      }
-    }
-    const localBlob = readLocalRoadmaps()[templateId];
-    const baseItems = remote?.items || localBlob?.items;
-    if (!baseItems?.[itemId] || baseItems[itemId].deleted) return { ok: false, title: null };
-    const wasDone = baseItems[itemId].done;
-    const basePhases = normalizeStringArray(remote?.phases) || normalizeStringArray(localBlob?.phases) || [];
-    const patch = { done, ...todoCompletionFields(done), updatedAt: Date.now() };
-    const patchedItem = { ...baseItems[itemId], ...patch };
-    const nextItems = { ...baseItems, [itemId]: patchedItem };
-    persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: basePhases });
-    if (uid) {
-      try {
-        // Targeted, per-item write (issue #184) — unlike the full
-        // saveRoadmap({ items: nextItems }) this replaced, this only touches
-        // itemId's own path, so two concurrent calls for different itemIds on
-        // the same not-yet-cached roadmap can no longer clobber each other's
-        // completion. Falls back to a full write only when the item has never
-        // been synced to Firebase for this roadmap at all (remote had no
-        // items map for it), since there's no existing remote node to merge
-        // fields into in that case.
-        const scoped = remote?.items?.[itemId]
-          ? await adapter.updateRoadmapItemFields(uid, templateId, itemId, patch)
-          : null;
-        if (!scoped) {
-          await adapter.saveRoadmap(uid, templateId, {
-            version: ROADMAP_VERSION,
-            updatedAt: adapter.now(),
-            templateId,
-            items: nextItems,
-            phases: basePhases
-          });
-        }
+        // Scoped per-item write (issue #232, same fix #184 applied to the
+        // cold branch below) — a full saveRoadmap({ items: nextItems })
+        // here would race with a concurrent update to a *different* itemId
+        // in the same cached-but-not-active roadmap, silently reverting
+        // whichever write lands second. writeCrossRoadmapPatch() falls back
+        // to a full write only when the item has never been synced to
+        // Firebase for this roadmap at all — no existing remote node to
+        // merge into.
+        await writeCrossRoadmapPatch(adapter, { uid, templateId, itemId, patch, nextItems, phases: cached.phases, attemptScoped: true });
       } catch (error) {
         console.error('Failed to save cross-roadmap item update', error);
         return { ok: false, title: null };
       }
     }
-    const delta = completionDelta({ done }, wasDone);
-    if (delta !== 0) onCompletionToggle(delta);
+    applyCrossRoadmapCompletionDelta(onCompletionToggle, done, wasDone);
     return { ok: true, title: patchedItem.title };
+  }
+
+  // Case 3: one-shot read (Firebase first, falling back to the local blob),
+  // patch, persist the same way as the cached case. Never seeds a
+  // not-yet-started template — a linked todo can only point at an item that
+  // already exists somewhere.
+  async function setColdTemplateItemDone(templateId, itemId, done) {
+    const { remote, baseItems, basePhases } = await fetchColdTemplateBase(adapter, uid, templateId);
+    if (!findLiveTemplateItem(baseItems, itemId)) return { ok: false, title: null };
+    const wasDone = baseItems[itemId].done;
+    const patch = buildCrossRoadmapDonePatch(done);
+    const { patchedItem, nextItems } = applyCrossRoadmapPatch(baseItems, itemId, patch);
+    persistLocalRoadmap(templateId, { dirty: false, items: nextItems, phases: basePhases });
+    if (uid) {
+      try {
+        // Targeted, per-item write (issue #184) — unlike a full
+        // saveRoadmap({ items: nextItems }), this only touches itemId's own
+        // path, so two concurrent calls for different itemIds on the same
+        // not-yet-cached roadmap can no longer clobber each other's
+        // completion. Only attempted when the remote read actually found
+        // this item (there's otherwise no existing remote node to merge
+        // fields into) — writeCrossRoadmapPatch() falls back to a full write
+        // in that case, same as the cached branch above.
+        await writeCrossRoadmapPatch(adapter, { uid, templateId, itemId, patch, nextItems, phases: basePhases, attemptScoped: !!remote?.items?.[itemId] });
+      } catch (error) {
+        console.error('Failed to save cross-roadmap item update', error);
+        return { ok: false, title: null };
+      }
+    }
+    applyCrossRoadmapCompletionDelta(onCompletionToggle, done, wasDone);
+    return { ok: true, title: patchedItem.title };
+  }
+
+  // Marks an item done/not-done in ANY template — not just the currently
+  // active one (issue #56 follow-up: completing a Daily Todo linked to a
+  // roadmap topic must work regardless of which roadmap the user happens to
+  // be viewing right now, without silently switching their active roadmap
+  // out from under them). Three cases, cheapest first, each its own helper
+  // above (issue #276 — this dispatcher used to inline all three, at a
+  // cyclomatic complexity of 33):
+  //   1. templateId is the active template — setActiveTemplateItemDone().
+  //   2. templateId is cached (visited this session, not active right now)
+  //      — setCachedTemplateItemDone().
+  //   3. templateId is cold (never touched this session) — one-shot read,
+  //      then setColdTemplateItemDone().
+  // Resolves `{ ok: false }` if the item can't be found anywhere (e.g. the
+  // source topic or its whole roadmap was deleted after the todo was linked
+  // to it) — callers must check `ok` and surface that gracefully rather
+  // than assuming success.
+  async function setItemDoneInTemplate(templateId, itemId, done) {
+    if (templateId === activeTemplateId) return setActiveTemplateItemDone(itemId, done);
+    const cached = roadmapCache[templateId];
+    if (cached?.items) return setCachedTemplateItemDone(templateId, cached, itemId, done);
+    return setColdTemplateItemDone(templateId, itemId, done);
   }
 
   function addItem({ title, phase, section, priority }) {
