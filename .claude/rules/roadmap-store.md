@@ -883,6 +883,29 @@ same precedent as the "Clear all filters" button's own direct `persistUi()` + `r
 and scrolls it into view. If you ever need another cross-page "arrive here already primed
 to X" signal, follow this same pattern rather than adding query-string routing.
 
+**Further ESLint complexity cleanup beyond issue #129's setUser split (issue #279) —
+more of the same extraction discipline, not a new pattern.** `resolveRoadmapItems()`'s
+merge branches share one new helper, `buildMergedResolution({ sourceItems, sourcePhases,
+baseItems, basePhases, dirty })` (module-scope, pure), and its remote-read branch calls
+`fetchRemoteRoadmapSafely(templateId)` instead of building/catching the promise inline.
+`setUser()`'s uid-transition wipe is now `maybeResetForNewUid(nextUid)` (a closure over
+the store's own mutable state, same shape as the file's other phase functions, not a
+pure module-scope function — it has to reassign `items`/`activeTemplateId`/etc.
+directly) and its blank-migration apply step is `applyBlankMigrationIfNeeded(onboarding)`.
+`resolveOnboardingState()` itself split into `newShapeOnboardingState(remoteMeta)` (the
+already-on-issue-#58-shape branch) and `resolveLegacyOnboardingState(...)` (everything
+else — the legacy-detection/migration path). `switchRoadmap()`'s tail split into
+`detachAndCacheOutgoingRoadmap()` and `attachIncomingRoadmapAndNotify()`. `updateItem()`'s
+length/shape caps moved into `isValidItemPatch(patch)`. `activityLogStore.js`'s and
+`dailyTodoStore.js`'s `setUser()` got the identical `maybeResetForNewUid`/
+`resolveLocalEntries`-or-`resolveLocalItems` split (the latter two are pure — no closure
+state, unlike the roadmapStore.js's version of `maybeResetForNewUid`); `activityLogStore.js`'s
+`setUser()` additionally split into `detachListeners()`/`queuePendingSaves()`, and
+`dailyTodoStore.js`'s `addTodo()` split into `validateTodoInput()`/`buildTodoRecord()`.
+None of this changes any store's external contract — every helper is either
+closure-private or serves a single already-documented function above; look there for the
+actual behavior, not here.
+
 **Personal notes per topic — `item.notes` (issue #15).** Every item may carry a plain-text
 `notes` field, capped at 5,000 characters; a missing field and `''` both mean "no notes"
 (backward compat — seed items are never retrofitted with `notes: ''`, the same precedent

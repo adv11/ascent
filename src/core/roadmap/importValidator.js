@@ -153,6 +153,82 @@ function isValidItem(item) {
   return false;
 }
 
+// One titled node's (phase/section) title check — corrupted, missing, or
+// over length, in that priority order. Shared by the phase- and
+// section-title checks below since both follow the identical three-way
+// branch, just against a different `path` prefix.
+function validateTitledNodeTitle(title, path, errors) {
+  if (looksCorrupted(title)) {
+    errors.push(`${path}.title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
+  } else if (typeof title !== 'string' || !title.trim()) {
+    errors.push(`${path}.title is required`);
+  } else if (title.length > MAX_TITLE_LENGTH) {
+    errors.push(`${path}.title exceeds ${MAX_TITLE_LENGTH} characters`);
+  }
+}
+
+// Validates one section's own items array, returning how many items were
+// valid (rolled up into the payload-wide MAX_ITEMS check by the caller).
+// Extracted out of validateImportPayload to keep its own complexity under
+// the ESLint gate (root CLAUDE.md).
+function validateSectionItems(section, path, errors) {
+  if (!Array.isArray(section.items) || section.items.length === 0) {
+    errors.push(`${path}.items must have at least one item`);
+    return 0;
+  }
+  let validCount = 0;
+  section.items.forEach((item, k) => {
+    const itemPath = `${path}.items[${k}]`;
+    const corruption = findItemCorruption(item, itemPath);
+    if (corruption) {
+      errors.push(corruption);
+    } else if (itemTitleTooLong(item)) {
+      errors.push(`${itemPath}.title exceeds ${MAX_TITLE_LENGTH} characters`);
+    } else if (!isValidItem(item)) {
+      errors.push(`item at ${itemPath} is invalid`);
+    } else {
+      validCount += 1;
+    }
+  });
+  return validCount;
+}
+
+// Validates one phase's own sections array, returning the total valid item
+// count across all of them.
+function validatePhaseSections(phase, phasePath, errors) {
+  if (!Array.isArray(phase.sections) || phase.sections.length === 0) {
+    errors.push(`${phasePath}.sections must be a non-empty array`);
+    return 0;
+  }
+  let totalItems = 0;
+  phase.sections.forEach((section, j) => {
+    const sectionPath = `${phasePath}.sections[${j}]`;
+    if (!section || typeof section !== 'object' || Array.isArray(section)) {
+      errors.push(`${sectionPath} is invalid`);
+      return;
+    }
+    validateTitledNodeTitle(section.title, sectionPath, errors);
+    totalItems += validateSectionItems(section, sectionPath, errors);
+  });
+  return totalItems;
+}
+
+// Validates one phase (shape/title/priority/sections), returning its own
+// valid item count. Extracted out of validateImportPayload's phases.forEach
+// to keep that function's complexity under the ESLint gate.
+function validatePhase(phase, i, errors) {
+  const phasePath = `phases[${i}]`;
+  if (!phase || typeof phase !== 'object' || Array.isArray(phase)) {
+    errors.push(`${phasePath} is invalid`);
+    return 0;
+  }
+  validateTitledNodeTitle(phase.title, phasePath, errors);
+  if (!VALID_PRIORITIES.includes(normalizePriority(phase.priority))) {
+    errors.push(`${phasePath}.priority must be one of ${VALID_PRIORITIES.join(', ')}`);
+  }
+  return validatePhaseSections(phase, phasePath, errors);
+}
+
 // Returns an array of human-readable error strings — empty means valid.
 // Field-level messages include the phases[i].sections[j].items[k] path so a
 // user can find the exact spot in their pasted JSON that needs fixing.
@@ -176,54 +252,7 @@ export function validateImportPayload(data) {
 
   let totalItems = 0;
   data.phases.forEach((phase, i) => {
-    if (!phase || typeof phase !== 'object' || Array.isArray(phase)) {
-      errors.push(`phases[${i}] is invalid`);
-      return;
-    }
-    if (looksCorrupted(phase.title)) {
-      errors.push(`phases[${i}].title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
-    } else if (typeof phase.title !== 'string' || !phase.title.trim()) {
-      errors.push(`phases[${i}].title is required`);
-    } else if (phase.title.length > MAX_TITLE_LENGTH) {
-      errors.push(`phases[${i}].title exceeds ${MAX_TITLE_LENGTH} characters`);
-    }
-    if (!VALID_PRIORITIES.includes(normalizePriority(phase.priority))) {
-      errors.push(`phases[${i}].priority must be one of ${VALID_PRIORITIES.join(', ')}`);
-    }
-    if (!Array.isArray(phase.sections) || phase.sections.length === 0) {
-      errors.push(`phases[${i}].sections must be a non-empty array`);
-      return;
-    }
-    phase.sections.forEach((section, j) => {
-      if (!section || typeof section !== 'object' || Array.isArray(section)) {
-        errors.push(`phases[${i}].sections[${j}] is invalid`);
-        return;
-      }
-      if (looksCorrupted(section.title)) {
-        errors.push(`phases[${i}].sections[${j}].title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
-      } else if (typeof section.title !== 'string' || !section.title.trim()) {
-        errors.push(`phases[${i}].sections[${j}].title is required`);
-      } else if (section.title.length > MAX_TITLE_LENGTH) {
-        errors.push(`phases[${i}].sections[${j}].title exceeds ${MAX_TITLE_LENGTH} characters`);
-      }
-      if (!Array.isArray(section.items) || section.items.length === 0) {
-        errors.push(`phases[${i}].sections[${j}].items must have at least one item`);
-        return;
-      }
-      section.items.forEach((item, k) => {
-        const path = `phases[${i}].sections[${j}].items[${k}]`;
-        const corruption = findItemCorruption(item, path);
-        if (corruption) {
-          errors.push(corruption);
-        } else if (itemTitleTooLong(item)) {
-          errors.push(`${path}.title exceeds ${MAX_TITLE_LENGTH} characters`);
-        } else if (!isValidItem(item)) {
-          errors.push(`item at ${path} is invalid`);
-        } else {
-          totalItems += 1;
-        }
-      });
-    });
+    totalItems += validatePhase(phase, i, errors);
   });
 
   if (totalItems > MAX_ITEMS) {

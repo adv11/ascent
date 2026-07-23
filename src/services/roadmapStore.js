@@ -399,22 +399,25 @@ function backfillLegacyOnboardingMeta({ uid, adapter, legacyRoadmap, legacyTempl
   });
 }
 
-export async function resolveOnboardingState({ uid, adapter, remoteMeta, localFallback, isStale }) {
-  if (remoteMeta?.startedTemplateIds?.length) {
-    // Already on the new (issue #58) meta shape — no migration needed.
-    const startedTemplateIds = remoteMeta.startedTemplateIds;
-    return {
-      onboardingDone: true,
-      activeTemplateId: remoteMeta.activeTemplateId || startedTemplateIds[0],
-      startedTemplateIds,
-      migratedLegacyItems: null
-    };
-  }
+// Already on the new (issue #58) meta shape — no migration needed. Split out
+// of resolveOnboardingState to keep that function's own complexity under
+// the ESLint gate (root CLAUDE.md).
+function newShapeOnboardingState(remoteMeta) {
+  const startedTemplateIds = remoteMeta.startedTemplateIds;
+  return {
+    onboardingDone: true,
+    activeTemplateId: remoteMeta.activeTemplateId || startedTemplateIds[0],
+    startedTemplateIds,
+    migratedLegacyItems: null
+  };
+}
 
-  // Either a brand-new account, or one that predates issue #58 (and possibly
-  // predates issue #51 too). Check the legacy singular roadmap path once to
-  // decide, and migrate it forward if this account turns out to already be
-  // onboarded.
+// Either a brand-new account, or one that predates issue #58 (and possibly
+// predates issue #51 too). Checks the legacy singular roadmap path once to
+// decide, and migrates it forward if this account turns out to already be
+// onboarded. Split out of resolveOnboardingState for the same complexity
+// reason as newShapeOnboardingState above.
+async function resolveLegacyOnboardingState({ uid, adapter, remoteMeta, localFallback, isStale }) {
   const legacyRoadmap = await fetchLegacyRoadmapSafely(uid, adapter);
   if (isStale()) return STALE;
 
@@ -437,6 +440,13 @@ export async function resolveOnboardingState({ uid, adapter, remoteMeta, localFa
     startedTemplateIds,
     migratedLegacyItems: legacyRoadmap ? legacyRoadmap.items : null
   };
+}
+
+export async function resolveOnboardingState({ uid, adapter, remoteMeta, localFallback, isStale }) {
+  if (remoteMeta?.startedTemplateIds?.length) {
+    return newShapeOnboardingState(remoteMeta);
+  }
+  return resolveLegacyOnboardingState({ uid, adapter, remoteMeta, localFallback, isStale });
 }
 
 // One-time migration for the now-retired 'blank' template (issue #4
@@ -908,6 +918,30 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // result, and skipped entirely for a cache hit with its own phases already
   // populated (the common, already-fast case), so a fast cache hit never
   // pays for the import either.
+  // Merges a resolved source's items/phases against the template's base
+  // seed — shared by every branch below that returns a merged result, so
+  // resolveRoadmapItems itself only has to decide *which* source to merge,
+  // not repeat the merge/normalize logic three times. Extracted to keep that
+  // function's own complexity under the ESLint gate (root CLAUDE.md).
+  function buildMergedResolution({ sourceItems, sourcePhases, baseItems, basePhases, dirty }) {
+    return {
+      items: mergeWithSeed(sourceItems, baseItems),
+      phases: normalizeStringArray(sourcePhases) || basePhases,
+      dirty
+    };
+  }
+
+  // Neither of these depends on the other's result — running them
+  // concurrently (rather than awaiting the template-data fetch first) is the
+  // actual fix for issue #121 item 6.
+  function fetchRemoteRoadmapSafely(templateId) {
+    if (!uid) return Promise.resolve(null);
+    return adapter.getRoadmap(uid, templateId).catch(error => {
+      console.error('Failed to load roadmap from Firebase', error);
+      return null;
+    });
+  }
+
   async function resolveRoadmapItems(templateId, templateDataPromise) {
     const cached = roadmapCache[templateId];
     if (cached) {
@@ -926,37 +960,19 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     // this initial-load path needed it too (issue #67).
     if (localBlob?.items && localBlob.dirty) {
       const { baseItems, phases: basePhases } = await templateDataPromise;
-      return {
-        items: mergeWithSeed(localBlob.items, baseItems),
-        phases: normalizeStringArray(localBlob.phases) || basePhases,
-        dirty: true
-      };
+      return buildMergedResolution({ sourceItems: localBlob.items, sourcePhases: localBlob.phases, baseItems, basePhases, dirty: true });
     }
 
-    // Neither of these depends on the other's result — running them
-    // concurrently (rather than awaiting the template-data fetch first) is
-    // the actual fix for issue #121 item 6.
-    const remotePromise = uid
-      ? adapter.getRoadmap(uid, templateId).catch(error => {
-          console.error('Failed to load roadmap from Firebase', error);
-          return null;
-        })
-      : Promise.resolve(null);
-    const [remote, { baseItems, phases: basePhases }] = await Promise.all([remotePromise, templateDataPromise]);
+    const [remote, { baseItems, phases: basePhases }] = await Promise.all([
+      fetchRemoteRoadmapSafely(templateId),
+      templateDataPromise
+    ]);
 
     if (remote?.items) {
-      return {
-        items: mergeWithSeed(remote.items, baseItems),
-        phases: normalizeStringArray(remote.phases) || basePhases,
-        dirty: false
-      };
+      return buildMergedResolution({ sourceItems: remote.items, sourcePhases: remote.phases, baseItems, basePhases, dirty: false });
     }
     if (localBlob?.items) {
-      return {
-        items: mergeWithSeed(localBlob.items, baseItems),
-        phases: normalizeStringArray(localBlob.phases) || basePhases,
-        dirty: !!localBlob.dirty
-      };
+      return buildMergedResolution({ sourceItems: localBlob.items, sourcePhases: localBlob.phases, baseItems, basePhases, dirty: !!localBlob.dirty });
     }
     return { items: baseItems, phases: basePhases, dirty: false };
   }
@@ -1023,34 +1039,51 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // and the migration this performs, and for what each extracted phase function
   // above (freshStateForNewUid/readOnboardingLocalFallback/resolveMetaExtras/
   // determineOnboardingAndActiveRoadmap/loadActiveRoadmap) covers.
+  // Whenever the active uid changes (sign-out, sign-in as a different user),
+  // wipe local storage so the incoming user never sees the outgoing user's
+  // data. The initial boot call has uid=null, so this guard is skipped on
+  // first load. Extracted out of setUser (including its own `if` test) to
+  // keep that function's own complexity under the ESLint gate (root
+  // CLAUDE.md) — the uid-transition condition now lives entirely here.
+  function maybeResetForNewUid(nextUid) {
+    if (uid === null || uid === nextUid) return;
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    clearLocal();
+    const fresh = freshStateForNewUid();
+    items = fresh.items;
+    activeTemplateId = fresh.activeTemplateId;
+    templatePhases = fresh.templatePhases;
+    onboardingDone = fresh.onboardingDone;
+    hiddenTemplateIds = fresh.hiddenTemplateIds;
+    customRoadmaps = fresh.customRoadmaps;
+    startedTemplateIds = fresh.startedTemplateIds;
+    favoriteRoadmapIds = fresh.favoriteRoadmapIds;
+    tourDone = fresh.tourDone;
+    roadmapCache = fresh.roadmapCache;
+    pendingCustomSeeds = fresh.pendingCustomSeeds;
+    dirty = fresh.dirty;
+    recentFlushedStrs = fresh.recentFlushedStrs;
+    structuralVersion += 1;
+  }
+
+  // Applies a blank-template migration's result to local persistence/cache,
+  // when setUser's onboarding-detection phase actually performed one —
+  // extracted out of setUser (including its own `if` test) for the same
+  // complexity reason as maybeResetForNewUid above.
+  function applyBlankMigrationIfNeeded(onboarding) {
+    if (!onboarding.blankMigration) return;
+    const { migratedId, migratedItems, migratedPhases } = onboarding.blankMigration;
+    persistLocalRoadmap(migratedId, { dirty: false, items: migratedItems, phases: migratedPhases });
+    roadmapCache[migratedId] = { items: migratedItems, phases: migratedPhases, dirty: false };
+  }
+
   async function setUser(nextUser) {
     const nextUid = nextUser?.uid || null;
     const callId = ++stateCallId;
     const isStale = () => callId !== stateCallId;
 
-    // Whenever the active uid changes (sign-out, sign-in as a different user),
-    // wipe local storage so the incoming user never sees the outgoing user's data.
-    // The initial boot call has uid=null, so this guard is skipped on first load.
-    if (uid !== null && uid !== nextUid) {
-      clearTimeout(saveTimer);
-      saveTimer = null;
-      clearLocal();
-      const fresh = freshStateForNewUid();
-      items = fresh.items;
-      activeTemplateId = fresh.activeTemplateId;
-      templatePhases = fresh.templatePhases;
-      onboardingDone = fresh.onboardingDone;
-      hiddenTemplateIds = fresh.hiddenTemplateIds;
-      customRoadmaps = fresh.customRoadmaps;
-      startedTemplateIds = fresh.startedTemplateIds;
-      favoriteRoadmapIds = fresh.favoriteRoadmapIds;
-      tourDone = fresh.tourDone;
-      roadmapCache = fresh.roadmapCache;
-      pendingCustomSeeds = fresh.pendingCustomSeeds;
-      dirty = fresh.dirty;
-      recentFlushedStrs = fresh.recentFlushedStrs;
-      structuralVersion += 1;
-    }
+    maybeResetForNewUid(nextUid);
 
     if (unsubscribeRoadmap) unsubscribeRoadmap();
     unsubscribeRoadmap = null;
@@ -1091,11 +1124,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     startedTemplateIds = onboarding.startedTemplateIds;
     customRoadmaps = onboarding.customRoadmaps;
     persistLocalCustomRoadmaps();
-    if (onboarding.blankMigration) {
-      const { migratedId, migratedItems, migratedPhases } = onboarding.blankMigration;
-      persistLocalRoadmap(migratedId, { dirty: false, items: migratedItems, phases: migratedPhases });
-      roadmapCache[migratedId] = { items: migratedItems, phases: migratedPhases, dirty: false };
-    }
+    applyBlankMigrationIfNeeded(onboarding);
 
     persistLocalOnboarding();
 
@@ -1237,9 +1266,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     const [, resolved] = await Promise.all([outgoingFlush, resolvedPromise, metaSave]);
     if (isStale()) return;
 
-    if (unsubscribeRoadmap) unsubscribeRoadmap();
-    unsubscribeRoadmap = null;
-    if (activeTemplateId) roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
+    detachAndCacheOutgoingRoadmap();
 
     activeTemplateId = requestedTemplateId;
     templatePhases = resolved.phases;
@@ -1253,25 +1280,42 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     persistLocal();
     persistLocalOnboarding();
 
-    if (uid) {
-      attachRoadmapListener(activeTemplateId);
-      // Not just `!alreadyStarted` (which is always dirty:true from the
-      // fresh-seed branch above): resolveRoadmapItems() can also return
-      // dirty:true for an ALREADY-started template, e.g. its roadmapCache
-      // entry was left dirty:true by a previous flushOutgoingRoadmap()
-      // failure (see that function's comment) or a dirty local blob from an
-      // interrupted session. Without this, switching into that template
-      // left the in-memory `dirty` flag true with no timer ever queued to
-      // actually flush it — the edit would silently sit unflushed until some
-      // other mutation happened to call queueSave() again (found during the
-      // issue #143 investigation).
-      if (dirty) {
-        queueSave();
-      } else {
-        notify({ saveState: 'synced' });
-      }
-    } else {
+    attachIncomingRoadmapAndNotify();
+  }
+
+  // Detaches the outgoing template's Firebase listener and caches its
+  // just-superseded items/phases/dirty state before switchRoadmap
+  // reassigns activeTemplateId — extracted out of switchRoadmap to keep its
+  // own complexity under the ESLint gate (root CLAUDE.md).
+  function detachAndCacheOutgoingRoadmap() {
+    if (unsubscribeRoadmap) unsubscribeRoadmap();
+    unsubscribeRoadmap = null;
+    if (activeTemplateId) roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
+  }
+
+  // Attaches the incoming template's listener and settles switchRoadmap's
+  // final saveState — extracted out of switchRoadmap for the same
+  // complexity reason as detachAndCacheOutgoingRoadmap above.
+  function attachIncomingRoadmapAndNotify() {
+    if (!uid) {
       notify({ saveState: 'local' });
+      return;
+    }
+    attachRoadmapListener(activeTemplateId);
+    // Not just `!alreadyStarted` (which is always dirty:true from the
+    // fresh-seed branch in switchRoadmap): resolveRoadmapItems() can also
+    // return dirty:true for an ALREADY-started template, e.g. its
+    // roadmapCache entry was left dirty:true by a previous
+    // flushOutgoingRoadmap() failure (see that function's comment) or a
+    // dirty local blob from an interrupted session. Without this, switching
+    // into that template left the in-memory `dirty` flag true with no timer
+    // ever queued to actually flush it — the edit would silently sit
+    // unflushed until some other mutation happened to call queueSave()
+    // again (found during the issue #143 investigation).
+    if (dirty) {
+      queueSave();
+    } else {
+      notify({ saveState: 'synced' });
     }
   }
 
@@ -1527,14 +1571,24 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     queueSave();
   }
 
+  // Every one of updateItem's length/shape caps (issue #53's title cap, plus
+  // the resource/tag shape checks) — extracted out of updateItem to keep its
+  // own complexity under the ESLint gate (root CLAUDE.md). A missing field
+  // on the patch is always valid (nothing to check), matching updateItem's
+  // existing "only validate keys the caller actually sent" behavior.
+  function isValidItemPatch(patch) {
+    if (typeof patch.title === 'string' && (!patch.title.trim() || patch.title.length > MAX_TITLE_LENGTH)) return false;
+    if (Array.isArray(patch.resources) && !patch.resources.every(isValidResource)) return false;
+    if (Array.isArray(patch.tags) && !isValidTags(patch.tags)) return false;
+    return true;
+  }
+
   // Returns false (mutating nothing) when the patch fails a length cap (issue
   // #53) — callers must check this return value instead of assuming success,
   // same convention as addItem()'s item-count cap.
   function updateItem(id, patch) {
     if (!items[id]) return false;
-    if (typeof patch.title === 'string' && (!patch.title.trim() || patch.title.length > MAX_TITLE_LENGTH)) return false;
-    if (Array.isArray(patch.resources) && !patch.resources.every(isValidResource)) return false;
-    if (Array.isArray(patch.tags) && !isValidTags(patch.tags)) return false;
+    if (!isValidItemPatch(patch)) return false;
     // Only a `done` toggle is cosmetic (see docs/architecture.md §5.1). A
     // `notes` patch (issue #15) must NOT be added here — the notes indicator
     // badge on the row needs structuralVersion to bump so it re-renders. The

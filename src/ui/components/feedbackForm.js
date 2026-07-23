@@ -9,17 +9,25 @@ import { createIcon } from './icons.js';
 // style every other ad hoc modal in this app (addToDailyTodoModal.js, etc.)
 // already uses.
 
-// Validated on blur after the first edit, not on every keystroke (§3.4) —
-// `touched` flips true on the field's first blur and stays true.
-export function createField({ label, type = 'text', maxLength, placeholder, value = '', required = true, onChange }) {
-  const isTextarea = type === 'textarea';
-  const input = el(isTextarea ? 'textarea' : 'input', {
+// The input/textarea's own attrs — a textarea can't take a `type`/`value`
+// attribute the way an `<input>` can (its value is set as a property below
+// instead). Extracted out of createField to keep its own complexity under
+// the ESLint gate (root CLAUDE.md).
+function buildFieldInputAttrs({ isTextarea, type, maxLength, placeholder, value }) {
+  return {
     className: 'field-input feedback-field-input',
     type: isTextarea ? null : type,
     placeholder,
     maxlength: maxLength ? String(maxLength) : null,
     value: isTextarea ? null : value
-  });
+  };
+}
+
+// Validated on blur after the first edit, not on every keystroke (§3.4) —
+// `touched` flips true on the field's first blur and stays true.
+export function createField({ label, type = 'text', maxLength, placeholder, value = '', required = true, onChange }) {
+  const isTextarea = type === 'textarea';
+  const input = el(isTextarea ? 'textarea' : 'input', buildFieldInputAttrs({ isTextarea, type, maxLength, placeholder, value }));
   if (isTextarea) input.value = value;
 
   const counter = el('span', { className: 'feedback-char-counter', 'aria-live': 'polite' });

@@ -132,22 +132,36 @@ export function createDailyTodoStore() {
     }, 500);
   }
 
-  // Sign-out privacy guard — same contract roadmapStore.js's setUser
-  // enforces (CLAUDE.md "Sign-out contract"): never load one user's
-  // localStorage into another user's session.
+  // Sign-out/uid-transition privacy wipe — same contract roadmapStore.js's
+  // setUser enforces (CLAUDE.md "Sign-out contract"): never load one user's
+  // localStorage into another user's session. Extracted out of setUser to
+  // keep its own complexity down.
+  function freshStateForNewUid() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    clearLocal();
+    items = {};
+    dirty = false;
+    recentFlushedStrs = [];
+  }
+
+  // Resolves what `items`/`dirty` should become from the local fallback blob
+  // read at the top of setUser() — pure, no closure state. A dirty local
+  // blob is at least as new as anything remote can offer (same reasoning as
+  // roadmapStore's resolveRoadmapItems dirty-local guard); an absent one
+  // leaves the caller's current items/dirty untouched.
+  function resolveLocalItems(localBlob, currentItems, currentDirty) {
+    if (localBlob.items && localBlob.dirty) return { items: localBlob.items, dirty: true };
+    if (localBlob.items) return { items: localBlob.items, dirty: false };
+    return { items: currentItems, dirty: currentDirty };
+  }
+
   async function setUser(nextUser) {
     const nextUid = nextUser?.uid || null;
     const callId = ++stateCallId;
     const isStale = () => callId !== stateCallId;
 
-    if (uid !== null && uid !== nextUid) {
-      clearTimeout(saveTimer);
-      saveTimer = null;
-      clearLocal();
-      items = {};
-      dirty = false;
-      recentFlushedStrs = [];
-    }
+    if (uid !== null && uid !== nextUid) freshStateForNewUid();
 
     if (unsubscribeTodos) unsubscribeTodos();
     unsubscribeTodos = null;
@@ -160,16 +174,7 @@ export function createDailyTodoStore() {
     }
 
     const localBlob = readLocalTodos();
-    if (localBlob.items && localBlob.dirty) {
-      // A queued-or-in-flight local edit from a previous session never got
-      // confirmed — at least as new as anything remote can offer, same
-      // reasoning as roadmapStore's resolveRoadmapItems dirty-local guard.
-      items = localBlob.items;
-      dirty = true;
-    } else if (localBlob.items) {
-      items = localBlob.items;
-      dirty = false;
-    }
+    ({ items, dirty } = resolveLocalItems(localBlob, items, dirty));
 
     if (isStale()) return;
 
@@ -189,19 +194,24 @@ export function createDailyTodoStore() {
   // one roadmap and only the (templateId, itemId) pair pins down which one.
   // `linkedItemTitle` is a display-time snapshot only (survives the source
   // item being renamed or deleted later) — never used to resolve the link.
-  function addTodo({ title, durationMs, linkedTemplateId = null, linkedItemId = null, linkedItemTitle = null }) {
+  // Trims/length-checks the title and clamps the duration — returns null if
+  // either is invalid, or `{ trimmedTitle, clampedDuration }` once both are
+  // sound. Extracted out of addTodo to keep its own complexity under the
+  // ESLint gate (root CLAUDE.md).
+  function validateTodoInput(title, durationMs) {
     const trimmedTitle = (title || '').trim();
-    if (!trimmedTitle || trimmedTitle.length > MAX_TODO_TITLE_LENGTH) return false;
+    if (!trimmedTitle || trimmedTitle.length > MAX_TODO_TITLE_LENGTH) return null;
     const clampedDuration = clampDurationMs(durationMs);
-    if (clampedDuration === null) return false;
+    if (clampedDuration === null) return null;
+    return { trimmedTitle, clampedDuration };
+  }
 
-    const now = Date.now();
-    const activeCount = Object.values(items).filter(t => !t.done && !isExpired(t, now)).length;
-    if (activeCount >= MAX_ACTIVE_TODOS) return false;
-
+  // Builds the new todo record — pulled out mainly for the linked-item
+  // ternaries (see the doc comment above addTodo for why all three only
+  // apply together).
+  function buildTodoRecord({ id, trimmedTitle, clampedDuration, now, linkedTemplateId, linkedItemId, linkedItemTitle }) {
     const isLinked = !!(linkedTemplateId && linkedItemId);
-    const id = genId();
-    items[id] = {
+    return {
       id,
       title: trimmedTitle,
       createdAt: now,
@@ -212,6 +222,19 @@ export function createDailyTodoStore() {
       linkedItemId: isLinked ? linkedItemId : null,
       linkedItemTitle: isLinked ? (linkedItemTitle || trimmedTitle) : null
     };
+  }
+
+  function addTodo({ title, durationMs, linkedTemplateId = null, linkedItemId = null, linkedItemTitle = null }) {
+    const validated = validateTodoInput(title, durationMs);
+    if (!validated) return false;
+    const { trimmedTitle, clampedDuration } = validated;
+
+    const now = Date.now();
+    const activeCount = Object.values(items).filter(t => !t.done && !isExpired(t, now)).length;
+    if (activeCount >= MAX_ACTIVE_TODOS) return false;
+
+    const id = genId();
+    items[id] = buildTodoRecord({ id, trimmedTitle, clampedDuration, now, linkedTemplateId, linkedItemId, linkedItemTitle });
     queueSave();
     return true;
   }

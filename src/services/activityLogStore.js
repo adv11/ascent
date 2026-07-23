@@ -46,6 +46,29 @@ export function pruneOldEntries(entries, now = Date.now(), maxAgeDays = PRUNE_AF
   return pruned;
 }
 
+// Resolves what `entries`/`dirty` should become from the local fallback blob
+// read at the top of setUser() — pure, no closure state, so it's easy to
+// reason about independent of the store's own mutable variables. A dirty
+// local blob is at least as new as anything remote can offer (same reasoning
+// as roadmapStore's resolveRoadmapItems dirty-local guard); an absent one
+// leaves the caller's current entries/dirty untouched. Extracted out of
+// setUser to keep its own complexity under the ESLint gate (root CLAUDE.md).
+function resolveLocalEntries(localBlob, currentEntries, currentDirty) {
+  if (localBlob.entries && localBlob.dirty) return { entries: localBlob.entries, dirty: true };
+  if (localBlob.entries) return { entries: localBlob.entries, dirty: false };
+  return { entries: currentEntries, dirty: currentDirty };
+}
+
+// Prunes entries older than a year and forces `dirty` when pruning actually
+// dropped anything — see the "If pruning actually dropped anything..."
+// comment this replaces below for the full reasoning. Pure, module-scope,
+// same extraction rationale as resolveLocalEntries above.
+function applyEntryPruning(entries, currentDirty, now) {
+  const prunedEntries = pruneOldEntries(entries, now);
+  const droppedSomething = Object.keys(prunedEntries).length !== Object.keys(entries).length;
+  return { entries: prunedEntries, dirty: currentDirty || droppedSomething };
+}
+
 function readLocalLog() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEYS.ACTIVITY_LOG) || '{}');
@@ -246,32 +269,50 @@ export function createActivityLogStore() {
     return { next, changed };
   }
 
-  // Sign-out privacy guard — same contract roadmapStore.js/dailyTodoStore.js
-  // enforce (.claude/rules/roadmap-store.md "Sign-out contract"): never load
-  // one user's localStorage into another user's session.
+  // Sign-out/uid-transition privacy wipe — same guard roadmapStore.js/
+  // dailyTodoStore.js apply (.claude/rules/roadmap-store.md's "Sign-out
+  // contract"): never load one user's localStorage into another user's
+  // session. Extracted out of setUser (including its own `if` test) to keep
+  // that function's own complexity down.
+  function maybeResetForNewUid(nextUid) {
+    if (uid === null || uid === nextUid) return;
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    clearTimeout(freezesSaveTimer);
+    freezesSaveTimer = null;
+    clearLocal();
+    entries = {};
+    dirty = false;
+    recentFlushedStrs = [];
+    streakFreezes = { ...DEFAULT_STREAK_FREEZES };
+    freezesDirty = false;
+    recentFlushedFreezeStrs = [];
+  }
+
+  // Detaches both Firebase listeners before setUser re-attaches them for the
+  // (possibly different) incoming uid — extracted out of setUser for the
+  // same complexity reason as maybeResetForNewUid above.
+  function detachListeners() {
+    if (unsubscribeLog) unsubscribeLog();
+    unsubscribeLog = null;
+    if (unsubscribeFreezes) unsubscribeFreezes();
+    unsubscribeFreezes = null;
+  }
+
+  // Queues a save for whichever of entries/streakFreezes came out of setUser
+  // still dirty — extracted out of setUser for the same complexity reason.
+  function queuePendingSaves() {
+    if (dirty) queueSave();
+    if (freezesDirty) queueSaveFreezes();
+  }
+
   async function setUser(nextUser) {
     const nextUid = nextUser?.uid || null;
     const callId = ++stateCallId;
     const isStale = () => callId !== stateCallId;
 
-    if (uid !== null && uid !== nextUid) {
-      clearTimeout(saveTimer);
-      saveTimer = null;
-      clearTimeout(freezesSaveTimer);
-      freezesSaveTimer = null;
-      clearLocal();
-      entries = {};
-      dirty = false;
-      recentFlushedStrs = [];
-      streakFreezes = { ...DEFAULT_STREAK_FREEZES };
-      freezesDirty = false;
-      recentFlushedFreezeStrs = [];
-    }
-
-    if (unsubscribeLog) unsubscribeLog();
-    unsubscribeLog = null;
-    if (unsubscribeFreezes) unsubscribeFreezes();
-    unsubscribeFreezes = null;
+    maybeResetForNewUid(nextUid);
+    detachListeners();
     uid = nextUid;
     adapter = getStorageAdapter(nextUser);
 
@@ -281,16 +322,7 @@ export function createActivityLogStore() {
     }
 
     const localBlob = readLocalLog();
-    if (localBlob.entries && localBlob.dirty) {
-      // A queued-or-in-flight local edit from a previous session never got
-      // confirmed — at least as new as anything remote can offer, same
-      // reasoning as roadmapStore's resolveRoadmapItems dirty-local guard.
-      entries = localBlob.entries;
-      dirty = true;
-    } else if (localBlob.entries) {
-      entries = localBlob.entries;
-      dirty = false;
-    }
+    ({ entries, dirty } = resolveLocalEntries(localBlob, entries, dirty));
 
     // If pruning actually dropped anything, this load is now genuinely ahead
     // of whatever's remote (which may still carry the pruned-out entries) —
@@ -298,9 +330,7 @@ export function createActivityLogStore() {
     // and so the listener's "never apply remote while dirty" guard (below)
     // doesn't let a stale, un-pruned remote snapshot silently resurrect what
     // was just pruned.
-    const prunedEntries = pruneOldEntries(entries, Date.now());
-    if (Object.keys(prunedEntries).length !== Object.keys(entries).length) dirty = true;
-    entries = prunedEntries;
+    ({ entries, dirty } = applyEntryPruning(entries, dirty, Date.now()));
 
     justAppliedFreezeDate = null;
     const localFreezeBlob = readLocalStreakFreezes();
@@ -314,8 +344,7 @@ export function createActivityLogStore() {
     recentFlushedFreezeStrs = [];
     attachListener();
     attachFreezesListener();
-    if (dirty) queueSave();
-    if (freezesDirty) queueSaveFreezes();
+    queuePendingSaves();
     notify({ saveState: 'synced' });
   }
 

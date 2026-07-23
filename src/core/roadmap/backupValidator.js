@@ -20,33 +20,53 @@ export function parseBackupJson(rawText) {
   }
 }
 
+function isNonEmptyString(value) {
+  return typeof value === 'string' && !!value.trim();
+}
+
+// Every field's own check, one condition per function, so
+// validateBackupItem stays a flat list of independent pushes instead of a
+// wall of compound `||` conditions — extracted to keep its own complexity
+// under the ESLint gate (root CLAUDE.md).
+function isValidBackupTitle(title) {
+  return isNonEmptyString(title) && title.length <= MAX_TITLE_LENGTH;
+}
+
 // One backup item's own field errors, keyed the same `items.<id>.<field>`
 // way importValidator.js's `phases[i].sections[j].items[k]` paths read.
 function validateBackupItem(id, item) {
   if (!item || typeof item !== 'object') return [`items.${id} is invalid`];
   const errors = [];
-  if (typeof item.title !== 'string' || !item.title.trim() || item.title.length > MAX_TITLE_LENGTH) {
-    errors.push(`items.${id}.title is invalid`);
-  }
-  if (typeof item.phase !== 'string' || !item.phase.trim()) errors.push(`items.${id}.phase is invalid`);
-  if (typeof item.section !== 'string' || !item.section.trim()) errors.push(`items.${id}.section is invalid`);
+  if (!isValidBackupTitle(item.title)) errors.push(`items.${id}.title is invalid`);
+  if (!isNonEmptyString(item.phase)) errors.push(`items.${id}.phase is invalid`);
+  if (!isNonEmptyString(item.section)) errors.push(`items.${id}.section is invalid`);
   if (!VALID_PRIORITIES.includes(item.priority)) errors.push(`items.${id}.priority is invalid`);
   return errors;
+}
+
+// The top-level shape checks (object/schemaVersion/items map) — split out of
+// validateBackupPayload so its own complexity stays under the ESLint gate;
+// returns a single error string, or null once the shape is sound enough to
+// validate item-by-item.
+function validateBackupShape(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return 'File does not contain a valid backup object.';
+  }
+  if (data.schemaVersion !== SUPPORTED_BACKUP_SCHEMA_VERSION) {
+    return `Unsupported backup schema version (${data.schemaVersion ?? 'missing'}) — this app reads version ${SUPPORTED_BACKUP_SCHEMA_VERSION}.`;
+  }
+  if (!data.items || typeof data.items !== 'object' || Array.isArray(data.items)) {
+    return 'Backup is missing its "items" map.';
+  }
+  return null;
 }
 
 // Returns an array of human-readable error strings; empty means valid. Stops
 // collecting per-item errors past MAX_VALIDATION_ERRORS so a badly-mangled
 // file with thousands of items doesn't produce an unusable wall of text.
 export function validateBackupPayload(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    return ['File does not contain a valid backup object.'];
-  }
-  if (data.schemaVersion !== SUPPORTED_BACKUP_SCHEMA_VERSION) {
-    return [`Unsupported backup schema version (${data.schemaVersion ?? 'missing'}) — this app reads version ${SUPPORTED_BACKUP_SCHEMA_VERSION}.`];
-  }
-  if (!data.items || typeof data.items !== 'object' || Array.isArray(data.items)) {
-    return ['Backup is missing its "items" map.'];
-  }
+  const shapeError = validateBackupShape(data);
+  if (shapeError) return [shapeError];
 
   const errors = [];
   for (const [id, item] of Object.entries(data.items)) {
