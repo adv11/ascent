@@ -87,6 +87,7 @@ test.describe('global topic search (issue #283)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card:not(.template-card-create) .template-card-pick').first().click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 15_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 15_000 });
     await dismissTourIfPresent(page);
 
     await page.keyboard.press('Control+k');
