@@ -4432,3 +4432,39 @@ this bug shape anywhere else in the app.
 
 See `CHANGELOG.md`'s own entry for this issue for the full per-selector list and
 before/after detail — not duplicated here.
+
+### 2026-07-23 — Issue #284 — Weekly progress digest banner
+
+Adds a dismissible, once-per-week digest banner to the dashboard, pulling from the
+existing `src/core/analytics/` engine rather than adding any new computation, per the
+issue's explicit scope. Three new modules: `src/core/analytics/progressDigest.js` (pure
+— `computeWeeklyCompletedCount()`, `computeProgressDigest()`, `hasDigestContent()`,
+`formatDigestMessage()` — built directly on `computeStreaks()`, so a digest and the
+Progress page's own streak stat can never disagree about what "the current streak" is),
+`src/ui/utils/progressDigest.js` (the once-per-week show/guard logic — `shouldShow
+ProgressDigest()`/`markProgressDigestShown()`, a rolling 7-day interval, same shape as
+`backupReminder.js`'s existing interval-gated nudge), and
+`src/ui/components/progressDigestBanner.js` (the actual banner, following
+`backupReminderBanner.js`'s exact "plain function returning a node or `null`, decided
+once at mount, no subscription/timer" shape).
+
+A new `KEYS`-adjacent keyed function, `progressDigestLastShownKey(uid)`
+(`localStorageKeys.js`), tracks the last-shown timestamp per account, same per-uid
+keyed/device-level/never-synced-to-Firebase pattern as `backupFirstSeenAtKey()` and
+`celebrationShownKey()` — see `.claude/rules/roadmap-store.md`'s entry for the full
+reasoning already established by those two precedents.
+
+**Judgment call**: the banner is marked "shown" the moment it renders, not on dismissal
+— so a page reload within the same week never re-shows it, whether or not the user
+clicked "Dismiss" first. This matches the issue's "once per calendar week, whichever is
+less naggy" instruction more literally than a session-only guard would. A second
+judgment call: a week with zero completions and no active streak renders nothing at all
+(`hasDigestContent()`) and does **not** consume the weekly guard, so the banner can still
+appear the moment there's real activity to report later in the same week, rather than
+silently burning that week's one allowed appearance on an empty sentence.
+
+`dashboard.js` wires the banner in next to the existing `verificationBanner`/
+`backupReminderBanner` pair, reading `activityLogStore` from the route's own `ctx`
+(already threaded through by `main.js`, no wiring change needed there). No new
+subscription or timer — same one-shot render-on-mount shape as its two banner
+neighbors, so no `_cleanup()`/route-cleanup wiring was needed either.

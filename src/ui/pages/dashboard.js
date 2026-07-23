@@ -6,6 +6,7 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createChangelogBell } from '../components/notificationBell.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
 import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
+import { createProgressDigestBanner } from '../components/progressDigestBanner.js';
 import { maybeShowGuestDataRiskNudge } from '../components/guestDataRiskNudge.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
@@ -514,7 +515,7 @@ export function renderPhaseCard(phase, pi, {
 }
 
 
-export function renderDashboard(app, { user, store, dailyTodoStore }) {
+export function renderDashboard(app, { user, store, dailyTodoStore, activityLogStore }) {
   if (!user) {
     navigate('/signin', true);
     return;
@@ -1243,6 +1244,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
   const backupReminderBanner = createBackupReminderBanner({ user, store });
+  const progressDigestBanner = activityLogStore ? createProgressDigestBanner({ user, store, activityLogStore }) : null;
 
   // Small header notification badge (not a per-roadmap feature — Daily Todos
   // are intentionally global, see onboarding.js) surfacing the soonest active
@@ -1373,6 +1375,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       el('div', { className: 'app-content' }, [
         verificationBanner,
         backupReminderBanner,
+        progressDigestBanner,
         offlineBanner,
         el('header', { className: 'dashboard-header' }, [
           // Issue #6 Phase 4.4 — the "Official/read-only" lock-badge concept
