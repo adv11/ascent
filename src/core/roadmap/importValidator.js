@@ -70,6 +70,41 @@ export function normalizePriority(value) {
   return typeof value === 'string' ? value.trim().toUpperCase() : value;
 }
 
+// Issue #326 — a payload can be schema-shaped and non-empty at every field yet
+// still not be a real roadmap: buildImportPrompt() (src/data/importPrompt.js)
+// uses these exact literal strings as its own schema-illustration placeholders,
+// and a weaker model can echo the template's shape back with them still
+// unfilled — every check above accepts that as valid, since every field is a
+// non-empty string under the length cap. Exact literal strings only (not a
+// generic "<...>" regex), so a legitimate title that happens to contain angle
+// brackets — "Intro to <T> generics in Java" — can never false-positive.
+const PLACEHOLDER_MARKERS = ['<roadmap title>', '<phase title>', '<section title>', '<item title>', '<https:// link>', '<short resource name>'];
+
+// An AI refusal ("I'm sorry, but I can't help with that...") wrapped just
+// enough to satisfy the schema is the sibling failure mode this issue closes —
+// matched as recognizable multi-word openers, never a bare "I" prefix, so a
+// legitimate title starting with "I" ("Iterators in Python") never
+// false-positives.
+const REFUSAL_OPENERS = ['i cannot', "i'm sorry, but", 'as an ai language model'];
+
+// Checked before looksCorrupted()/normal shape validation, same priority as
+// the corruption check it sits alongside — an unfilled placeholder or a
+// wrapped refusal is a more specific, more actionable problem than a bare
+// "is invalid"/"is required". `fieldPath` is the full dotted field path
+// (e.g. "title" or "phases[0].sections[1].items[2].title") so the returned
+// message matches this file's existing structured/technical convention.
+function placeholderOrRefusalError(text, fieldPath) {
+  if (typeof text !== 'string') return null;
+  if (PLACEHOLDER_MARKERS.some(marker => text.includes(marker))) {
+    return `${fieldPath} looks like unfilled placeholder text — make sure you pasted the AI's actual generated roadmap, not the prompt template`;
+  }
+  const lower = text.trim().toLowerCase();
+  if (REFUSAL_OPENERS.some(opener => lower.startsWith(opener))) {
+    return `${fieldPath} looks like an AI refusal or explanation, not real roadmap content — ask the AI to generate the roadmap JSON and paste its actual output`;
+  }
+  return null;
+}
+
 // A resource entry mirrors the app's own { label, url } shape (limits.js's
 // isValidResource) — label required and capped, url required and capped.
 // Deliberately **not** checking the URL's protocol here — that's a save-time
@@ -126,7 +161,10 @@ function itemTitleTooLong(item) {
 // corrupted item gets this actionable message instead of a bare "is
 // invalid" — same path prefix (`phases[i].sections[j].items[k]`) either way.
 function findItemCorruption(item, path) {
-  if (looksCorrupted(extractItemTitleText(item))) {
+  const titleText = extractItemTitleText(item);
+  const placeholderError = placeholderOrRefusalError(titleText, `${path}.title`);
+  if (placeholderError) return placeholderError;
+  if (looksCorrupted(titleText)) {
     return `${path}.title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`;
   }
   const isObjectItem = item && typeof item === 'object' && !Array.isArray(item);
@@ -174,7 +212,10 @@ function isValidItem(item) {
 // section-title checks below since both follow the identical three-way
 // branch, just against a different `path` prefix.
 function validateTitledNodeTitle(title, path, errors) {
-  if (looksCorrupted(title)) {
+  const placeholderError = placeholderOrRefusalError(title, `${path}.title`);
+  if (placeholderError) {
+    errors.push(placeholderError);
+  } else if (looksCorrupted(title)) {
     errors.push(`${path}.title looks corrupted (contains encoded/JSON-like text) — ${CORRUPTION_HINT}`);
   } else if (typeof title !== 'string' || !title.trim()) {
     errors.push(`${path}.title is required`);
@@ -258,7 +299,10 @@ export function validateImportPayload(data) {
   if (data.schemaVersion !== SUPPORTED_SCHEMA_VERSION) {
     errors.push('Unsupported schema version');
   }
-  if (typeof data.title !== 'string' || !data.title.trim()) {
+  const titlePlaceholderError = placeholderOrRefusalError(data.title, 'title');
+  if (titlePlaceholderError) {
+    errors.push(titlePlaceholderError);
+  } else if (typeof data.title !== 'string' || !data.title.trim()) {
     errors.push('title is required');
   }
   if (!Array.isArray(data.phases) || data.phases.length === 0) {

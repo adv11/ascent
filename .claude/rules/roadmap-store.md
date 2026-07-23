@@ -562,6 +562,33 @@ and section titles get the identical check. This is a heuristic, not a formal gr
 if you ever need a sixth marker, add it to `CORRUPTION_MARKERS` rather than writing a new
 detection path.
 
+**Unfilled placeholder / AI refusal detection — a sibling heuristic to corrupted-text
+detection above, same file, same treatment (issue #326).** A payload can be schema-shaped
+and non-empty at every field yet still not be a real roadmap: `buildImportPrompt()`
+(`src/data/importPrompt.js`) uses its own literal placeholder strings (`<roadmap title>`,
+`<phase title>`, `<section title>`, `<item title>`, `<https:// link>`, `<short resource
+name>`) as schema illustrations inside the prompt template it hands the user to copy — a
+weaker model can echo the template's shape back with these left unfilled, and every check
+`looksCorrupted()` performs accepts that as valid, since every field is still a non-empty
+string under the length cap. The sibling failure mode is an AI refusal ("I'm sorry, but I
+can't help with that…") wrapped just enough to satisfy the schema. `importValidator.js`'s
+`placeholderOrRefusalError(text, fieldPath)` checks a title against `PLACEHOLDER_MARKERS`
+(the exact literal strings above — never a generic `<...>` regex, so a legitimate title
+containing angle brackets, e.g. "Intro to `<T>` generics in Java," can never
+false-positive) and `REFUSAL_OPENERS` (a short list of recognizable multi-word openers —
+`"i cannot"`, `"i'm sorry, but"`, `"as an ai language model"` — matched case-insensitively
+against the trimmed string's start, never a bare "I" prefix, so a legitimate title
+starting with "I," e.g. "Iterators in Python," can never false-positive either). Called
+from the same three places `looksCorrupted()`/`findItemCorruption()` are — the top-level
+`title`, `validateTitledNodeTitle()` (shared by phase and section titles), and
+`findItemCorruption()` (every item shape's title) — and checked *first*, before
+`looksCorrupted()`, since an unfilled placeholder or a wrapped refusal is a more specific,
+more actionable problem than either "looks corrupted" or a bare "is invalid"/"is
+required". This is a heuristic over exact literal strings and recognizable phrase
+openers, not a general content-quality/plausibility model (detecting a roadmap that's
+schema-valid but nonsensical or off-topic requires real semantic understanding this app
+has no backend LLM call to provide) — deliberately out of scope, see the issue.
+
 **Corrupted-text detection, confirmed against a real ChatGPT payload (issue #121 item 1).**
 Issue #100's hypothesis above was confirmed, not disproven, by a live captured payload: a
 "Music Development" roadmap pasted from ChatGPT's web UI reproduced the exact
