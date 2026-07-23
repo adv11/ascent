@@ -9,6 +9,19 @@ const MAX_ITEMS = 500;
 const MAX_RESOURCES_PER_ITEM = 5;
 export const SUPPORTED_SCHEMA_VERSION = 1;
 
+// Issue #325 — the paste textarea (importRoadmapModal.js) has no upfront size
+// guard before this module's JSON.parse() runs, synchronously, on every
+// debounced keystroke. A large accidental paste (a whole chat transcript, a
+// full webpage) can be several MB and visibly freeze the tab. 300,000
+// characters is comfortably above any real roadmap's JSON size even at the
+// MAX_ITEMS (500) cap with resources on every item — the near-500-item
+// fixture in tests/unit/fixtures/aiProviderPayloads.js serializes to well
+// under 100,000 characters, so this leaves generous headroom for a
+// legitimate large roadmap while still catching an obviously-wrong paste
+// before ever attempting to parse it.
+export const MAX_IMPORT_TEXT_LENGTH = 300000;
+const TOO_LARGE_ERROR = 'This is too large to import — check you copied only the roadmap JSON, not the whole conversation.';
+
 // Many AI assistants wrap JSON output in a fenced code block (```json ... ```)
 // even when explicitly told not to — this is the single most common reason a
 // pasted payload fails to parse. Strip one leading/trailing fence (with or
@@ -20,6 +33,9 @@ function stripFencedCodeBlock(rawText) {
 }
 
 export function parseImportJson(rawText) {
+  if (typeof rawText === 'string' && rawText.length > MAX_IMPORT_TEXT_LENGTH) {
+    return { data: null, error: TOO_LARGE_ERROR };
+  }
   try {
     return { data: JSON.parse(stripFencedCodeBlock(rawText)), error: null };
   } catch {

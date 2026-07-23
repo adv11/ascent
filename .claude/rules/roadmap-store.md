@@ -501,6 +501,25 @@ returning the usual empty seed for a custom id. From that point on a created roa
 indistinguishable from any other custom roadmap — same Firebase path, same phase/section
 rename/delete controls, same `deleteCustomRoadmap` cleanup.
 
+**Oversized-paste guard, `MAX_IMPORT_TEXT_LENGTH` (issue #325).** Before any of the above
+validation runs, `parseImportJson()` checks `rawText.length` against
+`MAX_IMPORT_TEXT_LENGTH` (300,000 characters, `importValidator.js` — same "own,
+dependency-free constant" precedent as `MAX_TITLE_LENGTH`/`MAX_RESOURCE_LABEL_LENGTH` in
+`limits.js`, though this one lives directly in `importValidator.js` since nothing else
+needs to import it) and returns a dedicated error — "This is too large to import — check
+you copied only the roadmap JSON, not the whole conversation." — instead of ever calling
+`JSON.parse()`. This exists because the paste textarea's `input` handler debounces only
+300ms, not per-keystroke-skips-while-large; a several-MB accidental paste (a whole chat
+transcript, a full webpage's HTML) run through `JSON.parse()` synchronously on the main
+thread on every keystroke (backspacing/re-pasting re-triggers it) can visibly freeze the
+tab, with no upfront size ceiling to stop it before this issue. 300,000 characters is
+comfortably above any real roadmap's JSON size even at the `MAX_ITEMS` (500) cap with
+resources on every item — `tests/unit/fixtures/aiProviderPayloads.js`'s near-cap fixture
+serializes to well under 100,000 characters, leaving generous headroom. Deliberately
+**not** an HTML `maxlength` attribute on the textarea itself — that would silently
+truncate a legitimate large-but-valid paste mid-character, corrupting otherwise-good
+JSON; the fix is a length check before parsing, not a truncating input constraint.
+
 **A single malformed resource URL or oddly-cased priority must never fail the whole
 roadmap (issue #100 follow-up, found via real-world testing).** Early real-world use of
 the resources feature above found roadmaps failing "item is invalid" across many
