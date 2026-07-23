@@ -977,6 +977,21 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     return { items: baseItems, phases: basePhases, dirty: false };
   }
 
+  // Read-only snapshot of *any* started roadmap's items/phases (issue #285's
+  // comparison view) — reuses the exact same cache -> Firebase -> local blob
+  // -> seed resolution order resolveRoadmapItems() already applies to every
+  // roadmap load, but never touches activeTemplateId/items/roadmapCache/dirty
+  // and never attaches a listener. Safe to call for a roadmap that's already
+  // cached (an instant cache hit, same as switching to it would be) or one
+  // that's never been visited this session (a one-shot read, same network
+  // path fetchTemplateData()/resolveRoadmapItems() already take) — either way
+  // this is purely additive reading, not a second copy of the load logic.
+  async function getRoadmapSnapshotForComparison(templateId) {
+    if (!templateId) return { items: {}, phases: [] };
+    const { items: resolvedItems, phases } = await resolveRoadmapItems(templateId, fetchTemplateData(templateId));
+    return { items: resolvedItems, phases };
+  }
+
   // setUser()'s final phase, once onboardingDone is known true — loads the
   // active template's items/phases (cache -> Firebase -> local blob -> seed,
   // see resolveRoadmapItems) and seeds roadmapCache from a just-migrated
@@ -1913,6 +1928,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     updateResource,
     removeResource,
     importBackupItems,
+    getRoadmapSnapshotForComparison,
     flush,
     retrySaveNow,
     getUiState() {

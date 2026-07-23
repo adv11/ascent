@@ -10,7 +10,7 @@
 import { isFirebaseApiRequest, isRealtimeDbStreamingRequest, cacheFirst, networkFirst } from './src/services/sw/cacheStrategies.js';
 import { findClientToFocus, getReminderTargetUrl } from './src/services/sw/notificationHelpers.js';
 
-const CACHE_VERSION = 36;
+const CACHE_VERSION = 37;
 const STATIC_CACHE = `ascent-static-v${CACHE_VERSION}`;
 const DATA_CACHE = `ascent-data-v${CACHE_VERSION}`;
 const OFFLINE_URL = '/public/offline.html';

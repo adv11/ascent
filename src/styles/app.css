@@ -4349,6 +4349,32 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .projection-boost { color: var(--color-text-muted); font-size: var(--text-sm); }
 .projection-empty { color: var(--color-text-muted); text-align: center; }
 
+/* Roadmap comparison modal (issue #285) — reuses .modal-overlay/.modal-card and
+   .filter-chip (as a two-option mode toggle, same precedent as
+   .progress-range-toggle) rather than inventing new chrome; only the
+   comparison-specific result list below is new. Flush-left throughout, radius
+   0, 2px/1px rules per design-system.md. */
+.comparison-modal-card { width: min(640px, 92vw); max-height: 85vh; display: flex; flex-direction: column; gap: var(--space-4); }
+.comparison-modal-subtitle { color: var(--color-text-muted); font-size: var(--text-sm); }
+.comparison-mode-toggle { display: flex; gap: 8px; }
+.comparison-other-select { display: flex; flex-direction: column; gap: 6px; }
+.comparison-result-slot { overflow-y: auto; border-top: 2px solid var(--color-divider); padding-top: var(--space-4); }
+.comparison-loading, .comparison-empty { color: var(--color-text-muted); text-align: left; }
+.comparison-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); border: 1px solid var(--color-divider); margin-bottom: var(--space-4); }
+.comparison-summary-item { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-left: 1px solid var(--color-divider); text-align: left; }
+.comparison-summary-item:first-child { border-left: none; }
+.comparison-summary-value { font-size: var(--text-xl); font-weight: 800; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.comparison-summary-label { font-size: var(--text-xs); color: var(--color-text-muted); }
+.comparison-phase-groups { display: flex; flex-direction: column; gap: var(--space-4); }
+.comparison-phase-title { margin: 0 0 6px; font-size: var(--text-sm); font-weight: 700; text-align: left; }
+.comparison-row-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-divider); }
+.comparison-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-divider); text-align: left; }
+.comparison-row-title { color: var(--color-text); font-size: var(--text-sm); }
+.comparison-row-status { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+.comparison-row-status-both-done { color: var(--color-success); }
+.comparison-row-added .comparison-row-status { color: var(--color-accent-700); }
+.comparison-row-removed .comparison-row-status { color: var(--color-text-muted); }
+
 @media (max-width: 768px) {
   .progress-content { padding: var(--space-4); }
   .progress-header { flex-direction: column; align-items: stretch; }
