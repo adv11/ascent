@@ -689,3 +689,130 @@ describe('validateImportPayload — cross-provider/edge-case matrix (issue #121 
     expect(validateImportPayload(round3)).toEqual([]);
   });
 });
+
+// Issue #326 — a payload can be schema-shaped and non-empty at every field
+// yet still not be a real roadmap: buildImportPrompt()'s own literal
+// placeholder strings (<phase title>, etc.) echoed back unfilled by a
+// weaker model, or an AI refusal wrapped just enough to satisfy the schema.
+// Both used to pass every check above since every field was a non-empty
+// string under the length cap.
+describe('validateImportPayload — unfilled placeholder / AI refusal detection (issue #326)', () => {
+  it('flags a top-level title that is the literal <roadmap title> placeholder', () => {
+    const data = validPayload();
+    data.title = '<roadmap title>';
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e === 'title looks like unfilled placeholder text — make sure you pasted the AI\'s actual generated roadmap, not the prompt template')).toBe(true);
+  });
+
+  it('flags a phase title that is the literal <phase title> placeholder', () => {
+    const data = validPayload();
+    data.phases[0].title = '<phase title>';
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].title looks like unfilled placeholder text'))).toBe(true);
+  });
+
+  it('flags a section title that is the literal <section title> placeholder', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].title = '<section title>';
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].sections[0].title looks like unfilled placeholder text'))).toBe(true);
+  });
+
+  it('flags a plain-string item title that is the literal <item title> placeholder', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['<item title>'];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].sections[0].items[0].title looks like unfilled placeholder text'))).toBe(true);
+  });
+
+  it('flags a tuple item title that is the literal <item title> placeholder', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [['<item title>', 'P0']];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].sections[0].items[0].title looks like unfilled placeholder text'))).toBe(true);
+  });
+
+  it('flags an object item title that is the literal <item title> placeholder', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = [{ title: '<item title>' }];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].sections[0].items[0].title looks like unfilled placeholder text'))).toBe(true);
+  });
+
+  it('flags a title containing the whole unfilled schema echo, not just an exact match', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['Study <item title> basics'];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].sections[0].items[0].title looks like unfilled placeholder text'))).toBe(true);
+  });
+
+  it('flags a title starting with "I cannot"', () => {
+    const data = validPayload();
+    data.title = 'I cannot generate a roadmap for that topic.';
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e === "title looks like an AI refusal or explanation, not real roadmap content — ask the AI to generate the roadmap JSON and paste its actual output")).toBe(true);
+  });
+
+  it('flags a title starting with "I\'m sorry, but"', () => {
+    const data = validPayload();
+    data.title = "I'm sorry, but I can't help with that request.";
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('title looks like an AI refusal'))).toBe(true);
+  });
+
+  it('flags a title starting with "As an AI language model"', () => {
+    const data = validPayload();
+    data.title = 'As an AI language model, I am unable to produce this roadmap.';
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('title looks like an AI refusal'))).toBe(true);
+  });
+
+  it('flags an item title starting with a refusal phrase', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ["I'm sorry, but I can't help with that."];
+    const errors = validateImportPayload(data);
+    expect(errors.some(e => e.startsWith('phases[0].sections[0].items[0].title looks like an AI refusal'))).toBe(true);
+  });
+
+  // Critical care point (issue #326): must never false-positive on legitimate
+  // content — a title containing angle brackets unrelated to the exact
+  // placeholder strings, or one that simply starts with the letter "I".
+  it('does not flag a legitimate title containing angle brackets unrelated to the placeholder markers', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['Intro to <T> generics in Java'];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('does not flag a legitimate title starting with "I" that is not a refusal opener', () => {
+    const data = validPayload();
+    data.phases[0].sections[0].items = ['Iterators in Python'];
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  it('does not flag a legitimate roadmap title starting with "I"', () => {
+    const data = validPayload();
+    data.title = 'Iterative Software Design Roadmap';
+    expect(validateImportPayload(data)).toEqual([]);
+  });
+
+  // Regression guard: every existing valid fixture continues to validate
+  // exactly as before this change.
+  it('still accepts the plain valid payload with no errors', () => {
+    expect(validateImportPayload(validPayload())).toEqual([]);
+  });
+
+  it('still accepts the mixed-shape clean payload from the cross-provider fixture set', async () => {
+    const { MIXED_SHAPE_CLEAN_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    expect(validateImportPayload(MIXED_SHAPE_CLEAN_PAYLOAD)).toEqual([]);
+  });
+
+  it('still accepts the non-ASCII payload from the cross-provider fixture set', async () => {
+    const { NON_ASCII_PAYLOAD } = await import('./fixtures/aiProviderPayloads.js');
+    expect(validateImportPayload(NON_ASCII_PAYLOAD)).toEqual([]);
+  });
+
+  it('still accepts the large near-cap payload from the cross-provider fixture set', async () => {
+    const { buildLargeRoadmapPayload } = await import('./fixtures/aiProviderPayloads.js');
+    expect(validateImportPayload(buildLargeRoadmapPayload(490))).toEqual([]);
+  });
+});
