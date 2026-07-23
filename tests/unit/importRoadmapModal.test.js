@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { openCreateRoadmapModal } from '../../src/ui/components/importRoadmapModal.js';
+import { KEYS } from '../../src/services/localStorageKeys.js';
 
 function getOverlay() {
   return document.querySelector('.modal-overlay');
@@ -29,6 +30,7 @@ function validJsonText() {
 
 beforeEach(() => {
   document.body.innerHTML = '';
+  localStorage.clear();
   vi.useRealTimers();
 });
 
@@ -358,5 +360,123 @@ describe('openCreateRoadmapModal — paste-and-import column', () => {
     const promise = openCreateRoadmapModal();
     getOverlay().click();
     await expect(promise).resolves.toBeNull();
+  });
+});
+
+describe('openCreateRoadmapModal — draft autosave (issue #328)', () => {
+  it('filling every field, closing without importing, and reopening restores every field', () => {
+    vi.useFakeTimers();
+    openCreateRoadmapModal();
+    let overlay = getOverlay();
+
+    setTopic(overlay, 'Kubernetes for backend engineers');
+    [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'Beginner').click();
+    [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === '1 month').click();
+    [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === '2–5 hrs/week').click();
+    [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'YouTube videos').click();
+    [...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'Official docs').click();
+    const goalSelect = overlay.querySelector('.custom-select');
+    goalSelect.value = 'Interview prep';
+    goalSelect.dispatchEvent(new Event('change'));
+    const alreadyKnowInput = overlay.querySelectorAll('input.field-input')[0];
+    alreadyKnowInput.value = 'already comfortable with Docker';
+    alreadyKnowInput.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+
+    // Close without importing — an accidental outside-click.
+    overlay.click();
+    vi.useRealTimers();
+
+    expect(getOverlay()).toBeNull();
+    const stored = JSON.parse(localStorage.getItem(KEYS.CREATE_ROADMAP_DRAFT));
+    expect(stored.topic).toBe('Kubernetes for backend engineers');
+    expect(stored.experienceLevel).toBe('Beginner');
+    expect(stored.timeframe).toBe('1 month');
+    expect(stored.weeklyTime).toBe('2–5 hrs/week');
+    expect(stored.resourceTypes).toEqual(['YouTube videos', 'Official docs']);
+    expect(stored.goal).toBe('Interview prep');
+    expect(stored.alreadyKnow).toBe('already comfortable with Docker');
+
+    // Reopen — every field should be prefilled from the restored draft.
+    openCreateRoadmapModal();
+    overlay = getOverlay();
+    expect(overlay.querySelector('textarea.field-input').value).toBe('Kubernetes for backend engineers');
+    expect([...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'Beginner').classList.contains('active')).toBe(true);
+    expect([...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === '1 month').classList.contains('active')).toBe(true);
+    expect([...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === '2–5 hrs/week').classList.contains('active')).toBe(true);
+    expect([...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'YouTube videos').classList.contains('active')).toBe(true);
+    expect([...overlay.querySelectorAll('.import-option-chips button')].find(b => b.textContent === 'Official docs').classList.contains('active')).toBe(true);
+    expect(overlay.querySelector('.custom-select').value).toBe('Interview prep');
+    expect(overlay.querySelectorAll('input.field-input')[0].value).toBe('already comfortable with Docker');
+    expect(overlay.querySelector('.import-prompt-block').textContent).toContain('Kubernetes for backend engineers');
+  });
+
+  it('a successful import clears the draft — reopening after import starts fresh', async () => {
+    vi.useFakeTimers();
+    const promise = openCreateRoadmapModal();
+    let overlay = getOverlay();
+
+    setTopic(overlay, 'Rust for backend engineers');
+    vi.advanceTimersByTime(150);
+
+    const pasteArea = overlay.querySelector('.import-paste-area');
+    pasteArea.value = validJsonText();
+    pasteArea.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+    vi.useRealTimers();
+
+    findButton(overlay, 'Import roadmap').click();
+    await promise;
+
+    expect(localStorage.getItem(KEYS.CREATE_ROADMAP_DRAFT)).toBeNull();
+
+    openCreateRoadmapModal();
+    overlay = getOverlay();
+    expect(overlay.querySelector('textarea.field-input').value).toBe('');
+  });
+
+  it('Cancel does not clear the draft', () => {
+    vi.useFakeTimers();
+    const promise = openCreateRoadmapModal();
+    const overlay = getOverlay();
+    setTopic(overlay, 'Go for backend engineers');
+    vi.advanceTimersByTime(150);
+    vi.useRealTimers();
+
+    findButton(overlay, 'Cancel').click();
+
+    const stored = JSON.parse(localStorage.getItem(KEYS.CREATE_ROADMAP_DRAFT));
+    expect(stored.topic).toBe('Go for backend engineers');
+    return promise;
+  });
+
+  it('Escape does not clear the draft', () => {
+    vi.useFakeTimers();
+    openCreateRoadmapModal();
+    const overlay = getOverlay();
+    setTopic(overlay, 'Elixir for backend engineers');
+    vi.advanceTimersByTime(150);
+    vi.useRealTimers();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    const stored = JSON.parse(localStorage.getItem(KEYS.CREATE_ROADMAP_DRAFT));
+    expect(stored.topic).toBe('Elixir for backend engineers');
+  });
+
+  it('does not persist the pasted AI-response textarea itself', () => {
+    vi.useFakeTimers();
+    openCreateRoadmapModal();
+    const overlay = getOverlay();
+    setTopic(overlay, 'Go for backend engineers');
+    const pasteArea = overlay.querySelector('.import-paste-area');
+    pasteArea.value = validJsonText();
+    pasteArea.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+    vi.useRealTimers();
+
+    const stored = JSON.parse(localStorage.getItem(KEYS.CREATE_ROADMAP_DRAFT));
+    expect(stored.pasteText).toBeUndefined();
+    expect(JSON.stringify(stored)).not.toContain('My Roadmap');
   });
 });

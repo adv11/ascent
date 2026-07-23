@@ -415,6 +415,23 @@ icon, across sessions and devices, with no new UI and no `customRoadmaps` schema
 change. If a real icon-picker UI is ever built, this hash-based default is what an
 unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
+**Draft autosave for the "Create your own roadmap" modal — mirrors `KEYS.FEEDBACK_DRAFT`
+(issue #328).** `importRoadmapModal.js`'s topic textarea and its five customization
+inputs (experience level, timeframe, goal, weekly time commitment, resource types,
+"already know") persist to `KEYS.CREATE_ROADMAP_DRAFT` on every field change and are
+read back once on modal open to prefill every field — the exact same precedent this
+file's own "Draft autosave, not a queued-offline-write" entry (below, under "In-app
+feedback & bug reporting") documents for `feedbackModal.js`'s `KEYS.FEEDBACK_DRAFT`:
+device-level, never synced to Firebase, cleared only on a successful submit/import,
+never on Cancel/Escape/outside-click. The one deliberate difference from that precedent:
+the pasted AI-response textarea (`pasteArea`) is never persisted — it's regenerable from
+the same draft's topic/options by re-running the external AI, and persisting arbitrary
+large pasted text risks silently hitting the browser's storage quota. Chip-group fields
+(experience level, timeframe, weekly time, resource types) and the goal `<select>` read
+the restored draft's values *before* their controls are constructed, so each control's
+own initial "active"/selected state reflects the loaded draft with no separate rehydration
+step needed.
+
 **AI-assisted roadmap creation (`src/data/importPrompt.js`, `src/core/roadmap/`, issues
 #4/#64, redesigned in #100).** Since issue #100 retired manual "start truly blank"
 creation and merged onboarding's two cards into one, this is the *only* way to start a
