@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-1228%20passing-15803d?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-1377%20passing-15803d?style=flat-square">
   <img alt="Stack" src="https://img.shields.io/badge/stack-vanilla%20JS%20%C2%B7%20no%20build%20step-D9A441?style=flat-square">
   <img alt="Firebase" src="https://img.shields.io/badge/backend-Firebase-FFA000?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-all%20rights%20reserved-333333?style=flat-square">
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/issue-256/dashboard-dark.png" alt="Ascent dashboard" width="100%">
+  <img src="docs/screenshots/issue-312/dashboard-dark.png" alt="Ascent dashboard" width="100%">
 </p>
 
 <p align="center">
@@ -53,11 +53,14 @@ priority, and notes — instead of a wiki page or a spreadsheet that goes stale.
 | **12th Grade Mathematics** | Exam-focused syllabus tracker |
 | **Learning Piano** | Structured practice roadmap |
 | **Marketing** | Growth, content, analytics fundamentals |
-| **Blank slate** | Build your own from scratch, or generate one with AI import |
 
-Any template except the blank one can be hidden from your own picker without
-affecting anyone else's account, and you can run more than one roadmap at a time —
-switching between them never overwrites another's progress.
+Not a fit? **Create your own roadmap** — answer a few questions, generate one with
+your AI assistant of choice, and paste the result back in; it's validated and
+imported automatically, phases/sections/priorities and all.
+
+Any starter template can be hidden from your own picker without affecting anyone
+else's account, and you can run more than one roadmap at a time — switching between
+them never overwrites another's progress.
 
 ## How it works
 
@@ -93,8 +96,10 @@ roadmap in one click.
 - **Installable as a PWA** with offline support.
 
 <p align="center">
-  <img src="docs/screenshots/issue-256/onboarding-light.png" alt="Starter template picker" width="49%">
-  <img src="docs/screenshots/issue-256/progress-dark.png" alt="Progress analytics" width="49%">
+  <img src="docs/screenshots/issue-312/onboarding-light.png" alt="Starter template picker, with Daily Todos and Create your own roadmap" width="49%">
+  <img src="docs/screenshots/issue-312/progress-dark.png" alt="Progress analytics — streaks, activity heatmap, cumulative progress" width="49%">
+  <img src="docs/screenshots/issue-312/ai-import.png" alt="AI-assisted roadmap creation" width="49%">
+  <img src="docs/screenshots/issue-312/sharing.png" alt="Sharing a read-only roadmap link" width="49%">
 </p>
 
 ## Architecture at a glance
@@ -239,7 +244,7 @@ source of truth for current status — see it for the full, up-to-date list of w
 left. See [`CHANGELOG.md`](CHANGELOG.md) for the detailed change history and
 [`docs/roadmap.md`](docs/roadmap.md) for a pointer to the same tracker.
 
-Tests run via `npm test` (Vitest unit + integration, 1228 tests) and `npm run test:e2e`
+Tests run via `npm test` (Vitest unit + integration, 1377 tests) and `npm run test:e2e`
 (Playwright). Run `npm run lint` to check for security and quality issues. See the
 "Verifying changes" section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
 
