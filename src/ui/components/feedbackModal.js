@@ -56,6 +56,70 @@ function metadataSummary(metadata) {
   return `${metadata.browser} · ${metadata.os} · ${metadata.viewport} · ${metadata.currentRoute || '/'}`;
 }
 
+// Issue #281 — renderForm()/gatherFormValues() extraction. resolveTitlePlaceholder()
+// and buildTypeFields() (+ its three per-type helpers) pull the type-branching logic
+// that used to live inline in renderForm() out into named, module-scope functions;
+// readFieldValue() does the same for gatherFormValues()'s repeated `field?.getValue()
+// || null` pattern. Pure structural refactor — every field/placeholder/prefill value
+// is unchanged from the original inline code.
+function resolveTitlePlaceholder(type) {
+  if (type === 'bug') return 'Short description of what went wrong';
+  if (type === 'feature') return 'What would you like to see in Ascent?';
+  return undefined;
+}
+
+function applyRadioPrefill(radioGroupField, value) {
+  if (!value) return;
+  const radio = radioGroupField.node.querySelector(`input[value="${value}"]`);
+  if (radio) {
+    radio.checked = true;
+    radio.dispatchEvent(new Event('change'));
+  }
+}
+
+function buildBugTypeFields({ prefill, onChange }) {
+  const severityField = createRadioGroup({ name: 'severity', label: 'Severity', options: SEVERITY_OPTIONS });
+  applyRadioPrefill(severityField, prefill.severity);
+  const stepsField = createField({ label: 'Steps to reproduce', type: 'textarea', maxLength: 2000, value: prefill.steps || '', placeholder: '1. ...\n2. ...\n3. ...', onChange });
+  const expectedField = createField({ label: 'Expected behaviour', type: 'textarea', maxLength: 2000, value: prefill.expected || '', onChange });
+  const actualField = createField({ label: 'Actual behaviour', type: 'textarea', maxLength: 2000, value: prefill.actual || '', onChange });
+  const screenshotControl = createScreenshotControl({ onChange });
+  return {
+    fields: [severityField.node, stepsField.node, expectedField.node, actualField.node, screenshotControl.node],
+    severityField, stepsField, expectedField, actualField, screenshotControl
+  };
+}
+
+function buildFeatureTypeFields({ prefill, onChange }) {
+  const descriptionField = createField({ label: 'Describe the feature', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange });
+  const useCaseField = createField({ label: 'Your use case', type: 'textarea', maxLength: 2000, value: prefill.useCase || '', placeholder: 'Why do you need this? What problem does it solve?', onChange });
+  const usageFreqField = createRadioGroup({ name: 'usageFreq', label: 'How often would you use it?', options: USAGE_FREQ_OPTIONS, required: false });
+  applyRadioPrefill(usageFreqField, prefill.usageFreq);
+  return {
+    fields: [descriptionField.node, useCaseField.node, usageFreqField.node],
+    descriptionField, useCaseField, usageFreqField
+  };
+}
+
+function buildFeedbackTypeFields({ prefill, onChange }) {
+  const descriptionField = createField({ label: 'Your feedback', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange });
+  const screenshotControl = createScreenshotControl({ onChange });
+  return {
+    fields: [descriptionField.node, screenshotControl.node],
+    descriptionField, screenshotControl
+  };
+}
+
+function buildTypeFields(type, opts) {
+  if (type === 'bug') return buildBugTypeFields(opts);
+  if (type === 'feature') return buildFeatureTypeFields(opts);
+  return buildFeedbackTypeFields(opts);
+}
+
+function readFieldValue(field) {
+  return field?.getValue() || null;
+}
+
 // Multi-step modal: type select → form → success (issue #9 §2–§3, §8). One
 // long-lived overlay/card pair for the whole flow (not re-opened per step)
 // so `attachFocusTrap`/Escape/outside-click keep working across transitions —
@@ -130,48 +194,13 @@ export function openFeedbackModal({ user }) {
     const form = {};
     const fields = [];
 
-    const titleField = createField({ label: 'Title', maxLength: 120, value: prefill.title || '', placeholder: type === 'bug' ? 'Short description of what went wrong' : type === 'feature' ? 'What would you like to see in Ascent?' : undefined, onChange: persistDraft });
+    const titleField = createField({ label: 'Title', maxLength: 120, value: prefill.title || '', placeholder: resolveTitlePlaceholder(type), onChange: persistDraft });
     fields.push(titleField.node);
     form.title = () => titleField.getValue();
 
-    let severityField = null;
-    let stepsField = null;
-    let expectedField = null;
-    let actualField = null;
-    let descriptionField = null;
-    let useCaseField = null;
-    let usageFreqField = null;
-    let screenshotControl = null;
-
-    if (type === 'bug') {
-      severityField = createRadioGroup({ name: 'severity', label: 'Severity', options: SEVERITY_OPTIONS });
-      fields.push(severityField.node);
-      if (prefill.severity) {
-        const radio = severityField.node.querySelector(`input[value="${prefill.severity}"]`);
-        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
-      }
-      stepsField = createField({ label: 'Steps to reproduce', type: 'textarea', maxLength: 2000, value: prefill.steps || '', placeholder: '1. ...\n2. ...\n3. ...', onChange: persistDraft });
-      expectedField = createField({ label: 'Expected behaviour', type: 'textarea', maxLength: 2000, value: prefill.expected || '', onChange: persistDraft });
-      actualField = createField({ label: 'Actual behaviour', type: 'textarea', maxLength: 2000, value: prefill.actual || '', onChange: persistDraft });
-      fields.push(stepsField.node, expectedField.node, actualField.node);
-      screenshotControl = createScreenshotControl({ onChange: persistDraft });
-      fields.push(screenshotControl.node);
-    } else if (type === 'feature') {
-      descriptionField = createField({ label: 'Describe the feature', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange: persistDraft });
-      useCaseField = createField({ label: 'Your use case', type: 'textarea', maxLength: 2000, value: prefill.useCase || '', placeholder: 'Why do you need this? What problem does it solve?', onChange: persistDraft });
-      fields.push(descriptionField.node, useCaseField.node);
-      usageFreqField = createRadioGroup({ name: 'usageFreq', label: 'How often would you use it?', options: USAGE_FREQ_OPTIONS, required: false });
-      fields.push(usageFreqField.node);
-      if (prefill.usageFreq) {
-        const radio = usageFreqField.node.querySelector(`input[value="${prefill.usageFreq}"]`);
-        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
-      }
-    } else {
-      descriptionField = createField({ label: 'Your feedback', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange: persistDraft });
-      fields.push(descriptionField.node);
-      screenshotControl = createScreenshotControl({ onChange: persistDraft });
-      fields.push(screenshotControl.node);
-    }
+    const typeFields = buildTypeFields(type, { prefill, onChange: persistDraft });
+    fields.push(...typeFields.fields);
+    const { severityField, stepsField, expectedField, actualField, descriptionField, useCaseField, usageFreqField, screenshotControl } = typeFields;
 
     const systemInfoCheckbox = createSystemInfoCheckbox({
       checked: prefill.includeSystemInfo !== false,
@@ -183,13 +212,13 @@ export function openFeedbackModal({ user }) {
     function gatherFormValues() {
       return {
         title: titleField.getValue(),
-        severity: severityField?.getValue() || null,
-        steps: stepsField?.getValue() || null,
-        expected: expectedField?.getValue() || null,
-        actual: actualField?.getValue() || null,
-        description: descriptionField?.getValue() || null,
-        useCase: useCaseField?.getValue() || null,
-        usageFreq: usageFreqField?.getValue() || null,
+        severity: readFieldValue(severityField),
+        steps: readFieldValue(stepsField),
+        expected: readFieldValue(expectedField),
+        actual: readFieldValue(actualField),
+        description: readFieldValue(descriptionField),
+        useCase: readFieldValue(useCaseField),
+        usageFreq: readFieldValue(usageFreqField),
         includeSystemInfo: systemInfoCheckbox.isChecked()
       };
     }
