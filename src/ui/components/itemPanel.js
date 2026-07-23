@@ -16,6 +16,38 @@ const NOTES_SAVED_INDICATOR_MS = 1500;
 // Issue #180 — live elapsed-time display tick while a timer is running.
 const TIMER_TICK_MS = 1000;
 
+// Issue #329 — manually-triggered, best-effort resource link check. A browser
+// `fetch(url, { mode: 'no-cors' })` cannot see a cross-origin response's real
+// HTTP status (no CORS grant means the response comes back opaque), so this
+// can only ever answer "did the network request itself fail outright
+// (DNS/connection-level), or not" — never "does this page actually exist."
+// A real network-level failure (DNS error, connection refused, offline) *does*
+// reject the fetch promise even under `no-cors`, since CORS only restricts
+// reading the response, not making the request — that's the one signal this
+// can reliably surface. See `.claude/rules/roadmap-store.md` for the same
+// caveat documented alongside the store's other resource-URL rules, so a
+// future contributor doesn't "fix" the common could-not-verify result by
+// weakening the messaging below into a false claim of certainty.
+const LINK_CHECK_STATUS = { REACHABLE: 'reachable', UNVERIFIED: 'unverified', OFFLINE: 'offline' };
+const LINK_CHECK_MESSAGES = {
+  [LINK_CHECK_STATUS.REACHABLE]: 'Likely reachable — your browser got a response.',
+  [LINK_CHECK_STATUS.UNVERIFIED]: 'Could not verify this link from your browser — open it to check.',
+  [LINK_CHECK_STATUS.OFFLINE]: 'Can\'t check links while you\'re offline.'
+};
+
+// Exported for unit testing (mocking `fetch` for each outcome branch) — not
+// used anywhere outside this module otherwise.
+export async function checkResourceLink(url) {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return LINK_CHECK_STATUS.OFFLINE;
+  if (typeof fetch !== 'function') return LINK_CHECK_STATUS.OFFLINE;
+  try {
+    await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+    return LINK_CHECK_STATUS.REACHABLE;
+  } catch {
+    return LINK_CHECK_STATUS.UNVERIFIED;
+  }
+}
+
 export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   const overlay = el('div', { className: 'panel-overlay', onClick: e => { if (e.target === overlay) close(); } });
   const panel = el('aside', { className: 'item-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Edit topic' });
@@ -53,6 +85,9 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
 
   let resources = [...(item.resources || [])];
   let notesSaveTimer = null;
+  // Issue #329 — guards a still-in-flight link check from writing into
+  // detached DOM once the panel has been closed mid-fetch.
+  let panelClosed = false;
 
   // Issue #180 — lightweight time tracking. `timeSpentSeconds` is the
   // persisted cumulative total (patched via the same `onSave` → updateItem()
@@ -204,6 +239,15 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
         }
       });
 
+      const checkStatus = el('p', { className: 'small muted resource-check-status', text: '' });
+      const checkBtn = el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-sm',
+        text: 'Check link',
+        title: 'Best-effort only — most sites don\'t let a browser see their real response, so "could not verify" is a common, expected result.',
+        onClick: () => handleCheckLink(resource.url, checkBtn, checkStatus)
+      });
+
       const row = el('div', { className: 'resource-card' }, [
         el('div', { className: 'resource-card-header' }, [
           el('span', { className: `link-badge ${meta.badgeClass}` }, [
@@ -223,19 +267,44 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
         ]),
         el('div', { className: 'resource-actions' }, [
           el('a', { className: 'btn btn-ghost btn-sm', href: isValidUrl(resource.url) ? resource.url : '#', target: '_blank', rel: 'noopener noreferrer', text: 'Open' }),
+          checkBtn,
           el('button', {
             type: 'button',
             className: 'btn btn-danger btn-sm',
             text: 'Remove',
             onClick: () => { resources.splice(index, 1); renderResources(); }
           })
-        ])
+        ]),
+        checkStatus
       ]);
       resourceList.append(row);
     });
   }
 
+  // Issue #329 — never automatic, only ever run from this button's own click
+  // handler, so opening a topic's edit panel never fires an unexpected
+  // outbound network call on its own.
+  async function handleCheckLink(url, btn, statusEl) {
+    if (!isValidUrl(url)) {
+      statusEl.textContent = 'Enter a valid http or https URL before checking.';
+      statusEl.className = 'small muted resource-check-status error';
+      return;
+    }
+    btn.disabled = true;
+    statusEl.textContent = 'Checking…';
+    statusEl.className = 'small muted resource-check-status';
+    const status = await checkResourceLink(url);
+    if (panelClosed) return;
+    btn.disabled = false;
+    statusEl.replaceChildren(
+      createIcon(status === LINK_CHECK_STATUS.REACHABLE ? 'check' : 'warning', { size: 'xs' }),
+      ` ${LINK_CHECK_MESSAGES[status]}`
+    );
+    statusEl.className = `small muted resource-check-status ${status}`;
+  }
+
   function close() {
+    panelClosed = true;
     // A running timer must never keep ticking against an unmounted panel —
     // fold its elapsed session into the total and persist, same reasoning
     // as the notes-autosave flush just below.

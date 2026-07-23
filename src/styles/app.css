@@ -3620,6 +3620,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .resource-add { display: grid; gap: 8px; margin-top: 10px; }
 .resource-url-warning { margin: 0; }
 
+/* Issue #329 — best-effort "Check link" result line. `.unverified` (the
+   common, expected result — see itemPanel.js's own comment on why this is
+   not an error) stays neutral/muted, never the danger color: a CORS-blocked
+   response is not evidence the link is broken. `.reachable` uses the success
+   token; `.error` (an invalid URL, caught before ever attempting a fetch)
+   is the only state that uses the danger token. */
+.resource-check-status { margin: 0; display: flex; align-items: center; gap: 4px; }
+.resource-check-status.reachable { color: var(--color-success); }
+.resource-check-status.error { color: var(--color-danger); }
+
 /* Issue #12B — link-type badge, one color per detectLinkType() result
    (src/ui/utils/linkDetector.js). Colors match the issue's spec table;
    each pair is tuned per-theme via app.css's dark-mode :root override block

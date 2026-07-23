@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { openItemPanel } from '../../src/ui/components/itemPanel.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { openItemPanel, checkResourceLink } from '../../src/ui/components/itemPanel.js';
 
 const baseItem = {
   id: 'seed-0-0-0',
@@ -278,6 +278,122 @@ describe('itemPanel — time tracking (issue #180)', () => {
 
     expect(onSave).toHaveBeenCalledWith({ timeSpentSeconds: 15 });
     vi.useRealTimers();
+  });
+});
+
+describe('checkResourceLink() — pure fetch outcome mapping (issue #329)', () => {
+  const originalFetch = globalThis.fetch;
+  const originalOnLine = navigator.onLine;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    Object.defineProperty(navigator, 'onLine', { value: originalOnLine, configurable: true });
+  });
+
+  it('reports "reachable" when the no-cors HEAD request resolves (opaque-success-like)', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ type: 'opaque' });
+    const result = await checkResourceLink('https://example.com');
+    expect(result).toBe('reachable');
+    expect(globalThis.fetch).toHaveBeenCalledWith('https://example.com', { method: 'HEAD', mode: 'no-cors' });
+  });
+
+  it('reports "unverified" when the fetch rejects (a real network-level failure)', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    const result = await checkResourceLink('https://this-domain-does-not-exist-xyz123.test');
+    expect(result).toBe('unverified');
+  });
+
+  it('reports "offline" without attempting a fetch when navigator.onLine is false', async () => {
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+    globalThis.fetch = vi.fn();
+    const result = await checkResourceLink('https://example.com');
+    expect(result).toBe('offline');
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('reports "offline" when fetch is unsupported in the current environment', async () => {
+    globalThis.fetch = undefined;
+    const result = await checkResourceLink('https://example.com');
+    expect(result).toBe('offline');
+  });
+});
+
+describe('itemPanel — "Check link" UI (issue #329)', () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  function panelWithOneResource(url = 'https://example.com') {
+    openItemPanel({ item: { ...baseItem, resources: [{ label: 'Docs', url }] } });
+    return getPanel().querySelector('.resource-card');
+  }
+
+  it('never fetches on open — only on an explicit click of "Check link"', () => {
+    globalThis.fetch = vi.fn();
+    panelWithOneResource();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('shows "Checking…" then a "likely reachable" message, never claiming certainty', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({ type: 'opaque' });
+    const card = panelWithOneResource();
+    const btn = [...card.querySelectorAll('button')].find(b => b.textContent === 'Check link');
+    const status = card.querySelector('.resource-check-status');
+
+    btn.click();
+    expect(status.textContent).toBe('Checking…');
+    expect(btn.disabled).toBe(true);
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(status.textContent).toContain('Likely reachable');
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('never says "this link is broken" — a failed check reads as a best-effort, unverifiable result', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('network error'));
+    const card = panelWithOneResource();
+    const btn = [...card.querySelectorAll('button')].find(b => b.textContent === 'Check link');
+    const status = card.querySelector('.resource-check-status');
+
+    btn.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(status.textContent.trim()).toBe('Could not verify this link from your browser — open it to check.');
+    expect(status.textContent.toLowerCase()).not.toContain('broken');
+    expect(status.textContent.toLowerCase()).not.toContain('this link is');
+  });
+
+  it('shows an offline message without attempting a network call', async () => {
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+    globalThis.fetch = vi.fn();
+    const card = panelWithOneResource();
+    const btn = [...card.querySelectorAll('button')].find(b => b.textContent === 'Check link');
+    const status = card.querySelector('.resource-check-status');
+
+    btn.click();
+    await Promise.resolve();
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(status.textContent.trim()).toBe('Can\'t check links while you\'re offline.');
+    Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
+  });
+
+  it('refuses to check an invalid URL without attempting a fetch', async () => {
+    globalThis.fetch = vi.fn();
+    const card = panelWithOneResource('javascript:alert(1)');
+    const btn = [...card.querySelectorAll('button')].find(b => b.textContent === 'Check link');
+    const status = card.querySelector('.resource-check-status');
+
+    btn.click();
+    await Promise.resolve();
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(status.textContent).toBe('Enter a valid http or https URL before checking.');
   });
 });
 
