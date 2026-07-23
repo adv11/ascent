@@ -6,6 +6,7 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createChangelogBell } from '../components/notificationBell.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
 import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
+import { createProgressDigestBanner } from '../components/progressDigestBanner.js';
 import { maybeShowGuestDataRiskNudge } from '../components/guestDataRiskNudge.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
@@ -514,7 +515,7 @@ export function renderPhaseCard(phase, pi, {
 }
 
 
-export function renderDashboard(app, { user, store, dailyTodoStore }) {
+export function renderDashboard(app, { user, store, dailyTodoStore, activityLogStore }) {
   if (!user) {
     navigate('/signin', true);
     return;
@@ -595,18 +596,62 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const syncPill = el('span', { className: 'sync-pill', text: 'Syncing' });
 
   const userPillClass = user.isAnonymous ? 'guest' : 'online';
-  const activeTemplateId = store.getSnapshot().activeTemplateId;
-  const isCustomRoadmap = store.isCustomRoadmapId(activeTemplateId);
   // Surfaced in the hero so it's never ambiguous which roadmap is currently
   // loaded — easy to lose track of after switching templates a few times. A
   // custom roadmap (issue #4) has no entry in the template registry, so its
   // name/icon come from customRoadmaps meta instead of getTemplate().
-  const currentTemplate = isCustomRoadmap
-    ? (() => {
-      const custom = store.getSnapshot().customRoadmaps.find(r => r.id === activeTemplateId);
+  //
+  // Extracted to a function (issue #283): the global topic search's
+  // cross-roadmap selection can call store.switchRoadmap() while dashboard.js
+  // is already mounted on /app (no navigation, so renderDashboard() itself
+  // never re-runs) — activeTemplateId/isCustomRoadmap/currentTemplate used to
+  // be resolved once at mount and never touched again, leaving the header
+  // badge (and, since render() reads the same isCustomRoadmap closure
+  // variable, the custom-roadmap-only "+ Add phase"/"+ Add section" controls
+  // too) stuck showing the roadmap active *before* the switch. refreshRoadmapIdentity()
+  // below reassigns all three from handleSnapshot() whenever activeTemplateId
+  // actually changed, ahead of the render(snapshot) call that already runs on
+  // every structural change — so this is a single fix, not two.
+  function resolveCurrentTemplate(snapshot, templateId) {
+    if (store.isCustomRoadmapId(templateId)) {
+      const custom = snapshot.customRoadmaps.find(r => r.id === templateId);
       return { icon: createIcon('edit', { size: 'sm' }), name: custom ? custom.title : 'Custom roadmap' };
-    })()
-    : getTemplate(activeTemplateId);
+    }
+    return getTemplate(templateId);
+  }
+
+  const initialSnapshot = store.getSnapshot();
+  let activeTemplateId = initialSnapshot.activeTemplateId;
+  let isCustomRoadmap = store.isCustomRoadmapId(activeTemplateId);
+  let currentTemplate = resolveCurrentTemplate(initialSnapshot, activeTemplateId);
+
+  // currentTemplate.icon is a decorativeIcon.js name string for a built-in
+  // template (getTemplate(), issue #136 Phase 2 — was a raw emoji string
+  // before), or the shared createIcon() "edit" node for a custom roadmap's
+  // fallback icon (issue #107). Held as stable elements (not rebuilt inline
+  // in the header markup below) so refreshRoadmapIdentity() can update them
+  // in place after a same-page cross-roadmap switch (issue #283).
+  const roadmapBadgeIconSlot = el('span', { 'aria-hidden': 'true' }, [
+    typeof currentTemplate.icon === 'string'
+      ? createDecorativeIcon(currentTemplate.icon, { size: 'sm' })
+      : currentTemplate.icon
+  ]);
+  const roadmapBadgeNameEl = el('span', { text: `${currentTemplate.name} roadmap` });
+
+  function refreshRoadmapIdentity(snapshot) {
+    if (snapshot.activeTemplateId === activeTemplateId) return;
+    activeTemplateId = snapshot.activeTemplateId;
+    isCustomRoadmap = store.isCustomRoadmapId(activeTemplateId);
+    currentTemplate = resolveCurrentTemplate(snapshot, activeTemplateId);
+    roadmapBadgeIconSlot.replaceChildren(
+      typeof currentTemplate.icon === 'string'
+        ? createDecorativeIcon(currentTemplate.icon, { size: 'sm' })
+        : currentTemplate.icon
+    );
+    roadmapBadgeNameEl.textContent = `${currentTemplate.name} roadmap`;
+    const breadcrumbEl = topbar.querySelector('.app-topbar-breadcrumb');
+    if (breadcrumbEl) breadcrumbEl.textContent = `Roadmaps / ${currentTemplate.name}`;
+  }
 
   function persistUi() {
     store.setUiState({
@@ -662,7 +707,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     } catch {
       return;
     }
-    const targetItem = store.getSnapshot().items[payload?.itemId];
+    const targetItem = store.getSnapshot().allItems[payload?.itemId];
     if (!targetItem || targetItem.deleted) return;
     const card = content.querySelector(`.phase-card[data-phase-title="${CSS.escape(targetItem.phase)}"]`);
     if (card) {
@@ -1259,6 +1304,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       return;
     }
     lastStructuralVersion = snapshot.structuralVersion;
+    refreshRoadmapIdentity(snapshot);
     render(snapshot);
     // A cross-roadmap topic-search selection (issue #283) that required a real
     // store.switchRoadmap() call lands here — the switch bumps structuralVersion,
@@ -1291,6 +1337,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
   const backupReminderBanner = createBackupReminderBanner({ user, store });
+  const progressDigestBanner = activityLogStore ? createProgressDigestBanner({ user, store, activityLogStore }) : null;
 
   // Small header notification badge (not a per-roadmap feature — Daily Todos
   // are intentionally global, see onboarding.js) surfacing the soonest active
@@ -1422,6 +1469,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
       el('div', { className: 'app-content' }, [
         verificationBanner,
         backupReminderBanner,
+        progressDigestBanner,
         offlineBanner,
         el('header', { className: 'dashboard-header' }, [
           // Issue #6 Phase 4.4 — the "Official/read-only" lock-badge concept
@@ -1430,14 +1478,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
           // with a meta row instead of a separate header section.
           el('div', { className: 'roadmap-header' }, [
             el('div', { className: 'current-roadmap-badge' }, [
-              // currentTemplate.icon is a decorativeIcon.js name string for a
-              // built-in template (getTemplate(), issue #136 Phase 2 — was a
-              // raw emoji string before), or the shared createIcon() "edit"
-              // node for a custom roadmap's fallback icon (issue #107).
-              typeof currentTemplate.icon === 'string'
-                ? el('span', { 'aria-hidden': 'true' }, [createDecorativeIcon(currentTemplate.icon, { size: 'sm' })])
-                : el('span', { 'aria-hidden': 'true' }, [currentTemplate.icon]),
-              el('span', { text: `${currentTemplate.name} roadmap` })
+              roadmapBadgeIconSlot,
+              roadmapBadgeNameEl
             ]),
             roadmapMetaRow
           ]),

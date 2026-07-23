@@ -1997,6 +1997,30 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .backup-reminder-icon { font-size: var(--text-base); }
 .backup-reminder-msg { flex: 1; min-width: 220px; font-weight: 500; }
 
+/* Weekly progress digest banner (issue #284) — same shape as
+   .backup-reminder-banner immediately above, reusing the identical
+   warning-tint/border/text-token trio so every dismissible top-of-page
+   banner in this app reads as one visual family. */
+.progress-digest-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--color-warning-bg);
+  border-bottom: 1px solid var(--color-border-strong);
+  color: var(--color-accent-700);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+:root[data-theme='dark'] .progress-digest-banner {
+  background: var(--color-warning-bg);
+  border-bottom-color: var(--color-border-strong);
+  color: var(--color-accent-700);
+}
+.progress-digest-icon { display: inline-flex; }
+.progress-digest-msg { flex: 1; min-width: 220px; font-weight: 500; }
+
 /* intentional: theme-agnostic dark scrim behind an opaque, bright .modal-card
    (issue #116; issue #206 §3.5 — retuned to a neutral rgba(0,0,0,0.5), the
    spec's exact value, replacing the old slate-tinted rgba(15,23,42,0.55)). */
