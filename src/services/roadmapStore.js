@@ -2,9 +2,9 @@ import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
 import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData, getTemplate } from '../data/templates/index.js';
 import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
-import { MAX_TITLE_LENGTH, isValidResource, isValidTags, MAX_FAVORITE_ROADMAPS, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH } from '../core/roadmap/limits.js';
+import { MAX_TITLE_LENGTH, isValidResource, isValidTags, MAX_FAVORITE_ROADMAPS, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH, MAX_CUSTOM_ROADMAPS } from '../core/roadmap/limits.js';
 
-export { MAX_FAVORITE_ROADMAPS };
+export { MAX_FAVORITE_ROADMAPS, MAX_CUSTOM_ROADMAPS };
 
 const LOCAL_KEY = KEYS.ROADMAP;
 const UI_KEY = KEYS.UI_STATE;
@@ -1458,6 +1458,34 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     // rejected outright.
     const trimmedTitle = (title || '').trim().slice(0, MAX_CUSTOM_ROADMAP_TITLE_LENGTH);
     if (!trimmedTitle) throw new Error('Title is required');
+
+    // Issue #324 — createCustomRoadmap() previously had no upper bound on
+    // how many custom roadmaps a single account could create; the only
+    // other limit was database.rules.json's index-shape rule, which allows
+    // up to 1,000 — a shape constraint against stray keys, never a
+    // deliberate product cap. Throws a tagged Error (`error.code = 'capped'`)
+    // rather than returning `{ ok: false }` so the existing "throws on
+    // invalid input" contract (see the empty-title check above) stays
+    // consistent, and callers that don't care about the distinction can keep
+    // treating this like any other rejected creation.
+    //
+    // The cap is checked against `customRoadmaps.length` specifically, never
+    // `startedTemplateIds.length` — the 7 built-in starter templates
+    // (java-backend, frontend, data-science, genai-agentic-ai, math-grade12,
+    // piano, marketing) are never added to `customRoadmaps` and must never
+    // count toward this limit; a user who has started every built-in
+    // template plus zero custom ones is nowhere near the cap. Deliberately
+    // no additional creation-rate cooldown alongside this count cap — two
+    // legitimate custom roadmaps created back-to-back is already a real,
+    // tested scenario (issue #153's overlapping-create race-condition fix),
+    // and a cooldown would reject the second one outright instead of just
+    // handling it correctly.
+    if (customRoadmaps.length >= MAX_CUSTOM_ROADMAPS) {
+      const error = new Error(`You've reached the limit of ${MAX_CUSTOM_ROADMAPS} custom roadmaps (this doesn't count the built-in starter templates). Delete an older or unused custom roadmap before creating another.`);
+      error.code = 'capped';
+      throw error;
+    }
+
     const id = genId('croadmap');
     if (seedPhases || seedItems) {
       pendingCustomSeeds[id] = { phases: seedPhases || [], items: seedItems || {} };
