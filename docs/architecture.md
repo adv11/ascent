@@ -4482,6 +4482,29 @@ same `openItemPanel({ item, onSave, onDelete })` entry point every other row-lev
 action already uses, reusing the phase-card-open-and-scroll logic
 `applyScrollToPhaseSignal()` established rather than inventing a second version of it.
 
+### 2026-07-23 — Issue #285 — Roadmap comparison view
+
+Added a "Compare roadmaps" view, reachable from a new button on the Progress page's
+header. Two new modules: `src/core/roadmap/roadmapComparison.js` (pure — no DOM/store
+access, same discipline as `src/core/analytics/*.js` and `reviewSchedule.js`) computes
+the diff/overlap between two topic sets, matching topics by a normalized `(phase,
+title)` key rather than item id, since a freshly re-seeded template's generated ids
+never match a since-edited roadmap's own ids; `src/ui/components/roadmapComparisonModal.js`
+is the modal UI, offering two modes — the active roadmap vs. its own starter template's
+original seed content, or the active roadmap vs. any other roadmap the user has
+started. No new backend/Firebase schema was needed: mode one reads the existing
+template registry (`src/data/templates/index.js`) directly, and mode two added exactly
+one new read-only method to `roadmapStore.js`, `getRoadmapSnapshotForComparison(templateId)`
+— a thin wrapper around the store's existing `resolveRoadmapItems()`/`fetchTemplateData()`
+resolution pair that never mutates `activeTemplateId`/`items`/`roadmapCache`/`dirty` and
+never attaches a listener, so comparing against another roadmap never switches the
+user's active roadmap out from under them. See `.claude/rules/roadmap-store.md`'s new
+entry for the full contract. Unit tests cover the pure comparison engine
+(`tests/unit/roadmapComparison.test.js`); `tests/e2e/roadmapComparison.test.js` covers
+both modes end to end against a real Firebase emulator. Manual/browser verification was
+skipped for this PR (no browser available in the authoring environment) — covered
+instead by the unit suite plus the emulator-backed E2E tests above.
+
 ### 2026-07-23 — Issue #284 — Weekly progress digest banner
 
 Adds a dismissible, once-per-week digest banner to the dashboard, pulling from the

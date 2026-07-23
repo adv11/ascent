@@ -9,6 +9,7 @@ import { createHeatmap } from '../components/heatmap.js';
 import { createLineChart, createBarChart } from '../components/chartWrapper.js';
 import { createSkeletonCard } from '../components/skeleton.js';
 import { openShareModal } from '../components/shareModal.js';
+import { openRoadmapComparisonModal } from '../components/roadmapComparisonModal.js';
 import { showToast } from '../components/toast.js';
 import { createIcon } from '../components/icons.js';
 import { attachTooltip } from '../components/tooltip.js';
@@ -374,13 +375,19 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     }
   }, [createIcon('share', { size: 'xs' }), ' Share progress']);
 
+  const compareBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-secondary btn-sm',
+    onClick: () => openRoadmapComparisonModal({ store })
+  }, [createIcon('roadmaps', { size: 'xs' }), ' Compare roadmaps']);
+
   const content = el('div', { className: 'app-content progress-content', id: 'main-content', tabindex: '-1' }, [
     el('header', { className: 'progress-header' }, [
       el('div', {}, [
         el('h1', { text: 'Progress' }),
         el('p', { className: 'progress-header-subtitle', text: 'Your preparation journey at a glance.' })
       ]),
-      el('div', { className: 'progress-header-actions' }, [rangeToggleSlot, shareBtn])
+      el('div', { className: 'progress-header-actions' }, [rangeToggleSlot, compareBtn, shareBtn])
     ]),
     statStripSlot,
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Activity' }), heatmapSlot]),

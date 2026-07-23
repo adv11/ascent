@@ -71,6 +71,7 @@ src/services/dailyTodoStore.js  in-memory Daily Todos store — see .claude/rule
 src/services/activityLogStore.js  daily completed-item counts, feeds analytics (issue #8) — see .claude/rules/roadmap-store.md
 src/services/storage/         storage backend interface + FirebaseAdapter (+ withTimeout.js) + LocalStorageAdapter + adapterFactory — see .claude/rules/roadmap-store.md
 src/core/analytics/           pure analytics engine (streaks/velocity/heatmap/projection/progressDigest), no DOM/store access — see .claude/rules/roadmap-store.md
+src/core/roadmap/roadmapComparison.js  pure roadmap-comparison diff engine (issue #285) — no DOM/store access, matches topics by (phase, title); src/ui/components/roadmapComparisonModal.js  "Compare roadmaps" modal (vs. starter template or vs. another started roadmap), opened from progress.js — see .claude/rules/roadmap-store.md
 src/services/theme.js         dark/light theme state — see .claude/rules/ui-styling.md
 src/services/themeBootstrap.js  synchronous classic script, no-FOUC — see .claude/rules/ui-styling.md
 src/ui/router.js              tiny hash router (registerRoute/navigate/startRouter)
