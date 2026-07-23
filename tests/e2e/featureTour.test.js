@@ -121,7 +121,19 @@ test.describe('onboarding-page tour (issue #293)', () => {
     await expect(page.locator('.tour-popover')).toBeHidden();
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 
+    // A reload on /onboarding as an already-onboarded user always bounces to
+    // /app first — main.js's onAuthStateChanged treats every fresh page load
+    // as a "sign-in transition" (lastAuthUid resets on reload) and redirects
+    // off the onboarding picker, exactly like it does off a public route (see
+    // that file's own issue #294 comment). This is real, working-as-designed
+    // app behavior, not something this test should fight — so the actual
+    // "does it reappear" check happens by navigating back to /onboarding
+    // client-side afterward, not by asserting on the reload's own landing page.
     await page.reload();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+
+    await page.click('.app-sidebar-nav a[href="#/onboarding"]');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await expect(page.locator('.onboarding-page')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
   });
