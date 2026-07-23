@@ -61,6 +61,27 @@ behind the multi-roadmap/custom-roadmap/import/daily-todo feature set. Relocated
 `isValidUrl()` accepts only `http:` and `https:` protocols — this blocks `javascript:`
 and `data:` URI injection. Apply this at both render time and save time.
 
+**"Check link" is a best-effort signal only — never claim certainty, and never say a
+link "is broken" (issue #329).** `itemPanel.js`'s per-resource "Check link" button
+(`checkResourceLink()`) does a manually-triggered `fetch(url, { method: 'HEAD', mode:
+'no-cors' })` and reports one of three states: likely reachable, could not verify, or
+offline. This exists specifically because of a hard, permanent technical limit, not a
+bug to eventually fix: a browser `fetch` from this app's own origin to an arbitrary
+third-party domain is subject to CORS, and most sites grant no cross-origin visibility
+into their real response status — so the fetch promise resolving (an opaque response)
+only means the network request didn't fail outright, never that the page actually
+exists or returns a real 200. Conversely, the promise *rejecting* under `no-cors` is a
+genuine network-level failure (DNS error, connection refused, offline) — CORS doesn't
+block the request from firing, only reading its result, so a rejection is the one
+signal this can reliably surface. **"Could not verify" will be the common, expected
+result for most real-world third-party links — this is not evidence a link is dead**,
+and the UI copy must never imply otherwise (`.claude/rules/content-style.md`'s
+false-confidence rule applies directly here). Do not "fix" the common could-not-verify
+result by weakening this into a more confident-sounding message — a reliable check
+needs a server-side proxy this app doesn't have (see issue #330's proposed Cloud
+Functions backend for where that would eventually go), and there is no client-only way
+to close this gap.
+
 **Store pattern** (`src/services/roadmapStore.js`): a mutable `items` map for whichever
 template is currently active, `subscribe(callback)`/`notify()` for pub-sub, and a 500ms
 debounced `queueSave()` that persists to `localStorage` immediately and to the active
