@@ -57,6 +57,42 @@ function buildPickingOverlay(label = 'Opening…') {
   ]);
 }
 
+// Issue #293 — the second, onboarding-page-specific tour flagged as an open
+// follow-up by the dashboard tour's own expansion (buildTourSteps() in
+// dashboard.js): Daily Todos, favoriting a roadmap, and "Create your own
+// roadmap" have no dashboard-page target to spotlight, since all three live
+// only on this page. Same `{ target, title, body }` shape and live-
+// querySelector-per-step convention as buildTourSteps() (`.claude/rules/
+// ui-styling.md`'s featureTour.js entry) — exported for the same reason
+// buildTourSteps() is (issue #53's module-scope-extraction precedent), so
+// each step is independently testable against real rendered DOM.
+export function buildOnboardingTourSteps({ visibleGrid, getCreateCardEl }) {
+  return [
+    {
+      target: () => document.querySelector('.daily-todo-panel'),
+      title: 'Track daily todos',
+      body: 'Add anything you want to get done today — a rolling list, separate from your roadmap topics.'
+    },
+    {
+      target: () => visibleGrid.querySelector('.template-card-overflow-btn'),
+      title: 'Favorite your go-to roadmaps',
+      body: `Open a roadmap's ⋯ menu to favorite up to ${MAX_FAVORITE_ROADMAPS} — favorites always sort to the top of this page.`
+    },
+    {
+      target: () => getCreateCardEl(),
+      title: 'Build your own roadmap with AI',
+      body: 'Answer a few questions, generate a roadmap with an AI assistant, and paste the result back in.'
+    }
+  ];
+}
+
+// Extracted out of renderOnboarding() to keep its own complexity under the
+// ESLint gate (root CLAUDE.md) — pure, so it's independently unit-testable
+// without constructing a whole store/page render.
+export function shouldAutoStartOnboardingTour(snapshot, isSwitchingTemplate) {
+  return isSwitchingTemplate && snapshot.tourDone === true && snapshot.onboardingTourDone === false;
+}
+
 // Shown once, right after a brand-new sign-up (Issue #51). A user who has already
 // picked a template can also reach this page later via the dashboard's "Switch
 // template" link to start (or switch back to) a different one — since issue #58,
@@ -98,6 +134,24 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // can close over it. See the real, reproduced bug this guards against on
   // signOutBtn's own definition below.
   let signOutBtn = null;
+  // Issue #293 — same "tear down any tour already on screen before starting
+  // a fresh one" guard as dashboard.js's own activeTourCleanup.
+  let activeTourCleanup = null;
+
+  // Dynamically imported the same way dashboard.js's runFeatureTour() is
+  // (see that function's own comment) — the tour code (spotlight/portal/
+  // focus-trap machinery) has no reason to load on every onboarding-page
+  // visit, only the ones that actually run it.
+  async function runOnboardingTour() {
+    activeTourCleanup?.();
+    const { startTour } = await import('../components/featureTour.js');
+    activeTourCleanup = startTour(buildOnboardingTourSteps({ visibleGrid, getCreateCardEl: () => createCardEl }), {
+      onEnd: () => {
+        activeTourCleanup = null;
+        store.completeOnboardingTour();
+      }
+    });
+  }
 
   function setBusy(busy) {
     cardEls.forEach(card => {
@@ -566,6 +620,10 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   }, [createAvatar(user, 'sm')]);
   const accountDropdownItems = [
     { text: 'Settings', onClick: () => navigate('/settings') },
+    // Issue #293 — this page's own tour (Daily Todos/favorites/AI-import),
+    // distinct from dashboard.js's "Take a tour" (its own dashboard-only
+    // tour, wired the same way via sidebar.js's onStartTour prop).
+    { text: 'Take a tour', onClick: () => { store.resetOnboardingTour(); runOnboardingTour(); } },
     { text: 'My reports', onClick: () => openMyReports({ user }) },
     { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
@@ -652,11 +710,24 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     renderHiddenToggle();
   });
 
+  // Issue #293 — auto-starts once, only for an account that has already
+  // been through the dashboard tour at least once (tourDone === true,
+  // whether it was finished or skipped — see featureTour.js's onEnd
+  // comment) and is on a genuine return visit to this page
+  // (isSwitchingTemplate), never during first-time template picking. A
+  // freshly-backfilled existing account never reaches this, the same way
+  // dashboard.js's own auto-start check works — see roadmapStore.js's
+  // backfillOnboardingTourDoneIfNeeded().
+  if (shouldAutoStartOnboardingTour(snapshot, isSwitchingTemplate)) {
+    runOnboardingTour();
+  }
+
   return () => {
     themeToggleBtn._cleanup?.();
     dailyTodoPanel?._cleanup?.();
     accountDropdown._cleanup?.();
     dropdownEls.forEach(dropdown => dropdown._cleanup?.());
+    activeTourCleanup?.();
     unsubStore();
   };
 }

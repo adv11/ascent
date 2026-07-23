@@ -889,6 +889,41 @@ since every one of the tour's spotlight `querySelector` targets is dashboard-onl
 would resolve to nothing anywhere else. See `.claude/rules/ui-styling.md`'s
 `featureTour.js` entry for the spotlight/portal/focus-trap implementation itself.
 
+**A second, onboarding-page tour — `onboardingTourDone` (issue #293).** Daily Todos,
+favorite roadmaps, and "Create your own roadmap" have no dashboard-page target to
+spotlight (all three live only on `onboarding.js`) — rather than stretch the dashboard
+tour's own dashboard-only constraint, a second, independent tour covers them on
+`onboarding.js` itself, built the exact same way as `tourDone` above: `onboardingTourDone`
+is its own per-user boolean (`resolveMetaExtras()`'s
+`onboardingTourDone: remoteMeta?.onboardingTourDone === true || readLocalOnboardingTourDone()`,
+`KEYS.ONBOARDING_TOUR_DONE` local fallback, its own `firebase/database.rules.json`
+`.validate` rule sibling to `tourDone`'s), with its own `completeOnboardingTour()`/
+`resetOnboardingTour()` pair following `completeTour()`/`resetTour()`'s identical shape
+(`resetOnboardingTour()` is the same in-memory-only exception, for the same manual-replay
+reasoning). `backfillOnboardingTourDoneIfNeeded(onboarding)` mirrors
+`backfillTourDoneIfNeeded()` exactly (same `hasRealProgress(items)`-or-legacy-migration
+condition) so an account that predates this feature never sees it auto-fire retroactively.
+
+**Gating and manual replay live in `onboarding.js`, following the same split as the
+dashboard tour.** `renderOnboarding()` calls a new pure `shouldAutoStartOnboardingTour(snapshot,
+isSwitchingTemplate)` (extracted out of `renderOnboarding()` itself to keep its own
+complexity under the ESLint gate) — `isSwitchingTemplate && tourDone === true &&
+onboardingTourDone === false`. Requiring `tourDone` (the dashboard tour) to already be
+`true` — whether it was finished or skipped, both set it — means this second tour only
+ever appears on a genuine *return* visit to "My Roadmaps," after the dashboard tour has
+already introduced the spotlight/popover mechanism once; it never fires during first-time
+template picking, when `isSwitchingTemplate` is still `false`. `buildOnboardingTourSteps({
+visibleGrid, getCreateCardEl })` (exported the same way `buildTourSteps()` is, for the
+same testability reason) spotlights `.daily-todo-panel`, the first pickable card's
+`.template-card-overflow-btn` (where "Favorite" now lives — see the favorite-roadmaps
+section above), and `.template-card-create` — the last two read live from `visibleGrid`/a
+`getCreateCardEl()` getter rather than a captured reference, since `renderVisibleGrid()`
+tears down and rebuilds every card (including `createCardEl`) on every store update.
+Manually replayable from this page's own account dropdown ("Take a tour," next to
+Settings — this page rebuilds its own account menu rather than using `sidebar.js`'s, see
+the "no app-shell sidebar" note above), calling `store.resetOnboardingTour()` then
+re-running the tour, the same two-call shape the dashboard's own "Take a tour" item uses.
+
 **Favorite roadmaps — `favoriteRoadmapIds` (issue #177).** A parallel per-user array,
 same shape/persistence precedent as `hiddenTemplateIds` immediately above: up to
 `MAX_FAVORITE_ROADMAPS` (3, exported from `roadmapStore.js`) roadmap ids, no distinction
@@ -918,16 +953,16 @@ that this repo had previously under-enforced server-side caps on similar user-co
 arrays; don't repeat that gap for a future array field. `deleteCustomRoadmap()` also
 strips the deleted id from `favoriteRoadmapIds` (both in-memory and the Firebase/local
 persistence) so a deleted custom roadmap can never linger as a "favorite" pointing at
-nothing. `onboarding.js`'s picker grid renders a star toggle (`.template-card-favorite`,
-`data-action="favorite"`, the same click-guard convention as the hide/delete/info corner
-buttons — placed at the same top-right corner, directly left of whichever of those
-three a given card also has, not the top-left corner: top-left was tried first and
-collides with the decorative template icon that also renders there in the card's normal
-content flow, found live via screenshot) on every custom and built-in card, and sorts the "Create
-your own roadmap" action card first (never a favorite target — it isn't a roadmap to
-pick), followed by every pickable card with favorited ones first (`Array#sort`, stable,
-so order is otherwise unchanged). Toggling re-renders the whole visible grid rather than
-patching a single card in place, since a toggle can also move where the card sits.
+nothing. `onboarding.js`'s picker grid originally rendered a standalone star toggle
+(`.template-card-favorite`) at each card's top-right corner; issue #206 §4.1 later
+collapsed it (along with the hide/delete corner button) behind one `.template-card-overflow-btn`
+(⋯) menu once a card had 2+ secondary actions — "Favorite"/"Unfavorite" is now a
+`createDropdown()` menu item built by `buildFavoriteMenuAction(roadmapId, name)`, not a
+standalone button, on every custom and built-in card. Sorts the "Create your own roadmap"
+action card first (never a favorite target — it isn't a roadmap to pick), followed by
+every pickable card with favorited ones first (`Array#sort`, stable, so order is otherwise
+unchanged). Toggling re-renders the whole visible grid rather than patching a single card
+in place, since a toggle can also move where the card sits.
 
 **Custom-roadmap count cap — `MAX_CUSTOM_ROADMAPS` (issue #324).** Before this,
 `createCustomRoadmap()` had no upper bound at all on how many custom roadmaps a single

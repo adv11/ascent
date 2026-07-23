@@ -118,6 +118,9 @@
           "tourDone": {
             ".validate": "newData.isBoolean()"
           },
+          "onboardingTourDone": {
+            ".validate": "newData.isBoolean()"
+          },
           "$other": {
             ".validate": "false"
           }

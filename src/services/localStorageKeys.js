@@ -14,6 +14,12 @@ export const KEYS = {
   // state" precedent as ONBOARDING_DONE (its absence already means "not
   // done", so there's nothing useful to write on the false path).
   TOUR_DONE: 'ascent-tour-done',
+  // Second, onboarding-page-specific tour (issue #293) — spotlights Daily
+  // Todos, favoriting a roadmap, and "Create your own roadmap," none of
+  // which the dashboard tour above can reach (see TOUR_DONE's own comment
+  // and roadmap-store.md's "First-time feature tour" entry). Same
+  // never-persist-'false' precedent as TOUR_DONE/ONBOARDING_DONE.
+  ONBOARDING_TOUR_DONE: 'ascent-onboarding-tour-done',
   // Now means the *active* template id (issue #58) — the one currently displayed.
   TEMPLATE_ID: 'ascent-template-id',
   HIDDEN_TEMPLATES: 'ascent-hidden-templates',
