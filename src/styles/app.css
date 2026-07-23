@@ -600,20 +600,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    an <a> (landing.js's "Start for free"/"Sign in" links use
    .btn-primary/.btn-ghost/.btn-secondary, not just the old CTA class) is
    covered by construction instead of needing its own per-variant override. */
-/* issue #309 — `justify-content` removed from the base rule: design-system.md
-   §4's "flush-left everything... never center hero copy or button labels" is
-   a binding, repeated rule that this base class violated for every `.btn`
-   variant app-wide since Phase 1. Flex's default `normal` value resolves to
-   `flex-start` for a row container, so a label now starts at the left
-   padding edge same as the spec's own "a wide button starts its label at the
-   left padding edge" wording. A future trailing icon (none exist today —
-   checked every `.btn`-classed call site) should use `margin-left: auto` on
-   itself per that same spec line, not lean on this rule being centered.
-   `.btn-icon` (below) explicitly re-centers itself, since a square icon-only
-   button has no "label" for this rule to apply to. */
+/* issue #338 — `justify-content: center` restored to the base rule, reversing
+   issue #309's flush-left change: the product owner explicitly requested
+   centered button labels after seeing the sign-in screen (see
+   design-system.md §4, updated in the same PR to state the new rule). Any
+   trailing icon that previously relied on `margin-left: auto` to push itself
+   right against a flush-left label now just centers alongside the label text
+   as part of the same centered group — checked every `.btn`-classed call
+   site, none currently set `margin-left: auto` on a child, so no follow-up
+   change was needed there. `.btn-icon` (below) already centers its single
+   icon child; this rule now agrees with it instead of deliberately
+   diverging, since a square icon-only button was never covered by the old
+   flush-left rule to begin with. */
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
   min-height: 40px;
   padding: 10px var(--space-4);
