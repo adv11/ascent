@@ -29,12 +29,18 @@ export function fuzzyMatch(query, target) {
 
 // Issue #6 Phase 3.3 — a generic searchable command palette. `items`:
 // [{ id, title, subtitle, onSelect }]. Wired into topbar.js (Cmd/Ctrl+K,
-// issue #125) with page-navigation items only; searching live roadmap
-// items/sections/phases (the original spec's fuller ambition) is real
-// feature work for its own follow-up issue, deliberately out of scope there
-// — `openCommandPalette` here stays the reusable primitive any future caller
-// hands its own item list to.
-export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
+// issue #125) with page-navigation items.
+//
+// Issue #283 — an optional second search mode, layered on top of the nav-item
+// filter above rather than replacing it: `crossRoadmapSearch: { minQueryLength,
+// search(query) => Promise<[{ id, title, subtitle, onSelect }]> }`. Once the typed
+// query reaches `minQueryLength`, `search()` is called (topbar.js wires this to
+// roadmapStore.js's getAllRoadmapsForSearch() + core/roadmap/globalTopicSearch.js's
+// pure matcher) and its results render as a second, labeled group below the nav
+// results — this component stays roadmap-agnostic; it only ever renders whatever
+// `{ title, subtitle, onSelect }` rows the caller hands it, same contract as the
+// plain `items` list already had.
+export function openCommandPalette(items, { placeholder = 'Search…', crossRoadmapSearch } = {}) {
   const listId = 'command-palette-list';
   const input = el('input', {
     className: 'command-palette-input',
@@ -51,13 +57,35 @@ export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
     'aria-autocomplete': 'list'
   });
   const list = el('div', { className: 'command-palette-list', role: 'listbox', id: listId });
+  let navFiltered = items;
+  let topicFiltered = [];
   let filtered = items;
   let activeIndex = 0;
+  // Guards against an older, slower crossRoadmapSearch() call resolving after a
+  // newer one already started — same "stateCallId" precedent roadmapStore.js's own
+  // setUser()/switchRoadmap() use for exactly this async-out-of-order shape.
+  let searchToken = 0;
 
   function optionId(i) { return `command-palette-option-${i}`; }
 
-  function render() {
-    list.replaceChildren(...filtered.map((item, i) => el('button', {
+  // Rebuilds the single flat, keyboard-navigable `filtered` list from the two
+  // group arrays — nav results first, then topic results — so activeIndex/select()
+  // never need to know which group an index falls into.
+  function recomputeFiltered() {
+    filtered = [...navFiltered, ...topicFiltered];
+    activeIndex = Math.min(activeIndex, Math.max(filtered.length - 1, 0));
+  }
+
+  // A group header is only rendered when both groups can legitimately appear at
+  // once (crossRoadmapSearch is configured) — a plain nav-only palette (every
+  // existing call site until topbar.js's own topic-search wiring) renders exactly
+  // as it did before this issue, no headers at all.
+  function buildGroupHeader(text) {
+    return el('div', { className: 'command-palette-group-label', text });
+  }
+
+  function buildOptionRow(item, i) {
+    return el('button', {
       type: 'button',
       role: 'option',
       id: optionId(i),
@@ -67,7 +95,24 @@ export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
     }, [
       el('span', { className: 'command-palette-item-title', text: item.title }),
       item.subtitle ? el('span', { className: 'command-palette-item-subtitle', text: item.subtitle }) : null
-    ].filter(Boolean))));
+    ].filter(Boolean));
+  }
+
+  function render() {
+    const rows = [];
+    // "Topics" only appears once there are real topic results (below
+    // minQueryLength, or before an async search() resolves, topicFiltered is
+    // always empty — no header, no visual change from a plain nav-only palette).
+    // "Navigation" only appears *alongside* a non-empty Topics group, to
+    // disambiguate the two — a nav-only palette (every call site until this
+    // issue) never shows a "Navigation" label of its own.
+    const showTopicsHeader = topicFiltered.length > 0;
+    const showNavHeader = showTopicsHeader && navFiltered.length > 0;
+    if (showNavHeader) rows.push(buildGroupHeader('Navigation'));
+    navFiltered.forEach((item, i) => rows.push(buildOptionRow(item, i)));
+    if (showTopicsHeader) rows.push(buildGroupHeader('Topics'));
+    topicFiltered.forEach((item, i) => rows.push(buildOptionRow(item, navFiltered.length + i)));
+    list.replaceChildren(...rows);
     input.setAttribute('aria-activedescendant', filtered.length ? optionId(activeIndex) : '');
   }
 
@@ -78,14 +123,44 @@ export function openCommandPalette(items, { placeholder = 'Search…' } = {}) {
     item.onSelect?.();
   }
 
-  function filterItems(query) {
-    filtered = items
+  function filterNavItems(query) {
+    navFiltered = items
       .map(item => ({ item, match: fuzzyMatch(query, `${item.title} ${item.subtitle || ''}`) }))
       .filter(({ match }) => match.matched)
       .sort((a, b) => b.match.score - a.match.score)
       .map(({ item }) => item);
-    activeIndex = 0;
+  }
+
+  async function runCrossRoadmapSearch(query, token) {
+    const minLength = crossRoadmapSearch.minQueryLength ?? 2;
+    if (query.trim().length < minLength) {
+      topicFiltered = [];
+      recomputeFiltered();
+      render();
+      return;
+    }
+    let results;
+    try {
+      results = await crossRoadmapSearch.search(query);
+    } catch (error) {
+      console.error('Cross-roadmap topic search failed', error);
+      results = [];
+    }
+    if (token !== searchToken) return; // a newer keystroke already superseded this call
+    topicFiltered = results || [];
+    recomputeFiltered();
     render();
+  }
+
+  function filterItems(query) {
+    filterNavItems(query);
+    activeIndex = 0;
+    recomputeFiltered();
+    render();
+    if (crossRoadmapSearch) {
+      searchToken += 1;
+      runCrossRoadmapSearch(query, searchToken);
+    }
   }
 
   input.addEventListener('input', () => filterItems(input.value));

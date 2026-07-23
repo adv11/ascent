@@ -4432,3 +4432,52 @@ this bug shape anywhere else in the app.
 
 See `CHANGELOG.md`'s own entry for this issue for the full per-selector list and
 before/after detail — not duplicated here.
+
+### 2026-07-23 — PR #<pending> — Global topic search across all roadmaps (issue #283)
+
+`commandPalette.js`'s nav-item-only search (issue #125's deliberate scope, documented in
+CLAUDE.md's file map) is now paired with a second, optional search mode: a new
+`crossRoadmapSearch: { minQueryLength, search(query) }` option, layered on top of the
+existing nav-item filter rather than replacing it. Once the typed query reaches
+`minQueryLength` (2, wired by `topbar.js`), the palette renders a second, labeled
+"Topics" result group below "Navigation" — `commandPalette.js` itself stays entirely
+roadmap-agnostic; it only ever renders whatever `{ title, subtitle, onSelect }` rows the
+caller hands it, the same contract the plain `items` list already had. An async
+`searchToken` counter guards against an older, slower `search()` call resolving after a
+newer keystroke already superseded it — same "stateCallId" precedent
+`roadmapStore.js`'s own `setUser()`/`switchRoadmap()` use for the identical async
+out-of-order shape.
+
+The actual matching logic is a new pure module, `src/core/roadmap/globalTopicSearch.js`
+(`searchTopicsAcrossRoadmaps(roadmaps, query)`) — no DOM/store/Firebase access,
+independently unit-tested, following this repo's existing `core/roadmap/*.js`
+convention. It searches topic title, phase, section, notes, and resource label/url
+(deliberately wider than `dashboard.js`'s own per-roadmap `searchQuery`, which stays
+title/phase/section-only and untouched by this issue — the two are separate searches
+serving separate purposes, not one being generalized into the other), ranking a title
+hit above a notes/resource-only hit.
+
+The data feeding it comes from a new `roadmapStore.js` export,
+`getAllRoadmapsForSearch()` — resolves every started roadmap's (built-in + custom) items
+by reusing the exact same `fetchTemplateData()`/`resolveRoadmapItems()` cache-first
+resolution `switchRoadmap()` already uses (cache → Firebase → local blob → seed), run
+concurrently across every roadmap via `Promise.all` (same discipline as
+`switchRoadmap()`'s own network calls, issue #121 item 6). Deliberately read-only: it
+never writes to `roadmapCache` or any other store state, since opening the command
+palette must never mutate a roadmap the user hasn't actually switched to.
+
+Selecting a cross-roadmap result calls `store.switchRoadmap()` (a no-op if the result's
+roadmap is already active), then reaches `dashboard.js` through a new one-shot
+`sessionStorage` signal, `KEYS.OPEN_ITEM` — same "read once, then clear" precedent
+issue #8's `KEYS.SCROLL_TO_PHASE` established, extended here with one addition: a plain
+`window.dispatchEvent(new CustomEvent('ascent:open-item'))` fired alongside it for the
+same-roadmap-already-active case, since a no-op `switchRoadmap()` never notifies
+subscribers and dashboard.js (if already mounted) would otherwise have no trigger to
+consume the signal at all. `dashboard.js`'s `applyOpenItemSignal()` is checked in three
+places — once at mount (matching `applyScrollToPhaseSignal()`'s own precedent, for a
+navigation from a different page), once inside `handleSnapshot()` after a structural
+re-render (the cross-roadmap-switch case, which does bump `structuralVersion`), and once
+on the new window event (the same-roadmap case) — and opens the matching topic via the
+same `openItemPanel({ item, onSave, onDelete })` entry point every other row-level edit
+action already uses, reusing the phase-card-open-and-scroll logic
+`applyScrollToPhaseSignal()` established rather than inventing a second version of it.

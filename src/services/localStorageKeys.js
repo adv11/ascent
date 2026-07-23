@@ -69,6 +69,13 @@ export const KEYS = {
   // to open + scroll to that phase. sessionStorage, not localStorage — same
   // "read once, then clear" precedent as verificationBanner.js's dismiss key.
   SCROLL_TO_PHASE: 'ascent-scroll-to-phase',
+  // One-shot cross-roadmap signal (issue #283): commandPalette.js's global topic
+  // search writes `{ templateId, itemId }` here (JSON) right before calling
+  // store.switchRoadmap()+navigate('/app') for a result in a *different* roadmap
+  // than the one currently active — dashboard.js reads and immediately clears it
+  // on its next mount to open + scroll to that topic's item panel, same
+  // "read once, then clear" sessionStorage precedent as SCROLL_TO_PHASE above.
+  OPEN_ITEM: 'ascent-open-item',
   // In-app feedback widget (issue #9) — a half-written report so a modal
   // closed mid-fill is never lost, and a client-side submission-log rate
   // limiter. Both device-level (not synced to Firebase, not cleared on

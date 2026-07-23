@@ -1,5 +1,5 @@
 import { ROADMAP_VERSION, buildSeedItems, PHASES } from '../data/roadmap.js';
-import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData } from '../data/templates/index.js';
+import { buildSeedItems as buildTemplateSeedItems, getTemplatePhases, getLegacyBlankTemplateData, getTemplate } from '../data/templates/index.js';
 import { getStorageAdapter } from './storage/adapterFactory.js';
 import { KEYS } from './localStorageKeys.js';
 import { MAX_TITLE_LENGTH, isValidResource, isValidTags, MAX_FAVORITE_ROADMAPS, MAX_CUSTOM_ROADMAP_TITLE_LENGTH, MAX_CUSTOM_ROADMAP_DESCRIPTION_LENGTH } from '../core/roadmap/limits.js';
@@ -977,6 +977,26 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     return { items: baseItems, phases: basePhases, dirty: false };
   }
 
+  // Cross-roadmap topic search (issue #283) — resolves every started roadmap's
+  // (built-in + custom) items so `commandPalette.js`'s global topic search can scan
+  // across all of them, not just the active one. Deliberately read-only: reuses
+  // fetchTemplateData()/resolveRoadmapItems() exactly like switchRoadmap() does (cache
+  // -> Firebase -> local blob -> seed), but never writes to roadmapCache or any other
+  // store state — opening the command palette must never mutate a roadmap the user
+  // hasn't actually switched to. Runs concurrently across every roadmap (same
+  // Promise.all discipline as switchRoadmap()'s own network calls, issue #121 item 6)
+  // rather than sequentially, since none of these reads depend on each other.
+  async function getAllRoadmapsForSearch() {
+    return Promise.all(startedTemplateIds.map(async id => {
+      const templateDataPromise = fetchTemplateData(id);
+      const { items, phases } = await resolveRoadmapItems(id, templateDataPromise);
+      const title = isCustomRoadmapId(id)
+        ? (customRoadmaps.find(r => r.id === id)?.title || 'Untitled roadmap')
+        : (getTemplate(id)?.name || id);
+      return { id, title, items, phases };
+    }));
+  }
+
   // setUser()'s final phase, once onboardingDone is known true — loads the
   // active template's items/phases (cache -> Firebase -> local blob -> seed,
   // see resolveRoadmapItems) and seeds roadmapCache from a just-migrated
@@ -1913,6 +1933,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     updateResource,
     removeResource,
     importBackupItems,
+    getAllRoadmapsForSearch,
     flush,
     retrySaveNow,
     getUiState() {

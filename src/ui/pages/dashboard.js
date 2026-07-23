@@ -641,6 +641,49 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     });
   }
 
+  // One-shot cross-roadmap signal (issue #283) — commandPalette.js's global topic
+  // search (wired in topbar.js) writes the target item's id to KEYS.OPEN_ITEM right
+  // before calling store.switchRoadmap()+navigate('/app') for a result in a
+  // *different* roadmap than the one currently active. Read once, then cleared
+  // immediately, same "read once, then clear" precedent as
+  // applyScrollToPhaseSignal() above. Unlike that signal, this one also has a
+  // same-page trigger (the 'ascent:open-item' window event, below) — switching to a
+  // roadmap that's already the active one is a no-op in roadmapStore.js, so no
+  // navigation or structural re-render happens for a same-roadmap search result,
+  // and this function needs to run immediately instead of waiting for a mount that
+  // was never going to happen.
+  function applyOpenItemSignal() {
+    const raw = sessionStorage.getItem(KEYS.OPEN_ITEM);
+    if (!raw) return;
+    sessionStorage.removeItem(KEYS.OPEN_ITEM);
+    let payload;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    const targetItem = store.getSnapshot().items[payload?.itemId];
+    if (!targetItem || targetItem.deleted) return;
+    const card = content.querySelector(`.phase-card[data-phase-title="${CSS.escape(targetItem.phase)}"]`);
+    if (card) {
+      const pi = Number(card.dataset.phase);
+      if (!openPhases.has(pi)) {
+        openPhases.add(pi);
+        persistUi();
+        render(store.getSnapshot());
+      }
+      requestAnimationFrame(() => {
+        content.querySelector(`.phase-card[data-phase-title="${CSS.escape(targetItem.phase)}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    openItemPanel({
+      item: targetItem,
+      onSave: patch => store.updateItem(targetItem.id, patch),
+      onDelete: () => store.removeItem(targetItem.id)
+    });
+  }
+
   // Issue #153 root cause #2 — the error-state badge now carries a real
   // "Retry now" button (roadmapStore.js's retrySaveNow()) instead of a
   // static "retrying…" claim that was never actually true. Extracted out of
@@ -1217,6 +1260,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     }
     lastStructuralVersion = snapshot.structuralVersion;
     render(snapshot);
+    // A cross-roadmap topic-search selection (issue #283) that required a real
+    // store.switchRoadmap() call lands here — the switch bumps structuralVersion,
+    // which is exactly the render this signal needs to already have happened
+    // before it can find the target item's phase card in the DOM.
+    applyOpenItemSignal();
   }
 
   const toggleAllBtn = el('button', {
@@ -1357,6 +1405,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   const topbar = createTopbar({
     breadcrumb: `Roadmaps / ${currentTemplate.name}`,
     user,
+    store,
     syncPill,
     themeToggleBtn,
     dailyTodoNavBadge,
@@ -1443,7 +1492,20 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
   lastStructuralVersion = store.getSnapshot().structuralVersion;
   render(store.getSnapshot());
   applyScrollToPhaseSignal();
+  applyOpenItemSignal();
   maybeShowGuestDataRiskNudge({ user, store });
+
+  // Same-page case for the cross-roadmap search signal above: if the search result
+  // belongs to the roadmap that's already active, store.switchRoadmap() is a no-op
+  // (roadmapStore.js — no notify(), no structural bump), so neither the mount-time
+  // call above nor handleSnapshot() would ever run this. topbar.js dispatches this
+  // event immediately after writing the sessionStorage signal whenever the palette
+  // was opened from a page that's already /app, so it's picked up with no
+  // navigation/remount at all.
+  function onOpenItemEvent() {
+    applyOpenItemSignal();
+  }
+  window.addEventListener('ascent:open-item', onOpenItemEvent);
 
   // Issue #17 — auto-starts once, only for an account that has genuinely
   // finished onboarding but never seen the tour (a freshly-backfilled
@@ -1525,6 +1587,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore }) {
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);
     window.removeEventListener('beforeprint', handleBeforePrint);
+    window.removeEventListener('ascent:open-item', onOpenItemEvent);
     printMediaQuery.removeEventListener('change', handlePrintMediaChange);
     unmountPrintSnapshot?.();
     clearTimeout(saveBadgeTimer);

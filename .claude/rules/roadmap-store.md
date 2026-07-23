@@ -883,6 +883,46 @@ same precedent as the "Clear all filters" button's own direct `persistUi()` + `r
 and scrolls it into view. If you ever need another cross-page "arrive here already primed
 to X" signal, follow this same pattern rather than adding query-string routing.
 
+**Global topic search across every roadmap — `getAllRoadmapsForSearch()` (issue #283).**
+The command palette's nav-item-only search (issue #125) was scoped that way
+deliberately, with searching live roadmap topics called out as its own follow-up issue —
+this is that follow-up. `roadmapStore.js` exports `getAllRoadmapsForSearch()`, a
+**read-only** cross-roadmap query helper: it resolves `[{ id, title, items, phases }]`
+for every roadmap in `startedTemplateIds` (built-in + custom), by reusing the exact same
+`fetchTemplateData()`/`resolveRoadmapItems()` cache-first resolution `switchRoadmap()`
+already uses (cache → Firebase → local blob → seed) — run concurrently across every
+roadmap via `Promise.all`, same discipline as `switchRoadmap()`'s own network calls
+(issue #121 item 6), since none of these reads depend on each other. It deliberately
+**never writes to `roadmapCache` or any other store state** — unlike every other
+`resolveRoadmapItems()` caller (`setUser`/`switchRoadmap`), which always follows up by
+assigning the result into `roadmapCache`/`items`, this one only reads: opening the
+command palette must never mutate a roadmap the user hasn't actually switched to, even a
+not-yet-visited one that would otherwise get cached as a side effect of being read.
+
+The actual matching is `src/core/roadmap/globalTopicSearch.js`'s
+`searchTopicsAcrossRoadmaps(roadmaps, query)` — a **pure** function (no DOM/store/
+Firebase access), following this file's existing `core/roadmap/*.js` convention, taking
+`getAllRoadmapsForSearch()`'s resolved shape directly. It searches topic title, phase,
+section, notes, and resource label/url — deliberately wider than `dashboard.js`'s own
+per-roadmap `searchQuery` (title/phase/section only), which stays exactly as it is; the
+two are separate searches for separate purposes (fast local filter vs. "where did I put
+that across every roadmap I have"), not one generalizing into the other. `topbar.js`
+wires the two together via `commandPalette.js`'s new `crossRoadmapSearch` option (see
+`.claude/rules/ui-styling.md`'s command-palette entries for the UI-layer half) and
+handles selecting a result: `store.switchRoadmap(match.roadmapId)` (a no-op if already
+active) followed by a one-shot `sessionStorage[KEYS.OPEN_ITEM]` signal that
+`dashboard.js`'s `applyOpenItemSignal()` consumes — same "read once, then clear"
+precedent as `KEYS.SCROLL_TO_PHASE` above, opening the target topic via the existing
+`openItemPanel({ item, onSave, onDelete })` entry point every row-level edit action
+already uses. Because a no-op `switchRoadmap()` never fires a store `notify()`, the
+same-roadmap-already-active case additionally dispatches a plain
+`window.dispatchEvent(new CustomEvent('ascent:open-item'))` so an already-mounted
+dashboard picks up the signal immediately, without a real navigation. If you add another
+cross-roadmap read (a second global search facet, a "recently completed across all
+roadmaps" widget, etc.), reuse `getAllRoadmapsForSearch()`'s read-only,
+`fetchTemplateData()`/`resolveRoadmapItems()`-backed pattern rather than building a
+second bespoke multi-roadmap fetch path.
+
 **Further ESLint complexity cleanup beyond issue #129's setUser split (issue #279) —
 more of the same extraction discipline, not a new pattern.** `resolveRoadmapItems()`'s
 merge branches share one new helper, `buildMergedResolution({ sourceItems, sourcePhases,

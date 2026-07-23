@@ -411,6 +411,7 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
   const topbar = createTopbar({
     breadcrumb: 'Settings',
     user,
+    store,
     syncPill: null,
     themeToggleBtn,
     dailyTodoNavBadge: null,

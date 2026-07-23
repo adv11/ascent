@@ -336,6 +336,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   const topbar = createTopbar({
     breadcrumb: 'Progress',
     user,
+    store,
     syncPill: null,
     themeToggleBtn,
     dailyTodoNavBadge: null,
