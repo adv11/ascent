@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseImportJson, validateImportPayload, validateImportText, SUPPORTED_SCHEMA_VERSION } from '../../src/core/roadmap/importValidator.js';
+import { describe, it, expect, vi } from 'vitest';
+import { parseImportJson, validateImportPayload, validateImportText, SUPPORTED_SCHEMA_VERSION, MAX_IMPORT_TEXT_LENGTH } from '../../src/core/roadmap/importValidator.js';
 import { MAX_TITLE_LENGTH } from '../../src/core/roadmap/limits.js';
 
 function validPayload() {
@@ -50,6 +50,65 @@ describe('parseImportJson', () => {
     const result = parseImportJson('```json\n{not valid json\n```');
     expect(result.data).toBeNull();
     expect(result.error).toBe('Invalid JSON — check for missing commas or brackets');
+  });
+});
+
+// Issue #325 — the paste textarea has no upfront size guard before this
+// module's JSON.parse() runs, synchronously, on every debounced keystroke. A
+// large accidental paste (a whole chat transcript, a full webpage) can
+// visibly freeze the tab. The length check must run and reject before
+// JSON.parse is ever attempted, even against a string that would otherwise
+// be malformed/slow to parse.
+describe('parseImportJson — oversized-paste guard (issue #325)', () => {
+  const TOO_LARGE_ERROR = 'This is too large to import — check you copied only the roadmap JSON, not the whole conversation.';
+
+  it('returns the dedicated too-large error for a rawText longer than MAX_IMPORT_TEXT_LENGTH, without ever calling JSON.parse', () => {
+    const parseSpy = vi.spyOn(JSON, 'parse');
+    // Deliberately malformed AND oversized — proves the length check runs
+    // first, since a malformed string would otherwise hit the generic
+    // "Invalid JSON" catch block instead.
+    const oversizedMalformed = '{not valid json'.repeat(Math.ceil((MAX_IMPORT_TEXT_LENGTH + 1) / '{not valid json'.length));
+    expect(oversizedMalformed.length).toBeGreaterThan(MAX_IMPORT_TEXT_LENGTH);
+
+    const result = parseImportJson(oversizedMalformed);
+
+    expect(result.data).toBeNull();
+    expect(result.error).toBe(TOO_LARGE_ERROR);
+    expect(parseSpy).not.toHaveBeenCalled();
+    parseSpy.mockRestore();
+  });
+
+  it('surfaces the same too-large error through validateImportText', () => {
+    const oversized = 'a'.repeat(MAX_IMPORT_TEXT_LENGTH + 1);
+    const result = validateImportText(oversized);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual([TOO_LARGE_ERROR]);
+    expect(result.data).toBeNull();
+  });
+
+  it('does not reject a rawText exactly at MAX_IMPORT_TEXT_LENGTH (only strictly over the limit is rejected)', () => {
+    const prefix = '{"a":';
+    const suffix = '}';
+    const exactlyAtLimit = `${prefix}${'1'.repeat(MAX_IMPORT_TEXT_LENGTH - prefix.length - suffix.length)}${suffix}`;
+    expect(exactlyAtLimit.length).toBe(MAX_IMPORT_TEXT_LENGTH);
+    const result = parseImportJson(exactlyAtLimit);
+    expect(result.error).toBeNull();
+  });
+
+  it('still parses and validates a well-formed, well-under-the-limit payload normally', () => {
+    const result = validateImportText(JSON.stringify(validPayload()));
+    expect(result.valid).toBe(true);
+  });
+
+  it('regression guard: the near-500-item fixture (with resources on every item) stays comfortably under MAX_IMPORT_TEXT_LENGTH and still validates successfully', async () => {
+    const { buildLargeRoadmapPayload } = await import('./fixtures/aiProviderPayloads.js');
+    const payload = buildLargeRoadmapPayload(490);
+    const rawText = JSON.stringify(payload);
+    expect(rawText.length).toBeLessThan(MAX_IMPORT_TEXT_LENGTH);
+
+    const result = validateImportText(rawText);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 });
 

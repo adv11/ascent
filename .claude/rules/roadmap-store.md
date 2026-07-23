@@ -436,6 +436,23 @@ icon, across sessions and devices, with no new UI and no `customRoadmaps` schema
 change. If a real icon-picker UI is ever built, this hash-based default is what an
 unset `icon` field should fall back to, not a re-introduced fixed glyph.
 
+**Draft autosave for the "Create your own roadmap" modal — mirrors `KEYS.FEEDBACK_DRAFT`
+(issue #328).** `importRoadmapModal.js`'s topic textarea and its five customization
+inputs (experience level, timeframe, goal, weekly time commitment, resource types,
+"already know") persist to `KEYS.CREATE_ROADMAP_DRAFT` on every field change and are
+read back once on modal open to prefill every field — the exact same precedent this
+file's own "Draft autosave, not a queued-offline-write" entry (below, under "In-app
+feedback & bug reporting") documents for `feedbackModal.js`'s `KEYS.FEEDBACK_DRAFT`:
+device-level, never synced to Firebase, cleared only on a successful submit/import,
+never on Cancel/Escape/outside-click. The one deliberate difference from that precedent:
+the pasted AI-response textarea (`pasteArea`) is never persisted — it's regenerable from
+the same draft's topic/options by re-running the external AI, and persisting arbitrary
+large pasted text risks silently hitting the browser's storage quota. Chip-group fields
+(experience level, timeframe, weekly time, resource types) and the goal `<select>` read
+the restored draft's values *before* their controls are constructed, so each control's
+own initial "active"/selected state reflects the loaded draft with no separate rehydration
+step needed.
+
 **AI-assisted roadmap creation (`src/data/importPrompt.js`, `src/core/roadmap/`, issues
 #4/#64, redesigned in #100).** Since issue #100 retired manual "start truly blank"
 creation and merged onboarding's two cards into one, this is the *only* way to start a
@@ -504,6 +521,25 @@ calling `switchRoadmap(id)`, and `fetchTemplateData` consumes (and deletes) it i
 returning the usual empty seed for a custom id. From that point on a created roadmap is
 indistinguishable from any other custom roadmap — same Firebase path, same phase/section
 rename/delete controls, same `deleteCustomRoadmap` cleanup.
+
+**Oversized-paste guard, `MAX_IMPORT_TEXT_LENGTH` (issue #325).** Before any of the above
+validation runs, `parseImportJson()` checks `rawText.length` against
+`MAX_IMPORT_TEXT_LENGTH` (300,000 characters, `importValidator.js` — same "own,
+dependency-free constant" precedent as `MAX_TITLE_LENGTH`/`MAX_RESOURCE_LABEL_LENGTH` in
+`limits.js`, though this one lives directly in `importValidator.js` since nothing else
+needs to import it) and returns a dedicated error — "This is too large to import — check
+you copied only the roadmap JSON, not the whole conversation." — instead of ever calling
+`JSON.parse()`. This exists because the paste textarea's `input` handler debounces only
+300ms, not per-keystroke-skips-while-large; a several-MB accidental paste (a whole chat
+transcript, a full webpage's HTML) run through `JSON.parse()` synchronously on the main
+thread on every keystroke (backspacing/re-pasting re-triggers it) can visibly freeze the
+tab, with no upfront size ceiling to stop it before this issue. 300,000 characters is
+comfortably above any real roadmap's JSON size even at the `MAX_ITEMS` (500) cap with
+resources on every item — `tests/unit/fixtures/aiProviderPayloads.js`'s near-cap fixture
+serializes to well under 100,000 characters, leaving generous headroom. Deliberately
+**not** an HTML `maxlength` attribute on the textarea itself — that would silently
+truncate a legitimate large-but-valid paste mid-character, corrupting otherwise-good
+JSON; the fix is a length check before parsing, not a truncating input constraint.
 
 **A single malformed resource URL or oddly-cased priority must never fail the whole
 roadmap (issue #100 follow-up, found via real-world testing).** Early real-world use of
