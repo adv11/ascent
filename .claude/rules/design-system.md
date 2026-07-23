@@ -53,7 +53,7 @@ Rules:
 - **Radius 0 everywhere.** `--radius-sm/md/lg: 0px`. No rounded buttons, cards, inputs, checkboxes, chips, avatars, or modals.
 - **2px rules** (`--color-divider`) between major sections; **1px** between list rows / inside tables. Never soften a rule to a hairline or replace it with whitespace.
 - Modular grids: equal-width bordered cells (template picker, landing features, stat rows). Let the grid show.
-- **Flush-left everything**: headings, copy, button labels. A wide button starts its label at the left padding edge; a trailing icon is pushed right (`margin-left: auto`). Never center hero copy or button labels.
+- **Flush-left everything**: headings, copy. Never center hero copy. **Button labels are the one deliberate exception** (issue #338, reversing this rule's original scope at the product owner's explicit request): every `.btn` variant centers its label (and any icon) via `justify-content: center` on the shared base rule — a wide button's text sits centered in the available width, not pinned to the left padding edge.
 - Elevation only for overlays (dialog, dropdown, command palette, toasts) via `--shadow-sm/md/lg`. Flat surfaces otherwise.
 
 ## 5. Components
@@ -101,7 +101,7 @@ Rules:
 - [ ] No new hex values outside the token sheet
 - [ ] No border-radius > 0
 - [ ] No gradients / glows / drop-shadows on flat surfaces
-- [ ] No centered button labels or centered hero copy
+- [ ] No centered hero copy (button labels are centered by design — see §4)
 - [ ] Section boundaries drawn with 2px rules, list rows with 1px
 - [ ] Paragraph-size accent text uses `accent-700`
 - [ ] Fonts limited to Archivo 400/600/800
