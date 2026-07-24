@@ -4671,3 +4671,34 @@ reject a legitimate write. Verified against a real local Firebase emulator
 (`npx firebase emulators:start --only database`) via direct REST writes before trusting
 `tests/e2e/dataCapRules.test.js`'s new Playwright case, per this file's own recurring
 "a rule that looks right doesn't always compile/behave as expected" caution.
+
+### 2026-07-24 — Issue #348 — Simplify the feedback flow, remove screenshot capture entirely
+
+Product-requested simplification of issue #9's feedback/bug-report/feature-request
+widget. `src/ui/components/screenshotCapture.js` and its test are deleted outright —
+the `html2canvas` CDN dependency (`cdn.jsdelivr.net`, still needed separately for
+Chart.js, see `docs/adr/ADR-002-csp-sri-security.md`) is unaffected since that CSP
+entry serves both features and Chart.js remains. `feedbackForm.js` lost
+`createScreenshotControl()`; `feedbackModal.js` no longer builds or wires a screenshot
+control into any of the three report-type forms, and `submitReport()` calls no longer
+pass `screenshotB64`/`screenshotOmitted`.
+
+Required-field friction was also cut: the bug report's Steps/Expected/Actual three-textarea
+block collapsed into one "What happened?" free-text field (`item.whatHappened`), and
+Severity is no longer a required radio group — an unset severity now defaults to
+`'medium'` (`DEFAULT_SEVERITY`, `reportSchema.js`) at payload-build time rather than
+blocking submission. The feature request's "Describe the feature"/"Your use case" pair
+collapsed into one "Describe the feature" field. General feedback was already minimal
+(Title + Description) and needed no field change beyond losing its screenshot control.
+
+`core/feedback/reportSchema.js`'s `buildReportSummary()` is also gone — it existed
+solely to strip `screenshotB64` before the `users/{uid}/reports/{reportId}` write, which
+is unnecessary once the field never exists in the payload at all; `submitReport()`
+(`feedbackStore.js`) now writes the identical payload to both paths.
+`firebase/database.rules.json` drops the `screenshotB64`/`screenshotOmitted` `.validate`
+rules from both `reports/{reportId}` and `users/{uid}/reports/{reportId}`, replacing
+`steps`/`expected`/`actual`/`useCase` with a single `whatHappened` field rule.
+
+Per this issue's own cross-link note, issue #347's Bug 1 (`screenshotOmitted` never
+reaching the submitted payload) is resolved as a side effect of this removal — #347's
+Bug 2 (the cooldown message's hardcoded "3 reports" wording) is unrelated and still open.

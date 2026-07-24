@@ -39,16 +39,14 @@ describe('openFeedbackModal — type selector', () => {
 });
 
 describe('bug report form', () => {
-  it('renders all required fields', () => {
+  it('renders all required fields, with no screenshot control', () => {
     openFeedbackModal({ user: USER });
     clickType('Bug report');
     const labels = [...document.querySelectorAll('.field-label')].map(l => l.textContent);
     expect(labels.some(l => l.startsWith('Title'))).toBe(true);
     expect(labels.some(l => l.startsWith('Severity'))).toBe(true);
-    expect(labels.some(l => l.startsWith('Steps to reproduce'))).toBe(true);
-    expect(labels.some(l => l.startsWith('Expected behaviour'))).toBe(true);
-    expect(labels.some(l => l.startsWith('Actual behaviour'))).toBe(true);
-    expect(document.querySelector('.feedback-screenshot')).not.toBeNull();
+    expect(labels.some(l => l.startsWith('What happened?'))).toBe(true);
+    expect(document.querySelector('.feedback-screenshot')).toBeNull();
   });
 
   it('does not submit and shows an error when required fields are empty', async () => {
@@ -60,16 +58,13 @@ describe('bug report form', () => {
     expect(document.querySelector('.form-message.error')).not.toBeNull();
   });
 
-  it('submits successfully with all fields filled and shows the success screen with a reference id', async () => {
+  it('submits successfully with just title + what-happened filled, leaving severity unset', async () => {
     openFeedbackModal({ user: USER });
     clickType('Bug report');
 
     document.querySelectorAll('.feedback-field-input')[0].value = 'Dashboard flickers';
-    document.querySelector('input[name="severity"][value="high"]').click();
     const textareas = document.querySelectorAll('textarea.feedback-field-input');
-    textareas[0].value = 'Step 1';
-    textareas[1].value = 'No flicker';
-    textareas[2].value = 'Flickers';
+    textareas[0].value = 'Checked an item and it flickered instead of staying checked.';
 
     document.querySelector('.feedback-form').requestSubmit();
     await Promise.resolve();
@@ -80,6 +75,7 @@ describe('bug report form', () => {
     const args = submitReport.mock.calls[0][0];
     expect(args.type).toBe('bug');
     expect(args.userId).toBe('uid-1');
+    expect(args.form.severity).toBeNull();
     expect(document.querySelector('.feedback-reference').textContent).toBe('Reference: #REPOR');
   });
 
@@ -89,9 +85,7 @@ describe('bug report form', () => {
     document.querySelectorAll('.feedback-field-input')[0].value = 'Bug title';
     document.querySelector('input[name="severity"][value="low"]').click();
     const textareas = document.querySelectorAll('textarea.feedback-field-input');
-    textareas[0].value = 's';
-    textareas[1].value = 'e';
-    textareas[2].value = 'a';
+    textareas[0].value = 'Something went wrong.';
     document.querySelector('.feedback-system-info-checkbox input[type="checkbox"]').click();
 
     document.querySelector('.feedback-form').requestSubmit();
@@ -104,12 +98,13 @@ describe('bug report form', () => {
 });
 
 describe('feature request form', () => {
-  it('has no screenshot control', () => {
+  it('has no screenshot control and no separate use-case field', () => {
     openFeedbackModal({ user: USER });
     clickType('Feature request');
     expect(document.querySelector('.feedback-screenshot')).toBeNull();
     const labels = [...document.querySelectorAll('.field-label')].map(l => l.textContent);
-    expect(labels.some(l => l.startsWith('Your use case'))).toBe(true);
+    expect(labels.some(l => l.startsWith('Describe the feature'))).toBe(true);
+    expect(labels.some(l => l.startsWith('Your use case'))).toBe(false);
   });
 });
 
@@ -134,7 +129,7 @@ describe('draft autosave', () => {
     document.querySelectorAll('.feedback-field-input')[0].value = 'Bug title';
     document.querySelector('input[name="severity"][value="low"]').click();
     const textareas = document.querySelectorAll('textarea.feedback-field-input');
-    textareas[0].value = 's'; textareas[1].value = 'e'; textareas[2].value = 'a';
+    textareas[0].value = 'Something went wrong.';
     document.querySelector('.feedback-form').requestSubmit();
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     expect(localStorage.getItem(KEYS.FEEDBACK_DRAFT)).toBeNull();

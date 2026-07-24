@@ -8,7 +8,7 @@ import { canSubmit, recordSubmit, msUntilNextSubmit } from '../../services/feedb
 import { submitReport } from '../../services/feedbackStore.js';
 import { getTheme } from '../../services/theme.js';
 import { getRoute } from '../router.js';
-import { createField, createRadioGroup, createScreenshotControl, createSystemInfoCheckbox, debounce } from './feedbackForm.js';
+import { createField, createRadioGroup, createSystemInfoCheckbox, debounce } from './feedbackForm.js';
 import { buildMyReportsView } from './myReports.js';
 import { createIcon } from './icons.js';
 import { createDecorativeIcon } from './decorativeIcon.js';
@@ -77,36 +77,49 @@ function applyRadioPrefill(radioGroupField, value) {
   }
 }
 
+// Issue #348 collapsed Steps/Expected/Actual into one free-text field, and
+// made Severity optional (defaults to 'medium' — see reportSchema.js) rather
+// than a required radio group, to cut required typing before Submit unlocks.
 function buildBugTypeFields({ prefill, onChange }) {
-  const severityField = createRadioGroup({ name: 'severity', label: 'Severity', options: SEVERITY_OPTIONS });
+  const severityField = createRadioGroup({ name: 'severity', label: 'Severity', options: SEVERITY_OPTIONS, required: false });
   applyRadioPrefill(severityField, prefill.severity);
-  const stepsField = createField({ label: 'Steps to reproduce', type: 'textarea', maxLength: 2000, value: prefill.steps || '', placeholder: '1. ...\n2. ...\n3. ...', onChange });
-  const expectedField = createField({ label: 'Expected behaviour', type: 'textarea', maxLength: 2000, value: prefill.expected || '', onChange });
-  const actualField = createField({ label: 'Actual behaviour', type: 'textarea', maxLength: 2000, value: prefill.actual || '', onChange });
-  const screenshotControl = createScreenshotControl({ onChange });
+  const whatHappenedField = createField({
+    label: 'What happened?',
+    type: 'textarea',
+    maxLength: 2000,
+    value: prefill.whatHappened || '',
+    placeholder: 'What were you doing, what did you expect, and what happened instead?',
+    onChange
+  });
   return {
-    fields: [severityField.node, stepsField.node, expectedField.node, actualField.node, screenshotControl.node],
-    severityField, stepsField, expectedField, actualField, screenshotControl
+    fields: [whatHappenedField.node, severityField.node],
+    severityField, whatHappenedField
   };
 }
 
+// Issue #348 collapsed "Describe the feature"/"Your use case" into one field.
 function buildFeatureTypeFields({ prefill, onChange }) {
-  const descriptionField = createField({ label: 'Describe the feature', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange });
-  const useCaseField = createField({ label: 'Your use case', type: 'textarea', maxLength: 2000, value: prefill.useCase || '', placeholder: 'Why do you need this? What problem does it solve?', onChange });
+  const descriptionField = createField({
+    label: 'Describe the feature',
+    type: 'textarea',
+    maxLength: 2000,
+    value: prefill.description || '',
+    placeholder: 'What would you like to see, and why?',
+    onChange
+  });
   const usageFreqField = createRadioGroup({ name: 'usageFreq', label: 'How often would you use it?', options: USAGE_FREQ_OPTIONS, required: false });
   applyRadioPrefill(usageFreqField, prefill.usageFreq);
   return {
-    fields: [descriptionField.node, useCaseField.node, usageFreqField.node],
-    descriptionField, useCaseField, usageFreqField
+    fields: [descriptionField.node, usageFreqField.node],
+    descriptionField, usageFreqField
   };
 }
 
 function buildFeedbackTypeFields({ prefill, onChange }) {
   const descriptionField = createField({ label: 'Your feedback', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange });
-  const screenshotControl = createScreenshotControl({ onChange });
   return {
-    fields: [descriptionField.node, screenshotControl.node],
-    descriptionField, screenshotControl
+    fields: [descriptionField.node],
+    descriptionField
   };
 }
 
@@ -204,7 +217,7 @@ export function openFeedbackModal({ user }) {
 
     const typeFields = buildTypeFields(type, { prefill, onChange: persistDraft });
     fields.push(...typeFields.fields);
-    const { severityField, stepsField, expectedField, actualField, descriptionField, useCaseField, usageFreqField, screenshotControl } = typeFields;
+    const { severityField, whatHappenedField, descriptionField, usageFreqField } = typeFields;
 
     const systemInfoCheckbox = createSystemInfoCheckbox({
       checked: prefill.includeSystemInfo !== false,
@@ -217,11 +230,8 @@ export function openFeedbackModal({ user }) {
       return {
         title: titleField.getValue(),
         severity: readFieldValue(severityField),
-        steps: readFieldValue(stepsField),
-        expected: readFieldValue(expectedField),
-        actual: readFieldValue(actualField),
+        whatHappened: readFieldValue(whatHappenedField),
         description: readFieldValue(descriptionField),
-        useCase: readFieldValue(useCaseField),
         usageFreq: readFieldValue(usageFreqField),
         includeSystemInfo: systemInfoCheckbox.isChecked()
       };
@@ -270,9 +280,9 @@ export function openFeedbackModal({ user }) {
       errorMessage.hidden = true;
       const values = gatherFormValues();
       const errors = validateReport(type, values);
-      [titleField, severityField, stepsField, expectedField, actualField, descriptionField, useCaseField].forEach(f => f?.setError(null));
+      [titleField, whatHappenedField, descriptionField].forEach(f => f?.setError(null));
       if (errors.length) {
-        const fieldMap = { 'title is required': titleField, 'severity is required': severityField, 'steps is required': stepsField, 'expected is required': expectedField, 'actual is required': actualField, 'description is required': descriptionField, 'useCase is required': useCaseField };
+        const fieldMap = { 'title is required': titleField, 'whatHappened is required': whatHappenedField, 'description is required': descriptionField };
         errors.forEach(err => fieldMap[err]?.setError('This field is required.'));
         errorMessage.hidden = false;
         errorMessage.className = 'form-message error';
@@ -292,9 +302,7 @@ export function openFeedbackModal({ user }) {
           form: values,
           metadata,
           userId: user?.uid || null,
-          isAnonymous: !!user?.isAnonymous,
-          screenshotB64: screenshotControl?.getValue() || null,
-          screenshotOmitted: false
+          isAnonymous: !!user?.isAnonymous
         });
         recordSubmit();
         clearDraft();

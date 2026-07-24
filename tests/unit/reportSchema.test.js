@@ -4,41 +4,37 @@ import {
   validateFeatureRequest,
   validateGeneralFeedback,
   validateReport,
-  buildReportPayload,
-  buildReportSummary
+  buildReportPayload
 } from '../../src/core/feedback/reportSchema.js';
 
 describe('validateBugReport', () => {
-  const valid = { title: 'Crashes on save', severity: 'high', steps: '1. Click save', expected: 'Saves', actual: 'Crashes' };
+  const valid = { title: 'Crashes on save', severity: 'high', whatHappened: 'Clicked save and it crashed.' };
 
   it('accepts a fully filled report', () => {
     expect(validateBugReport(valid)).toEqual([]);
+  });
+
+  it('accepts a report with no severity set — it defaults later, not required here', () => {
+    expect(validateBugReport({ ...valid, severity: undefined })).toEqual([]);
   });
 
   it('flags a missing title', () => {
     expect(validateBugReport({ ...valid, title: '' })).toContain('title is required');
   });
 
-  it('flags a missing description-equivalent fields', () => {
-    expect(validateBugReport({ ...valid, steps: '' })).toContain('steps is required');
-    expect(validateBugReport({ ...valid, expected: '' })).toContain('expected is required');
-    expect(validateBugReport({ ...valid, actual: '' })).toContain('actual is required');
-  });
-
-  it('flags severity out of range', () => {
-    expect(validateBugReport({ ...valid, severity: 'urgent' })).toContain('severity is required');
-    expect(validateBugReport({ ...valid, severity: undefined })).toContain('severity is required');
+  it('flags a missing "what happened" field', () => {
+    expect(validateBugReport({ ...valid, whatHappened: '' })).toContain('whatHappened is required');
   });
 });
 
 describe('validateFeatureRequest', () => {
-  it('accepts a fully filled request', () => {
-    expect(validateFeatureRequest({ title: 'Dark mode', description: 'Add a toggle', useCase: 'Night use' })).toEqual([]);
+  it('accepts title + description', () => {
+    expect(validateFeatureRequest({ title: 'Dark mode', description: 'Add a toggle for night use' })).toEqual([]);
   });
 
-  it('flags a missing use case', () => {
-    const errors = validateFeatureRequest({ title: 'Dark mode', description: 'Add a toggle', useCase: '' });
-    expect(errors).toContain('useCase is required');
+  it('flags a missing description', () => {
+    const errors = validateFeatureRequest({ title: 'Dark mode', description: '' });
+    expect(errors).toContain('description is required');
   });
 });
 
@@ -64,39 +60,45 @@ describe('validateReport', () => {
   });
 });
 
-describe('buildReportPayload / buildReportSummary', () => {
+describe('buildReportPayload', () => {
   it('nulls out fields that do not apply to the given type', () => {
     const payload = buildReportPayload({
       type: 'feature',
-      form: { title: 'Export PDF', description: 'Add PDF export', useCase: 'Sharing', usageFreq: 'weekly' },
+      form: { title: 'Export PDF', description: 'Add PDF export', usageFreq: 'weekly' },
       metadata: null,
       userId: 'uid-1',
       isAnonymous: false,
-      screenshotB64: null,
-      screenshotOmitted: false,
       now: 12345
     });
     expect(payload.severity).toBeNull();
-    expect(payload.steps).toBeNull();
-    expect(payload.useCase).toBe('Sharing');
+    expect(payload.whatHappened).toBeNull();
+    expect(payload.description).toBe('Add PDF export');
     expect(payload.status).toBe('new');
     expect(payload.submittedAt).toBe(12345);
   });
 
-  it('never includes screenshotB64 in the summary payload', () => {
-    const full = buildReportPayload({
+  it('defaults an unset bug-report severity to "medium"', () => {
+    const payload = buildReportPayload({
       type: 'bug',
-      form: { title: 'Bug', severity: 'low', steps: 's', expected: 'e', actual: 'a' },
+      form: { title: 'Bug', whatHappened: 'It broke.' },
       metadata: null,
       userId: 'uid-1',
       isAnonymous: false,
-      screenshotB64: 'data:image/png;base64,abc',
-      screenshotOmitted: false,
       now: 1
     });
-    const summary = buildReportSummary(full);
-    expect(summary.screenshotB64).toBeUndefined();
-    expect('screenshotB64' in summary).toBe(false);
-    expect(summary.title).toBe('Bug');
+    expect(payload.severity).toBe('medium');
+  });
+
+  it('never has a screenshotB64/screenshotOmitted field — removed in issue #348', () => {
+    const payload = buildReportPayload({
+      type: 'bug',
+      form: { title: 'Bug', severity: 'low', whatHappened: 'It broke.' },
+      metadata: null,
+      userId: 'uid-1',
+      isAnonymous: false,
+      now: 1
+    });
+    expect('screenshotB64' in payload).toBe(false);
+    expect('screenshotOmitted' in payload).toBe(false);
   });
 });

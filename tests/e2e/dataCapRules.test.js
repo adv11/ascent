@@ -210,19 +210,23 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
     expect(compliant.ok, 'a compliant phases entry should still succeed').toBe(true);
   });
 
-  test('top-level reports/{reportId}.screenshotB64 rejects an oversized value; accepts a compliant one', async ({ page }) => {
+  // Issue #348 removed the screenshot feature entirely — screenshotB64 is no
+  // longer a recognized field on either reports/{id} path, so any write
+  // including it is rejected outright by the $other catch-all, not just
+  // capped by size.
+  test('top-level reports/{reportId}.screenshotB64 is rejected outright — the field no longer exists', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const uid = await signInGuestAndGetUid(page);
 
-    const oversized = await writeAtPath(page, `reports/rules-test-bad-${Date.now()}`, {
-      type: 'bug', title: 't', submittedAt: Date.now(), userId: uid, screenshotB64: 'a'.repeat(700001)
-    });
-    expect(oversized.ok, 'a screenshotB64 over the size cap should be rejected').toBe(false);
-
-    const compliant = await writeAtPath(page, `reports/rules-test-ok-${Date.now()}`, {
+    const withScreenshot = await writeAtPath(page, `reports/rules-test-bad-${Date.now()}`, {
       type: 'bug', title: 't', submittedAt: Date.now(), userId: uid, screenshotB64: 'a'.repeat(100)
     });
-    expect(compliant.ok, 'a compliant screenshotB64 should still succeed').toBe(true);
+    expect(withScreenshot.ok, 'a screenshotB64 field should be rejected — it no longer exists in the schema').toBe(false);
+
+    const compliant = await writeAtPath(page, `reports/rules-test-ok-${Date.now()}`, {
+      type: 'bug', title: 't', submittedAt: Date.now(), userId: uid
+    });
+    expect(compliant.ok, 'a compliant report with no screenshotB64 should still succeed').toBe(true);
   });
 
   // Issue #192 — users/{uid}/reports/{reportId} is the per-user mirror of the

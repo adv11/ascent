@@ -71,11 +71,19 @@ Cloud Function, which is out of scope for this decision.
   grows enough that console-only review becomes the bottleneck, an admin dashboard is
   the natural next step — the flat `reports/` path was chosen specifically so that
   addition doesn't require restructuring the data first.
-- A screenshot only ever lives at `reports/{reportId}` (full payload), never
-  `users/{uid}/reports/{reportId}` (summary) — enforced by both the client
-  (`buildReportSummary()` strips it) and a second, independent server-side rule
-  (`".validate": "false"` on that specific child under the user path) so a buggy client
-  can't accidentally leak a screenshot into the quota-sensitive per-user copy.
 - Rate limiting can be cleared by clearing `localStorage` — acceptable for a good-faith
   spam/double-submit guard, not acceptable if this is ever load-bearing for abuse
   prevention. Revisit with a Cloud Function if real abuse is observed.
+
+## Update (2026-07-24, issue #348) — screenshot capture removed
+
+The screenshot-attachment feature described above (`screenshotB64` on the full payload,
+stripped from the per-user summary via `buildReportSummary()`) was removed entirely as
+part of a product-requested simplification of the whole feedback flow — see
+`.claude/rules/roadmap-store.md`'s "In-app feedback & bug reporting" section and this
+repo's Build Log (`docs/architecture.md`, 2026-07-24) for the full change. Both
+`reports/{reportId}` and `users/{uid}/reports/{reportId}` now receive the identical
+payload from `buildReportPayload()` — there is no longer a smaller summary shape to
+build, so `buildReportSummary()` was deleted rather than left as dead code. This is a
+narrowing of Option 3's original shape, not a reversal of the decision itself — Firebase
+Realtime Database remains the storage backend for reports.
