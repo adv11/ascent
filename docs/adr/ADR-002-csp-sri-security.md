@@ -65,12 +65,12 @@ CSP directives chosen:
 | Directive | Value | Reason |
 |---|---|---|
 | `default-src` | `'self'` | Catchall — only same-origin resources allowed by default |
-| `script-src` | `'self' https://www.gstatic.com https://cdn.jsdelivr.net https://apis.google.com` | Firebase SDK CDN modules, lazy-loaded Chart.js (see the "CDN loading exceptions" section below), and Firebase Auth's own internal cross-tab/iframe script (see "apis.google.com allowlist entry" below) |
+| `script-src` | `'self' https://www.gstatic.com https://cdn.jsdelivr.net https://apis.google.com https://*.firebaseio.com` | Firebase SDK CDN modules, lazy-loaded Chart.js (see the "CDN loading exceptions" section below), Firebase Auth's own internal cross-tab/iframe script (see "apis.google.com allowlist entry" below), and the Realtime Database SDK's long-polling fallback transport, which loads its `/.lp` channel as a JSONP-style `<script>` tag (see "RTDB long-polling fallback needs script-src/frame-src, not just connect-src" below) |
 | `style-src` | `'self' https://fonts.googleapis.com` | Google Fonts CSS |
 | `font-src` | `https://fonts.gstatic.com` | Google Fonts font files |
 | `connect-src` | `https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com http://127.0.0.1:9099 http://127.0.0.1:9000 ws://127.0.0.1:9000` | Firebase Realtime Database (HTTPS + WebSocket), Auth REST, token refresh, plus the local Auth/Database emulator ports used by `FIREBASE_CONFIGURED=true` E2E runs (`connectAuthEmulator`/`connectDatabaseEmulator` in `firebase.js`) |
 | `img-src` | `'self' data:` | Allows inline SVG data URIs (used by favicon/icons) |
-| `frame-src` | `https://*.firebaseapp.com` | The `apis.google.com` gapi loader (see "apis.google.com allowlist entry" below) opens a hidden cross-tab auth-state iframe against the Firebase project's own `<project-id>.firebaseapp.com` auth domain — wildcarded (matching `connect-src`'s existing `https://*.firebaseio.com` pattern) since each deployment of this codebase has its own project-specific `authDomain` |
+| `frame-src` | `https://*.firebaseapp.com https://*.firebaseio.com` | The `apis.google.com` gapi loader (see "apis.google.com allowlist entry" below) opens a hidden cross-tab auth-state iframe against the Firebase project's own `<project-id>.firebaseapp.com` auth domain — wildcarded (matching `connect-src`'s existing `https://*.firebaseio.com` pattern) since each deployment of this codebase has its own project-specific `authDomain`; `https://*.firebaseio.com` was added for the RTDB long-polling fallback's own iframe fallback attempt, see below |
 | `frame-ancestors` | `'none'` | Belt-and-suspenders with X-Frame-Options: DENY |
 
 The `127.0.0.1` emulator entries only matter when `window.__USE_FIREBASE_EMULATOR__` is
@@ -189,6 +189,49 @@ against `switchprep-adv26.firebaseapp.com`; after, `inspector-issues` scores 1 (
 pre-existing, already-documented `frame-ancestors`-in-`<meta>`-tag notice (see the
 "Noted, not actioned" finding in issue #168 and the `frame-ancestors` row above) — a
 browser-spec limitation unrelated to this fix, not a regression.
+
+## RTDB long-polling fallback needs script-src/frame-src, not just connect-src (added 2026-07-24, issue #345)
+
+Issue #264 (see `.claude/rules/roadmap-store.md`'s "Watch the Firebase echo" area for the
+service-worker half) fixed one real cause of "My reports" hanging on "Loading…" forever —
+`sw.js`'s `networkFirst()` buffering/cloning RTDB's long-polling `/.lp`/`/.ws` requests,
+which are meant to be a deliberately held-open streaming connection, not a normal
+cacheable GET. A second live report of the identical symptom came in afterward
+(issue #345); `.claude/rules/roadmap-store.md`'s own account of that investigation
+confirmed #264's fix was still present and correctly wired, ruling out a regression of
+that fix specifically before this was ever filed as a fresh investigation.
+
+**Root cause, confirmed by forcing the RTDB SDK into long-polling in a real dev-server
+session (`window.WebSocket = undefined` before navigation) and watching the console, not
+by reasoning about the SDK's internals from documentation:** RTDB's long-polling
+transport does not send its `/.lp` channel request as a plain `fetch`/`XMLHttpRequest`
+that `connect-src` governs, or that `sw.js`'s `fetch` event handler could ever see —
+it loads the URL as a `<script>` tag (a JSONP-style transport, the same general shape
+gapi's own auth-iframe machinery uses above), and in some cases attempts an iframe as a
+further fallback. `index.html`'s CSP had `https://*.firebaseio.com` in `connect-src` (for
+the normal REST/WebSocket paths) but not in `script-src` or `frame-src` — so both the
+script-tag load and the iframe fallback were silently blocked by the browser before the
+request ever reached `sw.js`'s `fetch` handler at all. Console evidence from the repro:
+`Loading the script 'https://s-gke-usc1-nssi2-6.firebaseio.com/.lp?...' violates ...
+"script-src ..."` followed by, once that was fixed, `Framing
+'https://s-gke-usc1-nssi2-6.firebaseio.com/' violates ... "frame-src ..."` — two separate
+directives, two separate silent failures, neither of which ever surfaces an error to
+`onValue()`'s callback or its `onError` (a CSP-blocked resource load is not a network
+error the page's own JS can observe), reproducing the exact "stuck on Loading… forever"
+symptom with zero console signal from the app's own code. This is why the redirected
+long-poll host (`s-gke-usc1-nssi2-6.firebaseio.com`, not the project's own
+`<project-id>-default-rtdb.firebaseio.com` databaseURL host) still matters here — both
+still end in `firebaseio.com`, so the existing wildcard pattern covers it once the
+directives themselves are fixed.
+
+Fixed by adding `https://*.firebaseio.com` to both `script-src` and `frame-src` — same
+wildcard-per-deployment reasoning `frame-src`'s existing `https://*.firebaseapp.com`
+entry already uses above, not a project-specific hostname. `tests/unit/csp.test.js`
+guards both directives directly (parsing the static CSP string from `index.html`), since
+there's no unit-testable JS logic behind this fix and a real browser repro was the only
+way this class of regression was ever actually caught — a future SDK upgrade or CSP edit
+that silently drops either entry will be caught here rather than waiting for another live
+report.
 
 ## Consequences
 
