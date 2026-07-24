@@ -839,6 +839,32 @@ viewport-clamped "below" if nothing fits cleanly — same shape as `tooltip.js`'
 above/below flip, just with two more fallback directions since a tour popover is larger
 and more likely to need them.
 
+**A step whose target lives inside a collapsed/off-canvas ancestor must force that
+ancestor open before showing, and close it again after (issue #349).** Found live: 4 of
+the dashboard tour's 10 steps target elements inside `.app-sidebar`, which is a
+`position: fixed`, off-screen drawer at `≤639px` until `.mobile-open` is added — the
+tour resolved `step.target()` via a plain `querySelector`, which found the element even
+while it sat translated off-screen (still in the DOM, just not visible), so the ring
+positioned itself at real-but-invisible coordinates while the popover's own
+viewport-clamping (`computePlacement()` above) kept its text readable — the user saw
+the step's title/body with no visible thing being described. The fix is a generic hook,
+not sidebar-specific knowledge baked into `featureTour.js`: a step sets
+`requiresMobileSidebar: true`, and `startTour(steps, { onOpenSidebar, onCloseSidebar })`
+calls those caller-supplied callbacks around such a step — gated on
+`window.matchMedia('(max-width: 639px)').matches` so desktop/tablet (sidebar already
+inline) never triggers them. `dashboard.js` wires both to `sidebar._openMobile()`/
+`sidebar._closeMobile()` (`sidebar.js` — `_openMobile()` is idempotent-safe, unlike
+`_toggleMobile()`, since the tour needs "make sure it's open," not "flip it"). Opening
+the drawer triggers `.app-sidebar`'s own CSS transform transition (`--duration-base`,
+200ms) — `showStep()` defers its `reflow()`/focus call by that same duration when it
+just opened the drawer, or the ring measures the target's rect mid-slide-in and
+positions itself wrong. The drawer is also closed on `end()` regardless of which step
+the tour was on, so an interrupted tour (Escape, Skip, navigating away) never leaves it
+stuck open. Any future tour step (this tour or a new one) whose target lives inside
+another collapsed/off-canvas ancestor should reuse this same
+`requiresMobileSidebar`-shaped hook rather than teaching `featureTour.js` new
+component-specific DOM knowledge.
+
 ## Branded print/PDF export (issue #160, restructured onto `<thead>`/`<tfoot>` in a follow-up)
 
 **A repeating print header/footer uses a real `<table>` with `<thead>`/`<tfoot>`, not
