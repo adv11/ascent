@@ -89,5 +89,66 @@
         "description": "Ascent has a new visual design across every page: warm neutrals, a refreshed gold-and-rose accent, and clearer cards and checklists."
       }
     ]
+  },
+  {
+    "version": 4,
+    "date": "2026-07-23",
+    "items": [
+      {
+        "type": "feat",
+        "title": "Check whether a resource link still works",
+        "description": "Every resource in a topic's edit panel now has a \"Check link\" button that reports whether it looks reachable. This only runs when you click it, and it can't always tell for sure — some sites can't be checked from your browser."
+      },
+      {
+        "type": "feat",
+        "title": "Search topics across all of your roadmaps",
+        "description": "The command palette (Cmd/Ctrl+K) now searches topic titles, notes, and resource links across every roadmap you've started, not just the one you're viewing."
+      },
+      {
+        "type": "feat",
+        "title": "Compare your roadmap against its template or another roadmap",
+        "description": "A new \"Compare roadmaps\" button on the Progress page shows which topics you've added, which are missing, and which are done."
+      },
+      {
+        "type": "feat",
+        "title": "Weekly progress digest",
+        "description": "The dashboard now shows a dismissible summary of last week's activity, like how many topics you completed and your current streak."
+      },
+      {
+        "type": "feat",
+        "title": "Duplicate-topic warnings when importing a roadmap",
+        "description": "\"Create your own roadmap\" now flags topics that look like duplicates across phases after you paste in a roadmap, so you can review and merge them."
+      },
+      {
+        "type": "improvement",
+        "title": "\"Create your own roadmap\" now saves your draft",
+        "description": "Your topic list and customization choices are saved automatically while the \"Create your own roadmap\" modal is open, so closing it by accident no longer loses your work."
+      },
+      {
+        "type": "improvement",
+        "title": "Better detection of unfilled or incomplete AI responses",
+        "description": "\"Create your own roadmap\" now catches AI responses that are placeholder text or a refusal instead of a real roadmap, and tells you clearly instead of importing them as-is."
+      },
+      {
+        "type": "improvement",
+        "title": "Feature tour now covers everything in the app",
+        "description": "The first-time walkthrough now includes Settings, roadmap sharing, backups, feedback, and the \"What's New\" bell. A second short tour introduces Daily Todos, favorite roadmaps, and \"Create your own roadmap\" the first time you visit \"My Roadmaps.\""
+      },
+      {
+        "type": "fix",
+        "title": "Pasting a very large roadmap no longer freezes the tab",
+        "description": "\"Create your own roadmap\" now checks the size of a pasted roadmap before trying to read it, and shows a clear message if you pasted something too large, like a whole conversation instead of just the roadmap."
+      },
+      {
+        "type": "improvement",
+        "title": "A limit on how many custom roadmaps you can create",
+        "description": "You can now have up to 25 custom or AI-imported roadmaps. If you hit the limit, Ascent explains it and suggests deleting an older or unused roadmap first."
+      },
+      {
+        "type": "improvement",
+        "title": "Button text is now centered",
+        "description": "Labels on every button are now centered instead of aligned to the left."
+      }
+    ]
   }
 ]

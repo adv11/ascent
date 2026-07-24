@@ -939,7 +939,7 @@ process documented in ADR-002 and CLAUDE.md.
 New files: `src/services/themeBootstrap.js`, `docs/adr/ADR-002-csp-sri-security.md`,
 `tests/unit/themeBootstrap.test.js`.
 
-### 2026-07-05 — PR #TBD — Firebase Hosting + CI/CD (issue #28)
+### 2026-07-05 — Firebase Hosting + CI/CD (issue #28)
 
 **Platform**: Firebase Hosting (Spark free tier) chosen over Cloudflare Pages and Netlify
 because Auth + Realtime Database already live in the same Firebase project. One CLI, one
@@ -965,7 +965,7 @@ workflow prints instructions and exits cleanly rather than failing. Required set
 - `FIREBASE_CONFIG` (secret) — production `firebase.config.js` contents
 - `FIREBASE_PROJECT_ID` (variable) — project ID (non-sensitive)
 
-### 2026-07-05 — PR #TBD — Email verification, persistent sessions, account deletion (issue #14)
+### 2026-07-05 — Email verification, persistent sessions, account deletion (issue #14)
 
 **New module**: `src/ui/components/verificationBanner.js` — dismissible info bar shown on
 the dashboard when the signed-in user's email is not yet verified. Dismiss state is stored
@@ -989,7 +989,7 @@ with password re-entry — no native `confirm()`.
 **`src/ui/pages/signIn.js`**: "Keep me signed in" checkbox (checked by default) calls
 `authApi.setPersistence` before sign-in.
 
-### 2026-07-05 — PR #TBD — Auth form UX hardening (issue #26)
+### 2026-07-05 — Auth form UX hardening (issue #26)
 
 **New module**: `src/ui/utils/password.js` — two exports used by both auth pages:
 - `scorePassword(s)` — pure function returning 0–4; 0 for empty/too-short, 1 base for
@@ -1011,7 +1011,7 @@ password" / "Confirm password".
 `.strength-meter`, `.strength-segment`, `.strength-segment.weak/.fair/.strong`,
 `.field-error`.
 
-### 2026-07-06 — PR #TBD — Product rename to Ascent, brand system, localStorage key migration (issue #7)
+### 2026-07-06 — Product rename to Ascent, brand system, localStorage key migration (issue #7)
 
 **New module**: `src/ui/components/brand.js` — single source of truth for the wordmark.
 Exports `createBrandIcon()` / `createBrandWordmark()` / `createBrandMark({ tagline })`.
@@ -1047,7 +1047,7 @@ is Issue #10; Firebase Console changes (project display name, Auth email templat
 custom action-URL domain) are manual, non-code steps documented as a checklist on the
 closing PR.
 
-### 2026-07-06 — PR #TBD — Starter template system, new-user onboarding picker (issue #51)
+### 2026-07-06 — Starter template system, new-user onboarding picker (issue #51)
 
 **New directory**: `src/data/templates/` — the starter template registry (`index.js`:
 `TEMPLATES`, `getTemplate`, `buildSeedItems(templateId)`, `getTemplatePhases(templateId)`)
@@ -1293,7 +1293,7 @@ meta/data directly via the SDK, reloaded, and confirmed the migrated roadmap kep
 exact phases and topic, showed up correctly in both the dashboard and the onboarding
 picker, and that no "Start blank" card remained.
 
-### 2026-07-07 — PR #TBD — Personal notes per topic (issue #15)
+### 2026-07-07 — PR #63 — Personal notes per topic (issue #15)
 
 Added a `notes: string` field to the item schema, alongside the existing `resources`
 array. No template/seed changes: backward compat is handled entirely by treating a
@@ -1347,7 +1347,7 @@ recovered dirty state re-queues a save; an already-clean local blob still reads 
 remote as before, unaffected). Verified against the local Firebase emulator: the
 previously-deterministic E2E failure passed on repeated runs after the fix.
 
-### 2026-07-07 — PR #TBD — Storage adapter abstraction (issue #5, part 1/3)
+### 2026-07-07 — PR #66 — Storage adapter abstraction (issue #5, part 1/3)
 
 First of three PRs implementing issue #5 (pluggable storage backends). This PR
 introduces the `StorageAdapter` interface and refactors `roadmapStore.js` to go through
@@ -1379,7 +1379,7 @@ mock target moved from `../../src/services/firebase.js` to `../../src/services/s
 adapterFactory.js`, keeping the same `dbApi`-named fake so every existing test body is
 unchanged.
 
-### 2026-07-07 — PR #TBD — Google Drive storage adapter (issue #5, part 2/3)
+### 2026-07-07 — PR #69 — Google Drive storage adapter (issue #5, part 2/3)
 
 *(This adapter, and part 3 below, were removed in the 2026-07-08 entry at the end of
 this log — kept here as an accurate record of what shipped and why, not current state.)*
@@ -1408,7 +1408,7 @@ Google-shaped users); two new cases in `tests/integration/roadmapStore.test.js`'
 signed-in user; a later sign-in as a different auth type actually switches which
 adapter's methods get called, not a stale one from the previous session).
 
-### 2026-07-08 — PR #TBD — Remove Google Sign-In and the Google Drive storage adapter (issue #5 parts 2–3, issue #71)
+### 2026-07-08 — PR #72 — Remove Google Sign-In and the Google Drive storage adapter (issue #5 parts 2–3, issue #71)
 
 Part 3 of issue #5 (real "Sign in with Google" UI/GIS token wiring, PR #70) spent two
 days fighting real-world OAuth problems — popup timing losing the browser's user-gesture
@@ -1446,7 +1446,7 @@ Issues #5 and #71 were closed; #18, #10, and #6 had stale Google/Drive reference
 updated (they weren't about Google Sign-In themselves, just referenced it in passing);
 tracker issue #11 updated to match.
 
-### 2026-07-08 — PR #TBD — Firebase Database Rules hardening + anonymous data cleanup (issue #24)
+### 2026-07-08 — Firebase Database Rules hardening + anonymous data cleanup (issue #24)
 
 Four gaps identified in `firebase/database.rules.json`: no payload size limits, weak
 field-level type validation, no rules for the future `reports/` path (issue #9), and
@@ -1494,7 +1494,7 @@ orphan-free and is unaffected. If the cleanup call itself throws (e.g. a stale t
 it falls back to a plain sign-out rather than trapping the user in the app over a
 cleanup failure. See `tests/unit/firebaseSignOutCleanup.test.js` for the unit coverage.
 
-### 2026-07-08 — PR #TBD — ESLint complexity gates, targeted refactors, client-side security hardening (issue #53)
+### 2026-07-08 — ESLint complexity gates, targeted refactors, client-side security hardening (issue #53)
 
 Based on SonarSource's "Does Code Cleanliness Affect Coding Agents?" study
 (arXiv:2605.20049): cleaner code (fewer static-analysis violations, lower cognitive
@@ -1572,7 +1572,7 @@ This is defense in depth: the dashboard already hides the Delete-account button 
 anonymous users; this guard protects the API layer even if some future call site
 doesn't.
 
-### 2026-07-09 — PR #TBD — Daily Todos: rolling-deadline task list, separate from the roadmap (issue #56)
+### 2026-07-09 — Daily Todos: rolling-deadline task list, separate from the roadmap (issue #56)
 
 A genuinely different rhythm from the roadmap — time-boxed vs. untimed, flat list vs.
 phased hierarchy, ephemeral vs. durable — so it gets its own store, its own UI card, and
@@ -3361,7 +3361,7 @@ See `.claude/rules/roadmap-store.md`'s "A dirty real account must be flushed" an
 reasoning, and `docs/api.md`'s `switchRoadmap`/`createCustomRoadmap` entries for the
 updated signatures.
 
-### 2026-07-13 — PR #TBD — Guest data-loss risk indicator + nudge (issue #123)
+### 2026-07-13 — PR #147 — Guest data-loss risk indicator + nudge (issue #123)
 
 New module `src/ui/components/guestDataRiskNudge.js` (`maybeShowGuestDataRiskNudge`) plus
 a pure helper `src/ui/utils/guestDataRisk.js` (`shouldShowGuestRiskNudge`/
@@ -3373,7 +3373,7 @@ once per guest account, once at least 5 topics are completed, offering to naviga
 (tooltip via `attachTooltip`) next to the "Guest session" label — purely presentational,
 no new store state. See `.claude/rules/auth-security.md` for the full writeup.
 
-### 2026-07-13 — PR #TBD — Unwired components decided: two wired in, one kept as-is, one closed not-planned (issue #125)
+### 2026-07-13 — PR #149 — Unwired components decided: two wired in, one kept as-is, one closed not-planned (issue #125)
 
 Resolved the four dangling "not yet wired into any page" components/adapter left over from
 issue #6 Phase 3 and issue #5. `commandPalette.js` is now wired into `topbar.js` — a search
@@ -3393,7 +3393,7 @@ is closed as **not planned**, same precedent as Google Drive sync (#5/#71) — t
 (tested, harmless, a real future guest-only-local-mode feature could still pick it up) but
 `.claude/rules/roadmap-store.md` no longer describes it as open-ended scaffolding.
 
-### 2026-07-13 — PR #TBD — CI actually enforces coverage thresholds; router/confirmDialog/toast get direct unit tests (issue #128)
+### 2026-07-13 — PR #150 — CI actually enforces coverage thresholds; router/confirmDialog/toast get direct unit tests (issue #128)
 
 `ci.yml`'s `test-unit` job ran plain `npm test` (`vitest run`), not `npm run test:coverage`
 (`vitest run --coverage`) — `coverage.thresholds` in `vitest.config.js` is only evaluated
@@ -3417,7 +3417,7 @@ registry (`vi.resetModules()`) and re-import fresh per test, since both modules 
 module-level singleton state (`router.js`'s `routes` Map/`currentCleanup`, `toast.js`'s
 shared stack `root` node) that would otherwise leak listeners/DOM references across tests.
 
-### 2026-07-13 — PR #TBD — Split roadmapStore.js's setUser into named onboarding-detection phases (issue #129)
+### 2026-07-13 — PR #151 — Split roadmapStore.js's setUser into named onboarding-detection phases (issue #129)
 
 `setUser` was 786-line `createRoadmapStore`'s single worst ESLint complexity offender —
 complexity 56 (5.6x the gate's max of 10, and 4x the next-highest warning anywhere in the
@@ -3448,7 +3448,7 @@ passes unchanged (1043 → 1059 total repo tests, no existing test modified) —
 against the documented account shapes (post-#58, pre-#58-legacy-onboarded,
 pre-#51-identity, brand-new), independently callable for the first time.
 
-### 2026-07-13 — PR #TBD — Roadmap sharing: read-only published snapshot link (issue #131)
+### 2026-07-13 — PR #152 — Roadmap sharing: read-only published snapshot link (issue #131)
 Adds the first public, unauthenticated-reachable data path in this app.
 `src/core/roadmap/shareSchema.js` (pure, `buildRoadmapShareSnapshot()`) builds a frozen
 snapshot (title/phases/items with done/priority/resources, never notes/completedAt) from a
@@ -3470,7 +3470,7 @@ the only call site that needs a dynamic segment and the id is carried as a query
 the hash. See `.claude/rules/roadmap-store.md`'s "Roadmap sharing" section for the full
 data-model rationale, and `docs/api.md` for the `sharedRoadmaps/{shareId}` schema.
 
-### 2026-07-13 — PR #TBD — Local push notifications for Daily Todo deadlines, Phase A only (issue #132)
+### 2026-07-13 — PR #157 — Local push notifications for Daily Todo deadlines, Phase A only (issue #132)
 
 `sw.js` (issue #19's service worker) gains its first `notificationclick` handler,
 alongside a new pure `src/services/sw/notificationHelpers.js` module (client-focus/target-
@@ -3503,7 +3503,7 @@ for a click landing in the dead padding zone and never double-fires for clicks t
 from the button or another child control. Confirmed fixed against the real Firebase Auth/DB
 emulator (was ~50% flaky before, 100% pass across 40+ repeated runs after).
 
-### 2026-07-14 — PR #TBD — ICS calendar export for Daily Todos + print/PDF export for a roadmap (issue #133)
+### 2026-07-14 — PR #159 — ICS calendar export for Daily Todos + print/PDF export for a roadmap (issue #133)
 
 Two independent export surfaces added to the account menu (`sidebar.js`), both
 client-side only. `src/core/dailyTodo/icsExport.js` (`buildTodosIcs()`) is a pure module
@@ -3559,7 +3559,7 @@ panel, replacing the panel's old solid brand-gradient fill). The sidebar's activ
 item becomes pill-shaped. See `.claude/rules/ui-styling.md`'s "Visual design language"
 section for the full token/class reference.
 
-### 2026-07-14 — PR #TBD — Lazy per-route code loading, Phase 1 of network-speed perf (issue #137)
+### 2026-07-14 — PR #164 — Lazy per-route code loading, Phase 1 of network-speed perf (issue #137)
 
 `main.js` previously imported every page module (`signIn.js`/`signUp.js`/`dashboard.js`/
 `onboarding.js`/`settings.js`/`progress.js`) statically at the top of the file, evaluated
@@ -3585,7 +3585,7 @@ silently failed to wire up a working cleanup wouldn't be caught by `router.js`'s
 hints/caching headers, a CI Lighthouse budget, and a network-throttling dimension for
 `.claude/skills/verify-changes/`) are tracked separately and not part of this PR.
 
-### 2026-07-14 — PR #TBD — Resource-loading hints and caching headers, Phase 2 of network-speed perf (issue #137)
+### 2026-07-14 — PR #165 — Resource-loading hints and caching headers, Phase 2 of network-speed perf (issue #137)
 
 Two independent, small pieces, both following Phase 1 (lazy per-route loading, above).
 (1) `firebase.json`'s hosting `headers` array gains a rule for `/public/**` — the same
@@ -3606,7 +3606,7 @@ changes and remain the correct, unchanged set. `tests/unit/main.test.js` gained 
 test asserting the hint is appended exactly once (not duplicated on a second auth-state
 resolution, e.g. a token refresh) and only once the redirect condition is actually met.
 
-### 2026-07-14 — PR #TBD — CI performance budget via Lighthouse CI, Phase 3 of network-speed perf, closing out issue #137
+### 2026-07-14 — PR #167 — CI performance budget via Lighthouse CI, Phase 3 of network-speed perf, closing out issue #137
 
 New `lighthouse` job in `.github/workflows/ci.yml`, running on every PR alongside
 `lint`/`security`/`test-unit`/`test-e2e`: `treosh/lighthouse-ci-action` against a local
@@ -3652,7 +3652,7 @@ than asking Lighthouse to `page.goto()` a hash URL as the very first navigation 
 fresh browser context. Shipping `/`-only now rather than continuing to iterate blind on
 CI-only failures with no new local repro to work from.
 
-### 2026-07-14 — PR #TBD — CSP fix for Firebase Auth's internal script load, issue #137 Lighthouse follow-up (issue #168)
+### 2026-07-14 — PR #169 — CSP fix for Firebase Auth's internal script load, issue #137 Lighthouse follow-up (issue #168)
 
 `index.html`'s CSP `script-src` gained `https://apis.google.com`, fixing a console error
 (and Lighthouse `errors-in-console`/`inspector-issues` score-0 findings) present on every
@@ -3678,7 +3678,7 @@ reports the pre-existing, already-documented `frame-ancestors`-in-`<meta>`-tag n
 (issue #168's own "noted, not actioned" finding, a browser-spec limitation, not a
 regression from this change).
 
-### 2026-07-14 — PR #TBD — Design token retune, Phase A of issue #155's v2 redefinition (lime/near-black direction)
+### 2026-07-14 — PR #171 — Design token retune, Phase A of issue #155's v2 redefinition (lime/near-black direction)
 
 Issue #155's ZeBeyond pass (PR #162, entry above) shipped and closed, then was reopened
 same-day with new reference material scoped to a 5-phase, whole-app pass. This is Phase
@@ -3696,7 +3696,7 @@ live-verified for WCAG contrast; full writeup and the retune-vs-parallel-family
 decision rationale in `.claude/rules/ui-styling.md`'s "Visual design language v2"
 section.
 
-### 2026-07-14 — PR #TBD — New shared component classes, Phase B of issue #155's v2 redefinition (lime/near-black direction)
+### 2026-07-14 — PR #172 — New shared component classes, Phase B of issue #155's v2 redefinition (lime/near-black direction)
 
 Phase B: `.kpi-tile`/`.kpi-tile-hero`/`.card-arrow-badge`/`.filter-chip-counted` added
 to `src/styles/app.css`, and `chartWrapper.js` gained `createBucketedBarChart()`/
@@ -3717,7 +3717,7 @@ call-site pattern (`progress.js`) stays leak-free with no caller change required
 class/function list and reasoning in `.claude/rules/ui-styling.md`'s "Visual design
 language v2" section.
 
-### 2026-07-14 — PR #TBD — Landing/auth/shell recolor, Phase C of issue #155's v2 redefinition (lime/near-black direction)
+### 2026-07-14 — PR #173 — Landing/auth/shell recolor, Phase C of issue #155's v2 redefinition (lime/near-black direction)
 
 Phase C: swapped the ZeBeyond mint-based classes on `landing.js`, `authMarketingPanel.js`,
 and `sidebar.js` (`.eyebrow`, `.text-gradient-brand`, `.tag-chip-accent`, `.icon-tile`,
@@ -3730,7 +3730,7 @@ Visually verified in both themes against a real dev server (landing full-page, s
 — screenshots in the PR. No page outside this scope touched; Settings/Progress/modals
 remain Phase D's job.
 
-### 2026-07-14 — PR #TBD — Progress page stat strip on the new KPI tile component, Phase D1 of issue #155's v2 redefinition (lime/near-black direction)
+### 2026-07-14 — PR #174 — Progress page stat strip on the new KPI tile component, Phase D1 of issue #155's v2 redefinition (lime/near-black direction)
 
 Phase D1: `progress.js`'s `renderStatTile()`/`renderStatCards()` rebuilt on Phase B's
 `.kpi-tile`/`.kpi-tile-hero` component in place of the older `.stat-tile` row —
@@ -3745,7 +3745,7 @@ issue's Phase D also names `settings.js` and ~12 modals, which are large enough 
 warrant a separate Phase D2 rather than one oversized PR; tracker issue #11 reflects
 this split.
 
-### 2026-07-14 — PR #TBD — Settings page recolor, Phase D2 of issue #155's v2 redefinition (lime/near-black direction)
+### 2026-07-14 — PR #175 — Settings page recolor, Phase D2 of issue #155's v2 redefinition (lime/near-black direction)
 
 Phase D2: `.settings-verified` (`app.css`) — the sole accent-colored class unique to
 `settings.js` — recolored to `--accent-lime-dark` in dark theme, falling back to mint
@@ -3755,7 +3755,7 @@ other class is neutral gray/ink). Deliberately scoped to just this one class —
 ~12 modals the issue's Phase D also names are tracked as a further Phase D3, not this
 PR; tracker issue #11 reflects the split.
 
-### 2026-07-15 — PR #TBD — First modal recolors (importRoadmapModal + feedbackModal), Phase D3 part 1 of issue #155's v2 redefinition (lime/near-black direction)
+### 2026-07-15 — PR #176 — First modal recolors (importRoadmapModal + feedbackModal), Phase D3 part 1 of issue #155's v2 redefinition (lime/near-black direction)
 
 Phase D3 part 1: `.import-step-badge` (`importRoadmapModal.js`'s numbered step circles)
 and `.feedback-type-card`/`.feedback-reference` (`feedbackModal.js`) recolored to Phase
@@ -3768,7 +3768,7 @@ elements first — most modals in this app are neutral gray/ink with nothing to 
 The remaining ~10 modals are tracked as further Phase D3 PRs; tracker issue #11
 reflects the split.
 
-### 2026-07-15 — PR #TBD — Full completion: remaining Phase D3 recolors + Phase E verification, issue #155's v2 redefinition (lime/near-black direction) fully shipped
+### 2026-07-15 — PR #194 — Full completion: remaining Phase D3 recolors + Phase E verification, issue #155's v2 redefinition (lime/near-black direction) fully shipped
 
 Closes out issue #155 v2 in full. Recolored every remaining `--brand`-family selector
 app-wide (~45 across every page/modal/shared component) to Phase A's `--accent-lime`
@@ -3799,7 +3799,7 @@ untouched). Responsive spot-check at 375/768/1024/1440px (dark theme) confirmed 
 layout regression, expected since this entire pass (Phases A–E) never touched a layout
 property, only color values.
 
-### 2026-07-15 — PR #TBD — Branded, restyled printed/PDF roadmap export (issue #160)
+### 2026-07-15 — PR #195 — Branded, restyled printed/PDF roadmap export (issue #160)
 
 Restyle of an existing module (`src/ui/utils/printRoadmap.js`, `app.css`'s `@media
 print` block), not a new one — issue #133's plain black-on-white print output now
@@ -4032,7 +4032,7 @@ No change to `sw.js`'s own bump convention or `cacheStrategies.js` — this clos
 enforcement gap around the convention that already existed (issue #19), it doesn't
 replace it.
 
-### 2026-07-17 — PR #221 (pending) — "Alpenglow" visual redesign, PR 1 of 2: token layer + component restyle (issue #206)
+### 2026-07-17 — PR #226 — "Alpenglow" visual redesign, PR 1 of 2: token layer + component restyle (issue #206)
 
 Full-replace of `app.css`'s `:root`/`:root[data-theme='dark']` token layer with the
 "Alpenglow" gold→rose gradient identity, superseding (not extending) issue #155's
