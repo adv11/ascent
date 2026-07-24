@@ -25,6 +25,9 @@
                 ".validate": "false"
               }
             }
+          },
+          "$other": {
+            ".validate": "false"
           }
         },
         "roadmaps": {
@@ -164,7 +167,25 @@
           "$reportId": {
             ".write": "auth != null && auth.uid == $uid && !data.exists()",
             ".validate": "newData.hasChildren(['type','title','submittedAt']) && newData.child('type').val().matches(/^(bug|feature|feedback)$/) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 120",
-            "screenshotB64": { ".validate": "false" }
+            "type": { ".validate": "newData.val().matches(/^(bug|feature|feedback)$/)" },
+            "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+            "submittedAt": { ".validate": "newData.isNumber()" },
+            "severity": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 20)" },
+            "description": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+            "steps": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+            "expected": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+            "actual": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+            "useCase": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+            "usageFreq": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 30)" },
+            "screenshotOmitted": { ".validate": "newData.isBoolean()" },
+            "metadata": { ".validate": "newData.val() === null || newData.hasChildren()" },
+            "userId": { ".validate": "newData.val() === null || newData.isString()" },
+            "isAnonymous": { ".validate": "newData.isBoolean()" },
+            "status": { ".validate": "newData.isString() && newData.val().length <= 30" },
+            "screenshotB64": { ".validate": "false" },
+            "$other": {
+              ".validate": "false"
+            }
           }
         },
         "$other": {
@@ -177,7 +198,25 @@
         ".read": "false",
         ".write": "auth != null && !data.exists()",
         ".validate": "newData.hasChildren(['type','title','submittedAt']) && newData.child('type').val().matches(/^(bug|feature|feedback)$/) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 120 && newData.child('userId').val() == auth.uid",
-        "screenshotB64": { ".validate": "newData.isString() && newData.val().length <= 700000" }
+        "type": { ".validate": "newData.val().matches(/^(bug|feature|feedback)$/)" },
+        "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+        "submittedAt": { ".validate": "newData.isNumber()" },
+        "userId": { ".validate": "newData.isString()" },
+        "severity": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 20)" },
+        "description": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+        "steps": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+        "expected": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+        "actual": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+        "useCase": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 2000)" },
+        "usageFreq": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 30)" },
+        "screenshotOmitted": { ".validate": "newData.isBoolean()" },
+        "metadata": { ".validate": "newData.val() === null || newData.hasChildren()" },
+        "isAnonymous": { ".validate": "newData.isBoolean()" },
+        "status": { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "screenshotB64": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 700000)" },
+        "$other": {
+          ".validate": "false"
+        }
       }
     },
     "sharedRoadmaps": {
@@ -207,7 +246,24 @@
             },
             "$other": { ".validate": "false" }
           }
-        }
+        },
+        "phases": {
+          "$index": {
+            ".validate": "$index.matches(/^[0-9]{1,2}$/)",
+            "id": { ".validate": "newData.isString()" },
+            "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+            "priority": { ".validate": "newData.val().matches(/^(P0|P1|P2|P3)$/)" },
+            "resourceKey": { ".validate": "newData.isString() || newData.val() === null" },
+            "sections": {
+              "$sectionIndex": {
+                ".validate": "$sectionIndex.matches(/^[0-9]{1,2}$/)",
+                "id": { ".validate": "newData.isString()" },
+                "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" }
+              }
+            }
+          }
+        },
+        "$other": { ".validate": "false" }
       }
     }
   }
