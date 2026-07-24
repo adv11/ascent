@@ -4433,7 +4433,7 @@ this bug shape anywhere else in the app.
 See `CHANGELOG.md`'s own entry for this issue for the full per-selector list and
 before/after detail — not duplicated here.
 
-### 2026-07-23 — PR #<pending> — Global topic search across all roadmaps (issue #283)
+### 2026-07-23 — PR #323 — Global topic search across all roadmaps (issue #283)
 
 `commandPalette.js`'s nav-item-only search (issue #125's deliberate scope, documented in
 CLAUDE.md's file map) is now paired with a second, optional search mode: a new
