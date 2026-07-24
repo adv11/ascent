@@ -7,6 +7,13 @@ import path from 'node:path';
 // by index.html and public/manifest.json, and builds the Open Graph preview
 // image, so every generated asset stays pixel-consistent with the actual
 // brand mark instead of being redrawn by hand. Re-run after editing favicon.svg.
+//
+// IMPORTANT (issue #346): if you re-run this script for a brand color/mark change,
+// bump the `?v=N` cache-busting query string on every icon URL in index.html's
+// <link rel="icon"|"alternate icon"|"apple-touch-icon"> tags AND public/manifest.json's
+// icons[].src values, in the same PR. Mobile browsers/OSes cache a home-screen icon at
+// install time and never re-fetch it just because the file at the same URL changed —
+// without a new URL, this bug recurs on every future rebrand.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
