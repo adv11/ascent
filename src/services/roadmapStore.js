@@ -1400,17 +1400,31 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // *this* user's onboarding picker — it never touches the template's content
   // or any other user's account, and never affects startedTemplateIds or the
   // ability to switch to an already-started template (issue #58).
-  async function setHiddenTemplateIds(nextHiddenIds) {
-    hiddenTemplateIds = nextHiddenIds;
-    persistLocalHiddenTemplates();
-    notify();
-    if (uid) {
-      try {
-        await adapter.saveMeta(uid, { hiddenTemplateIds });
-      } catch (error) {
-        console.error('Failed to save hidden template preference', error);
+  // Issue #350 — routed through serializeMetaMutation() the same way
+  // switchRoadmap()/deleteCustomRoadmap() are. `computeNextIds` receives the
+  // *current* `hiddenTemplateIds` and must return the next array — it's
+  // called, and `hiddenTemplateIds` reassigned, inside the queued closure,
+  // not by the caller beforehand. Two overlapping hideTemplate()/
+  // unhideTemplate() calls (hiding one template, then another, in quick
+  // succession) used to each compute their own "append/remove my id" array
+  // from the shared `hiddenTemplateIds` before either had reassigned it, so
+  // whichever call's whole-array saveMeta() write landed last would silently
+  // erase the other's change — this guarantees a later call always computes
+  // from the earlier call's already-applied result, same as
+  // toggleFavoriteRoadmap()'s in-queue computation.
+  async function setHiddenTemplateIds(computeNextIds) {
+    return serializeMetaMutation(async () => {
+      hiddenTemplateIds = computeNextIds(hiddenTemplateIds);
+      persistLocalHiddenTemplates();
+      notify();
+      if (uid) {
+        try {
+          await adapter.saveMeta(uid, { hiddenTemplateIds });
+        } catch (error) {
+          console.error('Failed to save hidden template preference', error);
+        }
       }
-    }
+    });
   }
 
   // Toggles a roadmap's favorite state (issue #177) — applies uniformly to a
@@ -1421,24 +1435,38 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // it — callers must check the return value and surface that themselves
   // (the onboarding picker shows a toast), same convention as every other
   // capped mutation in this file (addItem, addTodo).
+  // Issue #350 — the cap check below is a read against current in-memory
+  // state, synchronous, no race risk (same "best-effort snapshot" precedent
+  // as switchRoadmap()'s `alreadyStarted` check) and can stay outside the
+  // queue. The mutate-then-save portion, though, must run inside
+  // serializeMetaMutation(): two overlapping toggleFavoriteRoadmap() calls
+  // for different ids used to each compute their own "add/remove my id"
+  // array from the shared `favoriteRoadmapIds` before either had reassigned
+  // it, so whichever call's whole-array saveMeta() write landed last would
+  // silently erase the other's change. Recomputing `isFavorite`/the next
+  // array *inside* the queued closure guarantees a later call always
+  // computes from the earlier call's already-applied result.
   async function toggleFavoriteRoadmap(id) {
-    const isFavorite = favoriteRoadmapIds.includes(id);
-    if (!isFavorite && favoriteRoadmapIds.length >= MAX_FAVORITE_ROADMAPS) {
+    const isFavoriteNow = favoriteRoadmapIds.includes(id);
+    if (!isFavoriteNow && favoriteRoadmapIds.length >= MAX_FAVORITE_ROADMAPS) {
       return { ok: false, capped: true };
     }
-    favoriteRoadmapIds = isFavorite
-      ? favoriteRoadmapIds.filter(favId => favId !== id)
-      : [...favoriteRoadmapIds, id];
-    persistLocalFavoriteRoadmaps();
-    notify();
-    if (uid) {
-      try {
-        await adapter.saveMeta(uid, { favoriteRoadmapIds });
-      } catch (error) {
-        console.error('Failed to save favorite roadmap preference', error);
+    return serializeMetaMutation(async () => {
+      const isFavorite = favoriteRoadmapIds.includes(id);
+      favoriteRoadmapIds = isFavorite
+        ? favoriteRoadmapIds.filter(favId => favId !== id)
+        : [...favoriteRoadmapIds, id];
+      persistLocalFavoriteRoadmaps();
+      notify();
+      if (uid) {
+        try {
+          await adapter.saveMeta(uid, { favoriteRoadmapIds });
+        } catch (error) {
+          console.error('Failed to save favorite roadmap preference', error);
+        }
       }
-    }
-    return { ok: true, capped: false };
+      return { ok: true, capped: false };
+    });
   }
 
   // Issue #17 — persists local + remote, same setHiddenTemplateIds()/
@@ -1497,12 +1525,12 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
 
   function hideTemplate(idToHide) {
     if (hiddenTemplateIds.includes(idToHide)) return Promise.resolve();
-    return setHiddenTemplateIds([...hiddenTemplateIds, idToHide]);
+    return setHiddenTemplateIds(current => (current.includes(idToHide) ? current : [...current, idToHide]));
   }
 
   function unhideTemplate(idToUnhide) {
     if (!hiddenTemplateIds.includes(idToUnhide)) return Promise.resolve();
-    return setHiddenTemplateIds(hiddenTemplateIds.filter(id => id !== idToUnhide));
+    return setHiddenTemplateIds(current => current.filter(id => id !== idToUnhide));
   }
 
   // Creates a brand-new user-authored roadmap (issue #4): generates an id,

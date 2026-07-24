@@ -2623,6 +2623,73 @@ describe('lost-update race on startedTemplateIds/customRoadmaps — issue #153',
   });
 });
 
+// Issue #350 — toggleFavoriteRoadmap() and setHiddenTemplateIds() (via
+// hideTemplate()/unhideTemplate()) bypassed the issue #153 queue entirely,
+// reintroducing the exact same lost-update race on their own array fields.
+describe('lost-update race on favoriteRoadmapIds/hiddenTemplateIds — issue #350', () => {
+  it('two overlapping toggleFavoriteRoadmap() calls for different ids both end up favorited, even when the first call\'s saveMeta() write is the slow one', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'race-favorite-user' });
+
+    let resolveFirstSaveMeta;
+    let sawFirstCall = false;
+    const saveMetaCalls = [];
+    dbApi.saveMeta.mockImplementation((_uid, patch) => {
+      saveMetaCalls.push(patch);
+      if (!sawFirstCall) {
+        sawFirstCall = true;
+        return new Promise(resolve => { resolveFirstSaveMeta = resolve; });
+      }
+      return Promise.resolve();
+    });
+
+    const toggleA = store.toggleFavoriteRoadmap('frontend');
+    const toggleB = store.toggleFavoriteRoadmap('data-science');
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(saveMetaCalls.length).toBe(1);
+    resolveFirstSaveMeta();
+
+    await Promise.all([toggleA, toggleB]);
+
+    expect(store.getSnapshot().favoriteRoadmapIds).toEqual(expect.arrayContaining(['frontend', 'data-science']));
+    const lastCall = saveMetaCalls[saveMetaCalls.length - 1];
+    expect(lastCall.favoriteRoadmapIds).toEqual(expect.arrayContaining(['frontend', 'data-science']));
+  });
+
+  it('two overlapping hideTemplate() calls for different ids both end up hidden, even when the first call\'s saveMeta() write is the slow one', async () => {
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'race-hide-user' });
+
+    let resolveFirstSaveMeta;
+    let sawFirstCall = false;
+    const saveMetaCalls = [];
+    dbApi.saveMeta.mockImplementation((_uid, patch) => {
+      saveMetaCalls.push(patch);
+      if (!sawFirstCall) {
+        sawFirstCall = true;
+        return new Promise(resolve => { resolveFirstSaveMeta = resolve; });
+      }
+      return Promise.resolve();
+    });
+
+    const hideA = store.hideTemplate('frontend');
+    const hideB = store.hideTemplate('data-science');
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(saveMetaCalls.length).toBe(1);
+    resolveFirstSaveMeta();
+
+    await Promise.all([hideA, hideB]);
+
+    expect(store.getSnapshot().hiddenTemplateIds).toEqual(expect.arrayContaining(['frontend', 'data-science']));
+    const lastCall = saveMetaCalls[saveMetaCalls.length - 1];
+    expect(lastCall.hiddenTemplateIds).toEqual(expect.arrayContaining(['frontend', 'data-science']));
+  });
+});
+
 // Issue #153 root cause #3 — flush() used to read the shared
 // items/templatePhases/activeTemplateId/dirty variables again *after* its
 // own await adapter.saveRoadmap() — if a switchRoadmap() to a different
