@@ -4655,3 +4655,19 @@ long-running session, not just across a reload. `sw.js` wires `DATA_CACHE`'s cal
 `tests/unit/cacheStrategies.test.js` covers `pruneCache()` directly and `networkFirst()`
 both with and without `maxEntries` passed. `STATIC_CACHE`'s `cacheFirst()` path is
 unaffected — a small, fixed precache set with no growth problem.
+
+### 2026-07-24 — PR #364 — Close `sharedRoadmaps/{shareId}`'s missing `$other`/`phases` gap (issue #351)
+
+`firebase/database.rules.json`'s `sharedRoadmaps/{shareId}` — the app's one public-read
+path — had no `$other: { ".validate": "false" }` catch-all (every sibling subtree got
+one in issue #275's sweep, but this one, one level *above* `items/{itemId}`, was
+missed), and its `phases` field had zero `.validate` rule. Added a `phases` schema
+mirroring the private `roadmaps/{templateId}/phases` shape with tighter index caps
+(100 phases/sections vs. 1,000), then the `$other` catch-all. Same-root-cause companion
+fix in the same PR: `users/{uid}/roadmap` and both `reports/{reportId}` paths were also
+missing their own `$other` catch-all — closed with explicit permissive field-level
+rules for every field each path's real payload writes, so the new catch-all doesn't
+reject a legitimate write. Verified against a real local Firebase emulator
+(`npx firebase emulators:start --only database`) via direct REST writes before trusting
+`tests/e2e/dataCapRules.test.js`'s new Playwright case, per this file's own recurring
+"a rule that looks right doesn't always compile/behave as expected" caution.

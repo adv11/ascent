@@ -375,4 +375,42 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
     });
     expect(used.ok, 'a compliant streak-freeze use should still succeed').toBe(true);
   });
+
+  // Issue #351 — sharedRoadmaps/{shareId} (the object one level above
+  // /items/{itemId}, already covered above) had no $other catch-all of its
+  // own, and its `phases` field had zero validation at all. Mirrors the
+  // extra-field/compliant-write shape every other #275/#351 case in this
+  // file already follows.
+  test('sharedRoadmaps/{shareId} rejects an unexpected extra top-level field and a malformed phases entry; accepts a compliant publish with phases', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    const uid = await signInGuestAndGetUid(page);
+    const baseShare = {
+      schemaVersion: 1, ownerUid: uid, templateId: 'java-backend', title: 'Rules test roadmap', publishedAt: Date.now(),
+      items: { 'item-1': { title: 'Topic 1', phase: 'Phase 1', section: 'Section 1', priority: 'P1', done: false } }
+    };
+
+    const extraField = await writeAtPath(page, `sharedRoadmaps/rules-test-351-extra-${Date.now()}`, {
+      ...baseShare,
+      notARealField: 'nope'
+    });
+    expect(extraField.ok, 'an undeclared top-level field on sharedRoadmaps/{shareId} should be rejected').toBe(false);
+
+    const malformedPhase = await writeAtPath(page, `sharedRoadmaps/rules-test-351-phase-${Date.now()}`, {
+      ...baseShare,
+      phases: [{ id: 'phase-1', title: 'a'.repeat(201), priority: 'P0', sections: [{ id: 'section-1', title: 'Section 1' }] }]
+    });
+    expect(malformedPhase.ok, 'an oversized phase title should be rejected').toBe(false);
+
+    const badPriority = await writeAtPath(page, `sharedRoadmaps/rules-test-351-priority-${Date.now()}`, {
+      ...baseShare,
+      phases: [{ id: 'phase-1', title: 'Phase 1', priority: 'NOPE', sections: [] }]
+    });
+    expect(badPriority.ok, 'a phase with an invalid priority value should be rejected').toBe(false);
+
+    const compliant = await writeAtPath(page, `sharedRoadmaps/rules-test-351-ok-${Date.now()}`, {
+      ...baseShare,
+      phases: [{ id: 'phase-1', title: 'Phase 1', priority: 'P0', sections: [{ id: 'section-1', title: 'Section 1' }] }]
+    });
+    expect(compliant.ok, 'a compliant publish with a real phases array should still succeed').toBe(true);
+  });
 });
