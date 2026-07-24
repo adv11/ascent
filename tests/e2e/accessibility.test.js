@@ -433,6 +433,7 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
     await modal.locator('.feedback-type-card', { hasText: 'General feedback' }).click();
+    await modal.locator('.feedback-form input[type="text"]').first().fill('Issue #357 focus coverage test');
     await modal.locator('textarea').first().fill('Test feedback for issue #357 focus coverage.');
     await modal.locator('button[type="submit"]').click();
     await expect(modal.locator('.feedback-success button', { hasText: 'Close' })).toBeFocused({ timeout: 10_000 });
