@@ -47,15 +47,25 @@ Verify visually at at least three viewport widths (mobile ~390px, tablet ~820px,
 
 **The inverse failure mode: a single-column list grid over-stretching a lone row (issue #65).** The multi-column case above is about *rows not stretching enough* to match their siblings; a single-column list grid has the opposite default-`align`-value trap — *one row stretching too much* to fill unrelated leftover space. `.dashboard-content` (`src/ui/pages/dashboard.js` / `src/styles/app.css`) is a `display: grid` inside a `flex: 1` container with no explicit `align-content`; the default `normal` resolves to `stretch` for a grid, so with few rows on screen (a priority filter matching one phase, a small custom/imported roadmap, a narrow search match) the container's leftover height — viewport height minus one or two rows' natural content height — got distributed into those few row tracks, ballooning whichever `.phase-card`/`.phase-manage-row` sat in them to hundreds of pixels tall. With many rows this never showed up, since their combined natural height already exceeds the container and there's no leftover space to distribute — easy to miss in normal testing for exactly that reason. Any single-column (or otherwise row-stacked) list grid must set `align-content: start;` on the grid container so implicit row tracks size to their content instead of stretching to fill the container, regardless of how few rows are present.
 
-**Responsive breakpoint scale — six tiers, not two (`src/styles/app.css`, issue #36).**
-`≤375px` (small phone) / `≤480px` (phone) / `≤768px` (tablet portrait) / `≤1024px`
-(tablet landscape / small laptop) / the untuned base styles for laptop–desktop /
-`≥1600px` (large/ultra-wide desktop, a `min-width` tier) replaces the old ad-hoc
-`920px`/`640px` pair — see the comment block above the `@media` rules at the bottom of
-`app.css` for the full rationale. Add new breakpoint-specific rules to the existing tier
-whose intent matches (don't invent a seventh number); if none fits, ask whether the new
-rule is really about screen width at all, since touch/hover capability (below) is a
-separate axis and should never be inferred from width.
+**Responsive breakpoint scale — seven tiers, not two (`src/styles/app.css`, issue #36,
+extended by issue #340).** `≤375px` (small phone) / `≤480px` (phone) / `≤768px` (tablet
+portrait) / `≤1024px` (tablet landscape / small laptop) / the untuned base styles for
+laptop–desktop / `≥1600px` (large/ultra-wide desktop, a `min-width` tier) / `≥2200px`
+(true ultra-wide/4K, issue #340) replaces the old ad-hoc `920px`/`640px` pair — see the
+comment block above the `@media` rules at the bottom of `app.css` for the full
+rationale. The `≥1600px` tier was originally wired to only 5 dashboard-related
+selectors (`.header-top`/`.roadmap-header`/`.stat-strip`/`.toolbar`/`.dashboard-content`)
+— issue #340 found every other top-level page container (`.onboarding-inner`,
+`.progress-content`) had no ultra-wide treatment at all and stayed at its base-tier
+width forever, which on a real 27"+ monitor read as a small, laptop-sized page
+floating in a sea of unused background. Both now get `≥1600px` and `≥2200px` caps
+alongside the dashboard selectors; `.settings-content` (a form/reading-width column)
+was deliberately left uncapped-tier — a form's line length doesn't benefit from
+growing past a comfortable reading width the way a chart/grid page does. Add new
+breakpoint-specific rules to the existing tier whose intent matches (don't invent an
+eighth number); if none fits, ask whether the new rule is really about screen width at
+all, since touch/hover capability (below) is a separate axis and should never be
+inferred from width.
 
 **Touch vs. hover capability must be detected with `(hover: …)`/`(pointer: …)` media
 features, never with a viewport-width media query as a stand-in (issue #36).** A

@@ -4658,16 +4658,41 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      ≤1024px  tablet landscape / small laptop (iPad landscape)
      1025–1599px  laptop / desktop — the existing base styles, untuned
      ≥1600px  large / ultra-wide desktop
+     ≥2200px  true ultra-wide / 4K (issue #340)
 
    Touch-capable vs. hover-capable is handled separately via the `(hover: …)`
    / `(pointer: …)` media features above and below — never inferred from
    viewport width. A touchscreen laptop or iPad landscape session is exactly
    as capable of triggering the `pointer: coarse` tier as a phone is, and a
    plain-mouse desktop at a narrow window should not get touch-sized targets.
-   ========================================================================== */
+
+   issue #340 — the ≥1600px tier originally only reached 5 dashboard-related
+   selectors, so every other top-level page content container (onboarding,
+   settings, progress) stayed at its base-tier width forever, no matter how
+   wide the monitor got — on a real 27"+ display this read as a small,
+   centered, laptop-sized page floating in a sea of unused background.
+   `.onboarding-inner` (880px base) and `.progress-content` (1160px base) now
+   get the same ≥1600px treatment `.dashboard-content` already had, plus a
+   second ≥2200px tier for true ultra-wide/4K so the column keeps growing
+   rather than capping out at a still-modest width on a 3440px+ display.
+   `.settings-content` is a form/reading-width column (720px) — verified
+   against a real 27"+ screenshot and deliberately left unchanged; growing a
+   form's line length past a comfortable reading width doesn't improve
+   usability the way more chart/grid room does for the other two pages.
+   Modal `max-width` values (`.import-modal-card`, `.command-palette-card`,
+   etc.) were also checked and left as-is — a modal filling most of a 27"+
+   screen would be its own usability problem, not a fix. */
 
 @media (min-width: 1600px) {
   .header-top, .roadmap-header, .stat-strip, .toolbar, .dashboard-content { max-width: 1320px; }
+  .onboarding-inner { width: min(1200px, 100%); }
+  .progress-content { max-width: 1320px; }
+}
+
+@media (min-width: 2200px) {
+  .header-top, .roadmap-header, .stat-strip, .toolbar, .dashboard-content { max-width: 1600px; }
+  .onboarding-inner { width: min(1500px, 100%); }
+  .progress-content { max-width: 1600px; }
 }
 
 @media (max-width: 1024px) {
