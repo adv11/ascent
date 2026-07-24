@@ -4638,7 +4638,7 @@ one). `tests/e2e/featureTour.test.js` (Firebase-emulator-gated) gained three new
 scenarios: auto-start on return visit + no-reappear-on-reload, never-auto-runs during
 first-time picking, and manual replay.
 
-### 2026-07-24 — PR #TBD — Cap DATA_CACHE's entry count (issue #354)
+### 2026-07-24 — PR #362 — Cap DATA_CACHE's entry count (issue #354)
 
 `networkFirst()` (`src/services/sw/cacheStrategies.js`) previously cached every
 successful Firebase RTDB/Auth GET response with no eviction of any kind — the only
