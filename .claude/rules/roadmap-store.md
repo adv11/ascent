@@ -694,6 +694,28 @@ recommending a copy button without a new confirmed report** — it has now been 
 both directions, which means neither direction should be trusted from reasoning about the
 UI alone; only a fresh captured repro (screenshot or saved payload) should change it again.
 
+**The prompt itself now front-loads `importValidator.js`'s exact rules, to cut down on
+`buildImportFixPrompt()` round-trips (issue #366).** Before this, `buildImportPrompt()`'s
+Rules section only loosely gestured at what the validator would actually check — a model
+had no way to self-check its own output against the exact caps/heuristics before
+returning it, so every avoidable mistake cost a full second AI turn through the fix-prompt
+loop. The Rules section now states, in plain language mirroring the validator's own
+checks: the exact `MAX_TITLE_LENGTH`/`MAX_RESOURCE_LABEL_LENGTH`/`MAX_RESOURCE_URL_LENGTH`
+caps (imported directly from `src/core/roadmap/limits.js`, never redeclared as separate
+numbers — if those constants change, this prompt text updates automatically), explicit
+"don't do this" examples mirroring `PLACEHOLDER_MARKERS`/`REFUSAL_OPENERS`/
+`CORRUPTION_MARKERS` (`importValidator.js`), and a short instruction for an agentic/
+tool-using model with live browsing access to verify each resource URL actually resolves
+before including it — worded so a non-agentic chat model can safely ignore it ("if you
+have no browsing/tool access, this instruction does not apply"). This is deliberately
+**additive to the free-text instructions only**, never the JSON schema contract above
+them — no `IMPORT_PROMPT_VERSION` bump, no `schemaAdapter.js`/`importValidator.js` change,
+since a prompt copied before this shipped still produces a payload that parses and
+validates identically. If you add a new validator heuristic (a new corruption/placeholder
+marker, a new cap), consider whether surfacing it in the prompt's Rules section the same
+way would help a model avoid it in the first place, same as this issue did for the
+existing ones — don't let the two drift apart the way they did before this issue.
+
 **Cross-provider/edge-case test matrix — automated coverage plus its real limit (issue
 #121 item 2).** `tests/unit/fixtures/aiProviderPayloads.js` covers the structural edge
 cases the issue named that don't require a live AI session to test: a roadmap just under

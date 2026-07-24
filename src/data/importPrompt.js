@@ -1,6 +1,12 @@
+import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../core/roadmap/limits.js';
+
 // Versioned so a future schema change never breaks a prompt a user already
 // copied and saved somewhere — bump this and add a new adapter in
 // src/core/roadmap/schemaAdapter.js instead of mutating the existing shape.
+// Issue #366 only extended the free-text rules section below (exact caps,
+// negative examples, agentic-model URL-verification guidance) — none of that
+// touches the JSON schema contract itself, so this stays at 1 per this
+// comment's own versioning convention.
 export const IMPORT_PROMPT_VERSION = 1;
 
 const VALID_PRIORITIES = 'P0|P1|P2|P3';
@@ -80,6 +86,19 @@ Rules:
 - Do not add any fields beyond those listed above.
 - "phases" must have at least 1 entry; each phase must have at least 1 section; each section at least 1 item.
 - Keep the total number of items at or under 500.
+- Length limits — content over these will be rejected: any "title" field must be ${MAX_TITLE_LENGTH} characters or fewer;
+  a resource "label" must be ${MAX_RESOURCE_LABEL_LENGTH} characters or fewer; a resource "url" must be ${MAX_RESOURCE_URL_LENGTH} characters or fewer.
+  Keep every title concise regardless of the limit — a short, scannable phrase, not a sentence.
+- Never output the literal placeholder text from this schema illustration (e.g. "<roadmap title>",
+  "<phase title>", "<section title>", "<item title>", "<short resource name>", "<https:// link>") — every
+  field must be real, generated content specific to the requested topic.
+- Never respond with a refusal, disclaimer, or explanation instead of the roadmap (e.g. "I cannot help with that", "I'm sorry, but...", "As an AI language model...").
+  If the topic is unclear, make a reasonable interpretation and generate a roadmap anyway rather than declining.
+- Output raw JSON text only. Never paste in rendered/markdown-linkified text (e.g. copied from a chat UI's
+  formatted response instead of its raw output) — this corrupts URLs and titles with stray
+  "%22"/"%5B"/"%5D" encoding or fragments like 'title:' /'url:' key syntax spliced into neighboring text.
+- If you have live browsing or tool access, verify each resource URL actually resolves before including it — don't include a URL you haven't checked just because it looks plausible.
+  If you have no browsing/tool access, this instruction does not apply — the "never invent a URL" rule above already covers that case.
 
 Generate a roadmap for: ${topicLine}${optionsBlock}`;
 }

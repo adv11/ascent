@@ -148,6 +148,11 @@
         "type": "improvement",
         "title": "Button text is now centered",
         "description": "Labels on every button are now centered instead of aligned to the left."
+      },
+      {
+        "type": "improvement",
+        "title": "Clearer AI-import prompt, fewer round-trips",
+        "description": "The generated prompt in \"Create your own roadmap\" now spells out the exact rules (length limits, what not to paste) so an AI is more likely to get it right on the first try."
       }
     ]
   }
