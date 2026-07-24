@@ -18,22 +18,26 @@ jobs:
             const labels = context.payload.issue.labels.map(l => l.name);
             const issueNumber = context.payload.issue.number;
 
-            const hasType     = labels.some(l => l.startsWith('type:'));
-            const hasPriority = labels.some(l => l.startsWith('priority:'));
-            const hasDomain   = labels.some(l => l.startsWith('domain:'));
+            const hasType       = labels.some(l => l.startsWith('type:'));
+            const priorityCount = labels.filter(l => l.startsWith('priority:')).length;
+            const hasDomain     = labels.some(l => l.startsWith('domain:'));
 
             const missing = [];
-            if (!hasType)     missing.push('`type:*`');
-            if (!hasPriority) missing.push('`priority:*`');
-            if (!hasDomain)   missing.push('`domain:*`');
+            if (!hasType)          missing.push('`type:*`');
+            if (priorityCount === 0) missing.push('`priority:*`');
+            if (!hasDomain)        missing.push('`domain:*`');
 
-            if (missing.length === 0) {
+            const extraPriority = priorityCount > 1;
+
+            if (missing.length === 0 && !extraPriority) {
               core.info('All three label categories present — OK');
               return;
             }
 
             const msg = [
-              `⚠️ **Missing required labels:** ${missing.join(', ')}`,
+              missing.length > 0
+                ? `⚠️ **Missing required labels:** ${missing.join(', ')}`
+                : `⚠️ **Too many priority labels:** found ${priorityCount}, expected exactly 1`,
               '',
               'Every issue must have **all three** label categories:',
               '- **Type** (≥ 1): `type:feat` `type:fix` `type:refactor` `type:test` `type:docs` `type:chore` `type:design` `type:security` `type:perf`',
@@ -50,4 +54,8 @@ jobs:
               body: msg,
             });
 
-            core.warning(`Issue #${issueNumber} is missing label categories: ${missing.join(', ')}`);
+            if (missing.length > 0) {
+              core.warning(`Issue #${issueNumber} is missing label categories: ${missing.join(', ')}`);
+            } else {
+              core.warning(`Issue #${issueNumber} has ${priorityCount} priority labels, expected exactly 1`);
+            }
