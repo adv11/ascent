@@ -18,7 +18,7 @@ describe('public/manifest.json', () => {
 
   it('every icon path resolves to a real file on disk', () => {
     manifest.icons.forEach(icon => {
-      const path = resolve(rootDir, icon.src.replace(/^\//, ''));
+      const path = resolve(rootDir, icon.src.replace(/^\//, '').split('?')[0]);
       expect(existsSync(path), `${icon.src} should exist on disk`).toBe(true);
     });
   });

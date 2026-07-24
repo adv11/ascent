@@ -93,7 +93,7 @@ Rules:
 - Avatars (`avatar.js`): square, ink fill, ground-colored Archivo 800 initial.
 - Notification badge: square accent dot, no pill.
 - Share card / PDF print (`shareCard.js`, `printRoadmap.js`): same tokens on white; brand triangle + wordmark header, 2px rules; print stays black-ink friendly (accent only for the triangle and priority tags).
-- PWA/meta: favicon + app icons = red triangle on `#F3F2F2` (dark: on `#141312`); `<meta name="theme-color">` = `#EC3013`; og-image rebuilt in Archivo 800 with the red poster style.
+- PWA/meta: favicon + app icons = red triangle on `#F3F2F2` (dark: on `#141312`); `<meta name="theme-color">` = `#EC3013`; og-image rebuilt in Archivo 800 with the red poster style. Icon URLs (`index.html`'s `<link rel="icon"|"alternate icon"|"apple-touch-icon">` and `public/manifest.json`'s `icons[].src`) carry a `?v=N` cache-busting query string — mobile browsers/OSes cache a home-screen icon at install time and never re-fetch it just because the file at the same URL changed server-side (issue #346). Bump `N` on every one of these URLs, in the same PR, whenever `scripts/generate-brand-assets.mjs` is re-run for a brand color/mark change — see that script's own header comment.
 - Emoji: never in UI copy or icons.
 
 ## 9. Review checklist (gate every UI PR on this)
