@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isFirebaseApiRequest, isRealtimeDbStreamingRequest, cacheFirst, networkFirst } from '../../src/services/sw/cacheStrategies.js';
+import { isFirebaseApiRequest, isRealtimeDbStreamingRequest, cacheFirst, networkFirst, pruneCache } from '../../src/services/sw/cacheStrategies.js';
 
-function makeMockCache(matchResult = undefined) {
+function makeMockCache(matchResult = undefined, keys = []) {
   return {
     match: vi.fn().mockResolvedValue(matchResult),
-    put: vi.fn().mockResolvedValue(undefined)
+    put: vi.fn().mockResolvedValue(undefined),
+    keys: vi.fn().mockResolvedValue(keys),
+    delete: vi.fn().mockResolvedValue(true)
   };
 }
 
@@ -83,5 +85,48 @@ describe('networkFirst', () => {
     const cache = makeMockCache(undefined);
     const fetcher = vi.fn().mockRejectedValue(new Error('offline'));
     await expect(networkFirst({ method: 'GET' }, cache, fetcher)).rejects.toThrow('offline');
+  });
+
+  it('does not prune when maxEntries is not passed', async () => {
+    const cache = makeMockCache();
+    const response = { ok: true, clone: () => 'cloned' };
+    const fetcher = vi.fn().mockResolvedValue(response);
+    await networkFirst({ method: 'GET' }, cache, fetcher);
+    expect(cache.keys).not.toHaveBeenCalled();
+  });
+
+  it('prunes the oldest entries once the cache exceeds maxEntries after caching', async () => {
+    const keys = ['req-1', 'req-2', 'req-3', 'req-4'];
+    const cache = makeMockCache(undefined, keys);
+    const response = { ok: true, clone: () => 'cloned' };
+    const fetcher = vi.fn().mockResolvedValue(response);
+    await networkFirst({ method: 'GET' }, cache, fetcher, { maxEntries: 3 });
+    expect(cache.delete).toHaveBeenCalledTimes(1);
+    expect(cache.delete).toHaveBeenCalledWith('req-1');
+  });
+
+  it('does not prune when at or under maxEntries', async () => {
+    const cache = makeMockCache(undefined, ['req-1', 'req-2']);
+    const response = { ok: true, clone: () => 'cloned' };
+    const fetcher = vi.fn().mockResolvedValue(response);
+    await networkFirst({ method: 'GET' }, cache, fetcher, { maxEntries: 2 });
+    expect(cache.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe('pruneCache', () => {
+  it('deletes only the oldest entries past the cap, oldest-first', async () => {
+    const cache = makeMockCache(undefined, ['a', 'b', 'c', 'd', 'e']);
+    await pruneCache(cache, 2);
+    expect(cache.delete).toHaveBeenCalledTimes(3);
+    expect(cache.delete).toHaveBeenNthCalledWith(1, 'a');
+    expect(cache.delete).toHaveBeenNthCalledWith(2, 'b');
+    expect(cache.delete).toHaveBeenNthCalledWith(3, 'c');
+  });
+
+  it('does nothing when under the cap', async () => {
+    const cache = makeMockCache(undefined, ['a']);
+    await pruneCache(cache, 5);
+    expect(cache.delete).not.toHaveBeenCalled();
   });
 });

@@ -47,14 +47,34 @@ export async function cacheFirst(request, cache, fetcher = fetch) {
 // fresh as possible, but an offline user should see their last-synced data
 // instead of a hard failure. Only successful, cacheable (GET) responses are
 // cached — Firebase writes must never be cached or replayed against cache.
-export async function networkFirst(request, cache, fetcher = fetch) {
+// `maxEntries` (issue #354) bounds DATA_CACHE's growth within a single
+// CACHE_VERSION's lifetime — every RTDB/Auth GET carries its own
+// query-string, so this cache has no naturally-stable key set and would
+// otherwise grow unbounded across a long-running session. Omit `maxEntries`
+// to keep the old unbounded behavior (used by STATIC_CACHE via cacheFirst,
+// which has a small fixed precache set and doesn't need this).
+export async function networkFirst(request, cache, fetcher = fetch, { maxEntries } = {}) {
   try {
     const response = await fetcher(request);
-    if (response.ok && request.method === 'GET') cache.put(request, response.clone());
+    if (response.ok && request.method === 'GET') {
+      await cache.put(request, response.clone());
+      if (maxEntries) await pruneCache(cache, maxEntries);
+    }
     return response;
   } catch (networkError) {
     const cached = await cache.match(request);
     if (cached) return cached;
     throw networkError;
   }
+}
+
+// Evicts the oldest entries once a cache exceeds `maxEntries`. Cache Storage
+// keys() returns entries in insertion order (per spec), so the oldest
+// entries are always at the front — no separate timestamp bookkeeping
+// needed for a simple count-based cap.
+export async function pruneCache(cache, maxEntries) {
+  const keys = await cache.keys();
+  const excess = keys.length - maxEntries;
+  if (excess <= 0) return;
+  await Promise.all(keys.slice(0, excess).map(key => cache.delete(key)));
 }

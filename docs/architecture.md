@@ -4637,3 +4637,21 @@ flags are genuinely independent (completing the dashboard tour never flips the o
 one). `tests/e2e/featureTour.test.js` (Firebase-emulator-gated) gained three new
 scenarios: auto-start on return visit + no-reappear-on-reload, never-auto-runs during
 first-time picking, and manual replay.
+
+### 2026-07-24 — PR #362 — Cap DATA_CACHE's entry count (issue #354)
+
+`networkFirst()` (`src/services/sw/cacheStrategies.js`) previously cached every
+successful Firebase RTDB/Auth GET response with no eviction of any kind — the only
+cleanup mechanism anywhere was `activate`'s wholesale deletion of *old-versioned* cache
+names on a `CACHE_VERSION` bump, which does nothing to bound growth within a single
+version's lifetime. Chose a count-based cap over a TTL scheme: `networkFirst()` now
+takes an optional `{ maxEntries }` option and, on every successful GET write, calls a
+new `pruneCache(cache, maxEntries)` that deletes the oldest entries once the cache
+exceeds the cap, relying on `Cache.keys()`'s spec-guaranteed insertion order rather than
+introducing a separate timestamp/IndexedDB bookkeeping scheme. Pruning runs inline on
+every write (not batched into `activate`) so the bound holds continuously for a
+long-running session, not just across a reload. `sw.js` wires `DATA_CACHE`'s call with a
+300-entry cap and bumps `CACHE_VERSION` (47 → 48) for a clean cutover.
+`tests/unit/cacheStrategies.test.js` covers `pruneCache()` directly and `networkFirst()`
+both with and without `maxEntries` passed. `STATIC_CACHE`'s `cacheFirst()` path is
+unaffected — a small, fixed precache set with no growth problem.

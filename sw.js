@@ -10,10 +10,19 @@
 import { isFirebaseApiRequest, isRealtimeDbStreamingRequest, cacheFirst, networkFirst } from './src/services/sw/cacheStrategies.js';
 import { findClientToFocus, getReminderTargetUrl } from './src/services/sw/notificationHelpers.js';
 
-const CACHE_VERSION = 47;
+const CACHE_VERSION = 48;
 const STATIC_CACHE = `ascent-static-v${CACHE_VERSION}`;
 const DATA_CACHE = `ascent-data-v${CACHE_VERSION}`;
 const OFFLINE_URL = '/public/offline.html';
+
+// Caps DATA_CACHE's entry count within a single CACHE_VERSION's lifetime
+// (issue #354) — RTDB/Auth GET URLs commonly carry per-call query-string
+// params, so this cache has no naturally-stable key set and would otherwise
+// grow unbounded for a long-running session or an infrequently-reloaded PWA
+// install. 300 comfortably covers this app's realistic per-session request
+// variety (per-roadmap/per-user RTDB reads plus Auth token refreshes) while
+// still bounding worst-case on-device storage growth.
+const DATA_CACHE_MAX_ENTRIES = 300;
 
 // Precache the minimum needed to render *something* offline on a first
 // visit with no other cache entries yet. Everything else (JS modules, other
@@ -59,7 +68,7 @@ self.addEventListener('fetch', event => {
   if (isFirebaseApiRequest(request.url)) {
     event.respondWith(
       caches.open(DATA_CACHE).then(cache =>
-        networkFirst(request, cache).catch(() => {
+        networkFirst(request, cache, fetch, { maxEntries: DATA_CACHE_MAX_ENTRIES }).catch(() => {
           throw new Error('offline and no cached data for this request');
         })
       )
