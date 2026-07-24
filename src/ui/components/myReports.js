@@ -95,8 +95,9 @@ export function openMyReports({ user }) {
   }
 
   const view = buildMyReportsView({ user });
+  const closeBtn = el('button', { type: 'button', className: 'btn btn-ghost btn-icon feedback-modal-close', 'aria-label': 'Close', onClick: close }, [createIcon('close', { size: 'sm' })]);
   const card = el('div', { className: 'modal-card feedback-modal-card' }, [
-    el('button', { type: 'button', className: 'btn btn-ghost btn-icon feedback-modal-close', 'aria-label': 'Close', onClick: close }, [createIcon('close', { size: 'sm' })]),
+    closeBtn,
     el('h2', { className: 'modal-title', text: 'My reports' }),
     view
   ]);
@@ -112,5 +113,6 @@ export function openMyReports({ user }) {
   const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.classList.add('scroll-locked');
   document.body.appendChild(overlay);
+  closeBtn.focus();
   return { close };
 }

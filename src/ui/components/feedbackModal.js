@@ -150,15 +150,16 @@ export function openFeedbackModal({ user }) {
 
   function renderTypeSelect() {
     const draft = readDraft();
+    const myReportsBtn = el('button', {
+      type: 'button',
+      className: 'btn btn-ghost btn-sm',
+      text: 'My reports',
+      onClick: renderMyReports
+    });
     setBody([
       el('div', { className: 'feedback-type-header' }, [
         el('h2', { className: 'modal-title', text: 'How can we help?' }),
-        el('button', {
-          type: 'button',
-          className: 'btn btn-ghost btn-sm',
-          text: 'My reports',
-          onClick: renderMyReports
-        })
+        myReportsBtn
       ]),
       draft
         ? el('p', { className: 'form-message', text: `You have an unfinished ${REPORT_TYPE_META[draft.type].label.toLowerCase()} draft.` })
@@ -175,18 +176,21 @@ export function openFeedbackModal({ user }) {
       )),
       el('p', { className: 'feedback-privacy-note', text: 'Your feedback goes directly to the team.' })
     ]);
+    myReportsBtn.focus();
   }
 
   function renderMyReports() {
     const view = buildMyReportsView({ user });
+    const backBtn = el('button', { type: 'button', className: 'btn btn-ghost btn-sm', text: '← Back', onClick: renderTypeSelect });
     setBody([
       el('div', { className: 'feedback-type-header' }, [
         el('h2', { className: 'modal-title', text: 'My reports' }),
-        el('button', { type: 'button', className: 'btn btn-ghost btn-sm', text: '← Back', onClick: renderTypeSelect })
+        backBtn
       ]),
       view
     ]);
     activeListenerCleanup = view._cleanup || null;
+    backBtn.focus();
   }
 
   function renderForm(type, prefill = {}) {
@@ -337,6 +341,7 @@ export function openFeedbackModal({ user }) {
   function renderSuccess(reportId) {
     clearInterval(cooldownTimer);
     const reference = (reportId || '').slice(0, 5).toUpperCase();
+    const closeBtn = el('button', { type: 'button', className: 'btn btn-primary', text: 'Close', onClick: close });
     setBody([
       el('div', { className: 'feedback-success' }, [
         el('div', { className: 'feedback-success-icon', 'aria-hidden': 'true' }, [createIcon('check', { size: 'lg' })]),
@@ -345,10 +350,11 @@ export function openFeedbackModal({ user }) {
         el('p', { className: 'feedback-reference', text: `Reference: #${reference}` }),
         el('div', { className: 'feedback-form-actions' }, [
           el('button', { type: 'button', className: 'btn btn-secondary', text: 'Send another', onClick: renderTypeSelect }),
-          el('button', { type: 'button', className: 'btn btn-primary', text: 'Close', onClick: close })
+          closeBtn
         ])
       ])
     ]);
+    closeBtn.focus();
   }
 
   const body = el('div', { className: 'feedback-modal-body' });

@@ -13,6 +13,8 @@ export function openDailyTodoGuide() {
     overlay.remove();
   }
 
+  const gotItBtn = el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close });
+
   // Condensed from an earlier 3-heading/8-paragraph version (issue #78) —
   // same facts, tightened into one short paragraph per heading so the modal
   // can be skimmed in a few seconds instead of read top to bottom.
@@ -50,9 +52,7 @@ export function openDailyTodoGuide() {
       el('strong', { text: 'unchecking' }),
       ' always syncs back silently. Deleting a linked todo before it\'s checked never touches the roadmap — only completing one does. A completed link shows a small timer-and-checkmark icon, cleared if either side is unchecked again.'
     ]),
-    el('div', { className: 'panel-footer-right' }, [
-      el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close })
-    ])
+    el('div', { className: 'panel-footer-right' }, [gotItBtn])
   ]);
 
   const overlay = el('div', {
@@ -65,6 +65,7 @@ export function openDailyTodoGuide() {
 
   const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.appendChild(overlay);
+  gotItBtn.focus();
 
   return close;
 }

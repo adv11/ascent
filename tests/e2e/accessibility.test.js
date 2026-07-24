@@ -390,6 +390,98 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
   });
 });
 
+// Issue #357 — these four modals call attachFocusTrap() but never moved
+// initial focus into themselves on open (fixed alongside this coverage
+// addition), and none were previously scanned by this suite at all. Each
+// test both runs the standard axe scan (matching this file's own established
+// per-modal pattern) and asserts a specific element inside the dialog is the
+// focused element right after open, which is the regression itself — axe's
+// ruleset doesn't simulate open-state focus movement, so only a direct
+// document.activeElement assertion catches it.
+test.describe('automated accessibility checks — initial focus on open (issue #357)', () => {
+  test('feedbackModal type-select screen moves focus to "My reports"', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.feedback-widget-trigger').click();
+    const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('button', { hasText: 'My reports' })).toBeFocused();
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Send feedback"]' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('feedbackModal "My reports" tab moves focus to the "← Back" button', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.feedback-widget-trigger').click();
+    const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
+    await expect(modal).toBeVisible();
+    await modal.locator('button', { hasText: 'My reports' }).click();
+    await expect(modal.locator('button', { hasText: '← Back' })).toBeFocused();
+  });
+
+  test('feedbackModal success screen moves focus to "Close"', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.feedback-widget-trigger').click();
+    const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
+    await expect(modal).toBeVisible();
+    await modal.locator('.feedback-type-card', { hasText: 'General feedback' }).click();
+    await modal.locator('.feedback-form input[type="text"]').first().fill('Issue #357 focus coverage test');
+    await modal.locator('textarea').first().fill('Test feedback for issue #357 focus coverage.');
+    await modal.locator('button[type="submit"]').click();
+    await expect(modal.locator('.feedback-success button', { hasText: 'Close' })).toBeFocused({ timeout: 10_000 });
+  });
+
+  test('standalone "My reports" modal moves focus to the close button', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await page.locator('[aria-label*="Account menu"]').click();
+    await page.locator('.dropdown-item', { hasText: 'My reports' }).click();
+    const modal = page.locator('.modal-overlay[aria-label="My reports"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.feedback-modal-close')).toBeFocused();
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="My reports"]' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('"Build your own roadmap" guide moves focus to "Got it"', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card-create .template-card-info-corner').click();
+    const modal = page.locator('.modal-overlay[aria-label="Build your own roadmap"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('button', { hasText: 'Got it' })).toBeFocused();
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Build your own roadmap"]' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('Daily Todos guide moves focus to "Got it"', async ({ page }) => {
+    test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+    await page.goto('/#/signin');
+    await page.click('text=Continue as guest');
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.daily-todo-info-btn').click();
+    const modal = page.locator('.modal-overlay[aria-label="About Today\'s Todos"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('button', { hasText: 'Got it' })).toBeFocused();
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="About Today\'s Todos"]' });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+});
+
 // Issue #116 — the light-mode-only axe pass above would never have caught
 // the `.feedback-type-card`/`.my-report-summary` dark-theme contrast bug
 // (near-black text on a dark navy background), since axe was only ever run

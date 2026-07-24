@@ -17,6 +17,8 @@ export function openBuildYourOwnGuide({ onOpenImport } = {}) {
     overlay.remove();
   }
 
+  const gotItBtn = el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close });
+
   const footerButtons = [
     onOpenImport
       ? el('button', {
@@ -26,7 +28,7 @@ export function openBuildYourOwnGuide({ onOpenImport } = {}) {
         onClick: () => { close(); onOpenImport(); }
       })
       : null,
-    el('button', { type: 'button', className: 'btn btn-primary', text: 'Got it', onClick: close })
+    gotItBtn
   ].filter(Boolean);
 
   const card = el('div', { className: 'modal-card build-guide-card' }, [
@@ -65,6 +67,7 @@ export function openBuildYourOwnGuide({ onOpenImport } = {}) {
 
   const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.appendChild(overlay);
+  gotItBtn.focus();
 
   return close;
 }
