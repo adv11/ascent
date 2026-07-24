@@ -1734,19 +1734,39 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   // own complexity under the ESLint gate (root CLAUDE.md). A missing field
   // on the patch is always valid (nothing to check), matching updateItem's
   // existing "only validate keys the caller actually sent" behavior.
-  function isValidItemPatch(patch) {
+  // Issue #381 — walks the prerequisite chain starting at `targetId` (using
+  // the current, not-yet-patched `items` map) to see if it ever reaches back
+  // to `id`. If it does, setting `id`'s prerequisite to `targetId` would
+  // create a cycle (A blocked by B, B blocked by A, or a longer loop) with no
+  // way for either topic to ever unlock. `targetId === id` (a topic naming
+  // itself) is caught on the very first iteration.
+  function wouldCreatePrerequisiteCycle(id, targetId) {
+    let current = targetId;
+    const seen = new Set();
+    while (current) {
+      if (current === id) return true;
+      if (seen.has(current)) break;
+      seen.add(current);
+      current = items[current]?.prerequisiteItemId || null;
+    }
+    return false;
+  }
+
+  function isValidItemPatch(patch, id) {
     if (typeof patch.title === 'string' && (!patch.title.trim() || patch.title.length > MAX_TITLE_LENGTH)) return false;
     if (Array.isArray(patch.resources) && !patch.resources.every(isValidResource)) return false;
     if (Array.isArray(patch.tags) && !isValidTags(patch.tags)) return false;
+    if (patch.prerequisiteItemId && wouldCreatePrerequisiteCycle(id, patch.prerequisiteItemId)) return false;
     return true;
   }
 
   // Returns false (mutating nothing) when the patch fails a length cap (issue
-  // #53) — callers must check this return value instead of assuming success,
-  // same convention as addItem()'s item-count cap.
+  // #53) or would create a prerequisite cycle (issue #381) — callers must
+  // check this return value instead of assuming success, same convention as
+  // addItem()'s item-count cap.
   function updateItem(id, patch) {
     if (!items[id]) return false;
-    if (!isValidItemPatch(patch)) return false;
+    if (!isValidItemPatch(patch, id)) return false;
     // Only a `done` toggle is cosmetic (see docs/architecture.md §5.1). A
     // `notes` patch (issue #15) must NOT be added here — the notes indicator
     // badge on the row needs structuralVersion to bump so it re-renders. The
