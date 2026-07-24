@@ -382,15 +382,12 @@ See `.claude/rules/roadmap-store.md`'s "In-app feedback & bug reporting" section
 
 | Export | Module | Signature | Notes |
 |---|---|---|---|
-| `submitReport` | `feedbackStore.js` | `async ({ type, form, metadata, userId, isAnonymous, screenshotB64, screenshotOmitted }) => reportId: string` | Writes `reports/{reportId}` (full payload) and, if `userId` is set, `users/{userId}/reports/{reportId}` (summary, no screenshot) in one multi-path `update()`. 15s timeout via `withTimeout()`. |
+| `submitReport` | `feedbackStore.js` | `async ({ type, form, metadata, userId, isAnonymous }) => reportId: string` | Writes `reports/{reportId}` and, if `userId` is set, `users/{userId}/reports/{reportId}` — both get the identical payload (issue #348 removed the screenshot feature, so there's no longer a separate, smaller summary shape) — in one multi-path `update()`. 15s timeout via `withTimeout()`. |
 | `listenMyReports` | `feedbackStore.js` | `(uid, callback: (reports) => void, onError?) => unsubscribe` | Live subscription to a signed-in user's own report history, newest-first. |
-| `validateBugReport` / `validateFeatureRequest` / `validateGeneralFeedback` / `validateReport` | `core/feedback/reportSchema.js` | `(report) => string[]` | Pure. Empty array means valid; `validateReport(type, report)` dispatches by type. |
-| `buildReportPayload` | `core/feedback/reportSchema.js` | `({ type, form, metadata, userId, isAnonymous, screenshotB64, screenshotOmitted, now }) => Report` | Pure. Nulls out every field that doesn't apply to `type`; always sets `status: 'new'`. |
-| `buildReportSummary` | `core/feedback/reportSchema.js` | `(fullPayload) => Report` | Pure. Strips `screenshotB64`. |
+| `validateBugReport` / `validateFeatureRequest` / `validateGeneralFeedback` / `validateReport` | `core/feedback/reportSchema.js` | `(report) => string[]` | Pure. Empty array means valid; `validateReport(type, report)` dispatches by type. Bug reports validate `title`/`whatHappened` only — `severity` is optional (issue #348). |
+| `buildReportPayload` | `core/feedback/reportSchema.js` | `({ type, form, metadata, userId, isAnonymous, now }) => Report` | Pure. Nulls out every field that doesn't apply to `type`; always sets `status: 'new'`. Defaults an unset bug-report `severity` to `'medium'` (`DEFAULT_SEVERITY`). |
 | `collectMetadata` / `collectCurrentMetadata` | `core/feedback/metadataCollector.js` | `(deps) => { browser, os, viewport, devicePixelRatio, currentRoute, appVersion, theme, userId, isAnonymous }` | `collectMetadata` is pure/dependency-injected (unit-testable with a fake `userAgent`); `collectCurrentMetadata({ route, theme, user })` is the real-globals wrapper components call. Never includes an email address. |
 | `canSubmit` / `recordSubmit` / `msUntilNextSubmit` | `feedbackRateLimit.js` | `(now?) => boolean` / `(now?) => void` / `(now?) => number` | Client-side, good-faith only (`localStorage`, `KEYS.FEEDBACK_RATE`) — max 3/24h, max 1/60s burst. Not a security boundary. |
-| `captureScreenshot` | `src/ui/components/screenshotCapture.js` | `async ({ excludeSelector? }) => { dataUrl: string \| null, omitted: boolean }` | Lazy-loads html2canvas from a pinned jsdelivr version, blurs sensitive regions, resizes until under 500KB (`MAX_SCREENSHOT_BYTES`). |
-| `readUploadedImage` | `src/ui/components/screenshotCapture.js` | `async (file) => { dataUrl: string } \| { error: string }` | Rejects non-images and anything over 2MB (`MAX_UPLOAD_BYTES`) with a friendly error, never a thrown exception. |
 
 ## Roadmap sharing — `src/services/shareStore.js`, `src/core/roadmap/shareSchema.js`, `src/ui/pages/sharedRoadmapView.js` (issue #131)
 

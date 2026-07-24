@@ -4855,15 +4855,6 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 }
 .feedback-radio-option input[type='radio']:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-.feedback-screenshot { gap: 8px; }
-.feedback-screenshot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.feedback-screenshot-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius-md); border: 1px solid var(--color-border); object-fit: contain; }
-/* .btn sets display: inline-flex, which (author CSS always beats the UA
-   stylesheet's [hidden]{display:none}, regardless of specificity) otherwise
-   leaves this button visibly rendered even while .hidden is true — same
-   fix as .daily-todo-nav-badge[hidden]/.clear-filters-btn[hidden] above. */
-.feedback-screenshot-remove[hidden] { display: none; }
-
 .feedback-system-info-checkbox { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-sm); color: var(--color-text); cursor: pointer; }
 /* issue #206 §5 follow-up — was an unstyled native checkbox (OS-default blue
    check in the screenshots); `accent-color` recolors the native control to

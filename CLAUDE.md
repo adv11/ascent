@@ -95,7 +95,7 @@ src/ui/components/itemPanel.js   slide-in panel for editing a topic + its resour
 src/ui/components/toast.js       transient toast notifications
 src/ui/components/confirmDialog.js  styled confirm/cancel modal — see "Never use window.confirm()" below; deleteAccountModal.js  shared "type password to confirm" delete-account modal used by sidebar.js/settings.js
 src/ui/components/buildYourOwnGuide.js, newRoadmapModal.js, importRoadmapModal.js  manual/AI-import roadmap creation — see .claude/rules/roadmap-store.md
-src/ui/components/feedbackWidget.js, feedbackModal.js, feedbackForm.js, screenshotCapture.js, myReports.js  in-app feedback & bug reporting (issue #9) — see .claude/rules/roadmap-store.md; src/services/feedbackStore.js, feedbackRateLimit.js, src/core/feedback/  Firebase write + rate limit + pure schema/metadata
+src/ui/components/feedbackWidget.js, feedbackModal.js, feedbackForm.js, myReports.js  in-app feedback & bug reporting (issue #9, screenshot capture removed in #348) — see .claude/rules/roadmap-store.md; src/services/feedbackStore.js, feedbackRateLimit.js, src/core/feedback/  Firebase write + rate limit + pure schema/metadata
 src/data/importPrompt.js, src/core/roadmap/importValidator.js, schemaAdapter.js, limits.js  AI-import prompt + pure validator/adapter/caps — see .claude/rules/roadmap-store.md
 src/core/dailyTodo/limits.js         MAX_TODO_TITLE_LENGTH/MAX_ACTIVE_TODOS/duration caps — see .claude/rules/roadmap-store.md
 src/core/time/timeTracking.js        pure start/pause elapsed-time math (issue #180), no DOM/store access — see .claude/rules/roadmap-store.md

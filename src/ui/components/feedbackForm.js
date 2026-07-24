@@ -1,13 +1,11 @@
 import { el, debounce } from '../dom.js';
-import { captureScreenshot, readUploadedImage } from './screenshotCapture.js';
-import { createIcon } from './icons.js';
 
 // Shared form primitives for feedbackModal.js's three report-type forms
-// (issue #9 §3.4) — field + char counter, radio groups, screenshot control.
-// Kept dependency-free of feedbackModal.js itself so each primitive is a
-// plain `{ node, getValue, setError }`-shaped builder, same composition
-// style every other ad hoc modal in this app (addToDailyTodoModal.js, etc.)
-// already uses.
+// (issue #9 §3.4, screenshot control removed in issue #348) — field + char
+// counter, radio groups. Kept dependency-free of feedbackModal.js itself so
+// each primitive is a plain `{ node, getValue, setError }`-shaped builder,
+// same composition style every other ad hoc modal in this app
+// (addToDailyTodoModal.js, etc.) already uses.
 
 // The input/textarea's own attrs — a textarea can't take a `type`/`value`
 // attribute the way an `<input>` can (its value is set as a property below
@@ -114,96 +112,6 @@ export function createRadioGroup({ name, label, options, required = true }) {
       if (message) { errorEl.textContent = message; errorEl.hidden = false; } else { errorEl.hidden = true; }
     }
   };
-}
-
-// Capture / upload / preview / remove — issue #9 §4. `onChange({ dataUrl, omitted })`
-// fires whenever the attached screenshot changes (including to `null` on remove).
-export function createScreenshotControl({ onChange }) {
-  let dataUrl = null;
-
-  const fileInput = el('input', { type: 'file', accept: 'image/*', hidden: true });
-  const preview = el('img', { className: 'feedback-screenshot-preview', alt: 'Screenshot preview' });
-  preview.hidden = true;
-  const errorEl = el('span', { className: 'field-error', role: 'alert' });
-  errorEl.hidden = true;
-
-  const removeBtn = el('button', {
-    type: 'button',
-    // `.feedback-screenshot-remove` (not just `.btn .btn-ghost .btn-sm`) so
-    // app.css can add a `[hidden]` override — `.btn` sets `display:
-    // inline-flex`, and author CSS declarations always beat the browser's
-    // default `[hidden] { display: none }` UA rule regardless of
-    // selector specificity, so `removeBtn.hidden = true` alone left the
-    // button visibly rendered the whole time (same pre-existing pattern as
-    // `.daily-todo-nav-badge[hidden]`/`.clear-filters-btn[hidden]` in
-    // app.css) — reported live (issue #9 follow-up).
-    className: 'btn btn-ghost btn-sm feedback-screenshot-remove',
-    text: 'Remove',
-    onClick: () => setScreenshot(null)
-  });
-  removeBtn.hidden = true;
-
-  function setScreenshot(next, omitted = false) {
-    dataUrl = next;
-    preview.src = next || '';
-    preview.hidden = !next;
-    removeBtn.hidden = !next;
-    onChange?.({ dataUrl: next, omitted });
-  }
-
-  const captureBtn = el('button', {
-    type: 'button',
-    className: 'btn btn-secondary btn-sm',
-    onClick: async () => {
-      errorEl.hidden = true;
-      captureBtn.disabled = true;
-      try {
-        const result = await captureScreenshot();
-        if (!result.dataUrl) {
-          errorEl.textContent = 'Screenshot was too large and was not attached.';
-          errorEl.hidden = false;
-          return;
-        }
-        setScreenshot(result.dataUrl, result.omitted);
-      } catch {
-        errorEl.textContent = 'Could not capture the screen. Try uploading an image instead.';
-        errorEl.hidden = false;
-      } finally {
-        captureBtn.disabled = false;
-      }
-    }
-  }, [createIcon('camera', { size: 'xs' }), ' Capture current screen']);
-
-  const uploadBtn = el('button', {
-    type: 'button',
-    className: 'btn btn-secondary btn-sm',
-    onClick: () => fileInput.click()
-  }, [createIcon('upload', { size: 'xs' }), ' Upload image']);
-
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files?.[0];
-    fileInput.value = '';
-    if (!file) return;
-    const result = await readUploadedImage(file);
-    if (result.error) {
-      errorEl.textContent = result.error;
-      errorEl.hidden = false;
-      return;
-    }
-    errorEl.hidden = true;
-    setScreenshot(result.dataUrl);
-  });
-
-  const node = el('div', { className: 'field feedback-field feedback-screenshot' }, [
-    el('span', { className: 'field-label', text: 'Screenshot' }),
-    el('div', { className: 'feedback-screenshot-actions' }, [captureBtn, uploadBtn]),
-    fileInput,
-    preview,
-    removeBtn,
-    errorEl
-  ]);
-
-  return { node, getValue: () => dataUrl, reset: () => setScreenshot(null) };
 }
 
 export function createSystemInfoCheckbox({ checked = true, summaryText, onChange }) {

@@ -1,7 +1,7 @@
 import { ref, push, update, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
 import { database, firebaseClock } from './firebase.js';
 import { withTimeout } from './storage/withTimeout.js';
-import { buildReportPayload, buildReportSummary } from '../core/feedback/reportSchema.js';
+import { buildReportPayload } from '../core/feedback/reportSchema.js';
 
 // Thin, stateless wrapper around the two Firebase calls the feedback widget
 // needs — deliberately not a fifth `create*Store()` in the roadmapStore.js/
@@ -11,27 +11,25 @@ import { buildReportPayload, buildReportSummary } from '../core/feedback/reportS
 
 const FIREBASE_TIMEOUT_MS = 15000;
 
-// Submits a report to both `reports/{reportId}` (full payload, developer-only)
-// and `users/{uid}/reports/{reportId}` (summary, no screenshot) in one
-// multi-path update — see reportSchema.js's buildReportPayload/buildReportSummary
-// for the exact shapes. Returns the generated reportId.
-export async function submitReport({ type, form, metadata, userId, isAnonymous, screenshotB64, screenshotOmitted }) {
+// Submits a report to both `reports/{reportId}` (developer-only) and
+// `users/{uid}/reports/{reportId}` (the user's own "My reports" history) in
+// one multi-path update — since issue #348 removed the screenshot feature,
+// both paths get the identical payload (see reportSchema.js's
+// buildReportPayload). Returns the generated reportId.
+export async function submitReport({ type, form, metadata, userId, isAnonymous }) {
   const reportId = push(ref(database, 'reports')).key;
-  const fullPayload = buildReportPayload({
+  const payload = buildReportPayload({
     type,
     form,
     metadata,
     userId,
     isAnonymous,
-    screenshotB64,
-    screenshotOmitted,
     now: firebaseClock()
   });
-  const summaryPayload = buildReportSummary(fullPayload);
 
   const updates = {
-    [`reports/${reportId}`]: fullPayload,
-    ...(userId ? { [`users/${userId}/reports/${reportId}`]: summaryPayload } : {})
+    [`reports/${reportId}`]: payload,
+    ...(userId ? { [`users/${userId}/reports/${reportId}`]: payload } : {})
   };
 
   await withTimeout(update(ref(database), updates), FIREBASE_TIMEOUT_MS, 'Timed out submitting your report');

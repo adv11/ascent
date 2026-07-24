@@ -33,12 +33,10 @@ beforeEach(() => {
 describe('submitReport', () => {
   const baseArgs = {
     type: 'bug',
-    form: { title: 'Crashes', severity: 'high', steps: 's', expected: 'e', actual: 'a' },
+    form: { title: 'Crashes', severity: 'high', whatHappened: 'Clicked save and it crashed.' },
     metadata: { browser: 'Chrome 126' },
     userId: 'uid-1',
-    isAnonymous: false,
-    screenshotB64: 'data:image/png;base64,abc',
-    screenshotOmitted: false
+    isAnonymous: false
   };
 
   it('writes reports/{id} and users/{uid}/reports/{id} in one multi-path update', async () => {
@@ -49,10 +47,11 @@ describe('submitReport', () => {
     expect(Object.keys(updates).sort()).toEqual(['reports/report-abc123', 'users/uid-1/reports/report-abc123'].sort());
   });
 
-  it('never writes screenshotB64 into the users/{uid}/reports/{id} summary', async () => {
+  it('never has a screenshotB64/screenshotOmitted field on either path — removed in issue #348', async () => {
     await submitReport(baseArgs);
     const [, updates] = update.mock.calls[0];
-    expect(updates['reports/report-abc123'].screenshotB64).toBe('data:image/png;base64,abc');
+    expect('screenshotB64' in updates['reports/report-abc123']).toBe(false);
+    expect('screenshotOmitted' in updates['reports/report-abc123']).toBe(false);
     expect('screenshotB64' in updates['users/uid-1/reports/report-abc123']).toBe(false);
   });
 
