@@ -329,22 +329,30 @@ export function buildTourSteps() {
     {
       target: () => document.querySelector('.app-sidebar-nav a[href="#/progress"]'),
       title: 'See your progress',
-      body: 'Streaks, charts, and your full history live on the Progress page.'
+      body: 'Streaks, charts, and your full history live on the Progress page.',
+      // Issue #349 — this and the next three steps' targets live inside the
+      // sidebar, which is an off-canvas drawer at ≤639px; featureTour.js
+      // opens/closes it around these steps via onOpenSidebar/onCloseSidebar
+      // rather than hardcoding sidebar DOM knowledge itself.
+      requiresMobileSidebar: true
     },
     {
       target: () => document.querySelector('.app-sidebar-nav a[href="#/onboarding"]'),
       title: 'Manage your roadmaps',
-      body: 'Switch between all your roadmaps anytime — your progress stays intact. This is also where you\'ll find Daily Todos, favorite roadmaps, and the option to build your own roadmap with AI.'
+      body: 'Switch between all your roadmaps anytime — your progress stays intact. This is also where you\'ll find Daily Todos, favorite roadmaps, and the option to build your own roadmap with AI.',
+      requiresMobileSidebar: true
     },
     {
       target: () => document.querySelector('.app-sidebar-nav a[href="#/settings"]'),
       title: 'Update your settings',
-      body: 'Manage your profile, password, and account preferences from Settings.'
+      body: 'Manage your profile, password, and account preferences from Settings.',
+      requiresMobileSidebar: true
     },
     {
       target: () => document.querySelector('.app-sidebar-identity'),
       title: 'Share, back up, and review reports',
-      body: 'Open your account menu to share a read-only roadmap link, download a backup, or see your past feedback reports.'
+      body: 'Open your account menu to share a read-only roadmap link, download a backup, or see your past feedback reports.',
+      requiresMobileSidebar: true
     },
     {
       target: () => document.querySelector('.feedback-widget-trigger'),
@@ -1460,8 +1468,14 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     activeTourCleanup = startTour(buildTourSteps(), {
       onEnd: () => {
         activeTourCleanup = null;
+        sidebar._closeMobile();
         store.completeTour();
-      }
+      },
+      // Issue #349 — only steps flagged `requiresMobileSidebar` trigger
+      // these; featureTour.js decides when to call them, this is just the
+      // sidebar-specific behavior it invokes.
+      onOpenSidebar: () => sidebar._openMobile(),
+      onCloseSidebar: () => sidebar._closeMobile()
     });
   }
 

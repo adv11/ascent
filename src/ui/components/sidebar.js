@@ -171,12 +171,22 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     document.body.classList.toggle('scroll-locked', opening);
   }
 
+  // Idempotent-safe open, unlike toggleMobile() — for callers (the feature
+  // tour, issue #349) that need the drawer open regardless of its current
+  // state rather than flipping it.
+  function openMobile() {
+    node.classList.add('mobile-open');
+    backdrop.classList.add('show');
+    document.body.classList.add('scroll-locked');
+  }
+
   backdrop.addEventListener('click', closeMobile);
   navEl.addEventListener('click', e => {
     if (e.target.closest('a')) closeMobile();
   });
 
   node._toggleMobile = toggleMobile;
+  node._openMobile = openMobile;
   node._closeMobile = closeMobile;
   node._backdrop = backdrop;
   node._cleanup = () => identity._cleanup?.();

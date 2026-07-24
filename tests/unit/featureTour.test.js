@@ -17,8 +17,18 @@ function buildSteps(n = 3) {
   }));
 }
 
+function mockMatchMedia(matches) {
+  window.matchMedia = vi.fn().mockImplementation(query => ({
+    matches,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  }));
+}
+
 beforeEach(() => {
   document.body.innerHTML = '';
+  mockMatchMedia(false);
 });
 
 describe('featureTour', () => {
@@ -122,5 +132,58 @@ describe('featureTour', () => {
 
     steps[0].target().click();
     expect(targetClick).toHaveBeenCalledTimes(1);
+  });
+
+  describe('requiresMobileSidebar (issue #349)', () => {
+    it('opens the sidebar drawer before showing a step flagged requiresMobileSidebar, at mobile viewport widths', () => {
+      mockMatchMedia(true);
+      const onOpenSidebar = vi.fn();
+      const onCloseSidebar = vi.fn();
+      const steps = buildSteps(1);
+      steps[0].requiresMobileSidebar = true;
+      startTour(steps, { onEnd: vi.fn(), onOpenSidebar, onCloseSidebar });
+      document.querySelector('.tour-welcome-card [data-action="start"]').click();
+
+      expect(onOpenSidebar).toHaveBeenCalledTimes(1);
+      expect(onCloseSidebar).not.toHaveBeenCalled();
+    });
+
+    it('does not open the sidebar drawer for a flagged step at non-mobile viewport widths', () => {
+      mockMatchMedia(false);
+      const onOpenSidebar = vi.fn();
+      const steps = buildSteps(1);
+      steps[0].requiresMobileSidebar = true;
+      startTour(steps, { onEnd: vi.fn(), onOpenSidebar });
+      document.querySelector('.tour-welcome-card [data-action="start"]').click();
+
+      expect(onOpenSidebar).not.toHaveBeenCalled();
+    });
+
+    it('closes the sidebar drawer when moving from a flagged step to one that is not flagged', () => {
+      mockMatchMedia(true);
+      const onOpenSidebar = vi.fn();
+      const onCloseSidebar = vi.fn();
+      const steps = buildSteps(2);
+      steps[0].requiresMobileSidebar = true;
+      startTour(steps, { onEnd: vi.fn(), onOpenSidebar, onCloseSidebar });
+      document.querySelector('.tour-welcome-card [data-action="start"]').click();
+      expect(onOpenSidebar).toHaveBeenCalledTimes(1);
+
+      document.querySelector('.tour-popover [data-action="next"]').click();
+      expect(onCloseSidebar).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the sidebar drawer on tour end if it was left open mid-sidebar-step', () => {
+      mockMatchMedia(true);
+      const onOpenSidebar = vi.fn();
+      const onCloseSidebar = vi.fn();
+      const steps = buildSteps(1);
+      steps[0].requiresMobileSidebar = true;
+      startTour(steps, { onEnd: vi.fn(), onOpenSidebar, onCloseSidebar });
+      document.querySelector('.tour-welcome-card [data-action="start"]').click();
+
+      document.querySelector('.tour-popover [data-action="skip"]').click();
+      expect(onCloseSidebar).toHaveBeenCalledTimes(1);
+    });
   });
 });
