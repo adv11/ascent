@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildImportPrompt, buildImportFixPrompt, IMPORT_PROMPT_VERSION } from '../../src/data/importPrompt.js';
+import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../../src/core/roadmap/limits.js';
 
 describe('buildImportPrompt', () => {
   it('renders the schema contract and a placeholder topic line when nothing is provided', () => {
@@ -98,6 +99,42 @@ describe('buildImportPrompt', () => {
     const prompt = buildImportPrompt('Rust');
     expect(prompt).toContain('Use the object form with "resources" for MOST items');
     expect(prompt).toContain('this is expected and encouraged');
+  });
+
+  // Issue #366 — front-load importValidator.js's exact rules into the prompt
+  // itself so a model can self-check before returning output.
+  it('states the exact title/resource-label/resource-url length caps from limits.js', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt).toContain(`${MAX_TITLE_LENGTH} characters`);
+    expect(prompt).toContain(`${MAX_RESOURCE_LABEL_LENGTH} characters`);
+    expect(prompt).toContain(`${MAX_RESOURCE_URL_LENGTH} characters`);
+  });
+
+  it('warns against echoing the literal schema placeholder text', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt).toContain('<roadmap title>');
+    expect(prompt).toContain('<item title>');
+    expect(prompt).toContain('placeholder');
+  });
+
+  it('warns against refusals/disclaimers instead of real output', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt.toLowerCase()).toContain('i cannot help with that');
+    expect(prompt.toLowerCase()).toContain("i'm sorry, but");
+    expect(prompt).toContain('refusal');
+  });
+
+  it('warns against pasting rendered/markdown-linkified text that corrupts URLs/titles', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt).toContain('%22');
+    expect(prompt.toLowerCase()).toContain('rendered/markdown');
+  });
+
+  it('tells an agentic/tool-using model to verify resource URLs, framed so a non-agentic model can ignore it', () => {
+    const prompt = buildImportPrompt('Rust');
+    expect(prompt.toLowerCase()).toContain('browsing or tool access');
+    expect(prompt.toLowerCase()).toContain('verify each resource url');
+    expect(prompt).toContain('If you have no browsing/tool access, this instruction does not apply');
   });
 
   it('renders all six fields together, each on its own line, in a stable order', () => {
