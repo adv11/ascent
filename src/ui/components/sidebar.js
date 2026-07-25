@@ -7,7 +7,7 @@ import { createIcon } from './icons.js';
 import { attachTooltip } from './tooltip.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
-import { exportBackupJson, exportBackupCsv, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
+import { exportBackupJson, exportBackupCsv, exportBackupMarkdown, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
 import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { openMyReports } from './myReports.js';
 import { openShareRoadmapModal } from './shareRoadmapModal.js';
@@ -64,6 +64,7 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
     { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
+    { text: 'Export as Markdown', onClick: () => exportBackupMarkdown(store) },
     { text: 'Import backup…', onClick: () => importInput.click() },
     { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
   );

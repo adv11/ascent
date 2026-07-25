@@ -4702,3 +4702,17 @@ rules from both `reports/{reportId}` and `users/{uid}/reports/{reportId}`, repla
 Per this issue's own cross-link note, issue #347's Bug 1 (`screenshotOmitted` never
 reaching the submitted payload) is resolved as a side effect of this removal — #347's
 Bug 2 (the cooldown message's hardcoded "3 reports" wording) is unrelated and still open.
+
+### 2026-07-25 — Issue #378 — Export a roadmap as Markdown
+
+New pure module `src/core/roadmap/markdownExport.js` (`buildRoadmapMarkdown(snapshot,
+title, { includeNotes })`), a third export format alongside `backupSchema.js`'s
+JSON/CSV pair — phases/sections as headings, topics as a `- [x]`/`- [ ]` checklist,
+resources as Markdown links, notes as an indented blockquote — for pasting into
+Obsidian/Notion/a personal wiki. One-way only, no import. Groups `snapshot.items` by
+`snapshot.phases` the same way `dashboard.js`'s `groupItems()` does, falling back to
+first-appearance order for anything outside the template skeleton. `exportBackupMarkdown()`
+(`backupActions.js`) wires it to a `.md` download via the existing `downloadTextFile()`
+helper, reusing `printRoadmap.js`'s newly-exported `resolveRoadmapTitle()` to resolve
+the display title. New "Export as Markdown" item added to both places the account menu
+is built (`sidebar.js`, and `onboarding.js`'s standalone rebuild of the same menu).

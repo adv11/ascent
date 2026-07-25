@@ -124,7 +124,7 @@ describe('createSidebar — account identity', () => {
     node.querySelector('.app-sidebar-identity').click();
     expect(document.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Import backup…', 'Print roadmap…']);
+    expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Export as Markdown', 'Import backup…', 'Print roadmap…']);
   });
 
   // Issue #17 — only the dashboard's sidebar instance passes onStartTour;
