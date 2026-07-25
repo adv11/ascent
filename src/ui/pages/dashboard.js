@@ -615,6 +615,14 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // addItem() only returns a boolean, so this is a pure before/after
   // comparison entirely in the UI layer.
   let knownItemIds = new Set();
+  // Issue #379 — keyboard-nav focus state, declared up here (not down by the
+  // keydown-handler wiring below) since render() reads focusedRowId to
+  // reapply the visual focus ring after a full re-render, and render() is
+  // both defined and first called earlier in this function than the
+  // keyboard-nav wiring itself; a `let` referenced before its own
+  // declaration executes throws in its temporal dead zone.
+  let focusedRowId = null;
+  let shortcutsOverlay = null;
 
   const offlineBanner = el('div', { className: 'offline-banner', id: 'offlineBanner' }, [
     el('span', { className: 'sync-dot error' }),
@@ -1758,9 +1766,6 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // This extends, not duplicates, the command palette (issue #283's
   // Cmd/Ctrl+K) — that's for jumping to a page/topic by search; this is for
   // moving through the list already on screen without leaving the keyboard.
-  let focusedRowId = null;
-  let shortcutsOverlay = null;
-
   function isTypingTarget(target) {
     if (!target) return false;
     const tag = target.tagName;
