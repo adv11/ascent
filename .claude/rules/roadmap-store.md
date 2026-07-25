@@ -1483,6 +1483,54 @@ lighter-weight, unpersisted, single-select AND condition layered on top of the s
 and no global tag-management page (rename/merge/delete across every item) — both
 explicitly out of scope for this issue, tags are edited per-item only.
 
+**Optional topic prerequisites — `item.prerequisiteItemId`, single-prerequisite only
+(issue #381).** Every item may carry an optional `prerequisiteItemId: string | null`
+naming another item's id **in the same roadmap** as a prerequisite (missing/`null` both
+mean "no prerequisite" — same backward-compat convention as `notes`/`tags`/
+`lastReviewedAt`). Multi-prerequisite (AND/OR combinations) is explicitly out of scope
+for this first version, matching issue #134's own "single fixed interval, not a full
+algorithm" scoping precedent — this is one prerequisite per topic, full stop.
+`itemPanel.js`'s "Blocked by" field (`createSelect()`, listing every other non-deleted
+item in the same roadmap — `openItemPanel()` takes a new `allItems` param for this,
+threaded through from every dashboard.js call site's `store.getSnapshot().items`) is the
+only way to set it; saving calls the normal `onSave` → `updateItem()` path with no
+special-casing beyond the store-side guard below.
+
+**Locked state is derived at render/toggle time, never a separate persisted "unlocked"
+flag — same "no second field to keep in sync" precedent as
+`completionCelebration.js`/`reviewSchedule.js`'s due-state above.** `dashboard.js`'s
+`getPrerequisite(item)`/`isBlocked(item)` (used by both `renderItemRow()` and
+`toggleDone()`) look the prerequisite up in the live `store.getSnapshot().allItems` map
+on every call: a locked topic is one whose `prerequisiteItemId` resolves to an existing,
+non-deleted, not-yet-`done` item. The moment the prerequisite is marked done (through the
+existing store subscription, no new one), the very next render/toggle sees it unlocked —
+there's nothing else to update. A locked row (`.check-item.locked`) renders dimmed with a
+disabled-looking checkbox (`aria-disabled`, `toggleDone()` bails out early via the same
+`isBlocked()` check) and a "Blocked by: `<title>`" chip (`.prerequisite-lock-chip`,
+`data-action="prerequisite-lock"`, following the existing click-guard convention even
+though it isn't currently interactive) naming the prerequisite.
+
+**A dangling reference (the prerequisite topic was since deleted) is treated as "no
+prerequisite" — same graceful-degradation precedent `setItemDoneInTemplate()` already
+established for a deleted linked-todo target.** `getPrerequisite()` returns `null` for a
+missing or soft-deleted (`item.deleted === true`) target, at which point `isBlocked()` is
+false and the topic renders/toggles normally — `prerequisiteItemId` itself is never
+cleared or re-validated on the dangling item, it just stops having any locking effect.
+
+**Cycle guard lives in `updateItem()` itself, not the UI — `wouldCreatePrerequisiteCycle()`
+(`roadmapStore.js`).** Setting `id`'s prerequisite to `targetId` is rejected (the whole
+`updateItem()` call returns `false`, mutating nothing — same "callers must check the
+return value" convention as every other cap in `isValidItemPatch()`) if walking
+`targetId`'s own prerequisite chain (via the *current*, not-yet-patched `items` map) ever
+reaches back to `id` — this catches both a topic naming itself directly and a longer A→B→
+A loop. `itemPanel.js`'s Save handler checks `onSave`'s return value and shows a form
+error ("That would create a circular prerequisite — pick a different topic.") instead of
+closing, rather than trying to pre-filter the "Blocked by" option list for a would-be
+cycle client-side. `prerequisiteItemId` is **not** in `updateItem()`'s cosmetic-check
+exemption (only `done` is), so a patch that sets/clears it bumps `structuralVersion` for
+free, same as `notes`/`tags`/`lastReviewedAt` — the row's locked/unlocked visual state
+needs a real re-render, not just a cosmetic done-toggle patch.
+
 **Lightweight time tracking — `item.timeSpentSeconds`, a plain cumulative counter, not a
 Pomodoro/focus-enforcement feature (issue #180).** Both a roadmap topic and a Daily Todo
 gained an optional `timeSpentSeconds: number` field (missing/`undefined` both mean "never

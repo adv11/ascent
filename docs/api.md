@@ -76,6 +76,14 @@ Returns a store instance with the following methods.
                      // itemPanel.js's comma-separated "Tags" input; used by
                      // core/roadmap/reviewSchedule.js's groupReviewDueItemsByTag() to group review-due
                      // topics that share a tag.
+  prerequisiteItemId?: string | null,  // issue #381 — this topic is locked until the referenced item
+                                         // (same roadmap only) is done. Missing/null both mean "no
+                                         // prerequisite" (backward compat, same as notes). Edited via
+                                         // itemPanel.js's "Blocked by" picker; updateItem() rejects a
+                                         // patch that would create a cycle (mutating nothing, callers
+                                         // must check the return value). A dangling reference (the
+                                         // prerequisite item was deleted) is treated as "no prerequisite"
+                                         // at render time, not re-validated/cleared on save.
   createdAt: number, updatedAt?: number,
 }
 ```

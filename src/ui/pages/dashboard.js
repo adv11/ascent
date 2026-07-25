@@ -780,6 +780,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     }
     openItemPanel({
       item: targetItem,
+      allItems: store.getSnapshot().items,
       onSave: patch => store.updateItem(targetItem.id, patch),
       onDelete: () => store.removeItem(targetItem.id)
     });
@@ -858,9 +859,34 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // animation to replay on rapid repeated clicks — otherwise a second toggle
   // before the first animation's `animationend` fires would be a no-op class
   // add, and the pop simply wouldn't restart.
+  // Issue #381 — a topic with an unmet prerequisite renders locked and can't
+  // be toggled done. A dangling reference (the prerequisite topic was since
+  // deleted) or one already marked done is treated as "no prerequisite" —
+  // the lock is purely derived at render/toggle time from the current
+  // snapshot, never a separate persisted "unlocked" flag to keep in sync.
+  function getPrerequisite(item) {
+    if (!item.prerequisiteItemId) return null;
+    const prerequisite = store.getSnapshot().allItems[item.prerequisiteItemId];
+    if (!prerequisite || prerequisite.deleted) return null;
+    return prerequisite;
+  }
+
+  function isBlocked(item) {
+    const prerequisite = getPrerequisite(item);
+    return !!prerequisite && !prerequisite.done;
+  }
+
+  function buildPrerequisiteLockChip(prerequisite) {
+    return el('span', {
+      className: 'prerequisite-lock-chip',
+      'data-action': 'prerequisite-lock',
+      title: `Blocked by "${prerequisite.title}" — complete it first to unlock this topic.`
+    }, [createIcon('lock', { size: 'xs' }), ` Blocked by: ${prerequisite.title}`]);
+  }
+
   function toggleDone(item, checkBoxEl) {
     const live = store.getSnapshot().allItems[item.id];
-    if (!live) return;
+    if (!live || isBlocked(live)) return;
     const nextDone = !live.done;
     const patch = { done: nextDone };
     if (!nextDone && live.completedViaTodoAt) patch.completedViaTodoAt = null;
@@ -909,6 +935,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     // set of discrete delay classes (CSS below) gets the same staggered
     // fan-in effect without violating it.
     const enteringClass = isNew ? `entering entering-delay-${Math.min(sectionIdx, 6)}` : '';
+    const prerequisite = getPrerequisite(item);
+    const locked = !!prerequisite && !prerequisite.done;
     // Issue #6 Phase 9 — role="checkbox" moved off the whole row and onto
     // just .check-box below. axe-core's no-focusable-content rule (WCAG
     // 4.1.2) correctly flags a role="checkbox" element that contains other
@@ -922,7 +950,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     // interactive control; keyboard toggling now happens via .check-box's
     // own role/tabindex/keydown handling.
     return el('div', {
-      className: `check-item ${item.done ? 'done' : ''} ${enteringClass}`,
+      className: `check-item ${item.done ? 'done' : ''} ${locked ? 'locked' : ''} ${enteringClass}`,
       dataset: { id: item.id },
       onClick: e => {
         if (e.target.closest('[data-action]')) return;
@@ -934,6 +962,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
         role: 'checkbox',
         tabindex: '0',
         'aria-checked': String(item.done),
+        'aria-disabled': String(locked),
         'aria-label': item.title,
         onClick: e => {
           e.stopPropagation();
@@ -949,8 +978,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       el('div', { className: 'check-body' }, [
         el('span', { className: 'check-title', text: item.title }),
         el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
+        locked ? buildPrerequisiteLockChip(prerequisite) : null,
         item.resources?.length ? buildResourceCountBadge(item, () => openItemPanel({
           item,
+          allItems: store.getSnapshot().items,
           onSave: patch => store.updateItem(item.id, patch),
           onDelete: () => store.removeItem(item.id)
         })) : null,
@@ -964,6 +995,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
             e.stopPropagation();
             openItemPanel({
               item,
+              allItems: store.getSnapshot().items,
               focusField: 'notes',
               onSave: patch => store.updateItem(item.id, patch),
               onDelete: () => store.removeItem(item.id)
@@ -1011,6 +1043,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
             e.stopPropagation();
             openItemPanel({
               item,
+              allItems: store.getSnapshot().items,
               onSave: patch => store.updateItem(item.id, patch),
               onDelete: () => store.removeItem(item.id)
             });
@@ -1334,7 +1367,29 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       const row = content.querySelector(`.check-item[data-id="${CSS.escape(item.id)}"]`);
       if (!row) return;
       row.classList.toggle('done', !!item.done);
-      row.querySelector('.check-box')?.setAttribute('aria-checked', String(!!item.done));
+      const checkBox = row.querySelector('.check-box');
+      checkBox?.setAttribute('aria-checked', String(!!item.done));
+
+      // Issue #381 — a plain `done` toggle is cosmetic and never bumps
+      // structuralVersion (see this function's own doc comment above), but
+      // it can still change *another* item's locked state if that item names
+      // this one as its prerequisite. Recomputed here, on every snapshot,
+      // rather than only on a structural re-render — otherwise a dependent
+      // row would stay visibly locked until some unrelated structural change
+      // happened to force a full render.
+      const prerequisite = getPrerequisite(item);
+      const locked = !!prerequisite && !prerequisite.done;
+      row.classList.toggle('locked', locked);
+      checkBox?.setAttribute('aria-disabled', String(locked));
+      const existingChip = row.querySelector('.prerequisite-lock-chip');
+      if (locked && !existingChip) {
+        row.querySelector('.priority-tag')?.after(buildPrerequisiteLockChip(prerequisite));
+      } else if (locked && existingChip) {
+        existingChip.title = `Blocked by "${prerequisite.title}" — complete it first to unlock this topic.`;
+        existingChip.replaceChildren(createIcon('lock', { size: 'xs' }), ` Blocked by: ${prerequisite.title}`);
+      } else if (!locked && existingChip) {
+        existingChip.remove();
+      }
     });
 
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery });

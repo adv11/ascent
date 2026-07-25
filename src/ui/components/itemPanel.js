@@ -48,7 +48,7 @@ export async function checkResourceLink(url) {
   }
 }
 
-export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
+export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focusField }) {
   const overlay = el('div', { className: 'panel-overlay', onClick: e => { if (e.target === overlay) close(); } });
   const panel = el('aside', { className: 'item-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Edit topic' });
 
@@ -56,6 +56,22 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
   const prioritySelect = createSelect(
     ['P0', 'P1', 'P2', 'P3'].map(p => ({ value: p, label: p })),
     { value: item.priority, ariaLabel: 'Priority' }
+  );
+
+  // Issue #381 — optional single prerequisite, picked from every other
+  // non-deleted topic in the same roadmap. A missing/empty value means "no
+  // prerequisite," same backward-compat convention as notes/tags. The store
+  // (updateItem()) rejects a patch that would create a cycle — this select
+  // only excludes the topic itself, it doesn't try to pre-filter the option
+  // list for a would-be cycle.
+  const prerequisiteOptions = [{ value: '', label: 'None' }].concat(
+    (allItems || [])
+      .filter(other => other.id !== item.id && !other.deleted)
+      .map(other => ({ value: other.id, label: other.title }))
+  );
+  const prerequisiteSelect = createSelect(
+    prerequisiteOptions,
+    { value: item.prerequisiteItemId || '', ariaLabel: 'Blocked by' }
   );
   const resourceList = el('div', { className: 'resource-list' });
   const labelInput = el('input', { className: 'field-input', placeholder: 'Resource label (e.g. YouTube tutorial)' });
@@ -320,6 +336,7 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
     overlay.classList.remove('show');
     panel.classList.remove('show');
     prioritySelect._cleanup?.();
+    prerequisiteSelect._cleanup?.();
     setTimeout(() => overlay.remove(), 240);
     onClose?.();
   }
@@ -366,6 +383,10 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
       el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Priority' }),
         prioritySelect
+      ]),
+      el('label', { className: 'field' }, [
+        el('span', { className: 'field-label', text: 'Blocked by' }),
+        prerequisiteSelect
       ]),
       el('label', { className: 'field' }, [
         el('span', { className: 'field-label', text: 'Tags' }),
@@ -456,7 +477,18 @@ export function openItemPanel({ item, onSave, onDelete, onClose, focusField }) {
             }
             clearTimeout(notesSaveTimer);
             notesSaveTimer = null;
-            onSave?.({ title, priority: prioritySelect.value, resources: cleanResources, notes: notesTextarea.value, tags });
+            const ok = onSave?.({
+              title,
+              priority: prioritySelect.value,
+              prerequisiteItemId: prerequisiteSelect.value || null,
+              resources: cleanResources,
+              notes: notesTextarea.value,
+              tags
+            });
+            if (ok === false) {
+              formError.textContent = 'That would create a circular prerequisite — pick a different topic.';
+              return;
+            }
             close();
           }
         })

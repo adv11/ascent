@@ -2532,6 +2532,77 @@ describe('tags — item field store contract (issue #182)', () => {
   });
 });
 
+describe('prerequisiteItemId — "blocked by" store contract (issue #381)', () => {
+  it('updateItem({ prerequisiteItemId }) persists like notes/tags and bumps structuralVersion', () => {
+    const store = createRoadmapStore();
+    const [firstId, secondId] = Object.keys(store.getSnapshot().allItems);
+    const beforeVersion = store.getSnapshot().structuralVersion;
+
+    const ok = store.updateItem(secondId, { prerequisiteItemId: firstId });
+    expect(ok).toBe(true);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.structuralVersion).toBeGreaterThan(beforeVersion);
+    expect(snapshot.items.find(i => i.id === secondId).prerequisiteItemId).toBe(firstId);
+  });
+
+  it('rejects a direct self-reference, mutating nothing', () => {
+    const store = createRoadmapStore();
+    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+
+    const ok = store.updateItem(firstId, { prerequisiteItemId: firstId });
+    expect(ok).toBe(false);
+    expect(store.getSnapshot().items.find(i => i.id === firstId).prerequisiteItemId).toBeFalsy();
+  });
+
+  it('rejects a two-item cycle (A blocked by B, then B blocked by A), mutating nothing', () => {
+    const store = createRoadmapStore();
+    const [aId, bId] = Object.keys(store.getSnapshot().allItems);
+
+    expect(store.updateItem(aId, { prerequisiteItemId: bId })).toBe(true);
+
+    const ok = store.updateItem(bId, { prerequisiteItemId: aId });
+    expect(ok).toBe(false);
+    expect(store.getSnapshot().items.find(i => i.id === bId).prerequisiteItemId).toBeFalsy();
+  });
+
+  it('rejects a longer cycle (A -> B -> C -> A)', () => {
+    const store = createRoadmapStore();
+    const [aId, bId, cId] = Object.keys(store.getSnapshot().allItems);
+
+    expect(store.updateItem(bId, { prerequisiteItemId: aId })).toBe(true);
+    expect(store.updateItem(cId, { prerequisiteItemId: bId })).toBe(true);
+
+    const ok = store.updateItem(aId, { prerequisiteItemId: cId });
+    expect(ok).toBe(false);
+    expect(store.getSnapshot().items.find(i => i.id === aId).prerequisiteItemId).toBeFalsy();
+  });
+
+  it('allows clearing an existing prerequisite back to null', () => {
+    const store = createRoadmapStore();
+    const [firstId, secondId] = Object.keys(store.getSnapshot().allItems);
+    store.updateItem(secondId, { prerequisiteItemId: firstId });
+
+    const ok = store.updateItem(secondId, { prerequisiteItemId: null });
+    expect(ok).toBe(true);
+    expect(store.getSnapshot().items.find(i => i.id === secondId).prerequisiteItemId).toBeNull();
+  });
+
+  it('a dangling reference to a since-deleted item is a no-op to reject/accept at the store level — removeItem soft-deletes, leaving the reference in place for the UI to treat as unblocked', () => {
+    const store = createRoadmapStore();
+    const [firstId, secondId] = Object.keys(store.getSnapshot().allItems);
+    store.updateItem(secondId, { prerequisiteItemId: firstId });
+    store.removeItem(firstId);
+
+    const snapshot = store.getSnapshot();
+    expect(snapshot.allItems[firstId].deleted).toBe(true);
+    // The reference itself is left untouched — dashboard.js's getPrerequisite()
+    // treats a deleted target as "no prerequisite" at render time, rather than
+    // the store clearing/re-validating it on the prerequisite's own deletion.
+    expect(snapshot.allItems[secondId].prerequisiteItemId).toBe(firstId);
+  });
+});
+
 // Issue #153 root cause #1 — two switchRoadmap()/createCustomRoadmap()/
 // deleteCustomRoadmap() calls racing in back-to-back (the reported repro:
 // importing two custom roadmaps within a few seconds) used to each compute

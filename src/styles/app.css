@@ -3429,6 +3429,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   cursor: default;
 }
 
+/* issue #381 — a topic blocked on an unmet prerequisite: dimmed row, disabled
+   checkbox (see dashboard.js's toggleDone()/isBlocked() guard), and a chip
+   naming the prerequisite. Matches .notes-indicator's ghost-chip treatment
+   rather than inventing a new pill style. */
+.check-item.locked { opacity: 0.55; }
+.check-item.locked .check-box { cursor: not-allowed; }
+.prerequisite-lock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--chip-height);
+  padding: 0 var(--chip-padding-x);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
 .check-actions { opacity: 0; transition: opacity 140ms ease; }
 .check-item:hover .check-actions, .check-item:focus-within .check-actions { opacity: 1; }
 /* A touch/coarse-pointer device (or one with no hover at all) has no reliable
