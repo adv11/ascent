@@ -12,7 +12,7 @@ import { openCreateRoadmapModal } from '../components/importRoadmapModal.js';
 import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
-import { exportBackupJson, exportBackupCsv, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
+import { exportBackupJson, exportBackupCsv, exportBackupMarkdown, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
 import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
@@ -628,6 +628,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
+    { text: 'Export as Markdown', onClick: () => exportBackupMarkdown(store) },
     { text: 'Import backup…', onClick: () => importInput.click() },
     { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
   ];

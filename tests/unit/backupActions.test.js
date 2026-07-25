@@ -11,14 +11,14 @@ vi.mock('../../src/ui/components/importBackupModal.js', () => ({ openImportBacku
 vi.mock('../../src/ui/components/toast.js', () => ({ showToast }));
 vi.mock('../../src/ui/utils/backupReminder.js', () => ({ markBackupTaken }));
 
-const { exportBackupJson, exportBackupCsv, exportTodosIcs, importBackupFromFile } = await import('../../src/ui/utils/backupActions.js');
+const { exportBackupJson, exportBackupCsv, exportBackupMarkdown, exportTodosIcs, importBackupFromFile } = await import('../../src/ui/utils/backupActions.js');
 
 function fakeStore(overrides = {}) {
   const allItems = overrides.allItems || {
     'existing-1': { id: 'existing-1', title: 'Existing topic', deleted: false }
   };
   return {
-    getSnapshot: () => ({ uid: 'user-1', activeTemplateId: 'java-backend', allItems, ...overrides.snapshot }),
+    getSnapshot: () => ({ uid: 'user-1', activeTemplateId: 'java-backend', allItems, items: [], phases: [], ...overrides.snapshot }),
     importBackupItems: overrides.importBackupItems || vi.fn(() => ({ added: 1, updated: 0, skipped: 0 })),
     removeItem: overrides.removeItem || vi.fn()
   };
@@ -51,6 +51,21 @@ describe('exportBackupCsv', () => {
     expect(filename).toMatch(/\.csv$/);
     expect(mimeType).toBe('text/csv');
     expect(markBackupTaken).not.toHaveBeenCalled();
+  });
+});
+
+describe('exportBackupMarkdown', () => {
+  it('downloads a .md file and never marks a backup as taken (Markdown is not restorable)', () => {
+    const store = fakeStore({ snapshot: { activeTemplateId: 'java-backend' } });
+    exportBackupMarkdown(store);
+
+    expect(downloadTextFile).toHaveBeenCalledTimes(1);
+    const [filename, content, mimeType] = downloadTextFile.mock.calls[0];
+    expect(filename).toMatch(/\.md$/);
+    expect(mimeType).toBe('text/markdown');
+    expect(content).toContain('# ');
+    expect(markBackupTaken).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith('Markdown exported.', 'success');
   });
 });
 

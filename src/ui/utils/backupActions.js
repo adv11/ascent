@@ -1,11 +1,13 @@
 import { isValidUrl } from '../dom.js';
 import { buildRoadmapExport, buildRoadmapCsv, exportFileBaseName } from '../../core/roadmap/backupSchema.js';
+import { buildRoadmapMarkdown } from '../../core/roadmap/markdownExport.js';
 import { validateBackupText } from '../../core/roadmap/backupValidator.js';
 import { buildTodosIcs } from '../../core/dailyTodo/icsExport.js';
 import { downloadTextFile, readFileAsText } from './backupTransfer.js';
 import { openImportBackupModal } from '../components/importBackupModal.js';
 import { showToast } from '../components/toast.js';
 import { markBackupTaken } from './backupReminder.js';
+import { resolveRoadmapTitle } from './printRoadmap.js';
 
 // Shared export/import handlers (issue #18, extracted in a follow-up so both
 // sidebar.js's account dropdown and backupReminderBanner.js's "Download
@@ -26,6 +28,17 @@ export function exportBackupCsv(store) {
   const csv = buildRoadmapCsv(snapshot);
   downloadTextFile(`${exportFileBaseName(snapshot.activeTemplateId)}.csv`, csv, 'text/csv');
   showToast('CSV exported.', 'success');
+}
+
+// Issue #378 — exports the active roadmap as a single Markdown file for
+// pasting into Obsidian/Notion/a personal wiki. One-way, like the CSV export
+// above — never counts toward markBackupTaken()'s clock, since it isn't a
+// restorable backup either.
+export function exportBackupMarkdown(store) {
+  const snapshot = store.getSnapshot();
+  const markdown = buildRoadmapMarkdown(snapshot, resolveRoadmapTitle(snapshot));
+  downloadTextFile(`${exportFileBaseName(snapshot.activeTemplateId)}.md`, markdown, 'text/markdown');
+  showToast('Markdown exported.', 'success');
 }
 
 // Issue #133 Part 1 — exports active Daily Todos as an ICS file. Separate

@@ -1386,6 +1386,8 @@ soft-deletes — via the existing `removeItem()`, never a direct mutation — an
 currently in the roadmap that isn't in the backup file); both still only ever call
 public store methods.
 
+**A third, read-only export format — Markdown (issue #378).** `src/core/roadmap/markdownExport.js`'s `buildRoadmapMarkdown(snapshot, title, { includeNotes })` is a third pure module alongside `backupSchema.js`/`backupValidator.js` above, producing a single Markdown document (phases/sections as headings, topics as a `- [x]`/`- [ ]` checklist, resources as links, notes as an indented blockquote) meant to be pasted into Obsidian/Notion/a personal wiki — not a restorable snapshot the way JSON/CSV are, and one-way only, same precedent as CSV. Reuses `snapshot.items` (already-filtered, non-deleted) and `snapshot.phases` for ordering, mirroring `dashboard.js`'s `groupItems()` grouping logic. Unlike `shareSchema.js`'s published share snapshot (which never includes notes, since a share link can reach a stranger), notes default to **included** here — this is always the user's own download. `exportBackupMarkdown()` (`backupActions.js`) wires it to a `.md` download via the same `downloadTextFile()` helper the JSON/CSV export uses, and reuses `printRoadmap.js`'s exported `resolveRoadmapTitle()` to resolve a built-in template's name or a custom roadmap's own title.
+
 Placement: export/import lives in the account dropdown (`sidebar.js`'s `buildAccountMenu()`)
 rather than a dedicated settings screen, since issue #16 (account settings page) doesn't
 exist yet — move it there once it does. Available to every signed-in identity,

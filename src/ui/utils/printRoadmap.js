@@ -23,7 +23,7 @@ function printSiteUrl() {
   return window.location.host;
 }
 
-function resolveRoadmapTitle(snapshot) {
+export function resolveRoadmapTitle(snapshot) {
   const custom = (snapshot.customRoadmaps || []).find(r => r.id === snapshot.activeTemplateId);
   if (custom) return custom.title;
   return getTemplate(snapshot.activeTemplateId)?.name || 'Roadmap';
