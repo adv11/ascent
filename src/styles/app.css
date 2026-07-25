@@ -5011,6 +5011,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .check-item { min-height: 46px; }
   .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
   .feedback-widget-trigger { min-height: 46px; }
+  .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

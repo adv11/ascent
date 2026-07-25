@@ -20,6 +20,24 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       expect(box.width).toBeGreaterThanOrEqual(44);
       expect(box.height).toBeGreaterThanOrEqual(44);
     });
+
+    test('onboarding template-card info-corner and overflow buttons are at least 44x44px (issue #377)', async ({ page }) => {
+      test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+      await page.goto('/#/signin');
+      await page.click('text=Continue as guest');
+      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+
+      const infoCornerBox = await page.locator('.template-card-create .template-card-info-corner').boundingBox();
+      expect(infoCornerBox.width).toBeGreaterThanOrEqual(44);
+      expect(infoCornerBox.height).toBeGreaterThanOrEqual(44);
+
+      const overflowBox = await page
+        .locator('.template-card', { hasText: 'Java Backend Engineer' })
+        .locator('.template-card-overflow-btn')
+        .boundingBox();
+      expect(overflowBox.width).toBeGreaterThanOrEqual(44);
+      expect(overflowBox.height).toBeGreaterThanOrEqual(44);
+    });
   });
 
   test.describe('touch targets are unchanged on non-touch desktop viewports', () => {
