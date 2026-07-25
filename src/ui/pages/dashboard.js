@@ -28,6 +28,7 @@ import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag } from '../../
 import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/completionCelebration.js';
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
 import { mountPrintSnapshot, attachPrintCleanup } from '../utils/printRoadmap.js';
+import { openModal } from '../components/modal.js';
 // openAddToDailyTodoModal, openDeleteAccountModal, triggerConfetti,
 // openBadgeShareModal, and startTour are all dynamically imported below,
 // right where each is used — every one of them only ever runs behind a rare,
@@ -1341,6 +1342,19 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     knownItemIds = new Set(allItems.map(i => i.id));
 
     checkForCelebration(allItems, { seedOnly: true });
+
+    // A full render() tears down and rebuilds every row's DOM node — reapply
+    // the (purely visual) keyboard-focus ring if the previously-focused row
+    // still exists and is still visible; drop it otherwise rather than
+    // leaving a stale id nothing points at.
+    if (focusedRowId != null) {
+      const stillVisible = getVisibleRows().some(r => r.dataset.id === focusedRowId);
+      if (stillVisible) {
+        content.querySelector(`.check-item[data-id="${CSS.escape(focusedRowId)}"]`)?.classList.add('check-item-focused');
+      } else {
+        focusedRowId = null;
+      }
+    }
   }
 
   // A "done" toggle only flips one item's checked state — it never changes which
@@ -1735,6 +1749,115 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   window.addEventListener('beforeprint', handleBeforePrint);
   printMediaQuery.addEventListener('change', handlePrintMediaChange);
 
+  // Issue #379 — keyboard-only navigation for the checklist: `j`/`k` move a
+  // purely-visual `.check-item-focused` ring between currently-visible rows
+  // (only rows inside an *open* .phase-card — a collapsed phase's rows are
+  // still in the DOM per renderPhaseCard() above, just not something a
+  // keyboard user should be able to "arrive at"), Enter/Space toggles the
+  // focused row's done state, and `?` opens a shortcuts-reference overlay.
+  // This extends, not duplicates, the command palette (issue #283's
+  // Cmd/Ctrl+K) — that's for jumping to a page/topic by search; this is for
+  // moving through the list already on screen without leaving the keyboard.
+  let focusedRowId = null;
+  let shortcutsOverlay = null;
+
+  function isTypingTarget(target) {
+    if (!target) return false;
+    const tag = target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+  }
+
+  function getVisibleRows() {
+    return Array.from(content.querySelectorAll('.phase-card.open .check-item'));
+  }
+
+  function setRowFocus(id) {
+    if (focusedRowId != null) {
+      content.querySelector(`.check-item[data-id="${CSS.escape(focusedRowId)}"]`)?.classList.remove('check-item-focused');
+    }
+    focusedRowId = id;
+    if (focusedRowId != null) {
+      const rowEl = content.querySelector(`.check-item[data-id="${CSS.escape(focusedRowId)}"]`);
+      rowEl?.classList.add('check-item-focused');
+      rowEl?.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function moveRowFocus(delta) {
+    const rows = getVisibleRows();
+    if (!rows.length) return;
+    const currentIndex = rows.findIndex(r => r.dataset.id === focusedRowId);
+    // Clamps at the list's ends rather than wrapping — moving past the last
+    // row and landing back at the first (or vice versa) read as more
+    // disorienting than just stopping, once actually tried against a long
+    // roadmap.
+    const nextIndex = currentIndex === -1
+      ? (delta > 0 ? 0 : rows.length - 1)
+      : Math.min(Math.max(currentIndex + delta, 0), rows.length - 1);
+    setRowFocus(rows[nextIndex].dataset.id);
+  }
+
+  function toggleFocusedRow() {
+    if (focusedRowId == null) return;
+    const rowEl = content.querySelector(`.check-item[data-id="${CSS.escape(focusedRowId)}"]`);
+    // Dispatches a real click on the row's own checkbox rather than calling
+    // toggleDone() directly — this is the same code path a mouse click on
+    // the checkbox already goes through (data-action click-guard convention,
+    // root CLAUDE.md), so there's no parallel toggle implementation to drift.
+    rowEl?.querySelector('.check-box')?.click();
+  }
+
+  function openShortcutsOverlay() {
+    if (shortcutsOverlay) return;
+    const rows = [
+      ['?', 'Show this shortcuts overlay'],
+      ['j', 'Move focus to the next topic'],
+      ['k', 'Move focus to the previous topic'],
+      ['Enter / Space', 'Toggle the focused topic']
+    ];
+    shortcutsOverlay = openModal({
+      ariaLabel: 'Keyboard shortcuts',
+      className: 'shortcuts-modal-card',
+      content: [
+        el('h2', { className: 'shortcuts-modal-title', text: 'Keyboard shortcuts' }),
+        el('div', { className: 'shortcuts-modal-list' }, rows.map(([key, desc]) => el('div', { className: 'shortcuts-modal-row' }, [
+          el('kbd', { className: 'shortcuts-modal-key', text: key }),
+          el('span', { className: 'shortcuts-modal-desc', text: desc })
+        ]))),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-secondary',
+          text: 'Got it',
+          onClick: () => closeShortcutsOverlay()
+        })
+      ]
+    });
+  }
+
+  function closeShortcutsOverlay() {
+    shortcutsOverlay?.close();
+    shortcutsOverlay = null;
+  }
+
+  function handleGlobalKeydown(e) {
+    if (isTypingTarget(e.target) || document.querySelector('.modal-overlay') || document.querySelector('.item-panel')) return;
+    if (e.key === '?') {
+      e.preventDefault();
+      openShortcutsOverlay();
+    } else if (e.key === 'j') {
+      e.preventDefault();
+      moveRowFocus(1);
+    } else if (e.key === 'k') {
+      e.preventDefault();
+      moveRowFocus(-1);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      if (focusedRowId == null) return;
+      e.preventDefault();
+      toggleFocusedRow();
+    }
+  }
+  window.addEventListener('keydown', handleGlobalKeydown);
+
   return () => {
     activeTourCleanup?.();
     themeToggleBtn._cleanup?.();
@@ -1750,5 +1873,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     printMediaQuery.removeEventListener('change', handlePrintMediaChange);
     unmountPrintSnapshot?.();
     clearTimeout(saveBadgeTimer);
+    window.removeEventListener('keydown', handleGlobalKeydown);
+    closeShortcutsOverlay();
   };
 }
