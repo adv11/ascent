@@ -323,20 +323,29 @@ test.describe('Server-side data-cap Firebase rules (issue #122)', () => {
   // path is now rejected, and that a real, otherwise-legitimate write
   // (roadmap item toggle, daily-todo create/complete, streak-freeze
   // grant/use) still succeeds unchanged.
-  test('users/{uid}/roadmap/items/{itemId} (legacy path) rejects an unexpected extra field; accepts a compliant item', async ({ page }) => {
+  // Issue #376 — the legacy singular `users/{uid}/roadmap` path has been
+  // read-only since issue #58's migration to `users/{uid}/roadmaps/{templateId}`,
+  // but the rules still allowed writes to it (including an unbounded
+  // `resources` index, unlike its replacement path's issue #187 cap). Locked
+  // to `.write: false` outright rather than merely capping the index, since
+  // nothing should ever write here again. This supersedes the #275 case
+  // above, which asserted a compliant write to this path still succeeded —
+  // it no longer can, by design.
+  test('users/{uid}/roadmap (legacy path) rejects every write, compliant or not', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     const uid = await signInGuestAndGetUid(page);
-
-    const extraField = await writeAtPath(page, `users/${uid}/roadmap`, {
-      version: 1, items: { item1: { title: 'Learn Java', done: true } }
-    });
-    expect(extraField.ok, 'an unvalidated field (done) on the legacy roadmap item path should be rejected').toBe(false);
 
     const compliant = await writeAtPath(page, `users/${uid}/roadmap`, {
       version: 1,
       items: { item1: { title: 'Learn Java', notes: 'short note', resources: { 0: { label: 'Docs', url: 'https://x.com' } } } }
     });
-    expect(compliant.ok, 'a compliant legacy roadmap item write (title/notes/resources only) should still succeed').toBe(true);
+    expect(compliant.ok, 'an otherwise-compliant write to the legacy roadmap path should now be rejected outright').toBe(false);
+
+    const oversizedIndex = await writeAtPath(page, `users/${uid}/roadmap`, {
+      version: 1,
+      items: { item1: { title: 'Learn Java', resources: { 100: { label: 'Docs', url: 'https://x.com' } } } }
+    });
+    expect(oversizedIndex.ok, 'a write with an unbounded resources index should also be rejected, same as any other write to this path').toBe(false);
   });
 
   test('users/{uid}/dailyTodos/{todoId} rejects an unexpected extra field; accepts a create and a complete', async ({ page }) => {
