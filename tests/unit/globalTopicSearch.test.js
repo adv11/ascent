@@ -64,6 +64,27 @@ describe('searchTopicsAcrossRoadmaps', () => {
     expect(resourceMatch[0].matchedFields).toContain('resources');
   });
 
+  it('matches a query that only appears in notes text, not title/phase/section/resources, and returns a snippet', () => {
+    const roadmaps = [{
+      id: 'r1',
+      title: 'R1',
+      items: {
+        a: {
+          id: 'a',
+          title: 'Auth basics',
+          phase: 'Security',
+          section: 'Tokens',
+          notes: 'JWT expiry gotcha — see RFC 7519 §4.1.4 for the exp claim details.',
+          resources: []
+        }
+      }
+    }];
+    const results = searchTopicsAcrossRoadmaps(roadmaps, 'expiry gotcha');
+    expect(results).toHaveLength(1);
+    expect(results[0].matchedFields).toEqual(['notes']);
+    expect(results[0].noteSnippet).toContain('expiry gotcha');
+  });
+
   it('never returns a soft-deleted item', () => {
     const results = searchTopicsAcrossRoadmaps(makeRoadmaps(), 'deleted topic');
     expect(results).toEqual([]);

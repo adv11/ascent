@@ -1113,9 +1113,21 @@ precedent as `KEYS.SCROLL_TO_PHASE` above, opening the target topic via the exis
 already uses. Because a no-op `switchRoadmap()` never fires a store `notify()`, the
 same-roadmap-already-active case additionally dispatches a plain
 `window.dispatchEvent(new CustomEvent('ascent:open-item'))` so an already-mounted
-dashboard picks up the signal immediately, without a real navigation. If you add another
-cross-roadmap read (a second global search facet, a "recently completed across all
-roadmaps" widget, etc.), reuse `getAllRoadmapsForSearch()`'s read-only,
+dashboard picks up the signal immediately, without a real navigation.
+
+**A notes-only match includes a `noteSnippet` excerpt so a user can tell why it
+matched (issue #380).** `buildMatchEntry()` (`globalTopicSearch.js`) builds a short,
+plain-substring excerpt (`buildSnippet()`, ±40 chars around the first match, `…`-
+truncated) whenever `'notes'` is among a match's `matchedFields` — `null` otherwise, so
+a title/phase/section/resource match carries no snippet at all. `topbar.js`'s
+`buildResultSubtitle()` appends it to the result row's subtitle only when the match
+did **not** also hit the title (a title hit is already self-explanatory) — this is
+presentation only, `searchTopicsAcrossRoadmaps()`'s ranking/field-matching logic is
+unchanged.
+
+If you add another cross-roadmap read (a second global search facet, a "recently
+completed across all roadmaps" widget, etc.), reuse `getAllRoadmapsForSearch()`'s
+read-only,
 `fetchTemplateData()`/`resolveRoadmapItems()`-backed pattern rather than building a
 second bespoke multi-roadmap fetch path.
 
