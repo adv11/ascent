@@ -38,6 +38,23 @@ function bestFieldRank(fields) {
   return Math.min(...fields.map(f => FIELD_PRIORITY.indexOf(f)));
 }
 
+// A short excerpt around the first match, so a result whose only hit was in
+// `notes` can show *why* it matched instead of just the topic title (issue #380)
+// — the same "show a highlighted excerpt" idea a search engine uses. Plain
+// substring only, matching this file's existing case-insensitive-substring
+// matching convention (no fuzzy/regex highlighting).
+const SNIPPET_RADIUS = 40;
+
+function buildSnippet(text, q) {
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return null;
+  const start = Math.max(0, idx - SNIPPET_RADIUS);
+  const end = Math.min(text.length, idx + q.length + SNIPPET_RADIUS);
+  const prefix = start > 0 ? '…' : '';
+  const suffix = end < text.length ? '…' : '';
+  return `${prefix}${text.slice(start, end).trim()}${suffix}`;
+}
+
 // Builds one ranked match entry for a single item, or null if the item is a
 // soft-deleted tombstone or doesn't match any field — extracted out of
 // searchTopicsAcrossRoadmaps()'s own loop to keep that function's complexity down.
@@ -45,6 +62,7 @@ function buildMatchEntry(roadmap, item, q) {
   if (!item || item.deleted) return null;
   const fields = matchedFields(item, q);
   if (!fields.length) return null;
+  const noteSnippet = fields.includes('notes') ? buildSnippet(item.notes, q) : null;
   return {
     rank: bestFieldRank(fields),
     match: {
@@ -54,7 +72,8 @@ function buildMatchEntry(roadmap, item, q) {
       itemTitle: item.title,
       phase: item.phase,
       section: item.section,
-      matchedFields: fields
+      matchedFields: fields,
+      noteSnippet
     }
   };
 }

@@ -23,11 +23,21 @@ function navigationItems() {
 // event dashboard.js also listens for (already on /app — a same-roadmap switch is a
 // no-op that never triggers a store notify/re-render on its own, so this is the
 // only way that case gets picked up without a real navigation).
+// Issue #380 — when the only reason a result matched was its notes text (not the
+// title itself), the plain "roadmap · phase" subtitle gives no clue why it showed
+// up. Appending the matched snippet lets a user tell at a glance, same as a search
+// engine's highlighted excerpt.
+function buildResultSubtitle(match) {
+  const base = `${match.roadmapTitle} · ${match.phase}`;
+  if (match.matchedFields.includes('title') || !match.noteSnippet) return base;
+  return `${base} — "${match.noteSnippet}"`;
+}
+
 function buildTopicResultItem(match, store) {
   return {
     id: `topic-${match.roadmapId}-${match.itemId}`,
     title: match.itemTitle,
-    subtitle: `${match.roadmapTitle} · ${match.phase}`,
+    subtitle: buildResultSubtitle(match),
     onSelect: async () => {
       const { activeTemplateId } = store.getSnapshot();
       if (match.roadmapId !== activeTemplateId) {
