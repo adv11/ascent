@@ -4783,8 +4783,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    (.claude/rules/ui-styling.md). */
 /* design-system.md §5 — "Feedback widget: solid accent square." Was a
    neutral --color-surface pill with a border (issue #301 follow-up); now a
-   flat solid --color-accent fill with ground-colored text/icon, matching
-   .btn-primary's own fill/text pairing. */
+   flat solid fill with ground-colored text/icon, matching .btn-primary's own
+   fill/text pairing — including that rule's own fix: fill reads
+   --color-accent-600, not the base --color-accent. The base accent measures
+   only ~3.76:1 against --color-ink-on-accent in light theme (axe-caught,
+   found via a real CI failure — issue #337's merge commit shipped this exact
+   regression, color-contrast id, .feedback-widget-label/-trigger, "serious"),
+   below the 4.5:1 WCAG AA floor for 14px bold text; --color-accent-600 clears
+   it at ~4.94:1. Same token, same reasoning as .btn-primary above — keep
+   both in sync if either's fill token ever changes. */
 .feedback-widget-trigger {
   position: fixed;
   bottom: max(24px, env(safe-area-inset-bottom));
@@ -4796,7 +4803,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: 12px 18px;
   border-radius: 0;
   border: none;
-  background: var(--color-accent);
+  background: var(--color-accent-600);
   color: var(--color-ink-on-accent);
   font-weight: 700;
   font-size: var(--text-sm);
@@ -4807,7 +4814,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: transform 220ms var(--ease-spring, ease), opacity 220ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 .feedback-widget-trigger.feedback-widget-visible { opacity: 1; transform: scale(1); }
-.feedback-widget-trigger:hover { box-shadow: var(--shadow-xl); background: var(--color-accent-600); }
+.feedback-widget-trigger:hover { box-shadow: var(--shadow-xl); background: color-mix(in srgb, var(--color-accent-600) 88%, black); }
 .feedback-widget-trigger:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 :root[data-theme='dark'] .feedback-widget-trigger:focus-visible { outline-color: var(--color-accent); }
 .feedback-widget-emoji { font-size: var(--text-lg); line-height: 1; }
