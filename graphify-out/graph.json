@@ -1462,8 +1462,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_core_analytics_datekey_parsedatekey",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "parsedatekey()"
     },
     {
@@ -1473,8 +1473,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_core_analytics_datekey_month_abbr",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "month_abbr"
     },
     {
@@ -1869,8 +1869,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "limits.js"
     },
     {
@@ -1880,8 +1880,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits_duration_presets",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "duration_presets"
     },
     {
@@ -1891,8 +1891,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits_clampdurationms",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "clampdurationms()"
     },
     {
@@ -1902,8 +1902,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_dailytodo_reminderscheduling",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "reminderscheduling.js"
     },
     {
@@ -1913,8 +1913,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_core_dailytodo_reminderscheduling_computereminderfireat",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "computereminderfireat()"
     },
     {
@@ -1924,8 +1924,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_core_dailytodo_reminderscheduling_shouldschedulereminder",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "shouldschedulereminder()"
     },
     {
@@ -2144,8 +2144,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_backupschema",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "backupschema.js"
     },
     {
@@ -2155,8 +2155,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_core_roadmap_backupschema_toexportitem",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "toexportitem()"
     },
     {
@@ -2166,8 +2166,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_core_roadmap_backupschema_buildroadmapexport",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "buildroadmapexport()"
     },
     {
@@ -2188,8 +2188,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_core_roadmap_backupschema_csvfield",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "csvfield()"
     },
     {
@@ -2199,8 +2199,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_core_roadmap_backupschema_csv_columns",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "csv_columns"
     },
     {
@@ -2210,8 +2210,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_core_roadmap_backupschema_buildroadmapcsv",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "buildroadmapcsv()"
     },
     {
@@ -2221,8 +2221,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "docref_rfc_4180",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "rfc-4180"
     },
     {
@@ -2375,8 +2375,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "globaltopicsearch.js"
     },
     {
@@ -2386,8 +2386,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_field_priority",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "field_priority"
     },
     {
@@ -2397,8 +2397,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_field_matchers",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "field_matchers"
     },
     {
@@ -2408,8 +2408,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_matchedfields",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "matchedfields()"
     },
     {
@@ -2419,8 +2419,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_bestfieldrank",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "bestfieldrank()"
     },
     {
@@ -2430,8 +2430,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_buildsnippet",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "buildsnippet()"
     },
     {
@@ -2441,8 +2441,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_buildmatchentry",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "buildmatchentry()"
     },
     {
@@ -2452,8 +2452,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_matchroadmapitems",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "matchroadmapitems()"
     },
     {
@@ -2463,8 +2463,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_core_roadmap_globaltopicsearch_searchtopicsacrossroadmaps",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "searchtopicsacrossroadmaps()"
     },
     {
@@ -2771,8 +2771,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_limits",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "limits.js"
     },
     {
@@ -2782,8 +2782,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_core_roadmap_limits_isvalidresource",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "isvalidresource()"
     },
     {
@@ -2793,8 +2793,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_core_roadmap_limits_isvalidtags",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "isvalidtags()"
     },
     {
@@ -2870,8 +2870,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "reviewschedule.js"
     },
     {
@@ -2881,8 +2881,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_isreviewdue",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "isreviewdue()"
     },
     {
@@ -2892,8 +2892,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_getreviewdueitems",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "getreviewdueitems()"
     },
     {
@@ -2903,8 +2903,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_groupreviewdueitemsbytag",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "groupreviewdueitemsbytag()"
     },
     {
@@ -3090,8 +3090,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "shareschema.js"
     },
     {
@@ -3101,8 +3101,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema_toshareitem",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "toshareitem()"
     },
     {
@@ -3112,8 +3112,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema_buildroadmapsharesnapshot",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "buildroadmapsharesnapshot()"
     },
     {
@@ -3266,8 +3266,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_roadmap",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "roadmap.js"
     },
     {
@@ -3486,8 +3486,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_templates_index",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "index.js"
     },
     {
@@ -3497,8 +3497,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_data_templates_index_loaders",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "loaders"
     },
     {
@@ -3508,8 +3508,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_data_templates_index_templates",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "templates"
     },
     {
@@ -3519,8 +3519,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_data_templates_index_gettemplate",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "gettemplate()"
     },
     {
@@ -3530,8 +3530,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_data_templates_index_buildseeditems",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "buildseeditems()"
     },
     {
@@ -3541,8 +3541,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_data_templates_index_gettemplatephases",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "gettemplatephases()"
     },
     {
@@ -3552,8 +3552,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_data_templates_index_getlegacyblanktemplatedata",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "getlegacyblanktemplatedata()"
     },
     {
@@ -3563,8 +3563,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_templates_java_backend",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "java-backend.js"
     },
     {
@@ -3574,8 +3574,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_resource_library",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "resource_library"
     },
     {
@@ -3585,8 +3585,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_topic_resources",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "topic_resources"
     },
     {
@@ -3596,8 +3596,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_phases",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "phases"
     },
     {
@@ -3607,8 +3607,8 @@
       "source_location": "L521",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_buildseeditems",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "buildseeditems()"
     },
     {
@@ -3783,8 +3783,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "main.js"
     },
     {
@@ -3794,8 +3794,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_main_app",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "app"
     },
     {
@@ -3805,8 +3805,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_main_activitylogstore",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "activitylogstore"
     },
     {
@@ -3816,8 +3816,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_main_store",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "store"
     },
     {
@@ -3827,8 +3827,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_main_dailytodostore",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "dailytodostore"
     },
     {
@@ -3838,8 +3838,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_main_feedbackwidget",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "feedbackwidget"
     },
     {
@@ -3849,8 +3849,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "src_main_guardapp",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "guardapp()"
     },
     {
@@ -3860,8 +3860,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_main_lazyguard",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "lazyguard()"
     },
     {
@@ -3871,8 +3871,8 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "src_main_preloaddashboardmodule",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "preloaddashboardmodule()"
     },
     {
@@ -3882,8 +3882,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "src_main_no_uid_seen_yet",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "no_uid_seen_yet"
     },
     {
@@ -3894,7 +3894,7 @@
       "_origin": "ast",
       "id": "src_services_accountguards",
       "community": 136,
-      "community_name": "accountGuards.js",
+      "community_name": "firebase.js",
       "norm_label": "accountguards.js"
     },
     {
@@ -3905,7 +3905,7 @@
       "_origin": "ast",
       "id": "src_services_accountguards_assertaccountdeletable",
       "community": 136,
-      "community_name": "accountGuards.js",
+      "community_name": "firebase.js",
       "norm_label": "assertaccountdeletable()"
     },
     {
@@ -3916,7 +3916,7 @@
       "_origin": "ast",
       "id": "src_services_accountguards_asserthaspasswordcredential",
       "community": 136,
-      "community_name": "accountGuards.js",
+      "community_name": "firebase.js",
       "norm_label": "asserthaspasswordcredential()"
     },
     {
@@ -3926,8 +3926,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_activitylogstore",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "activitylogstore.js"
     },
     {
@@ -3937,8 +3937,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_activitylogstore_stablestringify",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "stablestringify()"
     },
     {
@@ -3948,8 +3948,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_services_activitylogstore_pruneoldentries",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "pruneoldentries()"
     },
     {
@@ -3959,8 +3959,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_services_activitylogstore_resolvelocalentries",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "resolvelocalentries()"
     },
     {
@@ -3970,8 +3970,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_services_activitylogstore_applyentrypruning",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "applyentrypruning()"
     },
     {
@@ -3981,8 +3981,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_services_activitylogstore_readlocallog",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "readlocallog()"
     },
     {
@@ -3992,8 +3992,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_services_activitylogstore_default_streak_freezes",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "default_streak_freezes"
     },
     {
@@ -4003,8 +4003,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_services_activitylogstore_readlocalstreakfreezes",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "readlocalstreakfreezes()"
     },
     {
@@ -4014,8 +4014,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_services_activitylogstore_createactivitylogstore",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "createactivitylogstore()"
     },
     {
@@ -4025,8 +4025,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_activitylogstore_js_docref_adr_0009",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "adr-0009"
     },
     {
@@ -4036,8 +4036,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_authcleanup",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "authcleanup.js"
     },
     {
@@ -4047,8 +4047,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_services_authcleanup_signoutwithcleanup",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "signoutwithcleanup()"
     },
     {
@@ -4058,8 +4058,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "celebrationshownstore.js"
     },
     {
@@ -4069,8 +4069,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_read",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "read()"
     },
     {
@@ -4080,8 +4080,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_write",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "write()"
     },
     {
@@ -4091,8 +4091,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_hasshownroadmapcelebration",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "hasshownroadmapcelebration()"
     },
     {
@@ -4102,8 +4102,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_hasshownphasecelebration",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "hasshownphasecelebration()"
     },
     {
@@ -4113,8 +4113,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_markroadmapcelebrationshown",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "markroadmapcelebrationshown()"
     },
     {
@@ -4124,8 +4124,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_markphasecelebrationshown",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "markphasecelebrationshown()"
     },
     {
@@ -4168,8 +4168,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_dailytodostore",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "dailytodostore.js"
     },
     {
@@ -4179,8 +4179,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_dailytodostore_stablestringify",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "stablestringify()"
     },
     {
@@ -4190,8 +4190,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_dailytodostore_genid",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "genid()"
     },
     {
@@ -4201,8 +4201,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_dailytodostore_readlocaltodos",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "readlocaltodos()"
     },
     {
@@ -4212,8 +4212,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_services_dailytodostore_createdailytodostore",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "createdailytodostore()"
     },
     {
@@ -4333,8 +4333,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_feedbackstore",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "feedbackstore.js"
     },
     {
@@ -4344,8 +4344,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_services_feedbackstore_submitreport",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "submitreport()"
     },
     {
@@ -4388,8 +4388,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_firebase",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "firebase.js"
     },
     {
@@ -4399,8 +4399,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_firebase_app",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "app"
     },
     {
@@ -4410,8 +4410,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_services_firebase_auth",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "auth"
     },
     {
@@ -4421,8 +4421,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_services_firebase_database",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "database"
     },
     {
@@ -4432,8 +4432,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_services_firebase_authapi",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "authapi"
     },
     {
@@ -4476,8 +4476,8 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_verifydismissedkey",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "verifydismissedkey()"
     },
     {
@@ -4531,8 +4531,8 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_celebrationshownkey",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "celebrationshownkey()"
     },
     {
@@ -4652,8 +4652,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_reminderscheduler",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "reminderscheduler.js"
     },
     {
@@ -4663,8 +4663,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_timers",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "timers"
     },
     {
@@ -4674,8 +4674,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_remindersenabled",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "remindersenabled()"
     },
     {
@@ -4685,8 +4685,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_enablereminders",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "enablereminders()"
     },
     {
@@ -4696,8 +4696,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_disablereminders",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "disablereminders()"
     },
     {
@@ -4707,8 +4707,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_clearalltimers",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "clearalltimers()"
     },
     {
@@ -4718,8 +4718,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_canceltimer",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "canceltimer()"
     },
     {
@@ -4729,8 +4729,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_firenotification",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "firenotification()"
     },
     {
@@ -4740,8 +4740,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_scheduletimer",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "scheduletimer()"
     },
     {
@@ -4751,8 +4751,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_initreminderscheduler",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "initreminderscheduler()"
     },
     {
@@ -4839,8 +4839,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_services_roadmapstore_iscustomroadmapid",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "iscustomroadmapid()"
     },
     {
@@ -5004,8 +5004,8 @@
       "source_location": "L251",
       "_origin": "ast",
       "id": "src_services_roadmapstore_migratelocalroadmapsshape",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "migratelocalroadmapsshape()"
     },
     {
@@ -5235,8 +5235,8 @@
       "source_location": "L584",
       "_origin": "ast",
       "id": "src_services_roadmapstore_createroadmapstore",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "createroadmapstore()"
     },
     {
@@ -5246,19 +5246,19 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_serviceworkerregistration",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "serviceworkerregistration.js"
     },
     {
       "label": "registerServiceWorker()",
       "file_type": "code",
       "source_file": "src/services/serviceWorkerRegistration.js",
-      "source_location": "L5",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_serviceworkerregistration_registerserviceworker",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "registerserviceworker()"
     },
     {
@@ -5268,8 +5268,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_sharestore",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "sharestore.js"
     },
     {
@@ -5279,8 +5279,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_services_sharestore_shareidsmutationqueue",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "shareidsmutationqueue"
     },
     {
@@ -5290,8 +5290,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_services_sharestore_serializeshareidsmutation",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "serializeshareidsmutation()"
     },
     {
@@ -5301,8 +5301,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_sharestore_getshareids",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "getshareids()"
     },
     {
@@ -5312,8 +5312,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_services_sharestore_publishroadmapshare",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "publishroadmapshare()"
     },
     {
@@ -5323,8 +5323,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_services_sharestore_revokeroadmapshare",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "revokeroadmapshare()"
     },
     {
@@ -5334,8 +5334,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_services_sharestore_listmyshares",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "listmyshares()"
     },
     {
@@ -5345,8 +5345,8 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_services_sharestore_getsharedroadmap",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "getsharedroadmap()"
     },
     {
@@ -5356,8 +5356,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_storage_firebaseadapter",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "firebaseadapter.js"
     },
     {
@@ -5554,8 +5554,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_services_storage_firebaseadapter_firebaseadapter_updateroadmapitemfields",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": ".updateroadmapitemfields()"
     },
     {
@@ -5565,8 +5565,8 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_services_storage_firebaseadapter_firebaseadapter_getroadmapitem",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": ".getroadmapitem()"
     },
     {
@@ -5576,8 +5576,8 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "src_services_storage_firebaseadapter_firebaseadapter_roadmapitemref",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": ".roadmapitemref()"
     },
     {
@@ -5620,8 +5620,8 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "src_services_storage_firebaseadapter_firebaseadapter_now",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": ".now()"
     },
     {
@@ -5950,8 +5950,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_storage_adapterfactory",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "adapterfactory.js"
     },
     {
@@ -5961,8 +5961,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_services_storage_adapterfactory_getstorageadapter",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "getstorageadapter()"
     },
     {
@@ -5972,8 +5972,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_storage_withtimeout",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "withtimeout.js"
     },
     {
@@ -5983,8 +5983,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_services_storage_withtimeout_withtimeout",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "withtimeout()"
     },
     {
@@ -6203,8 +6203,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_theme_onthemechange",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "onthemechange()"
     },
     {
@@ -6236,8 +6236,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_addtodailytodomodal",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "addtodailytodomodal.js"
     },
     {
@@ -6247,8 +6247,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_components_addtodailytodomodal_openaddtodailytodomodal",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "openaddtodailytodomodal()"
     },
     {
@@ -6258,8 +6258,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "authmarketingpanel.js"
     },
     {
@@ -6269,8 +6269,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_iconsvg",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "iconsvg()"
     },
     {
@@ -6280,8 +6280,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_icons",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "icons"
     },
     {
@@ -6291,8 +6291,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_value_props",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "value_props"
     },
     {
@@ -6302,8 +6302,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_createauthmarketingpanel",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "createauthmarketingpanel()"
     },
     {
@@ -6313,8 +6313,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_authshell",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "authshell.js"
     },
     {
@@ -6324,8 +6324,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_authshell_authshell",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "authshell()"
     },
     {
@@ -6335,8 +6335,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_avatar",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 163,
+      "community_name": "createAvatar",
       "norm_label": "avatar.js"
     },
     {
@@ -6346,8 +6346,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_ui_components_avatar_initialsfor",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 163,
+      "community_name": "createAvatar",
       "norm_label": "initialsfor()"
     },
     {
@@ -6357,8 +6357,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_avatar_createavatar",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 163,
+      "community_name": "createAvatar",
       "norm_label": "createavatar()"
     },
     {
@@ -6368,8 +6368,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_backupreminderbanner",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "backupreminderbanner.js"
     },
     {
@@ -6379,8 +6379,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_backupreminderbanner_createbackupreminderbanner",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "createbackupreminderbanner()"
     },
     {
@@ -6390,8 +6390,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_brand",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 160,
+      "community_name": "brand.js",
       "norm_label": "brand.js"
     },
     {
@@ -6401,8 +6401,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_ui_components_brand_brandglyph",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 160,
+      "community_name": "brand.js",
       "norm_label": "brandglyph()"
     },
     {
@@ -6412,8 +6412,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_components_brand_createbrandicon",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 160,
+      "community_name": "brand.js",
       "norm_label": "createbrandicon()"
     },
     {
@@ -6423,8 +6423,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_ui_components_brand_createbrandwordmark",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 160,
+      "community_name": "brand.js",
       "norm_label": "createbrandwordmark()"
     },
     {
@@ -6522,8 +6522,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "chartwrapper.js"
     },
     {
@@ -6533,8 +6533,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_loadchartmodule",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "loadchartmodule()"
     },
     {
@@ -6544,8 +6544,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_cssvar",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "cssvar()"
     },
     {
@@ -6555,8 +6555,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_axisoptions",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "axisoptions()"
     },
     {
@@ -6566,8 +6566,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_createlinechart",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "createlinechart()"
     },
     {
@@ -6577,8 +6577,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_createbarchart",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "createbarchart()"
     },
     {
@@ -6588,8 +6588,8 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_bucket_tokens",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "bucket_tokens"
     },
     {
@@ -6599,8 +6599,8 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_bucket_fallbacks",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "bucket_fallbacks"
     },
     {
@@ -6610,8 +6610,8 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_bucket_legend",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "bucket_legend"
     },
     {
@@ -6621,8 +6621,8 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_bucketcolor",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "bucketcolor()"
     },
     {
@@ -6632,8 +6632,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_defaultbucketof",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "defaultbucketof()"
     },
     {
@@ -6643,8 +6643,8 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_positiontooltip",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "positiontooltip()"
     },
     {
@@ -6654,8 +6654,8 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_createbucketedbarchart",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "createbucketedbarchart()"
     },
     {
@@ -6665,8 +6665,8 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_createchartlegend",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "createchartlegend()"
     },
     {
@@ -6676,8 +6676,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "docref_adr_0002",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 77,
+      "community_name": "Shared Roadmap View Tests",
       "norm_label": "adr-0002"
     },
     {
@@ -6687,8 +6687,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "commandpalette.js"
     },
     {
@@ -6698,8 +6698,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette_fuzzymatch",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "fuzzymatch()"
     },
     {
@@ -6709,8 +6709,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette_opencommandpalette",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "opencommandpalette()"
     },
     {
@@ -6720,8 +6720,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette_bindcommandpaletteshortcut",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "bindcommandpaletteshortcut()"
     },
     {
@@ -6753,8 +6753,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_confirmdialog",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "confirmdialog.js"
     },
     {
@@ -6775,8 +6775,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "dailytodoguide.js"
     },
     {
@@ -6786,8 +6786,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide_opendailytodoguide",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "opendailytodoguide()"
     },
     {
@@ -6797,8 +6797,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "dailytodopanel.js"
     },
     {
@@ -6808,8 +6808,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel_resolveroadmapname",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "resolveroadmapname()"
     },
     {
@@ -6819,8 +6819,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel_createdailytodopanel",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "createdailytodopanel()"
     },
     {
@@ -6830,8 +6830,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "decorativeicon.js"
     },
     {
@@ -6841,8 +6841,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_decorative_icon_shapes",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "decorative_icon_shapes"
     },
     {
@@ -6852,8 +6852,8 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_valid_sizes",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "valid_sizes"
     },
     {
@@ -6863,8 +6863,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_createdecorativeicon",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "createdecorativeicon()"
     },
     {
@@ -6874,8 +6874,8 @@
       "source_location": "L278",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_hasdecorativeicon",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "hasdecorativeicon()"
     },
     {
@@ -6885,8 +6885,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_deleteaccountmodal",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "deleteaccountmodal.js"
     },
     {
@@ -6896,8 +6896,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_deleteaccountmodal_opendeleteaccountmodal",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "opendeleteaccountmodal()"
     },
     {
@@ -6962,8 +6962,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_featurebadge_createfeaturebadge",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "createfeaturebadge()"
     },
     {
@@ -7248,8 +7248,8 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "src_ui_components_feedbackmodal_openfeedbackmodal",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "openfeedbackmodal()"
     },
     {
@@ -7259,8 +7259,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_feedbackwidget",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "feedbackwidget.js"
     },
     {
@@ -7270,8 +7270,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_feedbackwidget_createfeedbackwidget",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "createfeedbackwidget()"
     },
     {
@@ -7303,8 +7303,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_heatmap",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "heatmap.js"
     },
     {
@@ -7314,8 +7314,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_day_abbr",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "day_abbr"
     },
     {
@@ -7325,8 +7325,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_labeled_rows",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "labeled_rows"
     },
     {
@@ -7336,8 +7336,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_layoutcells",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "layoutcells()"
     },
     {
@@ -7347,8 +7347,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_monthlabelsfor",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "monthlabelsfor()"
     },
     {
@@ -7358,8 +7358,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_formatcelldate",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "formatcelldate()"
     },
     {
@@ -7369,8 +7369,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_celltooltiptext",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "celltooltiptext()"
     },
     {
@@ -7380,8 +7380,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_createheatmap",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "createheatmap()"
     },
     {
@@ -7435,8 +7435,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "importbackupmodal.js"
     },
     {
@@ -7446,8 +7446,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_summarysentence",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "summarysentence()"
     },
     {
@@ -7457,8 +7457,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_mergebuttonlabel",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "mergebuttonlabel()"
     },
     {
@@ -7468,8 +7468,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_openimportbackupmodal",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "openimportbackupmodal()"
     },
     {
@@ -7721,8 +7721,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_modal_openmodal",
-      "community": 27,
-      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "openmodal()"
     },
     {
@@ -7798,8 +7798,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_ui_components_myreports_openmyreports",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "openmyreports()"
     },
     {
@@ -7809,8 +7809,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_notificationbadge",
-      "community": 11,
-      "community_name": "Changelog & Feature Badges",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "notificationbadge.js"
     },
     {
@@ -7820,8 +7820,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_notificationbadge_createnotificationbadge",
-      "community": 11,
-      "community_name": "Changelog & Feature Badges",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "createnotificationbadge()"
     },
     {
@@ -7842,8 +7842,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_ui_components_notificationbell_createnotificationbell",
-      "community": 11,
-      "community_name": "Changelog & Feature Badges",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "createnotificationbell()"
     },
     {
@@ -7853,8 +7853,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_ui_components_notificationbell_createchangelogbell",
-      "community": 11,
-      "community_name": "Changelog & Feature Badges",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "createchangelogbell()"
     },
     {
@@ -7886,8 +7886,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_progressring",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "progressring.js"
     },
     {
@@ -7897,8 +7897,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_progressring_createprogressring",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "createprogressring()"
     },
     {
@@ -7996,8 +7996,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_openroadmapcomparisonmodal",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "openroadmapcomparisonmodal()"
     },
     {
@@ -8007,8 +8007,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_select",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "select.js"
     },
     {
@@ -8018,8 +8018,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_ui_components_select_createselect",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "createselect()"
     },
     {
@@ -8403,8 +8403,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_readcollapsed",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "readcollapsed()"
     },
     {
@@ -8425,8 +8425,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_createsidebar",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "createsidebar()"
     },
     {
@@ -8491,8 +8491,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "themetoggle.js"
     },
     {
@@ -8502,8 +8502,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_icon_names",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "icon_names"
     },
     {
@@ -8513,8 +8513,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_arialabel",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "arialabel()"
     },
     {
@@ -8524,8 +8524,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_createthemetoggle",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "createthemetoggle()"
     },
     {
@@ -8535,8 +8535,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_toast",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "toast.js"
     },
     {
@@ -8546,8 +8546,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_ui_components_toast_ensureroot",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "ensureroot()"
     },
     {
@@ -8568,8 +8568,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_tooltip",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "tooltip.js"
     },
     {
@@ -8579,8 +8579,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_tooltip_overlapsvisiblesectionlabel",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "overlapsvisiblesectionlabel()"
     },
     {
@@ -8590,8 +8590,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_ui_components_tooltip_attachtooltip",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "attachtooltip()"
     },
     {
@@ -8601,8 +8601,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_topbar",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "topbar.js"
     },
     {
@@ -8612,8 +8612,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_topbar_navigationitems",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "navigationitems()"
     },
     {
@@ -8623,8 +8623,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_ui_components_topbar_buildresultsubtitle",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "buildresultsubtitle()"
     },
     {
@@ -8634,8 +8634,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_ui_components_topbar_buildtopicresultitem",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "buildtopicresultitem()"
     },
     {
@@ -8645,8 +8645,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_ui_components_topbar_createtopbar",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "createtopbar()"
     },
     {
@@ -8678,8 +8678,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_dom",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 161,
+      "community_name": "dom.js",
       "norm_label": "dom.js"
     },
     {
@@ -8689,8 +8689,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_dom_escapehtml",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 161,
+      "community_name": "dom.js",
       "norm_label": "escapehtml()"
     },
     {
@@ -8700,8 +8700,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_dom_el",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "el()"
     },
     {
@@ -8711,8 +8711,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_dom_clear",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 161,
+      "community_name": "dom.js",
       "norm_label": "clear()"
     },
     {
@@ -8722,8 +8722,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_dom_debounce",
-      "community": 4,
-      "community_name": "Import Validation & Corruption Detection",
+      "community": 161,
+      "community_name": "dom.js",
       "norm_label": "debounce()"
     },
     {
@@ -8733,8 +8733,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_ui_dom_isvalidurl",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "isvalidurl()"
     },
     {
@@ -8744,8 +8744,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "dashboard.js"
     },
     {
@@ -8755,8 +8755,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_resource_type_priority",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "resource_type_priority"
     },
     {
@@ -8766,8 +8766,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_resource_type_noun",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "resource_type_noun"
     },
     {
@@ -8777,8 +8777,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderinlineresources",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "renderinlineresources()"
     },
     {
@@ -8788,8 +8788,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_buildresourcecountbadge",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "buildresourcecountbadge()"
     },
     {
@@ -8799,8 +8799,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_summarizeresourcetypes",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "summarizeresourcetypes()"
     },
     {
@@ -8810,8 +8810,8 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_groupitems",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "groupitems()"
     },
     {
@@ -8821,8 +8821,8 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_countstats",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "countstats()"
     },
     {
@@ -8832,8 +8832,8 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_matchesactivefilter",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "matchesactivefilter()"
     },
     {
@@ -8843,8 +8843,8 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_filteritems",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "filteritems()"
     },
     {
@@ -8854,8 +8854,8 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_collectalltags",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "collectalltags()"
     },
     {
@@ -8865,8 +8865,8 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_prioritycounts",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "prioritycounts()"
     },
     {
@@ -8876,8 +8876,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_formatlastsynced",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "formatlastsynced()"
     },
     {
@@ -8887,8 +8887,8 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderfilterchips",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "renderfilterchips()"
     },
     {
@@ -8898,8 +8898,8 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_buildtoursteps",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "buildtoursteps()"
     },
     {
@@ -8909,8 +8909,8 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_csstoken",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "csstoken()"
     },
     {
@@ -8920,8 +8920,8 @@
       "source_location": "L416",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_animatephasebody",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "animatephasebody()"
     },
     {
@@ -8942,8 +8942,8 @@
       "source_location": "L575",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderdashboard",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "renderdashboard()"
     },
     {
@@ -8953,8 +8953,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_landing",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "landing.js"
     },
     {
@@ -8964,8 +8964,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_pages_landing_iconsvg",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "iconsvg()"
     },
     {
@@ -8975,8 +8975,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_ui_pages_landing_icons",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "icons"
     },
     {
@@ -8986,8 +8986,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_ui_pages_landing_features",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "features"
     },
     {
@@ -8997,8 +8997,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_ui_pages_landing_steps",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "steps"
     },
     {
@@ -9008,8 +9008,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_ui_pages_landing_landingproofline",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "landingproofline()"
     },
     {
@@ -9019,8 +9019,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_ui_pages_landing_scrolltosection",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "scrolltosection()"
     },
     {
@@ -9030,8 +9030,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildnav",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildnav()"
     },
     {
@@ -9041,8 +9041,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildheromock",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildheromock()"
     },
     {
@@ -9052,8 +9052,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildhero",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildhero()"
     },
     {
@@ -9063,8 +9063,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildsectioneyebrow",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildsectioneyebrow()"
     },
     {
@@ -9074,8 +9074,8 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildfeatures",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildfeatures()"
     },
     {
@@ -9085,8 +9085,8 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildsteps",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildsteps()"
     },
     {
@@ -9096,8 +9096,8 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildcta",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildcta()"
     },
     {
@@ -9107,8 +9107,8 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildfooter",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildfooter()"
     },
     {
@@ -9118,8 +9118,8 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_ui_pages_landing_renderlanding",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "renderlanding()"
     },
     {
@@ -9129,8 +9129,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "onboarding.js"
     },
     {
@@ -9140,8 +9140,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildimportresulttoast",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "buildimportresulttoast()"
     },
     {
@@ -9151,8 +9151,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildpickingoverlay",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "buildpickingoverlay()"
     },
     {
@@ -9162,8 +9162,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildonboardingtoursteps",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "buildonboardingtoursteps()"
     },
     {
@@ -9173,8 +9173,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_shouldautostartonboardingtour",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "shouldautostartonboardingtour()"
     },
     {
@@ -9228,8 +9228,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_pages_progress_lastndatekeys",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "lastndatekeys()"
     },
     {
@@ -9239,8 +9239,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_ui_pages_progress_formatshortdate",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "formatshortdate()"
     },
     {
@@ -9261,8 +9261,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_ui_pages_progress_buildcumulativeseries",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildcumulativeseries()"
     },
     {
@@ -9272,8 +9272,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_ui_pages_progress_buildvelocityseries",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildvelocityseries()"
     },
     {
@@ -9327,8 +9327,8 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "src_ui_pages_progress_renderstattile",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "renderstattile()"
     },
     {
@@ -9382,8 +9382,8 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "src_ui_pages_progress_renderprogress",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "renderprogress()"
     },
     {
@@ -9393,8 +9393,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_settings",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "settings.js"
     },
     {
@@ -9404,8 +9404,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_pages_settings_filter_options",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "filter_options"
     },
     {
@@ -9415,8 +9415,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildtogglerow",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buildtogglerow()"
     },
     {
@@ -9448,8 +9448,8 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildchangenameform",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buildchangenameform()"
     },
     {
@@ -9459,8 +9459,8 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildprofilesection",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buildprofilesection()"
     },
     {
@@ -9481,8 +9481,8 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "src_ui_pages_settings_builddatasection",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "builddatasection()"
     },
     {
@@ -9492,8 +9492,8 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "src_ui_pages_settings_builddangerzone",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "builddangerzone()"
     },
     {
@@ -9503,8 +9503,8 @@
       "source_location": "L389",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildguestview",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "buildguestview()"
     },
     {
@@ -9514,8 +9514,8 @@
       "source_location": "L397",
       "_origin": "ast",
       "id": "src_ui_pages_settings_rendersettings",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "rendersettings()"
     },
     {
@@ -9525,8 +9525,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "sharedroadmapview.js"
     },
     {
@@ -9536,8 +9536,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_getshareidfromroute",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "getshareidfromroute()"
     },
     {
@@ -9547,8 +9547,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_renderrevoked",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "renderrevoked()"
     },
     {
@@ -9558,8 +9558,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_renderresource",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "renderresource()"
     },
     {
@@ -9569,8 +9569,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_renderitem",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "renderitem()"
     },
     {
@@ -9580,8 +9580,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_groupitemsbyphasesection",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "groupitemsbyphasesection()"
     },
     {
@@ -9591,8 +9591,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_rendersnapshot",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "rendersnapshot()"
     },
     {
@@ -9602,8 +9602,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_ui_pages_sharedroadmapview_rendersharedroadmapview",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "sharedRoadmapView.js",
       "norm_label": "rendersharedroadmapview()"
     },
     {
@@ -9646,8 +9646,8 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "src_ui_pages_signin_buildresetform",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "buildresetform()"
     },
     {
@@ -9657,8 +9657,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "src_ui_pages_signin_rendersignin",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
       "norm_label": "rendersignin()"
     },
     {
@@ -9690,8 +9690,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_router",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "router.js"
     },
     {
@@ -9701,8 +9701,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_router_routes",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "routes"
     },
     {
@@ -9712,8 +9712,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_ui_router_getnavgeneration",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "getnavgeneration()"
     },
     {
@@ -9723,8 +9723,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_router_registerroute",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "registerroute()"
     },
     {
@@ -9734,8 +9734,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_ui_router_navigate",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "navigate()"
     },
     {
@@ -9745,8 +9745,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_ui_router_getroute",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "getroute()"
     },
     {
@@ -9756,8 +9756,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_ui_router_matchroute",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "matchroute()"
     },
     {
@@ -9767,8 +9767,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_ui_router_startrouter",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "startrouter()"
     },
     {
@@ -9965,8 +9965,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_buttonloading",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buttonloading.js"
     },
     {
@@ -9976,8 +9976,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_ui_utils_buttonloading_setbuttonloading",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "setbuttonloading()"
     },
     {
@@ -9987,8 +9987,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon",
-      "community": 145,
-      "community_name": "customRoadmapIcon.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "customroadmapicon.js"
     },
     {
@@ -9998,8 +9998,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_custom_roadmap_icons",
-      "community": 145,
-      "community_name": "customRoadmapIcon.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "custom_roadmap_icons"
     },
     {
@@ -10009,8 +10009,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_pickcustomroadmapicon",
-      "community": 145,
-      "community_name": "customRoadmapIcon.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "pickcustomroadmapicon()"
     },
     {
@@ -10086,8 +10086,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_utils_defaultfilterpreference_readdefaultfilterpreference",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "readdefaultfilterpreference()"
     },
     {
@@ -10471,8 +10471,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_svg",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "svg.js"
     },
     {
@@ -10482,8 +10482,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_ui_utils_svg_svgel",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "svgel()"
     },
     {
@@ -10493,8 +10493,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_ui_utils_svg_svgicon",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "svgicon()"
     },
     {
@@ -11307,8 +11307,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_integration_activitylogstore_test",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "activitylogstore.test.js"
     },
     {
@@ -11318,8 +11318,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_integration_dailytodostore_test",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "dailytodostore.test.js"
     },
     {
@@ -11395,8 +11395,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "roadmapstore.test.js"
     },
     {
@@ -11406,8 +11406,8 @@
       "source_location": "L456",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test_backupitem",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "backupitem()"
     },
     {
@@ -11417,8 +11417,8 @@
       "source_location": "L1803",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test_setupcustomroadmap",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "setupcustomroadmap()"
     },
     {
@@ -11428,8 +11428,8 @@
       "source_location": "L1952",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test_importedseed",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "importedseed()"
     },
     {
@@ -11439,8 +11439,8 @@
       "source_location": "L2141",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test_stablestringify",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "stablestringify()"
     },
     {
@@ -11450,8 +11450,8 @@
       "source_location": "L2185",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test_firstitemid",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "firstitemid()"
     },
     {
@@ -11461,8 +11461,8 @@
       "source_location": "L2621",
       "_origin": "ast",
       "id": "tests_integration_roadmapstore_test_callsforuid",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "callsforuid()"
     },
     {
@@ -11472,8 +11472,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_integration_roadmapstoreconcurrency_test",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "roadmapstoreconcurrency.test.js"
     },
     {
@@ -11483,8 +11483,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_integration_roadmapstoreconcurrency_test_deferred",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "deferred()"
     },
     {
@@ -11550,7 +11550,7 @@
       "_origin": "ast",
       "id": "tests_unit_accountguards_test",
       "community": 136,
-      "community_name": "accountGuards.js",
+      "community_name": "firebase.js",
       "norm_label": "accountguards.test.js"
     },
     {
@@ -11560,8 +11560,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_addtodailytodomodal_test",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "addtodailytodomodal.test.js"
     },
     {
@@ -11670,8 +11670,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_unit_analytics_projection_test_items",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "items()"
     },
     {
@@ -11725,8 +11725,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_authcleanup_test",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "authcleanup.test.js"
     },
     {
@@ -11736,8 +11736,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_avatar_test",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 163,
+      "community_name": "createAvatar",
       "norm_label": "avatar.test.js"
     },
     {
@@ -11890,8 +11890,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_backupschema_test",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "backupschema.test.js"
     },
     {
@@ -11901,8 +11901,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_backupschema_test_snapshot",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 156,
+      "community_name": "backupSchema.js",
       "norm_label": "snapshot()"
     },
     {
@@ -11934,8 +11934,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_brand_test",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 160,
+      "community_name": "brand.js",
       "norm_label": "brand.test.js"
     },
     {
@@ -11945,8 +11945,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_buttonloading_test",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buttonloading.test.js"
     },
     {
@@ -11956,8 +11956,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_unit_buttonloading_test_makebutton",
-      "community": 16,
-      "community_name": "Time Tracking & Daily Todo Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "makebutton()"
     },
     {
@@ -11989,8 +11989,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_celebrationshownstore_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "celebrationshownstore.test.js"
     },
     {
@@ -12143,8 +12143,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_commandpalette_test",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "commandpalette.test.js"
     },
     {
@@ -12154,8 +12154,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "tests_unit_commandpalette_test_makeitems",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "makeitems()"
     },
     {
@@ -12275,8 +12275,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_customroadmapicon_test",
-      "community": 145,
-      "community_name": "customRoadmapIcon.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "customroadmapicon.test.js"
     },
     {
@@ -12297,8 +12297,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodoguide_test",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "dailytodoguide.test.js"
     },
     {
@@ -12308,8 +12308,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "dailytodopanel.test.js"
     },
     {
@@ -12319,8 +12319,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_createfakestore",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "createfakestore()"
     },
     {
@@ -12330,8 +12330,8 @@
       "source_location": "L220",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_createfakeroadmapstore",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "createfakeroadmapstore()"
     },
     {
@@ -12341,8 +12341,8 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_linkedtodo",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "linkedtodo()"
     },
     {
@@ -12352,8 +12352,8 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_flushmicrotasks",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "flushmicrotasks()"
     },
     {
@@ -12363,8 +12363,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "dashboard.test.js"
     },
     {
@@ -12374,8 +12374,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_build",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "build()"
     },
     {
@@ -12385,8 +12385,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_format",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "format()"
     },
     {
@@ -12440,8 +12440,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dom_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 161,
+      "community_name": "dom.js",
       "norm_label": "dom.test.js"
     },
     {
@@ -12550,8 +12550,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "featuretoursteps.test.js"
     },
     {
@@ -12561,8 +12561,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test_fakestore",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "fakestore()"
     },
     {
@@ -12572,8 +12572,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test_mountfreshdashboardchrome",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 155,
+      "community_name": "decorativeIcon.js",
       "norm_label": "mountfreshdashboardchrome()"
     },
     {
@@ -12737,8 +12737,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_globaltopicsearch_test",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "globaltopicsearch.test.js"
     },
     {
@@ -12748,8 +12748,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_globaltopicsearch_test_makeroadmaps",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 154,
+      "community_name": "globalTopicSearch.js",
       "norm_label": "makeroadmaps()"
     },
     {
@@ -12803,8 +12803,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_heatmap_test",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "heatmap.test.js"
     },
     {
@@ -12814,8 +12814,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_heatmap_test_now",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "now"
     },
     {
@@ -12869,8 +12869,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_importbackupmodal_test",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "importbackupmodal.test.js"
     },
     {
@@ -12880,8 +12880,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_importbackupmodal_test_getoverlay",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "getoverlay()"
     },
     {
@@ -12891,8 +12891,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_importbackupmodal_test_findbutton",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "findbutton()"
     },
     {
@@ -12902,8 +12902,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_unit_importbackupmodal_test_backupdata",
-      "community": 137,
-      "community_name": "importBackupModal.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "backupdata()"
     },
     {
@@ -12924,8 +12924,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_importroadmapmodal_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "importroadmapmodal.test.js"
     },
     {
@@ -12935,8 +12935,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_importroadmapmodal_test_getoverlay",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "getoverlay()"
     },
     {
@@ -12946,8 +12946,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_unit_importroadmapmodal_test_findbutton",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "findbutton()"
     },
     {
@@ -12957,8 +12957,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_unit_importroadmapmodal_test_settopic",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "settopic()"
     },
     {
@@ -12968,8 +12968,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_unit_importroadmapmodal_test_validjsontext",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 4,
+      "community_name": "Import Validation & Corruption Detection",
       "norm_label": "validjsontext()"
     },
     {
@@ -13045,8 +13045,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_landing_test",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "landing.test.js"
     },
     {
@@ -13056,8 +13056,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_landing_test_setup",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "setup()"
     },
     {
@@ -13067,8 +13067,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_limits_test",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "limits.test.js"
     },
     {
@@ -13265,8 +13265,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_modal_test",
-      "community": 27,
-      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "modal.test.js"
     },
     {
@@ -13276,8 +13276,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_modal_test_makecontent",
-      "community": 27,
-      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "makecontent()"
     },
     {
@@ -13309,8 +13309,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_notificationbadge_test",
-      "community": 11,
-      "community_name": "Changelog & Feature Badges",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "notificationbadge.test.js"
     },
     {
@@ -13342,8 +13342,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_onboarding_test",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "onboarding.test.js"
     },
     {
@@ -13364,8 +13364,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "tests_unit_onboarding_test_getconfirmdialog",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "getconfirmdialog()"
     },
     {
@@ -13375,8 +13375,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "tests_unit_onboarding_test_clickdialogaction",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "clickdialogaction()"
     },
     {
@@ -13386,8 +13386,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "tests_unit_onboarding_test_clickoverflowaction",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "clickoverflowaction()"
     },
     {
@@ -13485,8 +13485,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_progress_test",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 164,
+      "community_name": "freshProgress",
       "norm_label": "progress.test.js"
     },
     {
@@ -13496,8 +13496,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_unit_progress_test_fakestore",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 164,
+      "community_name": "freshProgress",
       "norm_label": "fakestore()"
     },
     {
@@ -13507,8 +13507,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "tests_unit_progress_test_fakeactivitylogstore",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 164,
+      "community_name": "freshProgress",
       "norm_label": "fakeactivitylogstore()"
     },
     {
@@ -13518,8 +13518,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "tests_unit_progress_test_freshprogress",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 164,
+      "community_name": "freshProgress",
       "norm_label": "freshprogress()"
     },
     {
@@ -13606,8 +13606,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_progressring_test",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "progressring.test.js"
     },
     {
@@ -13639,8 +13639,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduler_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "reminderscheduler.test.js"
     },
     {
@@ -13650,8 +13650,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduler_test_makestore",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "makestore()"
     },
     {
@@ -13661,8 +13661,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduling_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "reminderscheduling.test.js"
     },
     {
@@ -13672,8 +13672,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduling_test_maketodo",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "maketodo()"
     },
     {
@@ -13694,8 +13694,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reviewschedule_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "reviewschedule.test.js"
     },
     {
@@ -13705,8 +13705,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_unit_reviewschedule_test_makeitem",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "makeitem()"
     },
     {
@@ -13782,8 +13782,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_router_test",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "router.test.js"
     },
     {
@@ -13793,8 +13793,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_unit_router_test_freshrouter",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "freshrouter()"
     },
     {
@@ -13826,8 +13826,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_select_test",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "select.test.js"
     },
     {
@@ -13837,8 +13837,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_select_test_options",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "options"
     },
     {
@@ -13848,8 +13848,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_select_test_mount",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "mount()"
     },
     {
@@ -13859,8 +13859,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_unit_select_test_trigger",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "trigger()"
     },
     {
@@ -13870,8 +13870,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_unit_select_test_fire",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "fire()"
     },
     {
@@ -13917,6 +13917,28 @@
       "community": 70,
       "community_name": "SEO Meta Tests",
       "norm_label": "metacontent()"
+    },
+    {
+      "label": "serviceWorkerRegistration.test.js",
+      "file_type": "code",
+      "source_file": "tests/unit/serviceWorkerRegistration.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "tests_unit_serviceworkerregistration_test",
+      "community": 61,
+      "community_name": "Tabs Component",
+      "norm_label": "serviceworkerregistration.test.js"
+    },
+    {
+      "label": "mockNavigatorServiceWorker()",
+      "file_type": "code",
+      "source_file": "tests/unit/serviceWorkerRegistration.test.js",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "tests_unit_serviceworkerregistration_test_mocknavigatorserviceworker",
+      "community": 61,
+      "community_name": "Tabs Component",
+      "norm_label": "mocknavigatorserviceworker()"
     },
     {
       "label": "settings.test.js",
@@ -14024,8 +14046,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_shareschema_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "shareschema.test.js"
     },
     {
@@ -14035,8 +14057,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_shareschema_test_snapshot",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 137,
+      "community_name": "shareStore.js",
       "norm_label": "snapshot()"
     },
     {
@@ -14101,8 +14123,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "sharedroadmapview.test.js"
     },
     {
@@ -14112,8 +14134,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test_getsharedroadmap",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "getsharedroadmap"
     },
     {
@@ -14123,8 +14145,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test_setup",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "setup()"
     },
     {
@@ -14134,8 +14156,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test_flush",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "flush()"
     },
     {
@@ -14178,8 +14200,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_signin_test",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 165,
+      "community_name": "setup",
       "norm_label": "signin.test.js"
     },
     {
@@ -14189,8 +14211,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_unit_signin_test_setup",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 165,
+      "community_name": "setup",
       "norm_label": "setup()"
     },
     {
@@ -14200,8 +14222,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "tests_unit_signin_test_inresetview",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 165,
+      "community_name": "setup",
       "norm_label": "inresetview()"
     },
     {
@@ -14255,8 +14277,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_signup_test",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "signup.test.js"
     },
     {
@@ -14266,8 +14288,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_unit_signup_test_fillpasswordfields",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "fillpasswordfields()"
     },
     {
@@ -14277,8 +14299,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_unit_signup_test_setup",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 136,
+      "community_name": "firebase.js",
       "norm_label": "setup()"
     },
     {
@@ -14431,8 +14453,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_svg_test",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 153,
+      "community_name": "authMarketingPanel.js",
       "norm_label": "svg.test.js"
     },
     {
@@ -14475,8 +14497,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_templates_test",
-      "community": 128,
-      "community_name": "index.js",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "templates.test.js"
     },
     {
@@ -14585,8 +14607,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_toast_test",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "toast.test.js"
     },
     {
@@ -14596,8 +14618,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_unit_toast_test_freshshowtoast",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "freshshowtoast()"
     },
     {
@@ -14607,8 +14629,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_tooltip_test",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "tooltip.test.js"
     },
     {
@@ -14618,8 +14640,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_topbar_test",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "topbar.test.js"
     },
     {
@@ -14629,8 +14651,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_topbar_test_baseprops",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 128,
+      "community_name": "navigate",
       "norm_label": "baseprops()"
     },
     {
@@ -14684,8 +14706,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_withtimeout_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "withtimeout.test.js"
     },
     {
@@ -15113,8 +15135,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_core_roadmap_limits_max_custom_roadmap_title_length",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "max_custom_roadmap_title_length"
     },
     {
@@ -15135,8 +15157,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_services_firebase_firebaseclock",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 145,
+      "community_name": "withTimeout",
       "norm_label": "firebaseclock"
     },
     {
@@ -17640,9 +17662,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 162,
       "norm_label": "issue template config (contact links)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Issue template config (contact links)",
       "id": "github_issue_template_config"
     },
     {
@@ -17682,9 +17704,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 36,
+      "community": 35,
       "norm_label": "pr template",
-      "community_name": "Issue Templates & Docs Index",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "github_pull_request_template"
     },
     {
@@ -17696,9 +17718,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci \u2014 pr quality gate workflow",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci"
     },
     {
@@ -17710,9 +17732,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci lint job (eslint, theme lint, icon lint)",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci_lint_job"
     },
     {
@@ -17724,9 +17746,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci security scan job (gitleaks, firebase.config.js check)",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci_security_job"
     },
     {
@@ -17738,9 +17760,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci vitest unit/integration test job",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci_test_unit_job"
     },
     {
@@ -17752,9 +17774,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci playwright e2e test job (firebase emulator)",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci_test_e2e_job"
     },
     {
@@ -17766,9 +17788,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci lighthouse performance budget job",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci_lighthouse_job"
     },
     {
@@ -17780,9 +17802,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 158,
       "norm_label": "ci pr-checklist job (doc-sync enforcement)",
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community_name": "CI \u2014 PR Quality Gate workflow",
       "id": "github_workflows_ci_pr_checklist_job"
     },
     {
@@ -17822,9 +17844,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 162,
       "norm_label": "sync master tracker workflow",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Issue template config (contact links)",
       "id": "github_workflows_tracker_sync"
     },
     {
@@ -17836,9 +17858,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 162,
       "norm_label": "tracker-sync concurrency group fix (issue #56 race condition)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Issue template config (contact links)",
       "id": "github_workflows_tracker_sync_concurrency_fix"
     },
     {
@@ -17850,9 +17872,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "adr-001: current flat module architecture (pre-restructure baseline)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "docs_adr_adr_001_current_architecture"
     },
     {
@@ -17864,9 +17886,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "target folder restructure (core/services/ui/data/utils/styles)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "docs_adr_adr_001_target_folder_structure"
     },
     {
@@ -17962,9 +17984,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 127,
+      "community": 136,
       "norm_label": "apis.google.com / frame-src allowlist entry (issue #168, gapi cross-tab auth iframe)",
-      "community_name": "ADR-002: CSP + SRI security hardening",
+      "community_name": "firebase.js",
       "id": "docs_adr_adr_002_apis_google_com_allowlist"
     },
     {
@@ -18074,9 +18096,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 159,
       "norm_label": "adr-005: anonymous firebase auth user lifecycle",
-      "community_name": "Product Rename Migration",
+      "community_name": "ADR-005: Anonymous Firebase Auth user lifecycle",
       "id": "docs_adr_adr_005_anonymous_user_lifecycle"
     },
     {
@@ -18088,9 +18110,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 159,
       "norm_label": "delete anonymous auth user + data on unlinked sign-out",
-      "community_name": "Product Rename Migration",
+      "community_name": "ADR-005: Anonymous Firebase Auth user lifecycle",
       "id": "docs_adr_adr_005_delete_on_unlinked_exit"
     },
     {
@@ -18340,9 +18362,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 159,
       "norm_label": "adr-010: in-app feedback storage (firebase write-only reports/)",
-      "community_name": "Product Rename Migration",
+      "community_name": "ADR-005: Anonymous Firebase Auth user lifecycle",
       "id": "docs_adr_adr_010_feedback_storage"
     },
     {
@@ -18354,9 +18376,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 159,
       "norm_label": "reports/{reportid} write-only, creation-only firebase path",
-      "community_name": "Product Rename Migration",
+      "community_name": "ADR-005: Anonymous Firebase Auth user lifecycle",
       "id": "docs_adr_adr_010_reports_write_only_path"
     },
     {
@@ -18368,9 +18390,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 159,
       "norm_label": "client-side feedback rate limiting (localstorage timestamp log)",
-      "community_name": "Product Rename Migration",
+      "community_name": "ADR-005: Anonymous Firebase Auth user lifecycle",
       "id": "docs_adr_adr_010_client_side_rate_limiting"
     },
     {
@@ -18424,9 +18446,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 127,
+      "community": 136,
       "norm_label": "background sync rejected (firebase sdk bypasses service worker fetch)",
-      "community_name": "ADR-002: CSP + SRI security hardening",
+      "community_name": "firebase.js",
       "id": "docs_adr_adr_011_background_sync_rejected"
     },
     {
@@ -18438,9 +18460,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "claude.md (root agent instructions)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "claude_md"
     },
     {
@@ -18536,9 +18558,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 159,
       "norm_label": "firebase/database.rules.json",
-      "community_name": "Product Rename Migration",
+      "community_name": "ADR-005: Anonymous Firebase Auth user lifecycle",
       "id": "firebase_database_rules"
     },
     {
@@ -18592,9 +18614,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 162,
       "norm_label": "master tracker issue #11",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Issue template config (contact links)",
       "id": "master_tracker_issue_11"
     },
     {
@@ -18620,9 +18642,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "docs/architecture.md (living architecture guide)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "docs_architecture_md"
     },
     {
@@ -18648,9 +18670,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "docs/roadmap.md (planned features)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "docs_roadmap_md"
     },
     {
@@ -18690,9 +18712,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "readme.md (project overview)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "readme_md"
     },
     {
@@ -19110,9 +19132,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "github issue label taxonomy (type/priority/domain)",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "claude_md_label_taxonomy"
     },
     {
@@ -19124,9 +19146,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "el(tag, attrs, children) \u2014 dom-construction helper",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "claude_md_el_dom_helper"
     },
     {
@@ -19138,9 +19160,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 47,
+      "community": 35,
       "norm_label": "confirmdialog() \u2014 styled confirm/cancel modal",
-      "community_name": "Responsive Breakpoint ADR-006",
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "id": "claude_md_confirmdialog"
     },
     {
@@ -33787,10 +33809,34 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/services/serviceWorkerRegistration.js",
-      "source_location": "L5",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_services_serviceworkerregistration",
+      "target": "src_services_serviceworkerregistration_registerserviceworker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/serviceWorkerRegistration.test.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "tests_unit_serviceworkerregistration_test",
+      "target": "src_services_serviceworkerregistration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/unit/serviceWorkerRegistration.test.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "tests_unit_serviceworkerregistration_test",
       "target": "src_services_serviceworkerregistration_registerserviceworker",
       "confidence_score": 1.0
     },
@@ -56410,6 +56456,17 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "tests/unit/serviceWorkerRegistration.test.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "tests_unit_serviceworkerregistration_test",
+      "target": "tests_unit_serviceworkerregistration_test_mocknavigatorserviceworker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "tests/unit/settings.test.js",
       "source_location": "L24",
       "weight": 1.0,
@@ -60379,5 +60436,5 @@
       "source_file": "docs/monetization-decision.md"
     }
   ],
-  "built_at_commit": "34e870ed040a3431a8e87797689356177d035906"
+  "built_at_commit": "599a37ec80c88f2802c32b4bcf96741cbca45e9c"
 }
