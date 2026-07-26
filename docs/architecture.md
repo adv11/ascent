@@ -4716,3 +4716,32 @@ first-appearance order for anything outside the template skeleton. `exportBackup
 helper, reusing `printRoadmap.js`'s newly-exported `resolveRoadmapTitle()` to resolve
 the display title. New "Export as Markdown" item added to both places the account menu
 is built (`sidebar.js`, and `onboarding.js`'s standalone rebuild of the same menu).
+
+### 2026-07-26 — Issue #391 — Reload on service-worker `controllerchange`, so mobile stops serving stale bundles after a deploy
+
+`sw.js`'s `skipWaiting()`/`clients.claim()` (added with the worker itself, issue #19)
+hand an already-open tab's control to the newly-activated worker the moment it takes
+over, but that alone doesn't make the tab re-fetch code already loaded into its JS
+runtime — a tab only actually starts being served through the new `CACHE_VERSION`'s
+caches on its next full navigation. A laptop dev tab gets refreshed/reopened often
+enough for this to be invisible; an installed mobile PWA, or a browser tab that's
+backgrounded and resumed rather than reloaded, can sit on one navigation for days,
+silently running a stale bundle well after a new version has deployed. Reported live as
+"laptop sees new features, mobile doesn't."
+
+`src/services/serviceWorkerRegistration.js` now adds a `navigator.serviceWorker`
+`controllerchange` listener that reloads the page once a new worker takes over —
+guarded by capturing `Boolean(navigator.serviceWorker.controller)` before registration,
+since `controllerchange` also fires on a brand-new tab's first-ever activation (no
+prior controller), which is not an update and must not trigger a reload loop. New
+`tests/unit/serviceWorkerRegistration.test.js` covers both branches plus the
+no-`serviceWorker`-API no-op path already relied on by `registerServiceWorker()` itself.
+
+This only fixes *future* sessions that load the new bundle containing this listener —
+it cannot rescue a session already running an older bundle, since that bundle predates
+the fix. A currently-stuck mobile session still needs one manual full reload (or PWA
+reinstall) to break out; after that, this listener keeps it current automatically.
+Unrelated to this fix: a separately-reported "stale gold icon" symptom on an installed
+mobile PWA is an OS-level home-screen-icon cache (issue #346 already fixed the served
+assets and cache-busting query strings) with no code-side remedy — documented in issue
+#391 as a known limitation, not addressed by this change.
