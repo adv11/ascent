@@ -28,16 +28,25 @@ const DATA_CACHE_MAX_ENTRIES = 300;
 // visit with no other cache entries yet. Everything else (JS modules, other
 // icons) is cached opportunistically the first time it's actually fetched,
 // via the cache-first runtime strategy below.
+//
+// manifest.json is deliberately NOT precached here (issue #403) — every
+// other file in this list is either immutable app shell or carries its own
+// version-busted URL when it changes, so cache-first is the right strategy
+// for it. manifest.json has no versioned URL of its own and is the one
+// place a stale cache-first read silently persists a retired app icon in a
+// device's native "Install app"/"Add to Home Screen" prompt indefinitely —
+// see the network-first special case in the fetch handler below.
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   OFFLINE_URL,
   '/src/styles/app.css',
-  '/public/manifest.json',
   '/public/favicon.svg',
   '/public/icon-192.png',
   '/public/icon-512.png'
 ];
+
+const MANIFEST_URL = '/public/manifest.json';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -80,6 +89,22 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request).catch(() =>
         caches.match(request).then(cached => cached || caches.match(OFFLINE_URL))
+      )
+    );
+    return;
+  }
+
+  // issue #403 — manifest.json names the app's icon URLs but has no
+  // versioned URL of its own, unlike every other precached asset above; a
+  // cache-first read here is exactly what let a retired app icon persist in
+  // a device's native install prompt indefinitely. Network-first (falling
+  // back to whatever's cached only when genuinely offline) means a fresh
+  // manifest is picked up on the very next successful fetch, no
+  // CACHE_VERSION bump or service-worker update required.
+  if (url.pathname === MANIFEST_URL) {
+    event.respondWith(
+      caches.open(STATIC_CACHE).then(cache =>
+        networkFirst(request, cache, fetch).catch(() => caches.match(OFFLINE_URL))
       )
     );
     return;
