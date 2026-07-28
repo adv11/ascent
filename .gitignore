@@ -39,3 +39,7 @@ graphify-out/.graphify_root
 
 # Local Firebase CLI hosting-deploy cache, machine-specific
 .firebase/
+
+# Generated demo video (scripts/generate-demo-video.mjs, issue #397) — large
+# binary, regenerate on demand, never committed
+dist/
