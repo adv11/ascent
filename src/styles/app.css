@@ -491,13 +491,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-transform: uppercase;
   color: var(--color-accent-700);
 }
-.eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); flex-shrink: 0; }
 /* issue #155 v2 Phase C — landing/auth/shell recolor: swap the ZeBeyond mint accent for
    the v2 lime accent on the specific classes scoped to those three areas (this class is
    only ever used by landing.js/authMarketingPanel.js — see ui-styling.md). Falls back to
    --color-brand-gold in light theme, unchanged (no v2 reference material exists there). */
 :root[data-theme='dark'] .eyebrow { color: var(--color-accent-700); }
-:root[data-theme='dark'] .eyebrow-dot { background: var(--color-accent); }
 
 /* Solid accent-color headline text, for one accent phrase inside an
    otherwise plain-color heading. Was a background-clip:text gradient;
@@ -928,15 +926,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    :root[data-theme='dark']'s --color-accent): since this panel is always-dark
    regardless of site theme, it always uses the dark-theme accent value directly. */
 .auth-marketing-eyebrow { color: #FF563C; margin: 0 0 var(--space-4); }
-.auth-marketing-eyebrow .eyebrow-dot { background: #FF563C; }
-/* intentional: subtle repeating diagonal-line texture — fills the panel's empty space
-   with a low-opacity design element instead of a flat void, fixed white regardless of
-   site theme since .auth-marketing itself is always-dark (issue #116).
-   A single CSS gradient, no image asset. */
+/* intentional: flat, low-opacity fixed-white fill on this panel's own always-dark
+   background regardless of site theme (issue #116) — flattened from a
+   repeating-linear-gradient texture per design-system.md §2's "no gradients
+   anywhere" rule (issue #406). */
 .auth-marketing-bg-pattern {
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0px, rgba(255, 255, 255, 0.06) 1px, transparent 1px, transparent 28px);
+  background-color: rgba(255, 255, 255, 0.03);
   pointer-events: none;
 }
 .auth-marketing-inner {
@@ -2667,21 +2664,21 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .filter-chip[data-p="P3"].active { background: color-mix(in srgb, var(--color-p3) 15%, transparent); border-color: var(--color-p3); color: var(--color-p3-ink); }
 .chip-count { opacity: 0.75; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
 
-/* Issue #6 Phase 4.3 — subtle hover shimmer: a diagonal highlight band swept
-   in via background-position on hover, not a separate ::after animation, so
-   it inherits the chip's own border-radius/overflow-hidden for free. */
+/* Issue #6 Phase 4.3 — subtle hover highlight, flattened from a swept
+   linear-gradient shimmer to a solid fixed-white overlay per design-system.md
+   §2's "no gradients anywhere" rule (issue #406); still its own ::before layer
+   so it inherits the chip's own border-radius/overflow-hidden for free. */
 .filter-chip::before {
   content: '';
   position: absolute;
   inset: 0;
-  /* intentional: fixed white shimmer highlight, same in both themes (issue #116) */
-  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
-  background-size: 220% 100%;
-  background-position: 150% 0;
-  transition: background-position var(--duration-slow) var(--ease-out);
+  /* intentional: fixed white highlight, same in both themes (issue #116) */
+  background: rgba(255, 255, 255, 0.12);
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out);
   pointer-events: none;
 }
-.filter-chip:hover::before { background-position: -50% 0; }
+.filter-chip:hover::before { opacity: 1; }
 
 .filter-chip-clear {
   display: inline-flex;

@@ -155,5 +155,76 @@
         "description": "The generated prompt in \"Create your own roadmap\" now spells out the exact rules (length limits, what not to paste) so an AI is more likely to get it right on the first try."
       }
     ]
+  },
+  {
+    "version": 5,
+    "date": "2026-07-28",
+    "items": [
+      {
+        "type": "feat",
+        "title": "Keyboard shortcuts for the checklist",
+        "description": "Press ? on the dashboard to see the new shortcuts: j and k move between topics on screen, and Enter or Space toggles the focused one done."
+      },
+      {
+        "type": "feat",
+        "title": "Export your roadmap as Markdown",
+        "description": "The account menu now has an \"Export as Markdown\" option, producing a plain-text file you can paste into Obsidian, Notion, or your own notes."
+      },
+      {
+        "type": "feat",
+        "title": "Add prerequisites to a topic",
+        "description": "A topic can now be marked \"Blocked by\" another topic in the same roadmap. It stays dimmed and unclickable until the prerequisite is marked done."
+      },
+      {
+        "type": "improvement",
+        "title": "Search results show why a note matched",
+        "description": "When a global topic search result only matches your notes, it now shows a short quoted excerpt so you can tell why it turned up."
+      },
+      {
+        "type": "improvement",
+        "title": "Daily Todos now count toward your streaks and heatmap",
+        "description": "Completing a standalone Daily Todo (one not linked to a roadmap topic) now shows up on the Progress page's activity heatmap and streaks."
+      },
+      {
+        "type": "improvement",
+        "title": "Submitting feedback or a bug report is quicker",
+        "description": "The bug report and feature request forms are shorter, and severity is no longer required when reporting a bug."
+      },
+      {
+        "type": "improvement",
+        "title": "Progress, My Roadmaps, and the dashboard use more of the screen on large monitors",
+        "description": "These pages no longer render as a small, centered block on wide or ultra-wide displays."
+      },
+      {
+        "type": "fix",
+        "title": "\"Share this roadmap\" modal now has a close button",
+        "description": "The modal was missing a visible close button, and a long list of published links could grow past the screen with no way to scroll to the bottom."
+      },
+      {
+        "type": "fix",
+        "title": "Today's Todos active count no longer gets stuck",
+        "description": "The \"N active\" badge could stay stuck after every todo was marked done. It now updates correctly, and a failed save now retries automatically."
+      },
+      {
+        "type": "fix",
+        "title": "Favorited roadmaps now show a star on their card",
+        "description": "Favoriting a roadmap from the ⋯ menu now shows a star on the card itself, instead of only affecting sort order."
+      },
+      {
+        "type": "fix",
+        "title": "The app now checks for updates more reliably",
+        "description": "A tab left open for a long time, or an installed app, now checks for a new version every hour and whenever you switch back to it."
+      },
+      {
+        "type": "fix",
+        "title": "App icon updates now reach installed devices",
+        "description": "Installed copies of Ascent could keep showing an old app icon indefinitely. Icon updates now reach every device reliably."
+      },
+      {
+        "type": "fix",
+        "title": "Fixed two undersized buttons on touch devices",
+        "description": "The \"build your own roadmap\" info button and the roadmap card's ⋯ menu button are now large enough to tap comfortably."
+      }
+    ]
   }
 ]

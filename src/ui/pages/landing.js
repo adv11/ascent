@@ -118,10 +118,7 @@ function buildHero() {
   return el('section', { className: 'landing-hero' }, [
     el('div', { className: 'bg-grid-glow', 'aria-hidden': 'true' }),
     el('div', { className: 'landing-hero-copy' }, [
-      el('p', { className: 'eyebrow landing-hero-eyebrow' }, [
-        el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
-        'Your learning roadmap'
-      ]),
+      el('p', { className: 'eyebrow landing-hero-eyebrow', text: 'Your learning roadmap' }),
       el('h1', { className: 'landing-hero-title' }, [
         'Engineer your ',
         el('span', { className: 'text-gradient-brand', text: 'next move' }),
@@ -139,10 +136,7 @@ function buildHero() {
 }
 
 function buildSectionEyebrow(label) {
-  return el('p', { className: 'eyebrow landing-section-eyebrow' }, [
-    el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
-    label
-  ]);
+  return el('p', { className: 'eyebrow landing-section-eyebrow', text: label });
 }
 
 function buildFeatures() {
