@@ -2,6 +2,7 @@ import { el } from '../dom.js';
 import { openModal } from './modal.js';
 import { confirmDialog } from './confirmDialog.js';
 import { showToast } from './toast.js';
+import { createIcon } from './icons.js';
 import { getTemplate } from '../../data/templates/index.js';
 import { publishRoadmapShare, revokeRoadmapShare, listMyShares } from '../../services/shareStore.js';
 
@@ -61,9 +62,18 @@ export function openShareRoadmapModal({ user, store }) {
   const list = el('ul', { className: 'share-link-list' });
   const generateBtn = el('button', { type: 'button', className: 'btn btn-primary', text: 'Generate a new link' });
 
+  const closeBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-ghost btn-icon modal-close',
+    'aria-label': 'Close',
+    onClick: () => close()
+  }, [createIcon('close', { size: 'sm' })]);
+
   const { close } = openModal({
     ariaLabel: 'Share this roadmap',
+    className: 'share-roadmap-modal-card',
     content: el('div', { className: 'share-roadmap-modal' }, [
+      closeBtn,
       el('h2', { text: 'Share this roadmap' }),
       el('p', {
         className: 'share-roadmap-modal-copy',

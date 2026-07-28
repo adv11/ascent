@@ -2134,11 +2134,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .share-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
-/* Roadmap sharing — published snapshot link (issue #131) */
-.share-roadmap-modal { display: grid; gap: 14px; max-width: 520px; }
+/* Roadmap sharing — published snapshot link (issue #131, close button +
+   internal scroll bound added issue #396) */
+.share-roadmap-modal-card { max-height: 90vh; overflow-y: auto; }
+.share-roadmap-modal { display: grid; gap: 14px; max-width: 520px; position: relative; }
+.share-roadmap-modal .modal-close { position: absolute; top: 0; right: 0; }
 .share-roadmap-modal-copy { color: var(--color-text-muted); font-size: var(--text-sm); }
 .share-roadmap-modal-status { font-size: var(--text-sm); color: var(--color-text); word-break: break-all; }
-.share-link-list { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0; }
+.share-link-list { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0; max-height: 240px; overflow-y: auto; }
 .share-link-row {
   display: flex;
   align-items: center;
