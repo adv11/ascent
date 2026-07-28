@@ -145,6 +145,28 @@ Callers (`main.js`) must `await setUser(...)` before reading `onboardingDone` of
 snapshot to make a routing decision — it is not safe to read it synchronously right
 after calling `setUser`.
 
+## `createDailyTodoStore()` — `src/services/dailyTodoStore.js` (issue #56, retry/hook added issue #394)
+
+`createDailyTodoStore({ onCompletionToggle }?)` — mirrors `createRoadmapStore`'s own
+`onCompletionToggle` contract above: an optional `(delta: 1 | -1) => void` callback,
+defaulting to a no-op, fired exactly once per genuine `done` transition from `setDone()`.
+`main.js` wires it to the identical `activityLogStore.recordCompletion`/
+`recordUncompletion` closure passed to `createRoadmapStore`, so a standalone (non-
+roadmap-linked) Daily Todo completion now also feeds the `/progress` heatmap/streaks —
+previously only a *linked* todo's completion reached `activityLogStore`, and only
+indirectly via the roadmap topic it was linked to. See `.claude/rules/roadmap-store.md`.
+
+| Method | Signature | Notes |
+|---|---|---|
+| `subscribe` | `(callback: (snapshot) => void) => unsubscribe` | Calls `callback` immediately with the current snapshot, then on every `notify()`. |
+| `setUser` | `async (user: { uid } \| null) => void` | **Must be awaited.** Same `stateCallId` staleness guard as `roadmapStore.js`'s `setUser`. |
+| `addTodo` | `({ title, durationMs, linkedTemplateId?, linkedItemId?, linkedItemTitle? }) => boolean` | Returns `false` (mutating nothing) for an empty/over-length title, an invalid duration, or once the active count (`!t.done && !isExpired(t, now)`) already reached `MAX_ACTIVE_TODOS`. |
+| `setDone` | `(id: string, done: boolean) => void` | No-op for a missing id. Fires `onCompletionToggle(done ? 1 : -1)` exactly once when `done` actually changes. |
+| `addTimeSpent` | `(id: string, seconds: number) => boolean` | Issue #180. Returns `false` for a missing id or a non-finite/non-positive `seconds`; otherwise adds `Math.floor(seconds)` to the todo's cumulative `timeSpentSeconds`. |
+| `removeTodo` | `(id: string) => void` | Permanently deletes — no soft-delete, no undo. Callers (the UI) are responsible for confirming first. |
+| `flush` | `async () => void` | Forces an immediate save, bypassing the debounce. Retried with exponential backoff (`SAVE_RETRY_BASE_MS` 2s up to `SAVE_RETRY_MAX_MS` 30s) on failure — same shape as `roadmapStore.js`'s `attemptFlushWithRetry`/`scheduleSaveRetry` (issue #153), added here in issue #394 so a failed save no longer leaves `dirty` stuck `true` forever (which would otherwise permanently block the remote-listener guard from ever applying another device's update again). |
+| `getSnapshot` | `(meta?) => { uid, todos, dirty, ...meta }` | `todos` is `Object.values(items)`, unsorted — sorting/bucketing (active/done/missed) is the caller's job, see `dailyTodoPanel.js`'s `render()`. |
+
 ## `src/data/templates/index.js` — template registry
 
 | Export | Signature | Notes |

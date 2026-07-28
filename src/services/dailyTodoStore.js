@@ -40,7 +40,16 @@ function readLocalTodos() {
   }
 }
 
-export function createDailyTodoStore() {
+// onCompletionToggle(delta) — issue #394: fired once, with +1 or -1, exactly
+// when a done-transition is detected, mirroring roadmapStore.js's own
+// onCompletionToggle contract (see that file's doc comment) so a standalone
+// (non-roadmap-linked) Daily Todo completion also reaches
+// activityLogStore.recordCompletion()/recordUncompletion() and therefore the
+// heatmap/streaks — previously only a linked todo's roadmap-side completion
+// did, via dailyTodoPanel.js's separate roadmapStore.setItemDoneInTemplate()
+// call. Defaults to a no-op so every existing no-args call site/unit test
+// keeps working unchanged.
+export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
   let adapter = getStorageAdapter(null);
   let uid = null;
   let unsubscribeTodos = null;
@@ -119,17 +128,48 @@ export function createDailyTodoStore() {
     notify({ saveState: 'saved' });
   }
 
+  // Issue #394, same "Issue #153 root cause #2" fix as roadmapStore.js's
+  // attemptFlushWithRetry/scheduleSaveRetry — a failed flush() here used to
+  // be a dead end: nothing ever re-queued the save, which left `dirty` stuck
+  // true forever. Since attachListener()'s remote-update guard unconditionally
+  // ignores incoming remote updates whenever `dirty` is true, a single failed
+  // save could permanently stop that device from ever seeing another device's
+  // updates (new todos, running/paused timer state) again.
+  let saveRetryTimer = null;
+  let saveRetryAttempt = 0;
+  const SAVE_RETRY_BASE_MS = 2000;
+  const SAVE_RETRY_MAX_MS = 30000;
+
+  function clearSaveRetry() {
+    clearTimeout(saveRetryTimer);
+    saveRetryTimer = null;
+    saveRetryAttempt = 0;
+  }
+
+  function attemptFlushWithRetry() {
+    flush().then(() => {
+      clearSaveRetry();
+    }).catch(error => {
+      console.error('Daily todos save failed', error);
+      scheduleSaveRetry(error);
+    });
+  }
+
+  function scheduleSaveRetry(error) {
+    clearTimeout(saveRetryTimer);
+    saveRetryAttempt += 1;
+    const delayMs = Math.min(SAVE_RETRY_BASE_MS * 2 ** (saveRetryAttempt - 1), SAVE_RETRY_MAX_MS);
+    notify({ saveState: 'error', error, retryAttempt: saveRetryAttempt, retryInMs: delayMs });
+    saveRetryTimer = setTimeout(attemptFlushWithRetry, delayMs);
+  }
+
   function queueSave() {
     dirty = true;
     persistLocal();
     notify({ saveState: 'saving' });
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      flush().catch(error => {
-        console.error('Daily todos save failed', error);
-        notify({ saveState: 'error', error });
-      });
-    }, 500);
+    clearSaveRetry();
+    saveTimer = setTimeout(attemptFlushWithRetry, 500);
   }
 
   // Sign-out/uid-transition privacy wipe — same contract roadmapStore.js's
@@ -139,6 +179,7 @@ export function createDailyTodoStore() {
   function freshStateForNewUid() {
     clearTimeout(saveTimer);
     saveTimer = null;
+    clearSaveRetry();
     clearLocal();
     items = {};
     dirty = false;
@@ -244,7 +285,9 @@ export function createDailyTodoStore() {
   function setDone(id, done) {
     const todo = items[id];
     if (!todo) return;
+    const wasDone = todo.done;
     items[id] = { ...todo, done, doneAt: done ? Date.now() : null };
+    if (done !== wasDone) onCompletionToggle(done ? 1 : -1);
     queueSave();
   }
 

@@ -431,6 +431,33 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
       expect(node.querySelector('.daily-todo-count-badge').textContent).toBe('2 active');
       node._cleanup();
     });
+
+    it('excludes done todos from the active-count badge (issue #394)', () => {
+      const store = createFakeStore();
+      const node = createDailyTodoPanel(store);
+      store.addTodo({ title: 'Task 1', durationMs: 60 * 60 * 1000 });
+      store.addTodo({ title: 'Task 2', durationMs: 60 * 60 * 1000 });
+      store.addTodo({ title: 'Task 3', durationMs: 60 * 60 * 1000 });
+      expect(node.querySelector('.daily-todo-count-badge').textContent).toBe('3 active');
+
+      const ids = store.getSnapshot().todos.map(t => t.id);
+      ids.forEach(id => store.setDone(id, true));
+
+      expect(node.querySelector('.daily-todo-count-badge').textContent).toBe('0 active');
+      expect(node.querySelector('.daily-todo-count-badge').hidden).toBe(true);
+      node._cleanup();
+    });
+
+    it('still renders a done todo row instead of hiding it (issue #394)', () => {
+      const store = createFakeStore();
+      const node = createDailyTodoPanel(store);
+      store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+      const id = store.getSnapshot().todos[0].id;
+
+      store.setDone(id, true);
+      expect(node.querySelector('.daily-todo-empty')).toBeFalsy();
+      node._cleanup();
+    });
   });
 });
 

@@ -357,14 +357,24 @@ export function createDailyTodoPanel(store, roadmapStore) {
   function render() {
     const now = Date.now();
     const todos = store.getSnapshot().todos;
-    const active = todos.filter(t => !isExpired(t, now)).sort((a, b) => a.expiresAt - b.expiresAt);
-    const missed = todos.filter(t => isExpired(t, now)).sort((a, b) => b.expiresAt - a.expiresAt);
+    // Issue #394 — must match dailyTodoStore.addTodo()'s own MAX_ACTIVE_TODOS
+    // definition of "active" (!t.done && !isExpired(t, now)). isExpired()
+    // always returns false for a done todo (by design — a done todo isn't
+    // "missed"), so filtering on isExpired() alone left every done todo
+    // stuck in the active list/count forever.
+    const active = todos.filter(t => !t.done && !isExpired(t, now)).sort((a, b) => a.expiresAt - b.expiresAt);
+    const done = todos.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+    const missed = todos.filter(t => !t.done && isExpired(t, now)).sort((a, b) => b.expiresAt - a.expiresAt);
 
+    // Done todos still render in the same list (not their own bucket — see
+    // the doc comment above) so completing one doesn't make it disappear;
+    // only the active count/badge below excludes them.
+    const displayList = [...active, ...done];
     activeList.replaceChildren();
-    if (!active.length) {
+    if (!displayList.length) {
       activeList.append(el('p', { className: 'daily-todo-empty', text: 'Nothing due in the next while — add one above.' }));
     } else {
-      active.forEach(todo => activeList.append(renderRow(todo, now)));
+      displayList.forEach(todo => activeList.append(renderRow(todo, now)));
     }
 
     missedToggle.textContent = `▸ Missed (${missed.length})`;
@@ -376,6 +386,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
     // Only rendered while collapsed (see CSS) — shown so shrinking the panel
     // never fully hides whether there's anything to come back for.
     countBadge.textContent = active.length === 1 ? '1 active' : `${active.length} active`;
+    countBadge.hidden = active.length === 0;
   }
 
   const unsubStore = store.subscribe(render);
