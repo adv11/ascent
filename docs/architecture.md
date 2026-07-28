@@ -4776,3 +4776,73 @@ Unrelated to this fix: a separately-reported "stale gold icon" symptom on an ins
 mobile PWA is an OS-level home-screen-icon cache (issue #346 already fixed the served
 assets and cache-busting query strings) with no code-side remedy — documented in issue
 #391 as a known limitation, not addressed by this change.
+
+### 2026-07-28 — PR #400 — Favorited roadmaps show no on-card favorite indicator (issue #395)
+
+`favoriteRoadmapIds` only ever affected sort order (favorites first) and the closed ⋯
+overflow menu's "Favorite"/"Unfavorite" text — nothing on the card itself showed the
+*current* favorited state, a regression from issue #206 §4.1's overflow-menu
+consolidation, which retired the old standalone favorite button without adding back any
+on-card cue. `onboarding.js`'s `buildCard()`/`buildCustomCard()` now render a small,
+non-interactive `.template-card-favorite-indicator` star (the already-defined but
+previously-unused `star` icon from `icons.js`) in the card's top-right corner, stacked
+left of the existing ⋯/info-corner button so neither collides with it. Toggling favorite
+state is still exclusively a ⋯-menu action — this only adds the missing visual cue.
+
+### 2026-07-28 — PR #401 — "Share this roadmap" modal missing close button and scroll bound (issue #396)
+
+`shareRoadmapModal.js` never rendered a close/cancel affordance — unlike every other
+modal in the app (`shareModal.js`, `feedbackModal.js`, `importRoadmapModal.js`,
+`myReports.js`) — relying entirely on `openModal()`'s Escape/click-outside dismissal
+with no visual cue for either. Once a user published several share links, the growing
+list had no `max-height`/`overflow-y: auto`, so the whole card grew past the viewport
+and `.modal-overlay`'s documented `align-items: safe center` fallback left it
+top-aligned with nothing reachable. Fixed with an explicit `.modal-close` icon button
+(matching `shareModal.js`'s existing convention) and a `max-height`/internal scroll on
+`.share-link-list`, so the close button stays visible regardless of how many links are
+published.
+
+### 2026-07-28 — PR #404 — Proactively check for service worker updates (issue #402)
+
+The service worker's own update check only ran automatically on a real page
+navigation — a backgrounded tab, an installed PWA kept open, or a long single-page
+session could go a long time without the browser ever re-checking `sw.js` for changes,
+so the existing silent reload-on-`controllerchange` fix (from issue #391 above) never
+got a chance to trigger. Reproduced live against production: a session sat on a stale
+`CACHE_VERSION` until the service worker/Cache Storage was manually cleared.
+`serviceWorkerRegistration.js` now proactively calls `registration.update()` on a
+recurring hourly interval and immediately whenever the tab regains visibility/focus —
+the existing silent-reload behavior is unchanged, this just makes sure it's actually
+reachable.
+
+### 2026-07-28 — PR #405 — Stop manifest.json from being cached immutably (issue #403)
+
+`manifest.json` names the app's icon URLs but, unlike those versioned icon files, had
+no versioned URL of its own — it fell under `firebase.json`'s blanket `/public/**` rule
+(`Cache-Control: max-age=31536000, immutable`) and was also precached cache-first by
+`sw.js`, so a device that had already fetched an old manifest had no reason to ever see
+a newer one, even after every icon file's own `?v=N` bump. Reported live via a
+screenshot showing the retired gold triangle icon in a real device's "Install app"
+prompt. `firebase.json` now carves `manifest.json` out with its own short-lived
+`Cache-Control` (matching `index.html`'s), and `sw.js` routes `manifest.json` requests
+through `networkFirst` instead of precaching it — a fresh manifest is now picked up on
+the next successful fetch, no version bump or app update required. See
+`.claude/rules/design-system.md` §8's note on this file for the general "anything that
+names other versioned assets needs this same always-revalidate treatment" lesson.
+
+### 2026-07-28 — Issue #406 — Design-system/content drift cleanup
+
+A full-codebase sweep found four small, verified drift issues, none functional/security
+bugs. Two undocumented CSS gradients (`.auth-marketing-bg-pattern`'s repeating diagonal
+texture, `.filter-chip::before`'s hover shimmer) violated design-system.md §2's "no
+gradients anywhere" rule — every other gradient in `app.css` already had an explicit
+removal comment citing this rule; these two were the only undocumented survivors.
+Flattened both to solid/opacity-based treatments with no visual restructuring.
+`.eyebrow-dot` was documented "retired" in design-system.md §3 but was still rendered at
+three call sites (`authMarketingPanel.js`, two in `landing.js`) and still violated §4's
+"radius 0 everywhere" via its `border-radius: 50%`; removed all three call sites and the
+now-dead CSS. `src/data/changelog.json` was stale by ~2.5 weeks (last entry 2026-07-23,
+missing everything through this PR); backfilled a version-5 entry covering every
+user-facing item from `CHANGELOG.md`'s `[Unreleased]` section not yet reflected there.
+This Build Log itself was missing entries for four recently merged PRs (#400/#401/#404/
+#405) — backfilled above, alongside this entry for the cleanup PR itself.
