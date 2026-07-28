@@ -28,16 +28,11 @@
 
 ## Demo video
 
-<p align="center">
-  <a href="https://github.com/adv11/ascent/releases/download/demo-video-v1/demo-video.mp4">
-    <img src="docs/screenshots/issue-312/dashboard-dark.png" alt="Watch the Ascent feature walkthrough" width="70%">
-  </a>
-</p>
+https://github.com/user-attachments/assets/255d9dc5-9217-4ab0-b7d8-f47de6c53a12
 
 <p align="center">
-  <a href="https://github.com/adv11/ascent/releases/download/demo-video-v1/demo-video.mp4">▶ Watch the full feature walkthrough (.mp4)</a>
-  — a ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
-  Progress heatmap, roadmap sharing, and more, generated automatically by
+  A ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
+  Progress heatmap, roadmap sharing, and more — generated automatically by
   <a href="scripts/generate-demo-video.mjs"><code>scripts/generate-demo-video.mjs</code></a> (issue #397).
 </p>
 
