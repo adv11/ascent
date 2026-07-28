@@ -41,7 +41,12 @@ const activityLogStore = createActivityLogStore();
 const store = createRoadmapStore({
   onCompletionToggle: delta => (delta > 0 ? activityLogStore.recordCompletion() : activityLogStore.recordUncompletion())
 });
-const dailyTodoStore = createDailyTodoStore();
+// Same onCompletionToggle injection as roadmapStore.js above (issue #394) —
+// a standalone Daily Todo completion is otherwise invisible to the
+// heatmap/streaks, since it never touches roadmapStore.js's items map.
+const dailyTodoStore = createDailyTodoStore({
+  onCompletionToggle: delta => (delta > 0 ? activityLogStore.recordCompletion() : activityLogStore.recordUncompletion())
+});
 // App-lifetime, never unmounted — same precedent as feedbackWidget.js above
 // (issue #132).
 initReminderScheduler(dailyTodoStore);

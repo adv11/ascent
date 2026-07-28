@@ -147,6 +147,108 @@ describe('setDone', () => {
   });
 });
 
+describe('onCompletionToggle (issue #394)', () => {
+  it('fires +1 exactly once when a todo transitions to done', async () => {
+    const onCompletionToggle = vi.fn();
+    const store = createDailyTodoStore({ onCompletionToggle });
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+
+    store.setDone(id, true);
+    expect(onCompletionToggle).toHaveBeenCalledTimes(1);
+    expect(onCompletionToggle).toHaveBeenCalledWith(1);
+  });
+
+  it('fires -1 exactly once when a done todo is unchecked', async () => {
+    const onCompletionToggle = vi.fn();
+    const store = createDailyTodoStore({ onCompletionToggle });
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+
+    store.setDone(id, true);
+    onCompletionToggle.mockClear();
+    store.setDone(id, false);
+    expect(onCompletionToggle).toHaveBeenCalledTimes(1);
+    expect(onCompletionToggle).toHaveBeenCalledWith(-1);
+  });
+
+  it('does not fire when setDone is called with the same done state (no real transition)', async () => {
+    const onCompletionToggle = vi.fn();
+    const store = createDailyTodoStore({ onCompletionToggle });
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+
+    store.setDone(id, false);
+    expect(onCompletionToggle).not.toHaveBeenCalled();
+  });
+
+  it('defaults to a no-op when no onCompletionToggle is provided', async () => {
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+    expect(() => store.setDone(id, true)).not.toThrow();
+  });
+});
+
+describe('save retry (issue #394)', () => {
+  it('retries with backoff after a failed flush, then clears dirty once it succeeds', async () => {
+    vi.useFakeTimers();
+    dbApi.saveDailyTodos
+      .mockRejectedValueOnce(new Error('network error'))
+      .mockResolvedValueOnce(undefined);
+
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+
+    // Initial debounced flush fails.
+    await vi.advanceTimersByTimeAsync(600);
+    expect(dbApi.saveDailyTodos).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot().dirty).toBe(true);
+
+    // Retry fires after the backoff delay and succeeds.
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(dbApi.saveDailyTodos).toHaveBeenCalledTimes(2);
+    expect(store.getSnapshot().dirty).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('resumes applying remote updates once a retried flush clears dirty', async () => {
+    vi.useFakeTimers();
+    let listenerCallback;
+    dbApi.listenDailyTodos.mockImplementation((_uid, onData) => {
+      listenerCallback = onData;
+      onData(null);
+      return () => {};
+    });
+    dbApi.saveDailyTodos
+      .mockRejectedValueOnce(new Error('network error'))
+      .mockResolvedValueOnce(undefined);
+
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Local task', durationMs: 60000 * 60 });
+
+    await vi.advanceTimersByTimeAsync(600);
+    expect(store.getSnapshot().dirty).toBe(true);
+
+    // While still dirty, an incoming remote update must be ignored.
+    listenerCallback({ 'remote-id': { id: 'remote-id', title: 'Remote', createdAt: 1, expiresAt: 2, done: false, doneAt: null } });
+    expect(store.getSnapshot().todos.some(t => t.id === 'remote-id')).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(store.getSnapshot().dirty).toBe(false);
+
+    listenerCallback({ 'remote-id': { id: 'remote-id', title: 'Remote', createdAt: 1, expiresAt: 2, done: false, doneAt: null } });
+    expect(store.getSnapshot().todos.some(t => t.id === 'remote-id')).toBe(true);
+    vi.useRealTimers();
+  });
+});
+
 describe('addTimeSpent (issue #180)', () => {
   it('adds elapsed seconds to a fresh todo with no prior timeSpentSeconds', async () => {
     const store = createDailyTodoStore();

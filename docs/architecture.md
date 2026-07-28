@@ -4737,6 +4737,37 @@ prior controller), which is not an update and must not trigger a reload loop. Ne
 `tests/unit/serviceWorkerRegistration.test.js` covers both branches plus the
 no-`serviceWorker`-API no-op path already relied on by `registerServiceWorker()` itself.
 
+### 2026-07-28 — Issue #394 — Daily Todos: heatmap integration, stuck active-count badge, sync retry
+
+Three real user-reported gaps in Daily Todos, all traced to `dailyTodoStore.js`/
+`dailyTodoPanel.js` never being brought fully up to parity with `roadmapStore.js`'s
+already-established patterns. (1) `dailyTodoStore.js`'s `setDone()` never touched
+`activityLogStore`, so completing a standalone (non-roadmap-linked) Daily Todo was
+invisible to the `/progress` heatmap/streaks — `createDailyTodoStore()` now accepts the
+same `onCompletionToggle(delta)` injection `createRoadmapStore()` already has, wired in
+`main.js` to the identical `activityLogStore.recordCompletion()`/`recordUncompletion()`
+closure, fired once on every genuine done-transition. (2) `dailyTodoPanel.js`'s active
+list/count filtered only on `isExpired()`, which always returns `false` for a done todo
+by design (a completed todo isn't "missed") — so a done todo was never excluded from the
+active count, and the header badge stayed stuck at its pre-completion "N active" forever.
+Fixed to match `dailyTodoStore.js`'s own `addTodo()`/`MAX_ACTIVE_TODOS` definition of
+active (`!t.done && !isExpired(t, now)`); done todos still render in the list (now
+sorted after the still-active ones), just excluded from the count, and the badge hides
+entirely at 0. (3) `dailyTodoStore.js`'s `flush()` had no retry on a failed save, unlike
+`roadmapStore.js`'s existing exponential-backoff retry (issue #153) — a failed
+`adapter.saveDailyTodos()` left `dirty: true` stuck with nothing ever re-queuing the
+save, and the store's own remote-listener guard ignores every incoming remote update
+while `dirty` is true, so a single flaky write could permanently stop that device from
+seeing another device's new todos or running/paused timer state ever again.
+`dailyTodoStore.js` now has the identical `attemptFlushWithRetry()`/`scheduleSaveRetry()`
+pair `roadmapStore.js` already implements. A fourth reported symptom (todos not
+appearing across devices) was investigated but not code-fixed here — the most likely
+cause is two devices each running an independent anonymous guest session (a distinct
+`uid` per device, never converging by design), which needs confirming directly with the
+user rather than assuming a code bug; tracked as a possible follow-up UX issue
+("Sign in to sync across devices"), not folded into this one. See
+`.claude/rules/roadmap-store.md`'s Daily Todos section for the full contract.
+
 This only fixes *future* sessions that load the new bundle containing this listener —
 it cannot rescue a session already running an older bundle, since that bundle predates
 the fix. A currently-stuck mobile session still needs one manual full reload (or PWA

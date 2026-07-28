@@ -95,7 +95,8 @@ the Store pattern above, not a first one to design from scratch.** Same mutable 
 after the debounce) + Firebase-echo guard (`stableStringify`-based, duplicated rather than
 imported from `roadmapStore.js` so the two stores stay independent) + sign-out privacy
 guard (a uid transition clears this store's own local data too — see "Sign-out contract"
-below, which applies here just as much as to the roadmap). The one thing it deliberately
+below, which applies here just as much as to the roadmap) + `onCompletionToggle`/save-retry
+(both added issue #394, see next paragraph). The one thing it deliberately
 does **not** carry over is `structuralVersion`: that optimization exists specifically to
 avoid tearing down/rebuilding every phase-card on a roadmap `done` toggle, and this list is
 flat and small (≤20 active items, `MAX_ACTIVE_TODOS`) with no equivalent expensive
@@ -108,7 +109,16 @@ device clock/timezone change can't retroactively move a deadline. Expiry itself
 is a pure, derived value computed on read — there is no server cron on this static-hosted
 app to run a background "mark expired" job, so a missed (expired, not done) todo just
 stops rendering as active and moves into a collapsed "Missed" section instead of ever
-being auto-deleted — deletion is always an explicit, confirmed user action instead (see
+being auto-deleted. **`isExpired()` is defined as `!todo.done && now > todo.expiresAt` —
+it always returns `false` for a done todo, by design, since a completed todo isn't
+"missed."** This means `isExpired()` alone is never a complete "is this todo active"
+check — `dailyTodoPanel.js`'s `render()` (its active list/count) and
+`dailyTodoStore.js`'s `addTodo()` (the `MAX_ACTIVE_TODOS` cap) both must additionally
+check `!t.done` themselves. `render()` originally missed the `!t.done` half (issue #394)
+— a done todo was never excluded from the active count/badge, so "N active" stayed stuck
+at its pre-completion count even once every todo was checked off. If you add a third
+"is this todo active" call site, include `!t.done` explicitly rather than assuming
+`isExpired()` alone covers it — deletion is always an explicit, confirmed user action instead (see
 `removeTodo(id)` below). Never deleted *automatically* is not the same as *never
 deletable*: `removeTodo(id)` permanently drops a todo from the store, but only the UI
 exposes it — a ✕ button that appears on a `done` or missed (never an active) row, gated
@@ -131,6 +141,30 @@ up needed no wiring change there — just `createDailyTodoPanel(dailyTodoStore)`
 in `renderOnboarding`'s own returned node, with `dailyTodoPanel?._cleanup?.()` added to
 its existing cleanup return alongside `themeToggleBtn._cleanup?.()`. If you ever consider
 moving it again, dashboard.js is specifically the wrong place — it's the roadmap view.
+
+**`onCompletionToggle` and save-retry (`dailyTodoStore.js`, issue #394) — the same two
+contracts `roadmapStore.js` already has, ported over because a standalone Daily Todo had
+neither.** `createDailyTodoStore({ onCompletionToggle })` mirrors `createRoadmapStore`'s
+own injection (`main.js` passes the identical closure to both:
+`delta => (delta > 0 ? activityLogStore.recordCompletion() : activityLogStore.recordUncompletion())`)
+— `setDone()` fires it with `+1`/`-1` exactly once on a genuine done-transition, so a
+todo completed with no `linkedTemplateId`/`linkedItemId` (the common case) now also
+reaches `activityLogStore` and therefore the `/progress` heatmap/streaks. Before this, only
+a *linked* todo's completion showed up in the heatmap, and only as the linked roadmap
+topic's own completion (via `dailyTodoPanel.js`'s separate `setItemDoneInTemplate` call
+documented below) — an unlinked todo left no trace anywhere analytics reads from.
+Defaults to a no-op, same "existing no-args call site/unit test keeps working" contract
+`roadmapStore.js`'s version has. Separately, `flush()` now has the identical
+exponential-backoff retry `roadmapStore.js`'s `attemptFlushWithRetry()`/
+`scheduleSaveRetry()` already implement (issue #153) — `queueSave()` calls
+`attemptFlushWithRetry()` instead of a bare `flush().catch()`, `clearSaveRetry()` is
+called both on a successful flush and inside `freshStateForNewUid()` (so a pending retry
+timer from one account never fires against the next signed-in uid). This closes a real
+gap: without it, a single failed `adapter.saveDailyTodos()` left `dirty: true` with
+nothing ever re-queuing the save, and `attachListener()`'s remote-update guard
+unconditionally ignores incoming remote snapshots whenever `dirty` is true — so one
+flaky write could permanently stop that device from ever seeing another device's new
+todos, or a todo's running/paused timer state, again.
 
 **Cross-roadmap awareness — the header badge, not the editor, on `dashboard.js`.**
 Since a signed-in user spends most of their time on the dashboard rather than the
