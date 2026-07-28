@@ -28,7 +28,7 @@
 
 ## Demo video
 
-https://github.com/user-attachments/assets/255d9dc5-9217-4ab0-b7d8-f47de6c53a12
+https://github.com/user-attachments/assets/42be1006-d3cf-4d27-8e03-8e8b0f67248a
 
 <p align="center">
   A ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
