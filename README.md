@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-1377%20passing-15803d?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-1474%20passing-15803d?style=flat-square">
   <img alt="Stack" src="https://img.shields.io/badge/stack-vanilla%20JS%20%C2%B7%20no%20build%20step-D9A441?style=flat-square">
   <img alt="Firebase" src="https://img.shields.io/badge/backend-Firebase-FFA000?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-all%20rights%20reserved-333333?style=flat-square">
@@ -24,6 +24,16 @@
 
 <p align="center">
   <img src="docs/screenshots/issue-312/dashboard-dark.png" alt="Ascent dashboard" width="100%">
+</p>
+
+## Demo video
+
+https://github.com/user-attachments/assets/255d9dc5-9217-4ab0-b7d8-f47de6c53a12
+
+<p align="center">
+  A ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
+  Progress heatmap, roadmap sharing, and more — generated automatically by
+  <a href="scripts/generate-demo-video.mjs"><code>scripts/generate-demo-video.mjs</code></a> (issue #397).
 </p>
 
 <p align="center">
@@ -244,7 +254,7 @@ source of truth for current status — see it for the full, up-to-date list of w
 left. See [`CHANGELOG.md`](CHANGELOG.md) for the detailed change history and
 [`docs/roadmap.md`](docs/roadmap.md) for a pointer to the same tracker.
 
-Tests run via `npm test` (Vitest unit + integration, 1377 tests) and `npm run test:e2e`
+Tests run via `npm test` (Vitest unit + integration, 1474 tests) and `npm run test:e2e`
 (Playwright). Run `npm run lint` to check for security and quality issues. See the
 "Verifying changes" section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
 
