@@ -295,6 +295,22 @@ describe('onboarding page — first-time picker (onboardingDone === false)', () 
     expect(createCard.querySelector('.template-card-overflow-btn')).toBeNull();
   });
 
+  // Issue #395 — favoriteRoadmapIds used to only affect sort order and the
+  // closed ⋯ menu's text label, never a visible on-card element.
+  it('renders an on-card favorite indicator only for a favorited built-in template', async () => {
+    const { app } = await setup({ favoriteRoadmapIds: ['piano'] });
+    const pianoCard = [...app.querySelectorAll('.template-card')].find(c => c.textContent.includes('Learning Piano'));
+    const otherCard = [...app.querySelectorAll('.template-card')].find(c => c !== pianoCard && !c.classList.contains('template-card-create'));
+
+    expect(pianoCard.querySelector('.template-card-favorite-indicator')).not.toBeNull();
+    expect(otherCard.querySelector('.template-card-favorite-indicator')).toBeNull();
+  });
+
+  it('does not render a favorite indicator on any card when nothing is favorited', async () => {
+    const { app } = await setup({ favoriteRoadmapIds: [] });
+    expect(app.querySelector('.template-card-favorite-indicator')).toBeNull();
+  });
+
   it('clicking Hide in the overflow menu asks for confirmation, then hides the card without picking it', async () => {
     const hideTemplate = vi.fn().mockResolvedValue(undefined);
     const switchRoadmap = vi.fn().mockResolvedValue(undefined);

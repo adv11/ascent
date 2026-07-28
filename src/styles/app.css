@@ -1298,6 +1298,26 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 :root[data-theme='dark'] .template-card-overflow-btn:hover,
 :root[data-theme='dark'] .template-card-overflow-btn[aria-expanded='true'] { color: var(--color-accent-700); border-color: var(--color-border-strong); }
 
+/* Favorited-roadmap on-card indicator (issue #395) — a plain, non-interactive
+   cue, never a click target (favoriting stays a ⋯-menu-only action, see
+   buildFavoriteMenuAction()/buildFavoriteIndicator() in onboarding.js). Sits
+   in the top-left corner specifically so it never collides with
+   .template-card-overflow-btn/.template-card-info-corner, both anchored
+   top-right, or with their 46px `pointer: coarse` touch-target override
+   below (issue #377) — this element has no touch target of its own to grow. */
+.template-card-favorite-indicator {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+.template-card-favorite-indicator svg path { fill: currentColor; }
+
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
 .hidden-templates-toggle { justify-self: center; }
 .hidden-grid { width: 100%; }
