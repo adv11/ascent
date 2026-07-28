@@ -1071,6 +1071,281 @@
       "norm_label": "main()"
     },
     {
+      "label": "generate-demo-video.mjs",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "generate-demo-video.mjs"
+    },
+    {
+      "label": "__dirname",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L36",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_dirname",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "__dirname"
+    },
+    {
+      "label": "root",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_root",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "root"
+    },
+    {
+      "label": "args",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L46",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_args",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "args"
+    },
+    {
+      "label": "outPath",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L53",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_outpath",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "outpath"
+    },
+    {
+      "label": "SLIDES",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L62",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_slides",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "slides"
+    },
+    {
+      "label": "STOPS",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L86",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_stops",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "stops"
+    },
+    {
+      "label": "startDevServer()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L293",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_startdevserver",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "startdevserver()"
+    },
+    {
+      "label": "readDesignTokens()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L315",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_readdesigntokens",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "readdesigntokens()"
+    },
+    {
+      "label": "installOverlay()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L337",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_installoverlay",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "installoverlay()"
+    },
+    {
+      "label": "removeOverlay()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L408",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_removeoverlay",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "removeoverlay()"
+    },
+    {
+      "label": "updateProgress()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L412",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_updateprogress",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "updateprogress()"
+    },
+    {
+      "label": "moveSpotlightTo()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L419",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_movespotlightto",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "movespotlightto()"
+    },
+    {
+      "label": "showCaption()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L449",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_showcaption",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "showcaption()"
+    },
+    {
+      "label": "playClickRipple()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L459",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_playclickripple",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "playclickripple()"
+    },
+    {
+      "label": "waitForPaint()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L482",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_waitforpaint",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "waitforpaint()"
+    },
+    {
+      "label": "captureAnimatedFrames()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L493",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_captureanimatedframes",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "captureanimatedframes()"
+    },
+    {
+      "label": "fadeOutCurrentPage()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L511",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_fadeoutcurrentpage",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "fadeoutcurrentpage()"
+    },
+    {
+      "label": "buildStepList()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L530",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_buildsteplist",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "buildsteplist()"
+    },
+    {
+      "label": "playSlide()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L536",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_playslide",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "playslide()"
+    },
+    {
+      "label": "runStop()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L597",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_runstop",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "runstop()"
+    },
+    {
+      "label": "CHORD_PROGRESSION_HZ",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L655",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_chord_progression_hz",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "chord_progression_hz"
+    },
+    {
+      "label": "buildFfmpegArgs()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L663",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_buildffmpegargs",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "buildffmpegargs()"
+    },
+    {
+      "label": "runFfmpeg()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L710",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_runffmpeg",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "runffmpeg()"
+    },
+    {
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L723",
+      "_origin": "ast",
+      "id": "scripts_generate_demo_video_main",
+      "community": 63,
+      "community_name": "Daily Todo Panel Tests",
+      "norm_label": "main()"
+    },
+    {
       "label": "lint-icons.mjs",
       "file_type": "code",
       "source_file": "scripts/lint-icons.mjs",
@@ -1319,8 +1594,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "analyticsengine.js"
     },
     {
@@ -1330,8 +1605,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_effectivecompletedat",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "effectivecompletedat()"
     },
     {
@@ -1341,8 +1616,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_buildderivedlogfromitems",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "buildderivedlogfromitems()"
     },
     {
@@ -1352,8 +1627,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_buildeffectiveactivitylog",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "buildeffectiveactivitylog()"
     },
     {
@@ -1363,8 +1638,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_computeoverview",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "computeoverview()"
     },
     {
@@ -1374,8 +1649,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_computephasebreakdown",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "computephasebreakdown()"
     },
     {
@@ -1385,8 +1660,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_priorities",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "priorities"
     },
     {
@@ -1396,8 +1671,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_computeprioritybreakdown",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "computeprioritybreakdown()"
     },
     {
@@ -1407,8 +1682,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_computeanalytics",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "computeanalytics()"
     },
     {
@@ -1418,8 +1693,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_core_analytics_analyticsengine_js_docref_adr_0009",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "adr-0009"
     },
     {
@@ -1462,8 +1737,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_core_analytics_datekey_parsedatekey",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "parsedatekey()"
     },
     {
@@ -1473,8 +1748,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_core_analytics_datekey_month_abbr",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "month_abbr"
     },
     {
@@ -1517,8 +1792,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_analytics_progressdigest",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "progressdigest.js"
     },
     {
@@ -1528,8 +1803,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_core_analytics_progressdigest_computeweeklycompletedcount",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "computeweeklycompletedcount()"
     },
     {
@@ -1539,8 +1814,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_core_analytics_progressdigest_computeprogressdigest",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "computeprogressdigest()"
     },
     {
@@ -1550,8 +1825,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_core_analytics_progressdigest_hasdigestcontent",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "hasdigestcontent()"
     },
     {
@@ -1561,8 +1836,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_core_analytics_progressdigest_formatdigestmessage",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "formatdigestmessage()"
     },
     {
@@ -1572,8 +1847,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_analytics_projection",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "projection.js"
     },
     {
@@ -1583,8 +1858,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_core_analytics_projection_adddays",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "adddays()"
     },
     {
@@ -1594,8 +1869,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_core_analytics_projection_computeprojection",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "computeprojection()"
     },
     {
@@ -1671,8 +1946,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_analytics_velocity",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "velocity.js"
     },
     {
@@ -1682,8 +1957,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_core_analytics_velocity_computevelocity",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "computevelocity()"
     },
     {
@@ -1869,8 +2144,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "limits.js"
     },
     {
@@ -1880,8 +2155,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits_duration_presets",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "duration_presets"
     },
     {
@@ -2342,8 +2617,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_completioncelebration",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "completioncelebration.js"
     },
     {
@@ -2353,8 +2628,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_core_roadmap_completioncelebration_isroadmapcomplete",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "isroadmapcomplete()"
     },
     {
@@ -2364,8 +2639,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_core_roadmap_completioncelebration_getcompletedphasetitles",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "getcompletedphasetitles()"
     },
     {
@@ -2914,8 +3189,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "roadmapcomparison.js"
     },
     {
@@ -2925,8 +3200,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_normalizekeypart",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "normalizekeypart()"
     },
     {
@@ -2936,8 +3211,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_comparisonkey",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "comparisonkey()"
     },
     {
@@ -2947,8 +3222,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_tocomparablelist",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "tocomparablelist()"
     },
     {
@@ -2958,8 +3233,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_matchstatus",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "matchstatus()"
     },
     {
@@ -2969,8 +3244,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_tocomparisonrow",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "tocomparisonrow()"
     },
     {
@@ -2980,8 +3255,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_compareroadmaptopics",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "compareroadmaptopics()"
     },
     {
@@ -2991,8 +3266,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_buildcomparisonsummary",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "buildcomparisonsummary()"
     },
     {
@@ -3002,8 +3277,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "src_core_roadmap_roadmapcomparison_groupcomparisonbyphase",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "groupcomparisonbyphase()"
     },
     {
@@ -3123,8 +3398,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_time_timetracking",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "timetracking.js"
     },
     {
@@ -3134,8 +3409,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_core_time_timetracking_computeelapsedseconds",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "computeelapsedseconds()"
     },
     {
@@ -3145,8 +3420,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_core_time_timetracking_accumulateelapsed",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "accumulateelapsed()"
     },
     {
@@ -3156,8 +3431,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_core_time_timetracking_formattimespent",
-      "community": 161,
-      "community_name": "dom.js",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "formattimespent()"
     },
     {
@@ -3508,8 +3783,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_data_templates_index_templates",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "templates"
     },
     {
@@ -3926,8 +4201,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_activitylogstore",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "activitylogstore.js"
     },
     {
@@ -3937,8 +4212,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_activitylogstore_stablestringify",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "stablestringify()"
     },
     {
@@ -3948,8 +4223,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_services_activitylogstore_pruneoldentries",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "pruneoldentries()"
     },
     {
@@ -3959,8 +4234,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_services_activitylogstore_resolvelocalentries",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "resolvelocalentries()"
     },
     {
@@ -3970,8 +4245,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_services_activitylogstore_applyentrypruning",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "applyentrypruning()"
     },
     {
@@ -3981,8 +4256,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_services_activitylogstore_readlocallog",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "readlocallog()"
     },
     {
@@ -3992,8 +4267,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_services_activitylogstore_default_streak_freezes",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "default_streak_freezes"
     },
     {
@@ -4003,8 +4278,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_services_activitylogstore_readlocalstreakfreezes",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "readlocalstreakfreezes()"
     },
     {
@@ -4025,8 +4300,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_activitylogstore_js_docref_adr_0009",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "adr-0009"
     },
     {
@@ -4058,8 +4333,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "celebrationshownstore.js"
     },
     {
@@ -4069,8 +4344,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_read",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "read()"
     },
     {
@@ -4080,8 +4355,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_write",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "write()"
     },
     {
@@ -4091,8 +4366,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_hasshownroadmapcelebration",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "hasshownroadmapcelebration()"
     },
     {
@@ -4102,8 +4377,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_hasshownphasecelebration",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "hasshownphasecelebration()"
     },
     {
@@ -4113,8 +4388,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_markroadmapcelebrationshown",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "markroadmapcelebrationshown()"
     },
     {
@@ -4124,8 +4399,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_markphasecelebrationshown",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "markphasecelebrationshown()"
     },
     {
@@ -4487,8 +4762,8 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_backupfirstseenatkey",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "backupfirstseenatkey()"
     },
     {
@@ -4498,8 +4773,8 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_lastbackupatkey",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "lastbackupatkey()"
     },
     {
@@ -4509,8 +4784,8 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_backupreminderdismissedatkey",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "backupreminderdismissedatkey()"
     },
     {
@@ -4520,8 +4795,8 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_guestrisknudgeshownkey",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "guestrisknudgeshownkey()"
     },
     {
@@ -4531,8 +4806,8 @@
       "source_location": "L160",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_celebrationshownkey",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "celebrationshownkey()"
     },
     {
@@ -4542,8 +4817,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_progressdigestlastshownkey",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "progressdigestlastshownkey()"
     },
     {
@@ -6115,8 +6390,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_theme",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "theme.js"
     },
     {
@@ -6126,8 +6401,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_services_theme_media",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "media"
     },
     {
@@ -6137,8 +6412,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_services_theme_subscribers",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "subscribers"
     },
     {
@@ -6148,8 +6423,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_services_theme_systemtheme",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "systemtheme()"
     },
     {
@@ -6159,8 +6434,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_theme_apply",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "apply()"
     },
     {
@@ -6170,8 +6445,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_theme_gettheme",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "gettheme()"
     },
     {
@@ -6181,8 +6456,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_theme_hasexplicitpreference",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "hasexplicitpreference()"
     },
     {
@@ -6192,8 +6467,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_services_theme_settheme",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "settheme()"
     },
     {
@@ -6203,8 +6478,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_services_theme_toggletheme",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "toggletheme()"
     },
     {
@@ -6214,8 +6489,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_theme_onthemechange",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "onthemechange()"
     },
     {
@@ -6225,8 +6500,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_services_theme_inittheme",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "inittheme()"
     },
     {
@@ -6247,8 +6522,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_addtodailytodomodal",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "addtodailytodomodal.js"
     },
     {
@@ -6258,8 +6533,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_components_addtodailytodomodal_openaddtodailytodomodal",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "openaddtodailytodomodal()"
     },
     {
@@ -6313,8 +6588,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_createauthmarketingpanel",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "createauthmarketingpanel()"
     },
     {
@@ -6324,8 +6599,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_authshell",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "authshell.js"
     },
     {
@@ -6335,8 +6610,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_authshell_authshell",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "authshell()"
     },
     {
@@ -6698,8 +6973,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "commandpalette.js"
     },
     {
@@ -6709,8 +6984,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette_fuzzymatch",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "fuzzymatch()"
     },
     {
@@ -6720,8 +6995,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette_opencommandpalette",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "opencommandpalette()"
     },
     {
@@ -6731,8 +7006,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "src_ui_components_commandpalette_bindcommandpaletteshortcut",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "bindcommandpaletteshortcut()"
     },
     {
@@ -6786,8 +7061,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "dailytodoguide.js"
     },
     {
@@ -6797,8 +7072,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide_opendailytodoguide",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "opendailytodoguide()"
     },
     {
@@ -6808,8 +7083,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodopanel.js"
     },
     {
@@ -6819,8 +7094,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel_resolveroadmapname",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "resolveroadmapname()"
     },
     {
@@ -6907,8 +7182,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_deleteaccountmodal_opendeleteaccountmodal",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "opendeleteaccountmodal()"
     },
     {
@@ -7292,8 +7567,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_guestdatarisknudge",
-      "community": 128,
-      "community_name": "navigate",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "guestdatarisknudge.js"
     },
     {
@@ -7303,8 +7578,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_guestdatarisknudge_maybeshowguestdatarisknudge",
-      "community": 128,
-      "community_name": "navigate",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "maybeshowguestdatarisknudge()"
     },
     {
@@ -7314,8 +7589,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_heatmap",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "heatmap.js"
     },
     {
@@ -7325,8 +7600,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_day_abbr",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "day_abbr"
     },
     {
@@ -7336,8 +7611,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_labeled_rows",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "labeled_rows"
     },
     {
@@ -7347,8 +7622,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_layoutcells",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "layoutcells()"
     },
     {
@@ -7358,8 +7633,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_monthlabelsfor",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "monthlabelsfor()"
     },
     {
@@ -7369,8 +7644,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_formatcelldate",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "formatcelldate()"
     },
     {
@@ -7380,8 +7655,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_celltooltiptext",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "celltooltiptext()"
     },
     {
@@ -7391,8 +7666,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_ui_components_heatmap_createheatmap",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 166,
+      "community_name": "heatmap.js",
       "norm_label": "createheatmap()"
     },
     {
@@ -7656,7 +7931,7 @@
       "_origin": "ast",
       "id": "src_ui_components_itempanel",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "itempanel.js"
     },
     {
@@ -7667,7 +7942,7 @@
       "_origin": "ast",
       "id": "src_ui_components_itempanel_link_check_status",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "link_check_status"
     },
     {
@@ -7678,7 +7953,7 @@
       "_origin": "ast",
       "id": "src_ui_components_itempanel_link_check_messages",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "link_check_messages"
     },
     {
@@ -7689,7 +7964,7 @@
       "_origin": "ast",
       "id": "src_ui_components_itempanel_checkresourcelink",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "checkresourcelink()"
     },
     {
@@ -7700,7 +7975,7 @@
       "_origin": "ast",
       "id": "src_ui_components_itempanel_openitempanel",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "openitempanel()"
     },
     {
@@ -7732,8 +8007,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_modal_openmodal",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "openmodal()"
     },
     {
@@ -7875,8 +8150,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_progressdigestbanner",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "progressdigestbanner.js"
     },
     {
@@ -7886,8 +8161,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_progressdigestbanner_createprogressdigestbanner",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "createprogressdigestbanner()"
     },
     {
@@ -7919,8 +8194,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "roadmapcomparisonmodal.js"
     },
     {
@@ -7930,8 +8205,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_roadmaplabel",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "roadmaplabel()"
     },
     {
@@ -7941,8 +8216,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_statuslabel",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "statuslabel()"
     },
     {
@@ -7952,8 +8227,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_rendersummaryrow",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "rendersummaryrow()"
     },
     {
@@ -7963,8 +8238,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_rendermatchedrow",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "rendermatchedrow()"
     },
     {
@@ -7974,8 +8249,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_renderonlyrow",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "renderonlyrow()"
     },
     {
@@ -7985,8 +8260,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_renderphasegroup",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "renderphasegroup()"
     },
     {
@@ -7996,8 +8271,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_rendercomparisonresult",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "rendercomparisonresult()"
     },
     {
@@ -8007,8 +8282,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_openroadmapcomparisonmodal",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "openroadmapcomparisonmodal()"
     },
     {
@@ -8018,8 +8293,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_select",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "select.js"
     },
     {
@@ -8029,8 +8304,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_ui_components_select_createselect",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "createselect()"
     },
     {
@@ -8326,8 +8601,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "shareroadmapmodal.js"
     },
     {
@@ -8337,8 +8612,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_activeroadmaptitle",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "activeroadmaptitle()"
     },
     {
@@ -8348,8 +8623,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_shareurl",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "shareurl()"
     },
     {
@@ -8359,8 +8634,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_copytoclipboard",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "copytoclipboard()"
     },
     {
@@ -8370,8 +8645,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_rendersharerow",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "rendersharerow()"
     },
     {
@@ -8381,8 +8656,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_openshareroadmapmodal",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "openshareroadmapmodal()"
     },
     {
@@ -8414,8 +8689,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_readcollapsed",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "readcollapsed()"
     },
     {
@@ -8436,8 +8711,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_createsidebar",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "createsidebar()"
     },
     {
@@ -8502,8 +8777,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "themetoggle.js"
     },
     {
@@ -8513,8 +8788,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_icon_names",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "icon_names"
     },
     {
@@ -8524,8 +8799,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_arialabel",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "arialabel()"
     },
     {
@@ -8535,8 +8810,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_createthemetoggle",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "createthemetoggle()"
     },
     {
@@ -8579,8 +8854,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_tooltip",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "tooltip.js"
     },
     {
@@ -8590,8 +8865,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_tooltip_overlapsvisiblesectionlabel",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "overlapsvisiblesectionlabel()"
     },
     {
@@ -8601,8 +8876,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_ui_components_tooltip_attachtooltip",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "attachtooltip()"
     },
     {
@@ -8689,7 +8964,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_dom",
-      "community": 161,
+      "community": 169,
       "community_name": "dom.js",
       "norm_label": "dom.js"
     },
@@ -8700,7 +8975,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_dom_escapehtml",
-      "community": 161,
+      "community": 169,
       "community_name": "dom.js",
       "norm_label": "escapehtml()"
     },
@@ -8711,8 +8986,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_dom_el",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "el()"
     },
     {
@@ -8722,7 +8997,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_dom_clear",
-      "community": 161,
+      "community": 169,
       "community_name": "dom.js",
       "norm_label": "clear()"
     },
@@ -8733,7 +9008,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_dom_debounce",
-      "community": 161,
+      "community": 169,
       "community_name": "dom.js",
       "norm_label": "debounce()"
     },
@@ -8744,8 +9019,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_ui_dom_isvalidurl",
-      "community": 161,
-      "community_name": "dom.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "isvalidurl()"
     },
     {
@@ -8788,8 +9063,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderinlineresources",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "renderinlineresources()"
     },
     {
@@ -8810,8 +9085,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_summarizeresourcetypes",
-      "community": 161,
-      "community_name": "dom.js",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "summarizeresourcetypes()"
     },
     {
@@ -9071,7 +9346,7 @@
       "label": "buildSectionEyebrow()",
       "file_type": "code",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L141",
+      "source_location": "L138",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildsectioneyebrow",
       "community": 20,
@@ -9082,7 +9357,7 @@
       "label": "buildFeatures()",
       "file_type": "code",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L148",
+      "source_location": "L142",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildfeatures",
       "community": 20,
@@ -9093,7 +9368,7 @@
       "label": "buildSteps()",
       "file_type": "code",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L160",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildsteps",
       "community": 20,
@@ -9104,7 +9379,7 @@
       "label": "buildCta()",
       "file_type": "code",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L173",
+      "source_location": "L167",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildcta",
       "community": 20,
@@ -9115,7 +9390,7 @@
       "label": "buildFooter()",
       "file_type": "code",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L184",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildfooter",
       "community": 20,
@@ -9126,7 +9401,7 @@
       "label": "renderLanding()",
       "file_type": "code",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L194",
+      "source_location": "L188",
       "_origin": "ast",
       "id": "src_ui_pages_landing_renderlanding",
       "community": 20,
@@ -9162,8 +9437,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildpickingoverlay",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "buildpickingoverlay()"
     },
     {
@@ -9239,8 +9514,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_pages_progress_lastndatekeys",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "lastndatekeys()"
     },
     {
@@ -9250,8 +9525,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_ui_pages_progress_formatshortdate",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "formatshortdate()"
     },
     {
@@ -9272,8 +9547,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_ui_pages_progress_buildcumulativeseries",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "buildcumulativeseries()"
     },
     {
@@ -9283,8 +9558,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_ui_pages_progress_buildvelocityseries",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 65,
+      "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "buildvelocityseries()"
     },
     {
@@ -9492,8 +9767,8 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "src_ui_pages_settings_builddatasection",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "builddatasection()"
     },
     {
@@ -9503,8 +9778,8 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "src_ui_pages_settings_builddangerzone",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "builddangerzone()"
     },
     {
@@ -9514,8 +9789,8 @@
       "source_location": "L389",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildguestview",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "buildguestview()"
     },
     {
@@ -9525,8 +9800,8 @@
       "source_location": "L397",
       "_origin": "ast",
       "id": "src_ui_pages_settings_rendersettings",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "rendersettings()"
     },
     {
@@ -9657,8 +9932,8 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "src_ui_pages_signin_buildresetform",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "buildresetform()"
     },
     {
@@ -9668,8 +9943,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "src_ui_pages_signin_rendersignin",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "rendersignin()"
     },
     {
@@ -9877,8 +10152,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "backupreminder.js"
     },
     {
@@ -9888,8 +10163,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_readtimestamp",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "readtimestamp()"
     },
     {
@@ -9899,8 +10174,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_ensurebackupfirstseenat",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "ensurebackupfirstseenat()"
     },
     {
@@ -9910,8 +10185,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_markbackuptaken",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "markbackuptaken()"
     },
     {
@@ -9921,8 +10196,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_dismissbackupreminder",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "dismissbackupreminder()"
     },
     {
@@ -9932,8 +10207,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_shouldshowbackupreminder",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "shouldshowbackupreminder()"
     },
     {
@@ -10031,8 +10306,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodo.js"
     },
     {
@@ -10042,8 +10317,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_isexpired",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "isexpired()"
     },
     {
@@ -10053,8 +10328,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_remainingms",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "remainingms()"
     },
     {
@@ -10064,8 +10339,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_formatremaining",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "formatremaining()"
     },
     {
@@ -10075,8 +10350,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_remainingband",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "remainingband()"
     },
     {
@@ -10152,8 +10427,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_guestdatarisk",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "guestdatarisk.js"
     },
     {
@@ -10163,8 +10438,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_ui_utils_guestdatarisk_shouldshowguestrisknudge",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "shouldshowguestrisknudge()"
     },
     {
@@ -10174,8 +10449,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_ui_utils_guestdatarisk_markguestrisknudgeshown",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "markguestrisknudgeshown()"
     },
     {
@@ -10186,7 +10461,7 @@
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "linkdetector.js"
     },
     {
@@ -10197,7 +10472,7 @@
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector_link_types",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "link_types"
     },
     {
@@ -10208,7 +10483,7 @@
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector_link_type_meta",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "link_type_meta"
     },
     {
@@ -10219,7 +10494,7 @@
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector_detectlinktype",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "detectlinktype()"
     },
     {
@@ -10394,8 +10669,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_progressdigest",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "progressdigest.js"
     },
     {
@@ -10405,8 +10680,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_utils_progressdigest_readtimestamp",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "readtimestamp()"
     },
     {
@@ -10416,8 +10691,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_ui_utils_progressdigest_shouldshowprogressdigest",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "shouldshowprogressdigest()"
     },
     {
@@ -10427,8 +10702,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_utils_progressdigest_markprogressdigestshown",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "markprogressdigestshown()"
     },
     {
@@ -11032,8 +11307,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_e2e_keyboardchecklistnav_test",
-      "community": 6,
-      "community_name": "E2E Test Suite",
+      "community": 170,
+      "community_name": "keyboardChecklistNav.test.js",
       "norm_label": "keyboardchecklistnav.test.js"
     },
     {
@@ -11043,8 +11318,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_e2e_keyboardchecklistnav_test_gotodashboard",
-      "community": 6,
-      "community_name": "E2E Test Suite",
+      "community": 170,
+      "community_name": "keyboardChecklistNav.test.js",
       "norm_label": "gotodashboard()"
     },
     {
@@ -11175,8 +11450,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_e2e_reviewtaggrouping_test",
-      "community": 152,
-      "community_name": "reviewTagGrouping.test.js",
+      "community": 6,
+      "community_name": "E2E Test Suite",
       "norm_label": "reviewtaggrouping.test.js"
     },
     {
@@ -11186,8 +11461,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_e2e_reviewtaggrouping_test_ageitemscompletion",
-      "community": 152,
-      "community_name": "reviewTagGrouping.test.js",
+      "community": 6,
+      "community_name": "E2E Test Suite",
       "norm_label": "ageitemscompletion()"
     },
     {
@@ -11571,8 +11846,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_addtodailytodomodal_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "addtodailytodomodal.test.js"
     },
     {
@@ -11582,8 +11857,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_analytics_analyticsengine_test",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "analyticsengine.test.js"
     },
     {
@@ -11593,8 +11868,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_unit_analytics_analyticsengine_test_now",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "now"
     },
     {
@@ -11637,8 +11912,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_analytics_progressdigest_test",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "progressdigest.test.js"
     },
     {
@@ -11648,8 +11923,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_unit_analytics_progressdigest_test_now",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "now"
     },
     {
@@ -11659,8 +11934,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_analytics_projection_test",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "projection.test.js"
     },
     {
@@ -11670,8 +11945,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_analytics_projection_test_now",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "now"
     },
     {
@@ -11714,8 +11989,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_analytics_velocity_test",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "velocity.test.js"
     },
     {
@@ -11725,8 +12000,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_analytics_velocity_test_now",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 167,
+      "community_name": "computeVelocity",
       "norm_label": "now"
     },
     {
@@ -11835,8 +12110,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_backupreminder_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 163,
+      "community_name": "backupReminder.js",
       "norm_label": "backupreminder.test.js"
     },
     {
@@ -12000,8 +12275,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_celebrationshownstore_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 168,
+      "community_name": "celebrationShownStore.js",
       "norm_label": "celebrationshownstore.test.js"
     },
     {
@@ -12154,8 +12429,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_commandpalette_test",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "commandpalette.test.js"
     },
     {
@@ -12165,8 +12440,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "tests_unit_commandpalette_test_makeitems",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "makeitems()"
     },
     {
@@ -12176,8 +12451,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_completioncelebration_test",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "completioncelebration.test.js"
     },
     {
@@ -12187,8 +12462,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_completioncelebration_test_item",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 155,
+      "community_name": "analyticsEngine.js",
       "norm_label": "item()"
     },
     {
@@ -12297,8 +12572,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodo_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodo.test.js"
     },
     {
@@ -12308,8 +12583,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodoguide_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "dailytodoguide.test.js"
     },
     {
@@ -12319,8 +12594,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "dailytodopanel.test.js"
     },
     {
@@ -12330,8 +12605,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_createfakestore",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "createfakestore()"
     },
     {
@@ -12341,8 +12616,8 @@
       "source_location": "L220",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_createfakeroadmapstore",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "createfakeroadmapstore()"
     },
     {
@@ -12352,8 +12627,8 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_linkedtodo",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "linkedtodo()"
     },
     {
@@ -12363,8 +12638,8 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_flushmicrotasks",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 160,
+      "community_name": "limits.js",
       "norm_label": "flushmicrotasks()"
     },
     {
@@ -12451,7 +12726,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dom_test",
-      "community": 161,
+      "community": 169,
       "community_name": "dom.js",
       "norm_label": "dom.test.js"
     },
@@ -12561,8 +12836,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "featuretoursteps.test.js"
     },
     {
@@ -12572,8 +12847,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test_fakestore",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "fakestore()"
     },
     {
@@ -12583,8 +12858,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test_mountfreshdashboardchrome",
-      "community": 63,
-      "community_name": "Daily Todo Panel Tests",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "mountfreshdashboardchrome()"
     },
     {
@@ -12781,8 +13056,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisk_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "guestdatarisk.test.js"
     },
     {
@@ -12792,8 +13067,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisknudge_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "guestdatarisknudge.test.js"
     },
     {
@@ -12803,8 +13078,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisknudge_test_fakestore",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "fakestore()"
     },
     {
@@ -12814,8 +13089,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisknudge_test_freshnudge",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 165,
+      "community_name": "guestDataRiskNudge.js",
       "norm_label": "freshnudge()"
     },
     {
@@ -13024,7 +13299,7 @@
       "_origin": "ast",
       "id": "tests_unit_itempanel_test",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "itempanel.test.js"
     },
     {
@@ -13035,7 +13310,7 @@
       "_origin": "ast",
       "id": "tests_unit_itempanel_test_baseitem",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "baseitem"
     },
     {
@@ -13046,7 +13321,7 @@
       "_origin": "ast",
       "id": "tests_unit_itempanel_test_getpanel",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "getpanel()"
     },
     {
@@ -13057,7 +13332,7 @@
       "_origin": "ast",
       "id": "tests_unit_itempanel_test_panelwithoneresource",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "panelwithoneresource()"
     },
     {
@@ -13101,7 +13376,7 @@
       "_origin": "ast",
       "id": "tests_unit_linkdetector_test",
       "community": 161,
-      "community_name": "dom.js",
+      "community_name": "itemPanel.js",
       "norm_label": "linkdetector.test.js"
     },
     {
@@ -13287,8 +13562,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_modal_test",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "modal.test.js"
     },
     {
@@ -13298,8 +13573,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_modal_test_makecontent",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 157,
+      "community_name": "shareRoadmapModal.js",
       "norm_label": "makecontent()"
     },
     {
@@ -13551,8 +13826,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_progressdigest_test",
-      "community": 0,
-      "community_name": "Analytics Engine",
+      "community": 156,
+      "community_name": "progressDigestBanner.js",
       "norm_label": "progressdigest.test.js"
     },
     {
@@ -13738,8 +14013,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_roadmapcomparison_test",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "roadmapcomparison.test.js"
     },
     {
@@ -13749,8 +14024,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_roadmapcomparison_test_item",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "item()"
     },
     {
@@ -13760,8 +14035,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_unit_roadmapcomparison_test_tomap",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 152,
+      "community_name": "roadmapComparisonModal.js",
       "norm_label": "tomap()"
     },
     {
@@ -13848,8 +14123,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_select_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "select.test.js"
     },
     {
@@ -13859,8 +14134,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_select_test_options",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "options"
     },
     {
@@ -13870,8 +14145,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_select_test_mount",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "mount()"
     },
     {
@@ -13881,8 +14156,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_unit_select_test_trigger",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "trigger()"
     },
     {
@@ -13892,8 +14167,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_unit_select_test_fire",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 161,
+      "community_name": "itemPanel.js",
       "norm_label": "fire()"
     },
     {
@@ -14332,8 +14607,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_signup_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "signup.test.js"
     },
     {
@@ -14343,8 +14618,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_unit_signup_test_fillpasswordfields",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "fillpasswordfields()"
     },
     {
@@ -14354,8 +14629,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_unit_signup_test_setup",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "setup()"
     },
     {
@@ -14574,8 +14849,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_theme_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "theme.test.js"
     },
     {
@@ -14585,8 +14860,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_unit_theme_test_freshtheme",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "freshtheme()"
     },
     {
@@ -14629,8 +14904,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_themetoggle_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "themetoggle.test.js"
     },
     {
@@ -14640,8 +14915,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_themetoggle_test_freshtoggle",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "freshtoggle()"
     },
     {
@@ -14651,8 +14926,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_unit_themetoggle_test_freshtheme",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "freshtheme()"
     },
     {
@@ -14662,8 +14937,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_timetracking_test",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 159,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "timetracking.test.js"
     },
     {
@@ -14695,8 +14970,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_tooltip_test",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "tooltip.test.js"
     },
     {
@@ -18372,9 +18647,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 4,
       "norm_label": "adr-009: progress analytics data model (completedat vs activitylog)",
-      "community_name": "Brand & Auth Marketing Panel",
+      "community_name": "Import Validation & Corruption Detection",
       "id": "docs_adr_adr_009_analytics_data_model"
     },
     {
@@ -18386,9 +18661,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 4,
       "norm_label": "activitylog day-count map vs item.completedat distinction",
-      "community_name": "Brand & Auth Marketing Panel",
+      "community_name": "Import Validation & Corruption Detection",
       "id": "docs_adr_adr_009_activitylog_vs_completedat"
     },
     {
@@ -18400,9 +18675,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 4,
       "norm_label": "oncompletiontoggle(delta) dependency-injected hook",
-      "community_name": "Brand & Auth Marketing Panel",
+      "community_name": "Import Validation & Corruption Detection",
       "id": "docs_adr_adr_009_oncompletiontoggle_hook"
     },
     {
@@ -20145,6 +20420,546 @@
       "_origin": "ast",
       "source": "scripts_generate_brand_assets_main",
       "target": "scripts_generate_brand_assets_sizedsvg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L46",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_args",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L663",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_buildffmpegargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L530",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_buildsteplist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L493",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_captureanimatedframes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L655",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_chord_progression_hz",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L36",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_dirname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L511",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_fadeoutcurrentpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L337",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_installoverlay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L723",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L419",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_movespotlightto",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L53",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_outpath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L459",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_playclickripple",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L536",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_playslide",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L315",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_readdesigntokens",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L408",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_removeoverlay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L37",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_root",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L710",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_runffmpeg",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L597",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_runstop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L449",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_showcaption",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_slides",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L293",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_startdevserver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L86",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_stops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L412",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_updateprogress",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L482",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video",
+      "target": "scripts_generate_demo_video_waitforpaint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L531",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_buildsteplist",
+      "target": "scripts_generate_demo_video_stops"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L732",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_main",
+      "target": "scripts_generate_demo_video_startdevserver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L740",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_main",
+      "target": "scripts_generate_demo_video_readdesigntokens",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L611",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_readdesigntokens",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L612",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_installoverlay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L644",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_removeoverlay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L501",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_captureanimatedframes",
+      "target": "scripts_generate_demo_video_updateprogress",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L525",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_fadeoutcurrentpage",
+      "target": "scripts_generate_demo_video_updateprogress",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L591",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_playslide",
+      "target": "scripts_generate_demo_video_updateprogress",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L617",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_movespotlightto",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L618",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_showcaption",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L627",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_playclickripple",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L499",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_captureanimatedframes",
+      "target": "scripts_generate_demo_video_waitforpaint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L523",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_fadeoutcurrentpage",
+      "target": "scripts_generate_demo_video_waitforpaint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L589",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_playslide",
+      "target": "scripts_generate_demo_video_waitforpaint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L580",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_playslide",
+      "target": "scripts_generate_demo_video_captureanimatedframes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L620",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_captureanimatedframes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L600",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runstop",
+      "target": "scripts_generate_demo_video_fadeoutcurrentpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L727",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_main",
+      "target": "scripts_generate_demo_video_buildsteplist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L742",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_main",
+      "target": "scripts_generate_demo_video_playslide",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L748",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_main",
+      "target": "scripts_generate_demo_video_runstop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L713",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_runffmpeg",
+      "target": "scripts_generate_demo_video_buildffmpegargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-demo-video.mjs",
+      "source_location": "L758",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_generate_demo_video_main",
+      "target": "scripts_generate_demo_video_runffmpeg",
       "confidence_score": 1.0
     },
     {
@@ -37651,7 +38466,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L186",
+      "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildfooter",
@@ -48618,7 +49433,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L174",
+      "source_location": "L168",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildcta",
@@ -48630,7 +49445,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L149",
+      "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildfeatures",
@@ -48642,7 +49457,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L185",
+      "source_location": "L179",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildfooter",
@@ -48690,7 +49505,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L142",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildsectioneyebrow",
@@ -48702,7 +49517,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L161",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildsteps",
@@ -48715,7 +49530,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L203",
+      "source_location": "L197",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -49981,7 +50796,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L173",
+      "source_location": "L167",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing",
@@ -49992,7 +50807,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L148",
+      "source_location": "L142",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing",
@@ -50003,7 +50818,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L184",
+      "source_location": "L178",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing",
@@ -50047,7 +50862,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L141",
+      "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing",
@@ -50058,7 +50873,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L160",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing",
@@ -50113,7 +50928,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L194",
+      "source_location": "L188",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing",
@@ -50195,7 +51010,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L135",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildhero",
@@ -50207,7 +51022,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L210",
+      "source_location": "L204",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -50231,7 +51046,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L204",
+      "source_location": "L198",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -50243,7 +51058,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L137",
+      "source_location": "L134",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildhero",
@@ -50255,7 +51070,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L206",
+      "source_location": "L200",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -50267,7 +51082,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L150",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildfeatures",
@@ -50279,7 +51094,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L162",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_buildsteps",
@@ -50291,7 +51106,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L207",
+      "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -50303,7 +51118,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L208",
+      "source_location": "L202",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -50315,7 +51130,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L212",
+      "source_location": "L206",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -50327,7 +51142,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/pages/landing.js",
-      "source_location": "L214",
+      "source_location": "L208",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_pages_landing_renderlanding",
@@ -60583,5 +61398,5 @@
       "source_file": "docs/monetization-decision.md"
     }
   ],
-  "built_at_commit": "b853f257105e2429762a60c7bdeed12d31bd4395"
+  "built_at_commit": "b477b249847022f1aef5a03c3aadde7773711c2b"
 }
