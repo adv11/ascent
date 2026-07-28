@@ -245,6 +245,23 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     };
   }
 
+  // Issue #395 — the ⋯ menu's "Favorite"/"Unfavorite" label (above) is the
+  // only way to *change* favorite state, but nothing on the card itself ever
+  // showed the *current* state — a regression from issue #206 §4.1, which
+  // retired the old standalone favorite button without adding back any
+  // on-card cue. This is a plain, non-interactive indicator (no click
+  // handler, no data-action) — toggling favorite state stays exclusively a
+  // ⋯-menu action. Sits in the top-left corner, opposite the overflow
+  // trigger/info button's top-right slot, so the two never collide.
+  function buildFavoriteIndicator(roadmapId) {
+    if (!favoriteRoadmapIds.includes(roadmapId)) return null;
+    return el('span', {
+      className: 'template-card-favorite-indicator',
+      'aria-label': 'Favorited',
+      title: 'Favorited'
+    }, [createIcon('star', { size: 'xs' })]);
+  }
+
   // "Create your own roadmap" (issue #100 — supersedes the separate manual
   // "Create"/"Import" cards issues #4/#64 shipped) — always the first card,
   // since it's an action rather than a roadmap to pick. Opens the two-column
@@ -401,12 +418,13 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       onClick: e => { if (e.target === cardEl) pickCustomRoadmap(roadmap, cardEl); }
     }, [
       pickBtn,
+      buildFavoriteIndicator(roadmap.id),
       buildCardOverflowMenu(roadmap.title, [
         buildFavoriteMenuAction(roadmap.id, roadmap.title),
         { text: 'Delete', danger: true, onClick: () => deleteCustomCard(roadmap, cardEl) }
       ]),
       buildPickingOverlay()
-    ]);
+    ].filter(Boolean));
 
     cardEls.push(cardEl);
     return el('div', { role: 'listitem' }, [cardEl]);
@@ -458,12 +476,13 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       onClick: e => { if (e.target === cardEl) pickTemplate(template, cardEl); }
     }, [
       pickBtn,
+      buildFavoriteIndicator(template.id),
       buildCardOverflowMenu(template.name, [
         buildFavoriteMenuAction(template.id, template.name),
         { text: 'Hide', onClick: () => hideTemplate(template, cardEl) }
       ]),
       buildPickingOverlay()
-    ]);
+    ].filter(Boolean));
 
     cardEls.push(cardEl);
 

@@ -1298,6 +1298,44 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 :root[data-theme='dark'] .template-card-overflow-btn:hover,
 :root[data-theme='dark'] .template-card-overflow-btn[aria-expanded='true'] { color: var(--color-accent-700); border-color: var(--color-border-strong); }
 
+/* Favorited-roadmap on-card indicator (issue #395) — a plain, non-interactive
+   cue, never a click target (favoriting stays a ⋯-menu-only action, see
+   buildFavoriteMenuAction()/buildFavoriteIndicator() in onboarding.js).
+   Top-left was tried first and rejected — .template-card-icon (the
+   decorative per-template/roadmap icon, left-aligned at the very top of
+   .template-card-pick's content, no top-left corner reserved for it) sits
+   directly under a top-left corner slot and visibly overlapped the star.
+   Stacked instead in the existing top-right corner column, left of
+   .template-card-overflow-btn/.template-card-info-corner — reviving the
+   pre-issue #206 two-corner-button offset this card family used when a
+   standalone favorite button and a hide/delete button shared this same
+   corner (see the `.dropdown.template-card-overflow` comment above noting
+   that offset is otherwise no longer needed). `right: 66px` (not the old
+   `right: 44px`, i.e. `12 + 24 + 8px gap`) is sized for the *larger* of the
+   two states that button can be in: `.template-card-overflow-btn`/
+   `.template-card-info-corner` grow to 46×46px under `@media (pointer:
+   coarse)` (issue #377) while staying anchored at the same `right: 12px`,
+   so their left edge shifts to `12 + 46 = 58px` from the card's right edge
+   at that size — `66px` (`12 + 46 + 8px gap`) clears that worst case, so
+   this indicator never overlaps the other button at *either* pointer
+   granularity, just with a bit more breathing room than 44px would give at
+   the plain-mouse 24px size. Both corner slots stay well inside
+   `.template-card`'s own `--space-6` padding at every registered breakpoint
+   (no width-specific override changes that padding — grepped before relying
+   on it), so this never bleeds outside the card. */
+.template-card-favorite-indicator {
+  position: absolute;
+  top: 12px;
+  right: 66px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+.template-card-favorite-indicator svg path { fill: currentColor; }
+
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
 .hidden-templates-toggle { justify-self: center; }
 .hidden-grid { width: 100%; }
