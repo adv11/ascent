@@ -5,27 +5,33 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Dev-only tool (issue #397) — generates a fully-automated, silent feature-walkthrough
-// .mp4 for LinkedIn/Instagram/GitHub Releases/README, mirroring generate-brand-assets.mjs's
-// pattern: Playwright-driven, run on demand, not part of `npm test`/CI. No manual screen
-// recording or narration — a synthetic cursor, accent-colored spotlight brackets, and
-// caption cards are all injected DOM overlays driven by page.evaluate(), so capture is
-// deterministic and works headless.
+// Dev-only tool (issue #397) — generates a fully-automated feature-walkthrough .mp4 for
+// LinkedIn/Instagram/GitHub Releases/README, mirroring generate-brand-assets.mjs's pattern:
+// Playwright-driven, run on demand, not part of `npm test`/CI. No manual screen recording
+// or narration — a synthetic cursor, accent-colored spotlight brackets, and caption cards
+// are all injected DOM overlays driven by page.evaluate(), so capture is deterministic and
+// works headless.
 //
-// Structure: a branded intro slide, ~15 real feature stops across the app (each a real
-// navigation/click/interaction — checking a topic, expanding a phase, opening the edit
-// panel, opening global search, opening the share modal, toggling theme — not a static
-// screenshot), and a branded outro/CTA slide. Every animation (cursor glide, spotlight
-// grow, caption fade, resulting UI motion like a phase FLIP-expand or panel slide-in) is
-// captured DURING its CSS transition, not after — frames are taken on a fixed interval
-// starting the instant a transition begins, so the output video actually shows motion
-// instead of a sequence of static end-states.
+// Structure: a branded intro slide (real triangle-in-square mark + wordmark, not a
+// placeholder), ~16 real feature stops across the app (each a real navigation/click/
+// interaction — checking a topic, expanding a phase, filtering by priority/resources,
+// opening the edit panel, opening global search, opening the share modal, toggling theme —
+// not a static screenshot), and a branded outro/CTA slide. Every animation (cursor glide,
+// spotlight grow, caption fade, resulting UI motion like a phase FLIP-expand or panel
+// slide-in) is captured DURING its CSS transition, not after — frames are taken on a fixed
+// interval starting the instant a transition begins, so the output video actually shows
+// motion instead of a sequence of static end-states. Runs ~60-90s total.
+//
+// Audio: a soft ambient chord-progression pad, mixed in under the video by default —
+// synthesized entirely from sine-wave math via ffmpeg's own audio filters at render time
+// (see CHORD_PROGRESSION_HZ below), never a downloaded or embedded audio file, so there is
+// no licensing question to resolve. Pass --no-music for the original fully-silent output.
 //
 // Requires `ffmpeg` on PATH (not an npm dependency — shells out to the system binary).
 // Starts its own dev-server.mjs instance on port 4173 and tears it down when done, so it
 // won't collide with a `npm run dev` you already have running elsewhere.
 //
-// Usage: node scripts/generate-demo-video.mjs [--theme=light|dark] [--out=dist/demo-video.mp4]
+// Usage: node scripts/generate-demo-video.mjs [--theme=light|dark] [--out=dist/demo-video.mp4] [--no-music]
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -45,6 +51,7 @@ const args = Object.fromEntries(
 );
 const theme = args.theme === 'dark' ? 'dark' : 'light';
 const outPath = path.resolve(root, args.out || 'dist/demo-video.mp4');
+const includeMusic = !args['no-music'];
 
 // ---------------------------------------------------------------------------
 // Slides: full-bleed branded title cards, no page element involved. Runs before
@@ -57,7 +64,7 @@ const SLIDES = {
     kicker: 'INTRODUCING',
     title: 'ASCENT',
     subtitle: 'Engineer your next move.',
-    body: 'A roadmap tracker for anyone learning, revising, or building toward a goal.',
+    body: 'Turn any goal into a step-by-step roadmap — pick a template, track every topic, and watch your progress add up.',
     durationMs: 5000,
   },
   outro: {
@@ -411,7 +418,17 @@ async function updateProgress(page, fraction) {
 
 async function moveSpotlightTo(page, selector) {
   const target = page.locator(selector).first();
-  await target.scrollIntoViewIfNeeded();
+  // NOT target.scrollIntoViewIfNeeded() — this app sets `html { scroll-behavior:
+  // smooth }` globally (.claude/rules/ui-styling.md documents this exact hazard
+  // elsewhere), so Playwright's built-in scroll can return before the animated
+  // scroll actually settles, leaving boundingBox() below reflecting a
+  // mid-transition position that then never gets corrected — the spotlight
+  // ends up baked in at a stale offset for the element's entire on-screen
+  // window. `behavior: 'instant'` on a real scrollIntoView() call overrides
+  // the page's own CSS scroll-behavior for this one programmatic call, so the
+  // scroll is guaranteed to have already fully settled before the next line
+  // measures anything.
+  await target.evaluate((el) => el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' }));
   const box = await target.boundingBox();
   if (!box) throw new Error(`Could not locate element (selector: ${selector})`);
   await page.evaluate((b) => {
@@ -526,6 +543,23 @@ async function playSlide(page, tokens, slide, framesDir, frameCounterRef, progre
       padding:0 10%;font-family:Archivo,-apple-system,BlinkMacSystemFont,sans-serif;
       opacity:0;transition:opacity 420ms ease-out;
     `;
+    // Brand lockup (the real triangle-in-square mark, not a placeholder —
+    // matches public/favicon.svg / brand.js's createBrandMark()) sits above
+    // the kicker on both the intro and outro slide, so the mark and name are
+    // reinforced at the very start AND the very end of the video, not just
+    // once — repetition is what actually drives logo/name recall.
+    const brandRow = document.createElement('div');
+    brandRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:28px;';
+    const brandIcon = document.createElement('div');
+    brandIcon.style.cssText = `width:34px;height:34px;background:${s.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;`;
+    const brandTriangle = document.createElement('div');
+    brandTriangle.style.cssText = `width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid ${s.accent};`;
+    brandIcon.appendChild(brandTriangle);
+    const brandWordmark = document.createElement('div');
+    brandWordmark.textContent = 'ASCENT';
+    brandWordmark.style.cssText = `color:${s.bg};font-weight:800;font-size:22px;letter-spacing:0.05em;`;
+    brandRow.append(brandIcon, brandWordmark);
+
     const kicker = document.createElement('div');
     kicker.style.cssText = `color:${s.bg};opacity:0.85;font-weight:600;font-size:15px;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:18px;`;
     kicker.textContent = s.kicker;
@@ -538,7 +572,7 @@ async function playSlide(page, tokens, slide, framesDir, frameCounterRef, progre
     const body = document.createElement('div');
     body.style.cssText = `color:${s.bg};opacity:0.85;font-weight:400;font-size:19px;max-width:640px;line-height:1.5;`;
     body.textContent = s.body;
-    wrap.append(kicker, title, subtitle, body);
+    wrap.append(brandRow, kicker, title, subtitle, body);
     document.body.appendChild(wrap);
     requestAnimationFrame(() => { wrap.style.opacity = '1'; });
   }, { ...slide, accent: tokens.accent, bg: tokens.bg });
@@ -592,9 +626,15 @@ async function runStop(page, stop, framesDir, frameCounterRef, progressRef) {
       ? async () => {
           await playClickRipple(page);
           await stop.action(page);
-          if (stop.triggerSelector && stop.triggerSelector !== stop.selector) {
-            await moveSpotlightTo(page, stop.selector);
-          }
+          // Always re-measure and re-sync after the action, even when
+          // triggerSelector === selector (a plain filter-chip click, say) —
+          // the action can shift the target's own layout (e.g. clicking a
+          // priority/resources filter chip reveals a new "Clear all
+          // filters" link above the chip row, pushing the whole row down),
+          // so the pre-click box this stop started with can go stale the
+          // instant the click lands, not just when the target is a
+          // freshly-created element (a panel/modal/palette).
+          await moveSpotlightTo(page, stop.selector);
         }
       : null,
     progressRef
@@ -604,19 +644,73 @@ async function runStop(page, stop, framesDir, frameCounterRef, progressRef) {
   await removeOverlay(page);
 }
 
-function runFfmpeg(framesDir, out) {
+// Ambient background music, synthesized entirely by ffmpeg's own audio filters —
+// not a downloaded/embedded audio file. No third-party track is bundled with this
+// script or the repo, so there's no licensing question to resolve: every waveform
+// here is generated at render time from nothing but sine-wave math. A real chord
+// progression (I-IV-vi-V7 in C, a common, pleasant "corporate/inspirational" move)
+// cycling every CHORD_SEGMENT_SEC gives it actual harmonic movement — a single
+// sustained chord for the whole video reads as a flat drone, not music. Mixed in
+// quietly under the video (`volume=0.14`) with a 2.5s fade in/out.
+const CHORD_PROGRESSION_HZ = [
+  [130.81, 164.81, 196.0, 246.94], // Cmaj7 — C3 E3 G3 B3
+  [174.61, 220.0, 261.63, 329.63], // Fmaj7 — F3 A3 C4 E4
+  [110.0, 130.81, 164.81, 196.0], // Am7 — A2 C3 E3 G3
+  [98.0, 123.47, 146.83, 174.61], // G7 — G2 B2 D3 F3
+];
+const CHORD_SEGMENT_SEC = 8;
+
+function buildFfmpegArgs(framesDir, out, durationSec, includeMusic) {
+  const args = ['-y', '-framerate', String(FPS), '-pattern_type', 'glob', '-i', path.join(framesDir, 'frame-*.png')];
+
+  if (!includeMusic) {
+    args.push('-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', out);
+    return args;
+  }
+
+  // Each chord is its own short segment (its 4 tones mixed, then faded 0.3s at
+  // both edges so concatenating segments never produces an audible click at the
+  // boundary), and the segments are concatenated end to end, cycling through the
+  // progression for as long as the video runs.
+  const segmentCount = Math.max(1, Math.ceil(durationSec / CHORD_SEGMENT_SEC));
+  let inputIndex = 1; // input 0 is the video frame sequence
+  const segmentLabels = [];
+  const filterParts = [];
+  for (let seg = 0; seg < segmentCount; seg++) {
+    const chord = CHORD_PROGRESSION_HZ[seg % CHORD_PROGRESSION_HZ.length];
+    const toneLabels = [];
+    for (const freq of chord) {
+      args.push('-f', 'lavfi', '-i', `sine=frequency=${freq}:duration=${CHORD_SEGMENT_SEC}`);
+      toneLabels.push(`[${inputIndex}:a]`);
+      inputIndex += 1;
+    }
+    const segLabel = `seg${seg}`;
+    filterParts.push(
+      `${toneLabels.join('')}amix=inputs=${chord.length}:duration=first,` +
+        `afade=t=in:d=0.3,afade=t=out:st=${CHORD_SEGMENT_SEC - 0.3}:d=0.3[${segLabel}]`
+    );
+    segmentLabels.push(`[${segLabel}]`);
+  }
+
+  const fadeOutStart = Math.max(0, durationSec - 2.5);
+  filterParts.push(`${segmentLabels.join('')}concat=n=${segmentCount}:v=0:a=1[chords]`);
+  filterParts.push(
+    `[chords]tremolo=f=0.15:d=0.2,volume=0.14,afade=t=in:d=2.5,afade=t=out:st=${fadeOutStart}:d=2.5[aout]`
+  );
+
+  args.push(
+    '-filter_complex', filterParts.join(';'),
+    '-map', '0:v', '-map', '[aout]',
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest',
+    out
+  );
+  return args;
+}
+
+function runFfmpeg(framesDir, out, durationSec, includeMusic) {
   return new Promise((resolve, reject) => {
     mkdirSync(path.dirname(out), { recursive: true });
-    const ffmpeg = spawn('ffmpeg', [
-      '-y',
-      '-framerate', String(FPS),
-      '-pattern_type', 'glob',
-      '-i', path.join(framesDir, 'frame-*.png'),
-      '-an', // no audio track — silent by design
-      '-c:v', 'libx264',
-      '-pix_fmt', 'yuv420p',
-      out,
-    ]);
+    const ffmpeg = spawn('ffmpeg', buildFfmpegArgs(framesDir, out, durationSec, includeMusic));
     ffmpeg.stderr.on('data', () => {}); // ffmpeg logs progress to stderr; suppress noise
     ffmpeg.on('error', (err) => reject(new Error(`ffmpeg not found on PATH — install it first. (${err.message})`)));
     ffmpeg.on('close', (code) => {
@@ -659,9 +753,10 @@ async function main() {
     console.log('Outro slide');
     await playSlide(page, outroTokens, SLIDES.outro, framesDir, frameCounterRef, progressRef);
 
-    console.log('Assembling frames into video via ffmpeg...');
-    await runFfmpeg(framesDir, outPath);
-    console.log(`Wrote ${path.relative(root, outPath)} (${frameCounterRef.value} frames, ~${Math.round(frameCounterRef.value / FPS)}s)`);
+    console.log(`Assembling frames into video via ffmpeg${includeMusic ? ' (with ambient background pad)' : ' (silent)'}...`);
+    const durationSec = frameCounterRef.value / FPS;
+    await runFfmpeg(framesDir, outPath, durationSec, includeMusic);
+    console.log(`Wrote ${path.relative(root, outPath)} (${frameCounterRef.value} frames, ~${Math.round(durationSec)}s)`);
   } finally {
     await browser.close();
     server.kill();

@@ -4847,32 +4847,51 @@ user-facing item from `CHANGELOG.md`'s `[Unreleased]` section not yet reflected 
 This Build Log itself was missing entries for four recently merged PRs (#400/#401/#404/
 #405) — backfilled above, alongside this entry for the cleanup PR itself.
 
-### 2026-07-28 — Issue #397 — Automated silent feature-walkthrough demo video
+### 2026-07-28 — Issue #397 — Automated feature-walkthrough demo video
 
 New dev-only script, `scripts/generate-demo-video.mjs`, joining `generate-brand-assets.mjs`
 as the second Playwright-driven asset-generation tool under `scripts/` — same category
 (run on demand, not part of `npm test`/CI, not linted by `npm run lint`, which only covers
 `src/`). Launches its own `dev-server.mjs` instance on port 4173, opens with a branded
-accent-field title slide, then walks a scripted ~60-90s sequence of 16 real feature stops
-(landing hero, guest sign-in, template picker, dashboard overview, checking off a topic,
-expanding a phase, priority filter, resources filter, the edit panel's resources/notes,
-global cross-roadmap search, Daily Todos, the Progress heatmap, streak/velocity stats,
-sharing a roadmap, the light/dark theme toggle, Settings) via real Playwright
-navigation/clicks — not static screenshots — closing on a branded CTA slide. For each stop,
-a DOM overlay layer (synthetic cursor with a click-ripple, accent-colored corner-bracket
-spotlight, a caption card, a top progress bar) is positioned from `getBoundingClientRect()`
-math rather than real OS mouse movement, keeping capture deterministic and headless-safe;
-overlay colors are read live from the page's own CSS custom properties
-(`getComputedStyle(document.documentElement)`), so the video always matches the app's actual
-current design tokens instead of a hardcoded palette that could drift out of sync. Frames
-are captured continuously *through* every CSS transition/animation (cursor glide, spotlight
-grow, a phase's real FLIP-expand, a panel's real slide-in) rather than only after they
-settle, which is what makes the output show actual motion instead of a slideshow of static
-end-states. Assembles the frame sequence into a single silent (`-an`, no audio track) `.mp4`
-via `ffmpeg`. Output path defaults to `dist/demo-video.mp4`, gitignored — binary video output
-is never committed, same rationale `generate-brand-assets.mjs`'s own generated-PNG precedent
+accent-field title slide (the real triangle-in-square mark + wordmark, not a placeholder),
+then walks a scripted ~60-90s sequence of 16 real feature stops (landing hero, guest
+sign-in, template picker, dashboard overview, checking off a topic, expanding a phase,
+priority filter, resources filter, the edit panel's resources/notes, global cross-roadmap
+search, Daily Todos, the Progress heatmap, streak/velocity stats, sharing a roadmap, the
+light/dark theme toggle, Settings) via real Playwright navigation/clicks — not static
+screenshots — closing on a branded CTA slide. For each stop, a DOM overlay layer (synthetic
+cursor with a click-ripple, accent-colored corner-bracket spotlight, a caption card, and a
+top progress bar) is positioned from `getBoundingClientRect()` math rather than real OS
+mouse movement, keeping capture deterministic and headless-safe; overlay colors are read
+live from the page's own CSS custom properties (`getComputedStyle(document.documentElement)`),
+so the video always matches the app's actual current design tokens instead of a hardcoded
+palette that could drift out of sync. (A persistent per-stop corner brand watermark was
+tried and then removed after real feedback — screenshotted overlapping the app's own topbar
+controls in the top-right corner; the brand mark now only appears on the book-ending
+intro/outro slides, not layered over the live app UI.) Frames are captured continuously
+*through* every CSS transition/animation (cursor glide, spotlight grow, a phase's real
+FLIP-expand, a panel's real slide-in) rather than only after they settle, which is what
+makes the output show actual motion instead of a slideshow of static end-states. Assembles
+the frame sequence into a single `.mp4` via `ffmpeg`, with ambient background music mixed
+in by default (see the audio section below) — `--no-music` restores the original fully-silent
+output. Output path defaults to `dist/demo-video.mp4`, gitignored — binary video output is
+never committed, same rationale `generate-brand-assets.mjs`'s own generated-PNG precedent
 documents for why only the small icon files it produces are tracked, not applicable here
 since this output is much larger.
+
+**Audio is synthesized, never a downloaded/embedded file — deliberately, to sidestep any
+licensing question entirely.** `CHORD_PROGRESSION_HZ` (`buildFfmpegArgs()`) is a real
+I-IV-vi-V7-in-C chord progression (Cmaj7 → Fmaj7 → Am7 → G7), each chord's 4 tones mixed and
+faded at its own segment edges (avoiding an audible click at each concat boundary) before
+being concatenated end to end and cycling for as long as the video runs — a single sustained
+chord for the whole runtime was tried first and reads as a flat drone, not music; the
+progression is what actually gives it movement. Built entirely from `ffmpeg`'s own
+`sine`/`amix`/`afade`/`concat`/`tremolo`/`volume` lavfi filters at render time — there is no
+audio asset anywhere in this repo or pulled from the network. Mixed in quietly
+(`volume=0.14`) with a 2.5s fade in/out at the very start/end so it reads as ambient
+background, not a distraction. If a real (licensed) soundtrack is ever wanted instead,
+replace `buildFfmpegArgs()`'s `-f lavfi` inputs with a real `-i <file>` audio input — don't
+bundle a third-party track into this repo without confirming its license explicitly first.
 
 **A genuine headless-Chromium pitfall worth documenting for any future frame-capture
 script in this repo**: `page.screenshot()` calls made after a route change in this app's
@@ -4889,3 +4908,22 @@ onward, for the rest of the run. `runStop()` now removes `#__demo_veil` immediat
 future script that drives this app across multiple hash routes, make sure something
 explicitly removes it — don't assume a route change will do it for you the way it would
 on a page with real full navigations.
+
+**A second, unrelated positioning bug found the same way — a stale bounding box, not a
+scroll-timing race.** The spotlight overlay for the priority/resources filter-chip stops
+consistently rendered above and to the side of the actual chip, for the entire stop, every
+run — initially misdiagnosed as this app's `html { scroll-behavior: smooth }` (a real,
+separately-documented hazard in `.claude/rules/ui-styling.md`) racing
+`scrollIntoViewIfNeeded()`; forcing an instant, non-smooth scroll didn't fix it, which ruled
+that theory out. The actual cause: `moveSpotlightTo()` measures the target's
+`getBoundingClientRect()` **before** the stop's `action()` click fires — correct for a
+target that doesn't move, but clicking a priority/resources filter chip makes a new "Clear
+all filters" link appear directly above the chip row, pushing the whole row down by its own
+height. `runStop()`'s post-action re-sync used to be conditional on `triggerSelector` being
+set to something other than `selector` (only relevant for a target that doesn't exist until
+the click creates it, like a modal or panel) — a plain filter-chip click, where trigger and
+target are the *same* element, skipped that re-measurement entirely, so the spotlight stayed
+frozen at the pre-click position for the stop's whole duration. Fixed by always re-running
+`moveSpotlightTo()` after `action()`, unconditionally — re-measuring a target that didn't
+move is harmless, and a target that did (whether because it's newly created or because a
+sibling shifted it) is now always caught.
