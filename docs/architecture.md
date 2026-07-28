@@ -4846,3 +4846,20 @@ missing everything through this PR); backfilled a version-5 entry covering every
 user-facing item from `CHANGELOG.md`'s `[Unreleased]` section not yet reflected there.
 This Build Log itself was missing entries for four recently merged PRs (#400/#401/#404/
 #405) — backfilled above, alongside this entry for the cleanup PR itself.
+
+### 2026-07-28 — Issue #397 — Automated silent feature-walkthrough demo video
+
+New dev-only script, `scripts/generate-demo-video.mjs`, joining `generate-brand-assets.mjs`
+as the second Playwright-driven asset-generation tool under `scripts/` — same category
+(run on demand, not part of `npm test`/CI, not linted by `npm run lint`, which only covers
+`src/`). Launches its own `dev-server.mjs` instance on port 4173, walks a scripted sequence
+of feature stops (landing, guest sign-in, template picker, dashboard checklist, Daily
+Todos, Progress heatmap, Settings) via real Playwright navigation/clicks, and for each stop
+injects a DOM overlay layer (synthetic cursor, accent-colored highlight box, caption card)
+positioned from `getBoundingClientRect()` math rather than real OS mouse movement — this is
+what keeps capture deterministic and headless-safe. Captures a screenshot burst per stop at
+a fixed frame interval, then shells out to `ffmpeg` to assemble the frames into a single
+silent (no audio track) `.mp4`. Output path defaults to `dist/demo-video.mp4`, gitignored —
+binary video output is never committed, same rationale `generate-brand-assets.mjs`'s own
+generated-PNG precedent documents for why only the small icon files it produces are
+tracked, not applicable here since this output is much larger.
