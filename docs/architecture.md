@@ -4852,14 +4852,40 @@ This Build Log itself was missing entries for four recently merged PRs (#400/#40
 New dev-only script, `scripts/generate-demo-video.mjs`, joining `generate-brand-assets.mjs`
 as the second Playwright-driven asset-generation tool under `scripts/` — same category
 (run on demand, not part of `npm test`/CI, not linted by `npm run lint`, which only covers
-`src/`). Launches its own `dev-server.mjs` instance on port 4173, walks a scripted sequence
-of feature stops (landing, guest sign-in, template picker, dashboard checklist, Daily
-Todos, Progress heatmap, Settings) via real Playwright navigation/clicks, and for each stop
-injects a DOM overlay layer (synthetic cursor, accent-colored highlight box, caption card)
-positioned from `getBoundingClientRect()` math rather than real OS mouse movement — this is
-what keeps capture deterministic and headless-safe. Captures a screenshot burst per stop at
-a fixed frame interval, then shells out to `ffmpeg` to assemble the frames into a single
-silent (no audio track) `.mp4`. Output path defaults to `dist/demo-video.mp4`, gitignored —
-binary video output is never committed, same rationale `generate-brand-assets.mjs`'s own
-generated-PNG precedent documents for why only the small icon files it produces are
-tracked, not applicable here since this output is much larger.
+`src/`). Launches its own `dev-server.mjs` instance on port 4173, opens with a branded
+accent-field title slide, then walks a scripted ~60-90s sequence of 16 real feature stops
+(landing hero, guest sign-in, template picker, dashboard overview, checking off a topic,
+expanding a phase, priority filter, resources filter, the edit panel's resources/notes,
+global cross-roadmap search, Daily Todos, the Progress heatmap, streak/velocity stats,
+sharing a roadmap, the light/dark theme toggle, Settings) via real Playwright
+navigation/clicks — not static screenshots — closing on a branded CTA slide. For each stop,
+a DOM overlay layer (synthetic cursor with a click-ripple, accent-colored corner-bracket
+spotlight, a caption card, a top progress bar) is positioned from `getBoundingClientRect()`
+math rather than real OS mouse movement, keeping capture deterministic and headless-safe;
+overlay colors are read live from the page's own CSS custom properties
+(`getComputedStyle(document.documentElement)`), so the video always matches the app's actual
+current design tokens instead of a hardcoded palette that could drift out of sync. Frames
+are captured continuously *through* every CSS transition/animation (cursor glide, spotlight
+grow, a phase's real FLIP-expand, a panel's real slide-in) rather than only after they
+settle, which is what makes the output show actual motion instead of a slideshow of static
+end-states. Assembles the frame sequence into a single silent (`-an`, no audio track) `.mp4`
+via `ffmpeg`. Output path defaults to `dist/demo-video.mp4`, gitignored — binary video output
+is never committed, same rationale `generate-brand-assets.mjs`'s own generated-PNG precedent
+documents for why only the small icon files it produces are tracked, not applicable here
+since this output is much larger.
+
+**A genuine headless-Chromium pitfall worth documenting for any future frame-capture
+script in this repo**: `page.screenshot()` calls made after a route change in this app's
+client-side hash router can silently return the correct *element* geometry while the
+*visible* dashboard/page content renders as a flat, empty `--color-bg` — not a timing
+race fixable with a longer wait or an extra `requestAnimationFrame` round trip (both were
+tried and did not help). The actual cause: this script's own crossfade veil (a full-viewport
+`div` appended directly to `document.body`, sibling to the SPA's `#app` root) was created
+before every route-change stop but never removed — and because this app's hash-based
+routing never triggers a real page reload, nothing else was ever going to clear it either.
+It just sat at full opacity over everything, permanently, from the first route change
+onward, for the rest of the run. `runStop()` now removes `#__demo_veil` immediately after
+`stop.before()` completes. If you add another full-viewport overlay element anywhere in a
+future script that drives this app across multiple hash routes, make sure something
+explicitly removes it — don't assume a route change will do it for you the way it would
+on a page with real full navigations.
