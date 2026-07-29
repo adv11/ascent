@@ -4996,3 +4996,38 @@ until a later phase's own pass. Verified with a live `npm run dev` walkthrough (
 dashboard, settings) that the restyled primitives render the v3 glass/gradient/glow look
 correctly against an otherwise-still-v2 page, confirming the parallel-token-layer approach
 lets phases land independently without a big-bang app-wide flip.
+
+### 2026-07-29 — Issue #424 — v3 visual redesign, Phase 2: app shell
+
+Wires Phase 1's (`#420`) `--v3-*` token layer and `.card` primitive into the app shell —
+`.app-sidebar` and `.app-topbar`, the two surfaces every authenticated page shares — plus
+the dashboard's `.phase-card` checklist cards and the Daily Todos rail
+(`.daily-todo-panel`), the first real adoption of the `.card` glass-surface shape Phase 1
+built but left unwired. Both shell surfaces switch to `hsl(var(--v3-surface) / 0.6-0.7)`
++ `backdrop-filter: blur(12px)`/`blur(20px)` (sidebar/topbar respectively, matching
+design-system.md §4's `blur-md`/`blur-xl` split), each with an `@supports not
+(backdrop-filter: blur(1px))` solid-surface fallback per §4/§9's checklist.
+`.nav-item.active`/`:hover` move from the v2 flat accent-tint fill to `hsl(var(--v3-accent)
+/ 0.08-0.1)`, kept as the existing left-edge accent-bar shape rather than a floating pill
+segment — see the deliberate scoping note directly above `.app-sidebar` in `app.css` for
+why: the portfolio's own "floating glass nav pill" reference is a single top-of-page bar,
+not a full-height side rail, so reshaping the sidebar into a margin-inset floating panel
+was judged out of this phase's scope (a layout change, not a surface-treatment one) and
+left for a future call rather than assumed here. `.phase-card` and `.daily-todo-panel`
+both get the same glass + `--v3-radius-lg` + resting-glow treatment as `.card` itself,
+including the `@supports` fallback — `.phase-card`'s left priority-color accent border
+(driven by `data-priority`) stays a real CSS `border`, since `.card`'s own hairline
+gradient `::before` has no mechanism for a per-instance data-driven color. `.phase-head`
+(the accordion toggle button inside each card) switched from an opaque flat fill to
+`transparent` so the card's glass background shows through instead of sitting under an
+opaque header strip. Two CI-only lint failures surfaced during Phase 1's own PR
+(`scripts/lint-theme.mjs` flagging the `.card::before` mask-composite `#000` markers and
+`.btn-primary`'s fixed black text as undocumented color literals) were fixed with
+`/* intentional: ... */` comments before this phase started — a reminder to run
+`node scripts/lint-theme.mjs`/`lint-icons.mjs` locally before pushing, not just `npm run
+lint`, since CI's ESLint job runs all three. Verified live via `npm run dev` in both
+themes (dashboard, sidebar, topbar) after discovering and unregistering a stale
+service-worker cache that was serving pre-Phase-2 CSS during manual testing — a reminder
+that `sw.js`'s cache-first strategy means a hard reload alone isn't always enough to see a
+fresh CSS change locally; unregistering the SW (or bumping `CACHE_VERSION`, already
+required by `scripts/check-cache-version.mjs`) is sometimes necessary too.

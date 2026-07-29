@@ -1560,6 +1560,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    staying pinned while the content scrolls past it. `overflow-y: auto` is a
    safety net for a future sidebar tall enough to exceed the viewport itself
    (more nav items than fit), not something today's short nav list needs. */
+/* v3 (issue #416 Phase 2 — #424): design-system.md §5 "recreate the
+   portfolio's floating glass nav pill." Scoped to a glass-surface treatment
+   on the existing full-height, edge-to-edge sticky sidebar rather than a
+   fully floating margin-inset pill — the portfolio's pill nav is a single
+   top-of-page bar, not a full-height side rail, and reshaping this into an
+   inset/floating panel would touch the sticky/height-cap layout this file's
+   own conventions document at length (see .claude/rules/ui-styling.md's
+   card/grid + sticky-context sections) for a mostly-cosmetic gain. Glass
+   blur + rounded active-item treatment ships now; a genuinely floating
+   sidebar shape is a separate future call, not assumed here. */
 .app-sidebar {
   width: 240px;
   position: sticky;
@@ -1571,9 +1581,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-6) var(--space-4);
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background: hsl(var(--v3-surface) / 0.6);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid hsl(var(--v3-divider) / 0.6);
   transition: width var(--duration-base) var(--ease-out);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .app-sidebar { background: hsl(var(--v3-surface-elevated)); }
 }
 
 /* issue #298 — design-system.md §4's 2px major-section rule, under the brand block. */
@@ -1593,7 +1608,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: var(--text-sm);
   transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
-.nav-item:hover { background: var(--color-surface-raised); color: var(--color-text); }
+.nav-item:hover { background: hsl(var(--v3-accent) / 0.08); color: var(--color-text); }
 /* issue #206 §3.7 — left-edge 3px accent bar + raised bg, replacing the old
    flat gold-tinted fill. Used `box-shadow: inset 3px 0 0 ...` rather than a
    `border-left`/pseudo-element, per the issue's own stated preference — an
@@ -1604,11 +1619,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    fully rounded pill's left corner — a rect radius is the correct shape for
    an edge-indicator pattern. Flagging this shape change from the pre-#206
    pill treatment. */
+/* v3 (issue #416 Phase 2 — #424): design-system.md §5 "active nav item:
+   accent text + hover fill on each pill segment." Kept the existing
+   left-edge accent bar shape (this row is still a full-width edge-to-edge
+   item, not a floating pill segment, per .app-sidebar's own scoping note
+   above) — only the color source and radius moved to the v3 accent/radius
+   tokens. */
 .nav-item.active {
-  background: var(--color-accent-100);
-  color: var(--color-accent-700);
-  border-radius: var(--radius-md);
-  box-shadow: inset 3px 0 0 var(--color-accent);
+  background: hsl(var(--v3-accent) / 0.1);
+  color: var(--v3-accent-ink, var(--color-accent-700));
+  border-radius: var(--v3-radius-md);
+  box-shadow: inset 3px 0 0 hsl(var(--v3-accent));
 }
 .nav-item-icon { display: inline-flex; flex-shrink: 0; }
 
@@ -1900,13 +1921,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    section boundaries (was a translucent/blurred "glass" surface + 1px rule,
    a decorative effect the "alignment and rules do the organising — never
    decoration" identity rule doesn't allow). */
+/* v3 (issue #416 Phase 2 — #424): design-system.md §4/§5's blur-xl glass
+   nav pill treatment, superseding #298's own flat/2px-rule comment above
+   (that comment documents the *v2* decision this phase reverses — kept in
+   place as history, not deleted). */
 .app-topbar {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-6);
-  background: var(--color-surface);
-  border-bottom: 2px solid var(--color-divider);
+  background: hsl(var(--v3-surface) / 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -1915,6 +1942,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      section header never sits half-hidden under the topbar. Keep these two
      in lockstep rather than hardcoding the same pixel value twice. */
   min-height: var(--topbar-h);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .app-topbar { background: hsl(var(--v3-surface-elevated)); }
 }
 .app-topbar-breadcrumb {
   font-weight: 700;
@@ -2895,14 +2925,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #298 — design-system.md §4: "Elevation only for overlays... Flat
    surfaces otherwise" (dropped the --shadow-sm this flat card had) and a 2px
    rule for a major section boundary (was a 1px colored border). */
+/* v3 (issue #416 Phase 2 — #424): the Daily Todos rail gets the same glass
+   treatment as .phase-card above, superseding #298's flat/2px-rule comment
+   directly above (kept as history). */
 .daily-todo-panel {
   max-width: 1160px;
   margin: 0 auto 18px;
   width: 100%;
   box-sizing: border-box;
-  background: var(--color-surface);
-  border: 2px solid var(--color-divider);
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-6);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .daily-todo-panel { background: hsl(var(--v3-surface-elevated)); }
 }
 /* On the onboarding "all roadmaps" page, .onboarding-inner already caps
    width at 880px and every sibling (header, template-grid) sits flush
@@ -3188,12 +3228,25 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    was), unlike .template-card above, which keeps its whole-card hover-lift
    because clicking anywhere on that card *does* trigger the pick action via
    its nested button covering the full card. */
+/* v3 (issue #416 Phase 2 — #424): wires the .card glass primitive (#420)
+   into the dashboard's checklist cards — the first real adoption of that
+   primitive, per §4/§5. The left priority-color accent border (below) is
+   layout-critical and kept as a real `border`, not folded into .card's own
+   hairline-gradient ::before, since that pseudo-element has no way to carry
+   a data-driven per-priority color. */
 .phase-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  position: relative;
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
   border-left-width: 3px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   overflow: hidden;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .phase-card { background: hsl(var(--v3-surface-elevated)); }
 }
 
 /* Issue #6 Phase 4.2 — left-border priority accent, reusing the same
@@ -3211,7 +3264,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   gap: 12px;
   padding: 15px 16px;
   border: 0;
-  background: var(--color-surface);
+  /* v3 (#424) — transparent so .phase-card's glass background shows through
+     instead of an opaque flat fill sitting on top of it. */
+  background: transparent;
   color: var(--color-text);
   font: inherit;
   text-align: left;
