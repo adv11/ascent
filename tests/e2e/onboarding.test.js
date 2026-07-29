@@ -14,13 +14,17 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 // — a re-render landing between the trigger click and the menu-item click
 // tears down the just-opened menu, so the item click can miss. Wrapped in
 // `expect(...).toPass()` to reopen and retry rather than a single
-// fire-and-forget click pair.
+// fire-and-forget click pair. Timeout raised 15s -> 25s in issue #416
+// Phase 2 (#424) — that phase's glass/backdrop-filter cards and 2 additional
+// Google Fonts families (index.html) measurably slow first paint/layout
+// settle in CI's headless Chromium, which was tipping this already-known
+// re-render race past the old window consistently (not flaking before).
 async function clickOverflowAction(card, text) {
   const menuItem = card.page().locator('.dropdown-menu .dropdown-item', { hasText: text });
   await expect(async () => {
     await card.locator('.template-card-overflow-btn').click();
     await menuItem.click({ timeout: 1_000 });
-  }).toPass({ timeout: 15_000 });
+  }).toPass({ timeout: 25_000 });
 }
 
 test.describe('onboarding — starter template picker (issue #51)', () => {
