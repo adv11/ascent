@@ -245,12 +245,26 @@
   --stagger-base: 40ms;
 
   /* Activity heatmap intensity scale — design-system.md §5: "hard-edged
-     squares, 5 steps" — the exact 5 hex stops from the spec/design-tokens.css. */
+     squares, 5 steps" — the exact 5 hex stops from the spec/design-tokens.css.
+     Superseded by --v3-heat-0..4 below (issue #416 Phase 4) — kept only until
+     every call site migrates off it; do not add a new reader of --heat-*. */
   --heat-0: var(--color-neutral-200);
   --heat-1: #FFC4B8;
   --heat-2: #FF9783;
   --heat-3: #FF563C;
   --heat-4: #DD2B0F;
+
+  /* v3 "developer portfolio" redesign (issue #416, Phase 4 — #428):
+     design-system.md §5 "5-step green ramp replacing v2's red ramp — needs
+     new stops, not a hue-rotate." Floor is --v3-surface-elevated (neutral,
+     "no activity"), each step progressively more saturated green, hottest
+     step anchored to --v3-accent itself. HSL components (not hex) to match
+     every other --v3-* token's alpha-compositing pattern. */
+  --v3-heat-0: var(--v3-surface-elevated);
+  --v3-heat-1: 146 55% 85%;
+  --v3-heat-2: 146 65% 68%;
+  --v3-heat-3: 146 75% 50%;
+  --v3-heat-4: var(--v3-accent);
 
   /* Old bare --neutral-* scale (no "color-" prefix) — a genuinely distinct,
      pre-existing, theme-INVARIANT scale (issue #6 Phase 1.3), separate from
@@ -405,6 +419,15 @@
   /* design-system.md §2 — dark theme's base --v3-accent already clears
      ~13:1 on --v3-bg, no separate text-safe ink variant needed. */
   --v3-accent-ink:       145 92% 55%;
+
+  /* v3 redesign (issue #416, Phase 4 — #428) — dark-theme heat-ramp middle
+     stops. --v3-heat-0/-4 flip automatically via --v3-surface-elevated/
+     --v3-accent above; only the two middle stops need their own dark values
+     (a straight light-mode carry-forward reads too washed-out against the
+     near-black --v3-bg). */
+  --v3-heat-1: 145 30% 22%;
+  --v3-heat-2: 145 55% 32%;
+  --v3-heat-3: 145 75% 42%;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -2734,14 +2757,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    planned person/customer cards, per the issue's spec). */
 /* issue #300 — design-system.md §4: "Elevation only for overlays... Flat
    surfaces otherwise" (dropped the --shadow-sm this flat stat cell had). */
+/* v3 (issue #416 Phase 4 — #428): wires the .card glass primitive (#420)
+   into the Progress page's stat strip — same surface-recolor pattern
+   .phase-card/.progress-card above use. */
 .kpi-tile {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: var(--space-6);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .kpi-tile { background: hsl(var(--v3-surface-elevated)); }
 }
 .kpi-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 /* issue #300 — spec's "uppercase kickers" for the progress stat row. */
@@ -2778,14 +2811,23 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    .kpi-tile-delta opacity dim is also dropped (0.75 opacity dropped it to
    3.33:1 light, still failing) rather than layering a second contrast risk
    on top of the fill/text fix. */
+/* v3 (issue #416 Phase 4 — #428): design-system.md §5's ".btn-primary —
+   gradient fill" pattern, applied to the single hero-highlighted stat tile.
+   Fixed black text in both themes, same reasoning as .btn-primary's own
+   comment above (the gradient is always light green regardless of theme). */
 .kpi-tile-hero {
-  background: var(--color-accent-600);
-  border-color: var(--color-accent-600);
+  background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end)));
+  border-color: transparent;
+  box-shadow: var(--v3-shadow-glow);
 }
 .kpi-tile-hero .kpi-tile-label,
 .kpi-tile-hero .kpi-tile-number,
 .kpi-tile-hero .kpi-tile-delta,
-.kpi-tile-hero .kpi-tile-total { color: var(--color-ink-on-accent); }
+.kpi-tile-hero .kpi-tile-total {
+  /* intentional: fixed black, same in both themes — matches .btn-primary's
+     own gradient-text comment (issue #416 Phase 4). */
+  color: #000;
+}
 
 /* Shared circular corner-badge affordance (issue #155 v2 Phase B) — used by `.kpi-tile`
    above and, per the issue's Phase D scope, planned for person/customer-style cards
@@ -2810,7 +2852,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .kpi-tile-hero .card-arrow-badge {
   background: rgba(0, 0, 0, 0.14);
   border-color: rgba(0, 0, 0, 0.14);
-  color: var(--color-text);
+  /* intentional: fixed black, matching .kpi-tile-hero's own fixed-black-text
+     convention (issue #416 Phase 4) — var(--color-text) would render white
+     in dark theme, unreadable against a light-green gradient fill. */
+  color: #000;
 }
 
 .toolbar {
@@ -4383,13 +4428,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .settings-sections { display: grid; gap: var(--space-6); }
 
-/* issue #300 — design-system.md §4: flat surfaces, no shadow (was --shadow-sm). */
+/* v3 (issue #416 Phase 4 — #428): wires the .card glass primitive (#420)
+   into the settings ledger's per-section cards — same surface-recolor
+   pattern .phase-card/.progress-card/.kpi-tile above use. Supersedes the
+   v2 flat-surface rule this comment used to document. */
 .settings-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  position: relative;
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-6);
   display: grid;
   gap: var(--space-4);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .settings-section { background: hsl(var(--v3-surface-elevated)); }
 }
 .settings-section-title { margin: 0; font-size: var(--text-lg); }
 
@@ -4403,9 +4459,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .settings-row-label-group { display: inline-flex; align-items: center; gap: var(--space-2); }
 .settings-row-value { color: var(--color-text-muted); font-size: var(--text-sm); margin-right: auto; }
 .settings-row-hint { color: var(--color-text-muted); font-size: 12px; margin: 0; }
-.settings-verified { color: var(--color-accent-700); font-weight: 700; }
-/* issue #155 v2 Phase D2 — settings-only class, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .settings-verified { color: var(--color-accent-700); }
+/* v3 (issue #416 Phase 4 — #428): design-system.md §2's paragraph-size
+   accent-text rule — --v3-accent-ink in light mode (--v3-accent itself
+   already clears AA in dark mode, no separate ink token needed there). */
+.settings-verified { color: hsl(var(--v3-accent-ink)); font-weight: 700; }
+:root[data-theme='dark'] .settings-verified { color: hsl(var(--v3-accent)); }
 .settings-unverified { color: var(--color-p1-ink); font-weight: 700; }
 
 .settings-select { max-width: 200px; }
@@ -4423,14 +4481,21 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    the --space-6 default) since this is a deliberately emphasized guest CTA
    card, not a standard content card. */
 .settings-guest-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  position: relative;
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-8);
   display: grid;
   gap: var(--space-3);
   justify-items: start;
   max-width: 480px;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .settings-guest-card { background: hsl(var(--v3-surface-elevated)); }
 }
 .settings-guest-card h2 { margin: 0; }
 .settings-guest-card p { margin: 0; color: var(--color-text-muted); }
@@ -4470,10 +4535,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .progress-range-toggle { display: flex; gap: var(--space-2); }
 
+/* v3 (issue #416 Phase 4 — #428): wires the .card glass primitive (#420)
+   into the Progress page's stat/heatmap/chart/table cards — same
+   surface-recolor pattern .phase-card (Phase 2) used, not the shared .card
+   class itself, since this card has no need for .card's hairline-gradient
+   ::before. */
 .progress-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  position: relative;
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-6);
   /* .progress-content has no explicit grid-template-columns, so its single
      implicit column defaults to `auto` sizing — a grid item's own default
@@ -4483,6 +4557,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      heatmap's own .heatmap-scroll (and the chart/table wrap containers)
      scroll internally. Same fix as .app-shell-main's own min-width: 0. */
   min-width: 0;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .progress-card { background: hsl(var(--v3-surface-elevated)); }
 }
 .progress-card-title { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
 
@@ -4504,21 +4581,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .heatmap-day-labels { display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; width: 26px; flex-shrink: 0; margin-top: 18px; }
 .heatmap-day-label { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 12px; }
 .heatmap-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); grid-auto-columns: 12px; gap: 3px; }
-/* issue #297 — design-system.md §5: "Heatmap: hard-edged squares." Both
-   border-radius values below were 2px, a holdover from the old rounded
-   scale; zeroed to match --radius-*'s "0 everywhere" rule. */
-.heatmap-cell { width: 12px; height: 12px; border-radius: 0; background: var(--heat-0); padding: 0; border: none; cursor: default; }
-.heatmap-cell[data-level="1"] { background: var(--heat-1); }
-.heatmap-cell[data-level="2"] { background: var(--heat-2); }
-.heatmap-cell[data-level="3"] { background: var(--heat-3); }
-.heatmap-cell[data-level="4"] { background: var(--heat-4); }
+/* v3 (issue #416 Phase 4 — #428): design-system.md §5's green heat ramp,
+   replacing v2's hard-edged-square red ramp above — --v3-radius-sm swaps
+   back in for the small-control corner (v2 zeroed radius app-wide; v3 §4's
+   3-step radius scale applies to every control, this one included). */
+.heatmap-cell { width: 12px; height: 12px; border-radius: var(--v3-radius-sm); background: hsl(var(--v3-heat-0)); padding: 0; border: none; cursor: default; }
+.heatmap-cell[data-level="1"] { background: hsl(var(--v3-heat-1)); }
+.heatmap-cell[data-level="2"] { background: hsl(var(--v3-heat-2)); }
+.heatmap-cell[data-level="3"] { background: hsl(var(--v3-heat-3)); }
+.heatmap-cell[data-level="4"] { background: hsl(var(--v3-heat-4)); }
 .heatmap-cell[data-today="true"] { outline: 1.5px solid var(--color-text); outline-offset: -1.5px; }
 .heatmap-legend { display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); }
-.heatmap-legend-swatch { width: 10px; height: 10px; border-radius: 0; background: var(--heat-0); }
-.heatmap-legend-swatch[data-level="1"] { background: var(--heat-1); }
-.heatmap-legend-swatch[data-level="2"] { background: var(--heat-2); }
-.heatmap-legend-swatch[data-level="3"] { background: var(--heat-3); }
-.heatmap-legend-swatch[data-level="4"] { background: var(--heat-4); }
+.heatmap-legend-swatch { width: 10px; height: 10px; border-radius: var(--v3-radius-sm); background: hsl(var(--v3-heat-0)); }
+.heatmap-legend-swatch[data-level="1"] { background: hsl(var(--v3-heat-1)); }
+.heatmap-legend-swatch[data-level="2"] { background: hsl(var(--v3-heat-2)); }
+.heatmap-legend-swatch[data-level="3"] { background: hsl(var(--v3-heat-3)); }
+.heatmap-legend-swatch[data-level="4"] { background: hsl(var(--v3-heat-4)); }
 /* Row-only grid placement (see heatmap.js) — column is left to
    `grid-auto-flow: column`'s own auto-placement in document order. */
 .gr-1 { grid-row: 1; }
@@ -4584,7 +4662,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #206 — --color-brand-gold is now defined in both themes (the
    Alpenglow token layer replaced the old dark-theme-only lime token), so the
    var() fallback this rule used to need is dead; dropped. */
-.chart-legend-dot-high { background: var(--color-accent); }
+/* v3 (issue #416 Phase 4 — #428): repointed to the v3 accent token, matching
+   chartWrapper.js's own BUCKET_TOKENS.high change above. */
+.chart-legend-dot-high { background: hsl(var(--v3-accent)); }
 .chart-legend-dot-medium { background: var(--color-text-faint); }
 .chart-legend-dot-low { background: var(--color-border-strong); }
 
@@ -4597,7 +4677,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    A small solid gold dot, not a full illustration. Was a gradient dot;
    reverted to solid per the app-wide "no gradients" decision. */
 .chart-empty-note { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
-.chart-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--color-accent); }
+/* v3 (issue #416 Phase 4 — #428): repointed to the v3 accent token. */
+.chart-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: hsl(var(--v3-accent)); }
 /* Issue #125 — a skeleton placeholder for the first Chart.js CDN load only
    (chartWrapper.js's dynamic import), shown/hidden by progress.js rather
    than CSS alone since it must disappear the instant the real chart mounts,
@@ -4646,12 +4727,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #155 v2 Phase D3 (full completion pass) — base rule, used by every mini-bar
    outside progress.js's already-recolored .kpi-tile-hero context (Phase D1). */
 :root[data-theme='dark'] .mini-bar-fill { fill: var(--color-accent); }
-/* issue #155 v2 Phase D1 — progress.js's "Items complete" kpi-tile-hero: a teal fill
-   on top of the tile's own solid accent background would clash/low-contrast, same
-   reasoning as .card-arrow-badge's hero override above. */
-.kpi-tile-hero .mini-bar-fill { fill: var(--color-bg); }
+/* intentional: v3 (issue #416 Phase 4 — #428) — .kpi-tile-hero's fill is now
+   a light-green gradient with fixed black text (see .kpi-tile-hero's own
+   comment above); a plain --color-bg (near-white) mini-bar-fill would
+   nearly disappear against it, so this reads a fixed dark tint instead,
+   matching the black-text treatment rather than the old solid-accent-fill
+   era's white-on-dark logic. */
+.kpi-tile-hero .mini-bar-fill { fill: rgba(0, 0, 0, 0.55); }
 /* intentional: matches .kpi-tile-hero .card-arrow-badge's black-tint-on-solid-accent
-   treatment above (issue #155 v2 Phase D1). */
+   treatment above (issue #416 Phase 4). */
 .kpi-tile-hero .mini-bar-track { fill: rgba(0, 0, 0, 0.14); }
 .stat-tile-bar { margin-top: 6px; }
 
