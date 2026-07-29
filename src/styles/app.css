@@ -39,31 +39,37 @@
      role (e.g. .phase-index-adjacent tertiary text) rather than dropping it. */
   --color-text-faint:     color-mix(in srgb, #201E1D 45%, transparent);
 
-  /* Accent ramp (OKLCH-derived per design-tokens.css) — replaces
-     --color-brand-gold / --color-brand-rose / --gradient-alpenglow. */
-  --color-accent:      #EC3013;
-  --color-accent-100:  #FFF2EF;
-  --color-accent-200:  #FFE0D9;
-  --color-accent-300:  #FFC4B8;
-  --color-accent-400:  #FF9783;
-  --color-accent-500:  #FF563C;
-  /* issue #297 follow-up — real, axe-confirmed contrast bug: neither white
-     nor dark ground-colored text clears 4.5:1 against the base
-     --color-accent (#EC3013 hosts white at 3.76:1, dark at 3.95-4.42:1 —
-     both fail; live on .btn-primary's "Start for free" label, caught by the
-     E2E a11y suite). This is new to the v2 palette — the old Alpenglow gold
-     accent passed at 6.8-8.1:1 in the same role. Darkened from #DD2B0F so it
-     doubles as the solid FILL for any body-text-size control on accent (not
-     just a hover step) — white text on this value measures 4.94:1. Icons/
-     large-numeral/UI-chrome uses of the base --color-accent (avatars, icon
-     badges, dots) are unaffected and stay on the un-darkened value per
-     design-system.md §2's own "fine for icons, large numerals, UI chrome"
-     carve-out — only .btn-primary and .seg-item's active fill (both host
-     real body-size text) were repointed to this token. */
-  --color-accent-600:  #C92910;  /* solid fill for text-hosting controls + hover step */
-  --color-accent-700:  #AE1800;  /* accent as paragraph-size text */
-  --color-accent-800:  #7C1405;  /* text on accent-100 tints */
-  --color-accent-900:  #4D170E;
+  /* v3 (issue #416 Phase 5 — #430) — accent ramp retinted from v2
+     Modernist's red/orange (#EC3013-family) to design-system.md §2's green
+     "hacker" accent, same hue as --v3-accent (hsl(146 88% 38%)). This is the
+     base --color-accent-* scale every not-yet-individually-migrated
+     component still reads directly (danger, warning, P0/P1 priority, and
+     every badge/border/text call site Phases 1-4 didn't touch), found live
+     as the single biggest remaining "still red" gap in this pass (screenshot
+     report: roadmap badge, stat number, phase-card left border, P0 chip, all
+     still red on the dashboard). Every step re-verified with a real
+     relative-luminance contrast calculation, same discipline as the #297
+     comment this replaces — see that calculation's results inline below. */
+  --color-accent:      #0CB656;
+  --color-accent-100:  #ECFEF4;
+  --color-accent-200:  #D4F7E3;
+  --color-accent-300:  #ABEDC8;
+  --color-accent-400:  #70DB9F;
+  --color-accent-500:  #0CB656;
+  /* Live-verified (relative-luminance calc): base --color-accent (#0CB656)
+     clears only 2.68:1 against white — same category of failure #297
+     documented for the old red base, and per design-system.md §2 still
+     "fine for icons, large numerals, UI chrome" (non-text/large-graphic
+     uses), just not real body-text-size text or a text-hosting solid fill.
+     --color-accent-600 (#067436) is the darkened step that clears 5.90:1
+     against white — the fill any text-hosting control (.btn-primary,
+     .seg-item's active fill, .kpi-tile-hero, .feedback-widget-trigger) must
+     read instead of the base token, exactly the existing established
+     pattern each of those call sites already documents in its own comment. */
+  --color-accent-600:  #067436;  /* solid fill for text-hosting controls + hover step; 5.90:1 with white */
+  --color-accent-700:  #034E24;  /* accent as paragraph-size text; 9.91:1 on white */
+  --color-accent-800:  #05612D;  /* text on accent-100 tints; 7.28:1 */
+  --color-accent-900:  #03451F;
 
   /* Neutral ramp (full --color-neutral-100...900 per design-tokens.css) */
   --color-neutral-100: #F8F4F4;
@@ -192,16 +198,26 @@
      alongside --radius-*/--radius-full below. */
   --chip-height: 22px;
   --chip-padding-x: 9px;
-  --chip-radius: 0px;
-
-  /* Radius scale — design-system.md §4: "Radius 0 everywhere... No rounded
-     buttons, cards, inputs, checkboxes, chips, avatars, or modals."
-     --radius-full is also zeroed for the same reason (pill-shaped chips/
-     avatars/toggle tracks all go square too). */
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-full: 0px;
+  /* v3 (issue #416 Phase 5 — #430) — design-system.md §4's three-step
+     radius scale, the exact opposite of v2 Modernist's "radius 0
+     everywhere" rule quoted below. Every remaining component that still
+     reads --radius-sm/md/lg/full/--chip-radius directly (i.e. every
+     surface Phases 1-4 didn't individually touch, since those phases
+     migrated call sites onto a parallel --v3-* namespace rather than
+     retuning these base tokens) now gets the v3 look automatically — this
+     was the single biggest source of "still looks like the old UI" drift
+     going into Phase 5's compliance sweep. --v3-radius-sm/md/lg above stay
+     as the canonical values; these alias them so both namespaces resolve
+     to one scale. --radius-full is restored to a real pill radius (was
+     zeroed for v2's "avatars/toggle tracks go square too" rule, itself
+     retired by v3 §8's "avatars: --radius-lg rounded square, not v2's hard
+     square" — genuinely pill-shaped elements, e.g. toggle-track thumbs,
+     segmented-control selection, still want a full pill, not a square). */
+  --radius-sm: var(--v3-radius-sm);
+  --radius-md: var(--v3-radius-md);
+  --radius-lg: var(--v3-radius-lg);
+  --radius-full: 9999px;
+  --chip-radius: var(--v3-radius-md);
 
   /* Shadow scale — design-system.md §4: "Elevation only for overlays
      (dialog, dropdown, command palette, toasts) via --shadow-sm/md/lg. Flat
@@ -344,16 +360,25 @@
   --color-text-muted:     color-mix(in srgb, #F1EFED 60%, transparent);
   --color-text-faint:     color-mix(in srgb, #F1EFED 45%, transparent);
 
-  --color-accent:      #FF563C;
-  --color-accent-100:  #38201A;
-  --color-accent-200:  #4D170E;
-  --color-accent-300:  #7C1405;
-  --color-accent-400:  #DD2B0F;
-  --color-accent-500:  #FF563C;
-  --color-accent-600:  #FF6D55;  /* hover steps LIGHTER on dark ground */
-  --color-accent-700:  #FFC4B8;  /* accent as text */
-  --color-accent-800:  #FFC4B8;
-  --color-accent-900:  #FFE0D9;
+  /* v3 (issue #416 Phase 5 — #430) — dark-theme half of the green retint
+     above, same hue as --v3-accent's dark value (hsl(145 92% 55%)). Live-
+     verified: base --color-accent (#23F67B) on --color-bg (#141312) clears
+     12.85:1 — dark theme's existing --color-ink-on-accent (near-black,
+     below) already reads fine directly against the base accent, so no
+     darkened-fill workaround is needed here the way light theme's
+     --color-accent-600 is (dark theme's own --color-accent-600 stays a
+     *lighter* hover step, per the pre-existing "hover steps LIGHTER on dark
+     ground" convention this replaces). */
+  --color-accent:      #23F67B;
+  --color-accent-100:  #0D2617;
+  --color-accent-200:  #103720;
+  --color-accent-300:  #124929;
+  --color-accent-400:  #14713B;
+  --color-accent-500:  #23F67B;
+  --color-accent-600:  #47F590;  /* hover steps LIGHTER on dark ground; 13.30:1 with dark ink */
+  --color-accent-700:  #8CF2B7;  /* accent as text; 14.68:1 on --color-bg */
+  --color-accent-800:  #8CF2B7;
+  --color-accent-900:  #BEF4D4;
 
   --color-neutral-100: #1E1C1B;
   --color-neutral-200: #2B2827;
@@ -1012,10 +1037,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 :root[data-theme='dark'] .forgot-link:focus-visible { outline-color: var(--color-accent); }
 
 .reset-success-msg { display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-base); color: var(--color-text); line-height: 1.5; }
-/* intentional: fixed white checkmark on a --color-brand-gold-colored badge, same in both themes (issue #116) */
-.reset-success-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--color-accent); color: var(--color-ink-on-accent); font-size: 13px; font-weight: 900; }
-/* issue #155 v2 Phase D3 (full completion pass) — same "white text fails on lime"
-   pattern as .import-step-badge: swaps both fill and text color, not just the fill. */
+/* v3 (issue #416 Phase 5 — #430) — reads --color-accent-600, not the base
+   --color-accent: the checkmark glyph is body-text-size content hosted on a
+   solid fill, the same "text-hosting fill needs the darkened step" pattern
+   .btn-primary/.seg-item already document (--color-ink-on-accent clears
+   only 2.68:1 on the base green in light theme; 5.90:1 on --color-accent-600).
+   Dark theme's own --color-ink-on-accent is already dark ink, which reads
+   fine straight against the (bright) base accent, so no fill change needed
+   there. */
+.reset-success-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--color-accent-600); color: var(--color-ink-on-accent); font-size: 13px; font-weight: 900; }
 :root[data-theme='dark'] .reset-success-icon { background: var(--color-accent); }
 
 /* Auth pages — issue #6 Phase 5.1: .auth-page is a two-column split
@@ -1881,17 +1911,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .dropdown-scrim { z-index: 209; }
 
 .dropdown { position: relative; display: inline-flex; min-width: 0; }
+/* v3 (issue #416 Phase 5 — #430): glass surface per design-system.md §5's
+   nav/overlay treatment — was a flat --color-surface fill + --shadow-lg. */
 .dropdown-menu {
   position: fixed;
   min-width: 180px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
+  background: hsl(var(--v3-surface) / 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: var(--v3-shadow-glow);
   padding: var(--space-1);
   display: none;
   flex-direction: column;
   z-index: 210;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .dropdown-menu { background: hsl(var(--v3-surface-elevated)); }
 }
 .dropdown-menu.open { display: flex; }
 .dropdown-item {
@@ -1901,13 +1938,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: var(--space-2) var(--space-3);
   border: none;
   background: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--v3-radius-md);
   font: inherit;
   font-size: var(--text-sm);
   color: var(--color-text);
   cursor: pointer;
 }
-.dropdown-item:hover, .dropdown-item:focus-visible { background: var(--color-surface-raised); outline: none; }
+.dropdown-item:hover, .dropdown-item:focus-visible { background: hsl(var(--v3-accent) / 0.1); outline: none; }
 .dropdown-item-danger { color: var(--color-danger); }
 
 /* Custom-styled listbox replacing a bare <select> (issue #136 Phase 3,
@@ -2307,13 +2344,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: 24px;
   overflow-y: auto;
 }
+/* v3 (issue #416 Phase 5 — #430): glass surface + shadow-glow per
+   design-system.md §5's overlay rule — was a flat --color-surface fill +
+   --shadow-lg. Applies to every hand-rolled overlay built on `.modal-card`
+   (confirmDialog, deleteAccountModal, itemPanel, newRoadmapModal,
+   importRoadmapModal, share/comparison/feedback modals, guide modals). */
 .modal-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  background: hsl(var(--v3-surface) / 0.9);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: var(--v3-shadow-glow);
   padding: 32px 28px 28px;
   width: 100%;
   max-width: 420px;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .modal-card { background: hsl(var(--v3-surface-elevated)); }
 }
 /* design-system.md §5 — "modal/dialog... 2px title rules" (issue #301
    follow-up; this modal title previously had no rule at all, just a margin
@@ -2439,7 +2487,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .import-column-scroll { display: grid; gap: 14px; align-content: start; }
 .import-step-heading { display: flex; align-items: center; gap: 10px; font-size: var(--text-sm); font-weight: 800; color: var(--color-text); margin: 6px 0 0; }
 .import-step-heading:first-child { margin-top: 0; }
-/* intentional: fixed white text on a solid --color-brand-gold background, same theme-agnostic pattern as .reset-success-icon/.template-card-delete:hover above (issue #116) */
+/* v3 (issue #416 Phase 5 — #430) — light theme now reads --color-accent-600
+   (not the base accent) for the same text-hosting-fill reason as
+   .reset-success-icon above; white text on it clears 5.90:1. Also fixes a
+   real, pre-existing bug found auditing this rule during the compliance
+   sweep: the code comment below claimed dark theme already overrode the
+   text color to a dark ink (`var(--color-bg)`), but the actual dark-theme
+   rule only ever overrode `background`, never `color` — so dark theme was
+   silently rendering fixed white text on a bright accent fill the whole
+   time (1.44:1 on the new green base, and not much better on the old v2 red
+   either). Fixed for real this time: the dark override below now also sets
+   `color`. */
 .import-step-badge {
   flex-shrink: 0;
   display: inline-flex;
@@ -2448,18 +2506,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--color-accent-600);
+  color: #fff; /* intentional: fixed white on --color-accent-600, dark theme overrides below */
   font-size: 12px;
   font-weight: 800;
 }
-/* issue #155 v2 Phase D3 — modal-scoped recolor. Unlike every other Phase C/D2 recolor,
-   this one must also swap its *text* color, not just its background: white text (the
-   base rule above) fails badly on solid lime (the issue's own explicit callout — lime
-   hosts near-black text, never white), so dark theme reads `var(--color-bg)` here instead
-   of the fixed white the light-theme/pre-v2 rule above uses. Falls back to the
-   original brand+white pairing in light theme. */
-:root[data-theme='dark'] .import-step-badge { background: var(--color-accent); }
+:root[data-theme='dark'] .import-step-badge { background: var(--color-accent); color: var(--color-bg); }
 .field-hint { font-size: 12px; color: var(--color-text-muted); margin-top: -4px; }
 .import-options { display: grid; gap: 14px; padding: 14px; background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
 .import-option-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -3638,10 +3690,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      (not a new §5/PR2 motion addition). */
   transition: transform var(--duration-base) var(--ease-bounce), opacity 120ms ease;
 }
+/* v3 (issue #416 Phase 5 — #430) — reads --color-accent-600 in light theme,
+   not the base accent, same text-hosting-fill fix as .reset-success-icon
+   above (the checkmark glyph reads --color-ink-on-accent, which fails
+   against the base green in light theme but clears 5.90:1 on -600; dark
+   theme's own --color-ink-on-accent is already dark ink and reads fine
+   against the bright base accent, so this is scoped to light theme only —
+   see the `:root[data-theme='dark']` override immediately below). */
 .check-item.done .check-box {
-  background: var(--color-accent);
+  background: var(--color-accent-600);
   border-color: transparent;
 }
+:root[data-theme='dark'] .check-item.done .check-box { background: var(--color-accent); }
 .check-item.done .check-mark { transform: scale(1); opacity: 1; }
 /* issue #298 — design-system.md §5: "done row text = line-through at 50% opacity".
    Was only a color-mute (--color-text-muted, a 64% mix per issue #297's contrast
@@ -3903,7 +3963,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    introduced by a changelog entry the user has already opened the drawer
    for; same rounded-pill treatment as .sync-pill, brand-colored since this
    is always positive/informational, never a warning/error state. */
-/* intentional: fixed white text on a solid --color-brand-gold background, same in both themes (issue #116 precedent) */
+/* v3 (issue #416 Phase 5 — #430) — same fixes as .import-step-badge above:
+   light theme's fill moves to --color-accent-600 (white text clears 5.90:1,
+   vs. 2.68:1 on the base accent); the dark-theme override's `color` was
+   missing entirely before this pass (a real, pre-existing bug — dark theme
+   was rendering fixed white text straight on the bright base accent, now
+   fixed to dark ink via `var(--color-bg)`, same as .import-step-badge). */
 .feature-new-badge {
   display: inline-block;
   font-size: 10px;
@@ -3912,12 +3977,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   letter-spacing: 0.03em;
   padding: 2px 8px;
   border-radius: 0;
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--color-accent-600);
+  color: #fff; /* intentional: fixed white on --color-accent-600, dark theme overrides below */
 }
-/* issue #155 v2 Phase D3 (full completion pass) — featureBadge.js; white-text-fails-on
-   -lime pattern, swaps both fill and text. */
-:root[data-theme='dark'] .feature-new-badge { background: var(--color-accent); }
+:root[data-theme='dark'] .feature-new-badge { background: var(--color-accent); color: var(--color-bg); }
 
 .notes-textarea {
   resize: vertical;
@@ -4029,6 +4092,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #206 §6 — small solid gold icon badge, not a generic muted-gray
    glyph. Was a gradient fill; reverted to solid per the app-wide
    "no gradients" decision. */
+/* v3 (issue #416 Phase 5 — #430) — light theme reads --color-accent-600, not
+   the base accent, same text/icon-hosting-fill fix as the other badges in
+   this pass ( --color-ink-on-accent clears only 2.68:1/~3:1-graphics-floor
+   on the base green; 5.90:1 on -600). Uses the token, not a literal color,
+   so dark theme (already dark ink, already passes against the bright base
+   accent) needs no override. */
 .empty-icon {
   display: inline-flex;
   align-items: center;
@@ -4037,9 +4106,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   height: 48px;
   margin: 0 auto var(--space-3);
   border-radius: 50%;
-  background: var(--color-accent);
+  background: var(--color-accent-600);
   color: var(--color-ink-on-accent);
 }
+:root[data-theme='dark'] .empty-icon { background: var(--color-accent); }
 .empty-title { font-weight: 800; color: var(--color-text); margin-top: var(--space-2); }
 .empty-message { margin-top: var(--space-1); }
 .empty-state .btn { margin-top: var(--space-4); }
@@ -4126,8 +4196,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .tour-ring {
   position: fixed;
   z-index: 1101;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--color-accent);
+  /* v3 (issue #416 Phase 5 — #430) — design-system.md §7's cutout radius
+     follows --v3-radius-lg now, replacing the old hard --radius-md corner. */
+  border-radius: var(--v3-radius-lg);
+  border: 2px solid hsl(var(--v3-accent));
   /* The dimming layer itself — a huge-spread box-shadow fills the rest of
      the viewport, leaving this element's own box as a "cutout" over the
      highlighted target. Not clip-path'ing a separate overlay, per the
@@ -4142,15 +4214,23 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
       width var(--duration-base) var(--ease-standard), height var(--duration-base) var(--ease-standard);
   }
 }
+/* v3 (issue #416 Phase 5 — #430) — glass card + shadow-glow per
+   design-system.md §7, replacing the old flat --color-surface/--shadow-lg
+   card. */
 .tour-popover {
   position: fixed;
   z-index: 1102;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  background: hsl(var(--v3-surface) / 0.9);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: var(--v3-shadow-glow);
   padding: 20px;
   max-width: 320px;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .tour-popover { background: hsl(var(--v3-surface-elevated)); }
 }
 .tour-popover-progress {
   position: absolute;
@@ -4224,10 +4304,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 
 /* 3.8 Notification badge */
-/* intentional: fixed white text on a solid --color-danger background, same in both themes (issue #116) */
-/* issue #299 — design-system.md §8: "Notification badge: square accent dot,
-   no pill." Was a pill-shaped, danger-colored badge left over from the
-   pre-#297 direction. */
+/* v3 (issue #416 Phase 5 — #430) — design-system.md §8: "small glowing
+   accent dot", replacing the v2 flat square dot. The numbered-count variant
+   (`.notification-badge` without `-dot`) keeps its own count-pill shape —
+   §8's "dot" language only applies to the dot variant a caller opts into via
+   `.notification-badge-dot`, since a count needs legible digits a bare glow
+   dot can't render. */
 .notification-badge {
   display: inline-flex;
   align-items: center;
@@ -4235,21 +4317,48 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background: var(--color-accent);
+  background: hsl(var(--v3-accent));
   color: var(--color-ink-on-accent);
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
+  border-radius: var(--v3-radius-sm);
 }
-.notification-badge-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
+.notification-badge-dot {
+  min-width: 8px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 8px hsl(var(--v3-accent) / 0.8);
+}
 
 /* 3.3 Command palette */
-.command-palette-card { max-width: 560px; width: 100%; padding: 0; display: grid; grid-template-rows: auto 1fr auto; max-height: 70vh; }
+/* v3 (issue #416 Phase 5 — #430) — glass surface matching the nav pill's
+   blur-xl per design-system.md §5, replacing the flat `.modal-card`-derived
+   surface this component used to inherit implicitly. */
+.command-palette-card {
+  max-width: 560px;
+  width: 100%;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  max-height: 70vh;
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: var(--v3-shadow-glow-lg);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .command-palette-card { background: hsl(var(--v3-surface-elevated)); }
+}
 .command-palette-input {
   font: inherit;
   font-size: var(--text-base);
   border: none;
-  border-bottom: 2px solid var(--color-divider); /* design-system.md §5's "2px input rule" (issue #301 follow-up; was 1px) */
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
   padding: var(--space-4) var(--space-6);
   background: transparent;
   color: var(--color-text);
@@ -4270,15 +4379,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border: none;
   background: none;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--v3-radius-md);
   cursor: pointer;
 }
-/* design-system.md §5 — "selected row = 3px accent bar + accent-100 fill
-   (same pattern as sidebar's active nav item)" (issue #301 follow-up; this
-   was still the pre-#301 neutral `--color-surface-raised` hover-style fill,
-   `.nav-item.active`'s own exact treatment just below). */
-.command-palette-item.active { background: var(--color-accent-100); box-shadow: inset 3px 0 0 var(--color-accent); }
-.command-palette-item.active .command-palette-item-title { color: var(--color-accent-700); }
+/* v3 (issue #416 Phase 5 — #430) — result rows get the standard v3
+   hover/active accent tint per design-system.md §6, replacing the old
+   solid-fill + inset-bar treatment. */
+.command-palette-item.active { background: hsl(var(--v3-accent) / 0.1); box-shadow: none; }
+.command-palette-item.active .command-palette-item-title { color: var(--v3-accent-ink, hsl(var(--v3-accent))); }
 .command-palette-item-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-text); }
 .command-palette-item-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); }
 /* issue #283 — "Navigation"/"Topics" group headers, only rendered once the palette

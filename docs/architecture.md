@@ -5070,3 +5070,47 @@ local testing surfaced: two tests that retry-loop opening a template card's ⋯ 
 menu (`accessibility.test.js`, `onboarding.test.js`) were tipping past their 15s retry
 window consistently once Phase 2's glass/`backdrop-filter` cards and two extra Google
 Fonts families slowed CI's first paint/layout settle — both raised to 25s.
+
+### 2026-07-30 — PR #431 (issue #430) — v3 redesign Phase 5: overlays & long tail + full compliance sweep (closes master tracker #416)
+
+Final phase of the v3 "developer portfolio" redesign. Every remaining hand-rolled
+overlay (`.modal-card` and everything built on it, `.dropdown-menu`, the command
+palette, the feature-tour spotlight) moves onto the v3 glass/`--v3-radius-lg`/
+`--v3-shadow-glow` recipe Phase 1 established, each with a `@supports not
+(backdrop-filter)` fallback; `.notification-badge-dot` becomes a small glowing dot
+per design-system.md §8. Icon fill/stroke and `prefers-reduced-motion` audits found
+no gaps.
+
+Two compliance-sweep findings expanded this PR beyond its original per-component
+scope, both surfaced by live screenshot feedback mid-review rather than assumed from
+the issue text:
+
+1. **`--radius-sm`/`-md`/`-lg`/`-full`/`--chip-radius` were still `0px`** — the v2
+   "Modernist" zero-radius rule, never retuned when Phases 1-4 built the `--v3-*`
+   token layer *alongside* these rather than replacing them. Every component reading
+   these base tokens directly (not yet individually migrated to `--v3-*`) was still
+   rendering hard square corners. Fixed by aliasing the base radius tokens to their
+   `--v3-*` equivalents — a token-value change, not a rename or structural change, so
+   it required no per-selector edits and carries low regression risk.
+2. **`--color-accent`/`-100`…`-900` were still the v2 orange/red ramp** (`#EC3013`-
+   family). Retinted to the same green hue as `--v3-accent` in both themes, every
+   step re-derived and contrast-verified with a real relative-luminance calculation.
+   Per design-system.md §2, danger/warning/priority deliberately keep reusing this
+   ramp (no separate red-for-danger token) — that's the spec's "one accent, end to
+   end" identity, not an oversight. Re-verifying every text-hosting solid fill against
+   the new ramp caught five call sites (`.reset-success-icon`, `.import-step-badge`,
+   `.check-item.done .check-box`, `.feature-new-badge`, `.empty-icon`) reading the
+   *base* accent under `--color-ink-on-accent`, which clears only ~2.7:1 in light
+   theme — moved to `--color-accent-600` (5.90:1), the same pattern `.btn-primary`/
+   `.seg-item` already used. Also found two independent, pre-existing bugs while
+   there: `.import-step-badge`/`.feature-new-badge`'s dark-theme overrides only ever
+   set `background`, never `color`, despite each having a code comment claiming
+   otherwise — fixed white text on a bright accent fill, ~1.4:1 in dark theme,
+   predating this PR under the old red ramp too.
+
+Deliberately deferred: the activity heatmap's `--heat-0`…`-4` ramp (still literal
+red/orange) — design-system.md §5 calls for a hand-tuned green ramp here, not a
+hue-rotate, and that work is already in Phase 4's own PR (#429, not yet merged);
+duplicating it risked conflicting with that more carefully tuned pass. See
+`CHANGELOG.md`'s `[Unreleased]` entry for the full verification list (lint/test/
+manual-browser pass) and every recolored selector.
