@@ -42,6 +42,15 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
+// issue #416 Phase 4 — the --v3-* tokens are HSL *components* (e.g.
+// "146 88% 38%"), not full color values, so they need wrapping in hsl(...)
+// before use as a Chart.js color string — unlike --color-*, which cssVar()
+// above can return as-is.
+function cssVarHsl(name, fallback) {
+  const components = cssVar(name, null);
+  return components ? `hsl(${components})` : fallback;
+}
+
 // issue #300 — `--color-brand-gold` no longer exists as a CSS custom property
 // (removed in Phase 1's #297 token migration; design-system.md's mapping
 // table repoints every old "primary accent" token, this one included, to
@@ -61,12 +70,28 @@ function axisOptions() {
   };
 }
 
+// issue #416 Phase 4 — design-system.md §5: "single accent gradient line...
+// fall back to flat --color-accent stroke if Chart.js can't gradient a line
+// stroke cleanly, don't fight the library for it." A canvas
+// CanvasGradient (not a CSS gradient — Chart.js's borderColor takes a
+// CanvasRenderingContext2D gradient object, not a string) sized to the
+// canvas's own rendered width works cleanly here, so no fallback is needed
+// in practice; `canvas.clientWidth` may briefly report 0 before first
+// layout, in which case a flat --v3-accent stroke covers that edge case.
+function gradientLineStroke(ctx, canvas) {
+  const width = canvas.clientWidth;
+  if (!width) return cssVarHsl('--v3-accent', cssVar('--color-accent', '#EC3013'));
+  const gradient = ctx.createLinearGradient(0, 0, width, 0);
+  gradient.addColorStop(0, cssVarHsl('--v3-gradient-start', cssVar('--color-accent', '#EC3013')));
+  gradient.addColorStop(1, cssVarHsl('--v3-gradient-end', cssVar('--color-accent', '#EC3013')));
+  return gradient;
+}
+
 // createLineChart(canvas, { labels, totals }) — B4's cumulative progress
 // line. `totals[i]` is the running total as of `labels[i]`.
 export async function createLineChart(canvas, { labels, totals }) {
   const Chart = await loadChartModule();
   const ctx = canvas.getContext('2d');
-  const accentColor = cssVar('--color-accent', '#EC3013');
 
   const { x, y } = axisOptions();
   return new Chart(ctx, {
@@ -76,7 +101,8 @@ export async function createLineChart(canvas, { labels, totals }) {
       datasets: [{
         label: 'Total completed',
         data: totals,
-        borderColor: accentColor,
+        borderColor: gradientLineStroke(ctx, canvas),
+        borderWidth: 2,
         fill: false,
         tension: 0.35,
         pointRadius: 0,
@@ -98,8 +124,8 @@ export async function createLineChart(canvas, { labels, totals }) {
 // distinguishing it visually from the solid-accent bars beneath it.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
-  const accentColor = cssVar('--color-accent', '#EC3013');
-  const accent700Color = cssVar('--color-accent-700', '#AE1800');
+  const accentColor = cssVarHsl('--v3-accent', cssVar('--color-accent', '#EC3013'));
+  const accentMutedColor = cssVarHsl('--v3-accent-muted', cssVar('--color-accent-700', '#AE1800'));
   const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
     data: {
@@ -115,8 +141,8 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
           type: 'line',
           label: '7-day avg',
           data: rollingAverage,
-          borderColor: accent700Color,
-          backgroundColor: accent700Color,
+          borderColor: accentMutedColor,
+          backgroundColor: accentMutedColor,
           borderWidth: 2,
           borderDash: [6, 4],
           pointRadius: 0,
@@ -137,9 +163,11 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
 // floating custom tooltip (a small white rounded-rect card, dark text, pointing down
 // at the hovered bar) + legend row (dot + label). Built and visually verified in
 // isolation this phase; no page calls this yet — Phase C/D wires it into a real chart.
-// issue #300 — --color-brand-gold no longer exists (see createLineChart's
-// own comment above); repointed to --color-accent, same as the live charts.
-const BUCKET_TOKENS = { high: '--color-accent', medium: '--color-text-faint', low: '--color-border-strong' };
+// issue #416 Phase 4 — repointed the "high" bucket to the v3 accent token,
+// matching the live charts above; medium/low stay on their existing
+// theme-flipping --color-* tokens (no v3 equivalent needed for a muted/
+// neutral bucket).
+const BUCKET_TOKENS = { high: '--v3-accent', medium: '--color-text-faint', low: '--color-border-strong' };
 const BUCKET_FALLBACKS = { high: '#EC3013', medium: '#9c9184', low: '#d3ccc0' };
 export const BUCKET_LEGEND = [
   { bucket: 'high', label: 'High' },
@@ -147,7 +175,12 @@ export const BUCKET_LEGEND = [
   { bucket: 'low', label: 'Low' }
 ];
 
+// The "high" bucket reads an HSL-components --v3-* token (needs hsl(...)
+// wrapping); medium/low read plain --color-* tokens (already full color
+// values) — see cssVar()/cssVarHsl()'s own comments above for why these two
+// token families need different reader functions.
 function bucketColor(bucket) {
+  if (bucket === 'high') return cssVarHsl(BUCKET_TOKENS.high, BUCKET_FALLBACKS.high);
   return cssVar(BUCKET_TOKENS[bucket], BUCKET_FALLBACKS[bucket]);
 }
 
