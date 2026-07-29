@@ -82,11 +82,13 @@ function buildNav() {
   stepsLink.addEventListener('click', () => scrollToSection('landing-steps'));
 
   return el('header', { className: 'landing-nav' }, [
-    el('a', { className: 'brand', href: '#/signin' }, createBrandMark()),
-    el('nav', { className: 'landing-nav-links', 'aria-label': 'Page sections' }, [featuresLink, stepsLink]),
-    el('div', { className: 'landing-nav-actions' }, [
-      el('a', { className: 'btn btn-ghost', href: '#/signin', text: 'Sign in' }),
-      el('a', { className: 'btn btn-primary', href: '#/signup', text: 'Start for free' })
+    el('div', { className: 'landing-nav-inner' }, [
+      el('a', { className: 'brand', href: '#/signin' }, createBrandMark()),
+      el('nav', { className: 'landing-nav-links', 'aria-label': 'Page sections' }, [featuresLink, stepsLink]),
+      el('div', { className: 'landing-nav-actions' }, [
+        el('a', { className: 'btn btn-ghost', href: '#/signin', text: 'Sign in' }),
+        el('a', { className: 'btn btn-primary', href: '#/signup', text: 'Start for free' })
+      ])
     ])
   ]);
 }

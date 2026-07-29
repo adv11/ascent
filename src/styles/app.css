@@ -4791,7 +4791,27 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #299 — design-system.md's flat "2px-ruled header bar" nav, replacing
    the pre-#297 floating/bordered/blurred pill-shaped bar (chip-radius, glass
    surface, backdrop-filter — none of which fit the flat Modernist identity). */
+/* v3 (issue #416 Phase 3 follow-up) — was a centered 1160px-max-width bar
+   with an opaque flat --color-bg fill, which read as a hard-edged rectangle
+   floating against .landing-page's ambient gradient wash bleeding around it
+   on either side (a real, reported visual bug, not a stylistic choice).
+   .landing-nav is now a full-bleed glass bar (matching the app-shell
+   topbar's own blur-xl treatment, design-system.md §5); .landing-nav-inner
+   carries the old centered max-width layout so the nav's *content* still
+   aligns with the hero/sections below it. */
 .landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: hsl(var(--v3-surface) / 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .landing-nav { background: hsl(var(--v3-surface-elevated)); }
+}
+.landing-nav-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4799,8 +4819,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   max-width: 1160px;
   margin: 0 auto;
   padding: var(--space-4) var(--space-6);
-  border-bottom: 2px solid var(--color-divider);
-  background: var(--color-bg);
 }
 .landing-nav-links { display: flex; gap: var(--space-6); }
 .landing-nav-link {
@@ -4817,10 +4835,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .landing-nav-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .landing-nav-actions { display: flex; align-items: center; gap: var(--space-3); }
 
-/* issue #155 (ZeBeyond direction) — position:relative;overflow:hidden so the
-   .bg-grid-glow decorative layer can sit behind the copy/mock without
-   affecting layout; .landing-hero-copy/.landing-hero-mock get z-index: 1 so
-   they stay above it. */
+/* issue #155 (ZeBeyond direction) — position:relative so .landing-hero-copy/
+   .landing-hero-mock's z-index: 1 has a containing block to stack above the
+   orbs/wash behind them. v3 (issue #416 Phase 3 follow-up) — dropped the
+   overflow: hidden this rule used to carry for the (now-unused) .bg-grid-glow
+   layer: with .landing-orb-1/-2 (blurred, 60px) as children of this section,
+   that clip hard-cropped their blur at the section's own rectangular edge,
+   reading as a visible rectangular "box" seam against .landing-page's ambient
+   wash behind it — a real, reported visual bug, not a stylistic choice.
+   .landing-page's own overflow-x: hidden is still the horizontal-scroll
+   safety net; letting this section's overflow stay visible is what lets the
+   orbs' blur bleed smoothly into the page wash instead of clipping. */
 .landing-hero {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -4830,7 +4855,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   margin: 0 auto;
   padding: var(--space-12) var(--space-6) var(--space-16);
   position: relative;
-  overflow: hidden;
 }
 .landing-hero-copy { position: relative; z-index: 1; }
 .landing-hero-eyebrow { margin: 0 0 var(--space-4); }
