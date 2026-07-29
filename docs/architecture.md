@@ -4927,3 +4927,38 @@ frozen at the pre-click position for the stop's whole duration. Fixed by always 
 `moveSpotlightTo()` after `action()`, unconditionally — re-measuring a target that didn't
 move is harmless, and a target that did (whether because it's newly created or because a
 sibling shifted it) is now always caught.
+
+### 2026-07-29 — Issue #417 — v3 visual redesign, Phase 0: discovery & spec
+
+Docs-only phase, no `app.css`/component code touched — establishes the written source of
+truth every later phase of `#416`'s v3 redesign implements against, mirroring `#289`'s own
+Phase 0 for the v2 "Modernist" rollout. `.claude/rules/design-system.md` was rewritten in
+place (not appended), replacing v2's content wholesale: color tokens carried forward
+value-for-value from the developer's personal portfolio (`app/globals.css`'s literal HSL
+triples, both themes), a 3-step radius scale reversing v2's "radius 0 everywhere" rule,
+glass/glow/gradient tokens, a 3-font system (Sora/Outfit/JetBrains Mono replacing Archivo),
+and vanilla-CSS/`IntersectionObserver`-based equivalents for the portfolio's Framer
+Motion-driven motion (floating orbs, scroll-progress shimmer, staggered hero fade-in,
+`whileInView` scroll-reveal) — a new `src/ui/utils/scrollReveal.js` module is specified for
+Phase 3 to build, since Framer Motion is a React-only dependency this build-step-free repo
+cannot add. New `docs/adr/ADR-013-v3-terminal-redesign.md` documents the pivot: why a
+colors-only swap and a coexisting-theme option were both rejected in favor of full
+glassmorphic adoption, and explicitly retires v2 (`#289`/`#297`–`#301`/`#309`) rather than
+keeping it as a fallback.
+
+One contrast risk was caught and documented before any implementation phase starts,
+rather than being discovered mid-rollout: the portfolio's raw accent color measures
+~2.8:1 against its light-mode background — well under the WCAG AA 4.5:1 body-text floor —
+because the portfolio itself never renders accent at paragraph size (only as
+headline/button/UI-chrome color). The spec introduces a new `--color-accent-ink` token
+(computed starting point ~6.5:1, to be verified with a real contrast tool, not trusted
+blind) that Phase 1 must use for any paragraph-size accent text in light mode; dark mode's
+accent already measures ~13:1 against its near-black background and needs no separate
+token.
+
+A follow-up issue (`#418`) was filed alongside this phase, blocked on `#416`'s full
+completion: once the v3 UI actually ships, the README screenshots, the generated demo
+video (`scripts/generate-demo-video.mjs` reads colors live from the app's own CSS tokens,
+so its output goes stale the moment those tokens change), and the GitHub repo "About"
+description all need a consistency pass, the same catch-up `#312` did after the v1 → v2
+transition. Filed now so it isn't lost or forgotten by the time Phase 5 closes.
