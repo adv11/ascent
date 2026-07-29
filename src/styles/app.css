@@ -543,6 +543,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    in the reference) — generalizes the ad hoc uppercase-label pattern
    already used piecemeal by .current-roadmap-badge/.toolbar-label/
    .panel-kicker into one reusable class. */
+/* v3 (issue #416 Phase 3) — recolored from the v2 red/orange
+   --color-accent-700 to the v3 green accent (design-system.md §3's kicker
+   spec), both themes. authMarketingPanel.js's always-dark panel keeps its
+   own fixed-literal override (.auth-marketing-eyebrow, below) regardless of
+   this change. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -551,21 +556,36 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 700;
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  color: var(--color-accent-700);
+  color: var(--v3-accent-ink, hsl(var(--v3-accent)));
 }
-/* issue #155 v2 Phase C — landing/auth/shell recolor: swap the ZeBeyond mint accent for
-   the v2 lime accent on the specific classes scoped to those three areas (this class is
-   only ever used by landing.js/authMarketingPanel.js — see ui-styling.md). Falls back to
-   --color-brand-gold in light theme, unchanged (no v2 reference material exists there). */
-:root[data-theme='dark'] .eyebrow { color: var(--color-accent-700); }
 
-/* Solid accent-color headline text, for one accent phrase inside an
-   otherwise plain-color heading. Was a background-clip:text gradient;
-   reverted to a flat color per the app-wide "no gradients, solid only"
-   decision — the class name is kept as-is (matching every JS call site) even
-   though it's no longer literally a gradient. */
+/* v3 (issue #416 Phase 3) — design-system.md §2/§4 explicitly re-enables
+   gradients for headline text ("Gradients are back and encouraged"),
+   reversing the Alpenglow-era "no gradients, solid only" decision this class
+   used to follow (see the removed comment this replaces). One accent phrase
+   inside an otherwise plain-color heading only — never a fully gradient-
+   filled heading, since that can't be evaluated by contrast tooling against
+   a single foreground color. */
 .text-gradient-brand {
-  color: var(--color-accent-700);
+  background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@supports not (background-clip: text) {
+  .text-gradient-brand { color: var(--v3-accent-ink, var(--color-accent-700)); }
+}
+
+/* v3 (issue #416 Phase 3) — design-system.md §3's hero-kicker dot,
+   "un-retired": a small glowing accent dot paired with an .eyebrow label. */
+.eyebrow-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--v3-accent));
+  box-shadow: 0 0 8px hsl(var(--v3-accent) / 0.8);
+  flex-shrink: 0;
 }
 
 /* Two-tone tag-chip pair (the "EPOP CONCEPT" + "AUTOMOTIVE" chip pattern) —
@@ -1056,11 +1076,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* intentional: fixed accent color on this panel's own fixed-dark background
    regardless of site theme (issue #116) — mirrors .eyebrow's layout (imported via the
    shared class) but can't read the theme-flipping --color-accent token here, same
-   reasoning as every other fixed color on this panel. issue #297 — retuned to the
-   dark-theme Modernist accent value (#FF563C, matching
-   :root[data-theme='dark']'s --color-accent): since this panel is always-dark
-   regardless of site theme, it always uses the dark-theme accent value directly. */
-.auth-marketing-eyebrow { color: #FF563C; margin: 0 0 var(--space-4); }
+   reasoning as every other fixed color on this panel. v3 (issue #416 Phase 3) —
+   retuned from the v2 red/orange Modernist accent (#FF563C) to the dark-theme
+   --v3-accent value (#23f67b, matching :root[data-theme='dark']'s --v3-accent
+   at 145 92% 55%): this panel is always-dark regardless of site theme, so it
+   always uses the dark-theme v3 accent value directly, same as before. */
+.auth-marketing-eyebrow { color: #23f67b; margin: 0 0 var(--space-4); }
 /* intentional: flat, low-opacity fixed-white fill on this panel's own always-dark
    background regardless of site theme (issue #116) — flattened from a
    repeating-linear-gradient texture per design-system.md §2's "no gradients
@@ -1161,17 +1182,29 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .auth-brand { justify-self: start; }
 
+/* v3 (issue #416 Phase 3) — design-system.md §4 glass-surface treatment,
+   matching .card's own recipe (surface/85 + blur-md + hairline border +
+   accent-tinted shadow). Kept as its own class rather than switching to
+   .card directly since this card also needs overflow: hidden for its
+   head/body/foot padding structure, which .card's ::before hairline-border
+   pseudo-element assumes isn't clipped. */
 .auth-card-lg {
-  background: var(--surface-glass);
+  position: relative;
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25), inset 0 1px 0 hsl(var(--v3-text) / 0.04);
   overflow: hidden;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .auth-card-lg { background: hsl(var(--v3-surface-elevated)); }
 }
 
 .auth-card-head { padding: 28px 28px 0; }
-.auth-title { font-size: clamp(26px, 4vw, 32px); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; }
-.auth-subtitle { margin-top: 8px; color: var(--color-text-muted); font-size: var(--text-base); }
+.auth-title { font-family: var(--font-heading-v3, var(--font-display)); font-size: clamp(26px, 4vw, 32px); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+.auth-subtitle { margin-top: 8px; color: var(--color-text-muted); font-size: var(--text-base); font-family: var(--font-body-v3, var(--font-body)); }
 .auth-card-body { padding: 24px 28px; display: grid; gap: 16px; }
 .auth-card-foot { padding: 0 28px 24px; font-size: var(--text-base); color: var(--color-text-muted); text-align: center; }
 .auth-form { display: grid; gap: 14px; }
@@ -1228,25 +1261,32 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    Base surface swapped from --surface-glass to --color-surface per the
    spec's explicit "Base: var(--color-surface) bg" instruction — this drops
    the backdrop-filter glass effect this card family previously had. */
+/* v3 (issue #416 Phase 3) — design-system.md §4 glass card grid ("cards are
+   visually separate objects now, not cells in one ruled grid"). */
 .template-card {
   height: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25), inset 0 1px 0 hsl(var(--v3-text) / 0.04);
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   text-align: left;
   cursor: pointer;
-  transition: transform var(--duration-base) var(--ease-decelerate), box-shadow var(--duration-base) var(--ease-decelerate), border-color var(--duration-base) var(--ease-decelerate);
+  transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out), border-color var(--duration-slow, 300ms) var(--ease-out);
   font-family: inherit;
   color: var(--color-text);
   width: 100%;
   position: relative;
 }
-.template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--color-border-strong); }
+@supports not (backdrop-filter: blur(1px)) {
+  .template-card { background: hsl(var(--v3-surface-elevated)); }
+}
+.template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); border-color: hsl(var(--v3-accent) / 0.4); }
 .template-card.is-disabled { cursor: not-allowed; opacity: 0.6; transform: none; pointer-events: none; }
 .template-card.picking { opacity: 0.85; }
 /* `store.switchRoadmap()` (onClick, buildCard()/buildCustomCard(),
@@ -4678,12 +4718,100 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    at '#/'. Self-contained section; nothing here is reused by any other page.
    ========================================================================== */
 
-.landing-page { min-height: 100vh; min-height: 100dvh; background: var(--color-bg); overflow-x: hidden; }
+/* v3 (issue #416 Phase 3) — design-system.md §4's ambient background wash,
+   scoped to this marketing page only ("wash on marketing pages,
+   flat-with-glass-cards on app pages" — the dashboard/settings/progress
+   shell stays flat). Three soft radial accent washes over the base
+   --color-bg, per the portfolio's own `body` rule. */
+.landing-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  position: relative;
+  background:
+    radial-gradient(circle at 10% -10%, hsl(var(--v3-accent) / 0.1), transparent 45%),
+    radial-gradient(circle at 90% -10%, hsl(var(--v3-gradient-end) / 0.1), transparent 45%),
+    radial-gradient(circle at 50% 120%, hsl(var(--v3-accent) / 0.08), transparent 50%),
+    var(--color-bg);
+}
+
+/* Decorative floating blurred orbs behind the hero (design-system.md §7) —
+   aria-hidden, absolutely positioned, purely ambient. Fully disabled (not
+   just paused) under prefers-reduced-motion via the app-wide catch-all at
+   the bottom of this file. */
+.landing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+  background: hsl(var(--v3-accent) / 0.25);
+}
+.landing-orb-1 {
+  width: 280px;
+  height: 280px;
+  top: -60px;
+  left: -40px;
+  animation: float 6s ease-in-out infinite;
+}
+.landing-orb-2 {
+  width: 220px;
+  height: 220px;
+  bottom: -40px;
+  right: 4%;
+  background: hsl(var(--v3-gradient-end) / 0.22);
+  animation: floatSlow 10s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+/* v3 (issue #416 Phase 3) — scroll-reveal at-rest/revealed states
+   (design-system.md §7, driven by src/ui/utils/scrollReveal.js). */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 450ms, transform 450ms;
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal-delay-1 { transition-delay: 0.05s; }
+.reveal-delay-2 { transition-delay: 0.15s; }
+.reveal-delay-3 { transition-delay: 0.25s; }
+.reveal-delay-4 { transition-delay: 0.35s; }
 
 /* issue #299 — design-system.md's flat "2px-ruled header bar" nav, replacing
    the pre-#297 floating/bordered/blurred pill-shaped bar (chip-radius, glass
    surface, backdrop-filter — none of which fit the flat Modernist identity). */
+/* v3 (issue #416 Phase 3 follow-up) — was a centered 1160px-max-width bar
+   with an opaque flat --color-bg fill, which read as a hard-edged rectangle
+   floating against .landing-page's ambient gradient wash bleeding around it
+   on either side (a real, reported visual bug, not a stylistic choice).
+   .landing-nav is now a full-bleed glass bar (matching the app-shell
+   topbar's own blur-xl treatment, design-system.md §5); .landing-nav-inner
+   carries the old centered max-width layout so the nav's *content* still
+   aligns with the hero/sections below it. */
 .landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: hsl(var(--v3-surface) / 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .landing-nav { background: hsl(var(--v3-surface-elevated)); }
+}
+.landing-nav-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4691,8 +4819,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   max-width: 1160px;
   margin: 0 auto;
   padding: var(--space-4) var(--space-6);
-  border-bottom: 2px solid var(--color-divider);
-  background: var(--color-bg);
 }
 .landing-nav-links { display: flex; gap: var(--space-6); }
 .landing-nav-link {
@@ -4709,10 +4835,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .landing-nav-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .landing-nav-actions { display: flex; align-items: center; gap: var(--space-3); }
 
-/* issue #155 (ZeBeyond direction) — position:relative;overflow:hidden so the
-   .bg-grid-glow decorative layer can sit behind the copy/mock without
-   affecting layout; .landing-hero-copy/.landing-hero-mock get z-index: 1 so
-   they stay above it. */
+/* issue #155 (ZeBeyond direction) — position:relative so .landing-hero-copy/
+   .landing-hero-mock's z-index: 1 has a containing block to stack above the
+   orbs/wash behind them. v3 (issue #416 Phase 3 follow-up) — dropped the
+   overflow: hidden this rule used to carry for the (now-unused) .bg-grid-glow
+   layer: with .landing-orb-1/-2 (blurred, 60px) as children of this section,
+   that clip hard-cropped their blur at the section's own rectangular edge,
+   reading as a visible rectangular "box" seam against .landing-page's ambient
+   wash behind it — a real, reported visual bug, not a stylistic choice.
+   .landing-page's own overflow-x: hidden is still the horizontal-scroll
+   safety net; letting this section's overflow stay visible is what lets the
+   orbs' blur bleed smoothly into the page wash instead of clipping. */
 .landing-hero {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -4722,20 +4855,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   margin: 0 auto;
   padding: var(--space-12) var(--space-6) var(--space-16);
   position: relative;
-  overflow: hidden;
 }
 .landing-hero-copy { position: relative; z-index: 1; }
 .landing-hero-eyebrow { margin: 0 0 var(--space-4); }
 .landing-hero-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--text-4xl);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  font-family: var(--font-heading-v3, var(--font-display));
+  font-weight: 700;
+  font-size: clamp(40px, 5vw, 72px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   margin: 0 0 var(--space-4);
   color: var(--color-text);
 }
 .landing-hero-subtitle {
+  font-family: var(--font-body-v3, var(--font-body));
   font-size: var(--text-lg);
   line-height: var(--leading-loose);
   color: var(--color-text-muted);
@@ -4749,34 +4882,40 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .landing-mock-card {
   width: 100%;
   max-width: 380px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: var(--v3-shadow-glow);
   overflow: hidden;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .landing-mock-card { background: hsl(var(--v3-surface-elevated)); }
 }
 .landing-mock-head { display: flex; gap: 6px; padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border); }
 .landing-mock-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border-strong); }
 .landing-mock-body { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-6); }
 .landing-mock-row { display: flex; align-items: center; gap: var(--space-3); }
-/* Square, matching the real .check-box's shape (design-system.md §5:
-   "Checkboxes: squares") — this decorative landing-page mockup had its own
-   stray radius (issue #309). */
+/* v3 (issue #416 Phase 3) — design-system.md §5 "Checkboxes: rounded
+   squares (--radius-sm)... done = accent fill", superseding v2's zero-radius
+   square rule (the comment this replaces). Recolored from the v2 red/orange
+   --color-accent/--color-warning-bg to the v3 green accent, both themes
+   (a single v3-token rule now covers both, replacing the old light/dark
+   conditional pair). */
 .landing-mock-check {
   width: 18px;
   height: 18px;
-  border-radius: 0;
-  border: 2px solid var(--color-accent);
-  background: var(--color-warning-bg);
+  border-radius: var(--v3-radius-sm);
+  border: 2px solid hsl(var(--v3-accent));
+  background: hsl(var(--v3-accent) / 0.12);
   flex-shrink: 0;
 }
-/* issue #155 v2 Phase D3 (full completion pass) — the landing hero's mockup preview
-   should match the real dashboard checklist it's depicting, now that
-   .check-item.done .check-box is lime in dark theme too. */
-:root[data-theme='dark'] .landing-mock-check { border-color: var(--color-accent); background: var(--color-warning-bg); }
-/* Flat, not a pill — design-system.md §5 "Progress: flat bars (6-8px)... accent fill" (issue #301 follow-up). */
+/* v3 (issue #416 Phase 3) — design-system.md §5 "Progress: gradient fill",
+   superseding v2's flat-accent-fill rule (issue #301, the comment this
+   replaces). */
 .landing-mock-bar { flex: 1; height: 10px; background: var(--color-border-strong); overflow: hidden; }
-.landing-mock-bar-fill { display: block; height: 100%; background: var(--color-accent); }
-:root[data-theme='dark'] .landing-mock-bar-fill { background: var(--color-accent); }
+.landing-mock-bar-fill { display: block; height: 100%; background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end))); }
 .landing-mock-fill-1 { width: 92%; }
 .landing-mock-fill-2 { width: 68%; }
 .landing-mock-fill-3 { width: 100%; }
@@ -4784,10 +4923,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .landing-section-eyebrow { display: flex; justify-content: center; margin-bottom: var(--space-3); }
 .landing-section-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--text-2xl);
-  letter-spacing: var(--tracking-tight);
+  font-family: var(--font-heading-v3, var(--font-display));
+  font-weight: 600;
+  font-size: clamp(28px, 3vw, 36px);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
   text-align: center;
   margin: 0 0 var(--space-8);
   color: var(--color-text);
@@ -4806,25 +4946,35 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-8);
+  transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
 }
+@supports not (backdrop-filter: blur(1px)) {
+  .feature-card { background: hsl(var(--v3-surface-elevated)); }
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); }
+/* v3 (issue #416 Phase 3) — recolored from the v2 red/orange
+   --color-warning-bg/--color-accent-700 tint to a v3 accent-tinted glass
+   chip, both themes (was a light-vs-dark-theme conditional pair; a single
+   v3-token rule now covers both). */
 .feature-card-icon {
   width: 48px;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  background: var(--color-warning-bg);
-  color: var(--color-accent-700);
+  border-radius: var(--v3-radius-md);
+  background: hsl(var(--v3-accent) / 0.12);
+  color: var(--v3-accent-ink, hsl(var(--v3-accent)));
   margin-bottom: var(--space-6);
 }
-/* issue #155 v2 Phase C — landing-only class, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .feature-card-icon { background: var(--color-warning-bg); color: var(--color-accent-700); }
-.feature-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); margin: 0 0 var(--space-2); color: var(--color-text); }
+.feature-card-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-lg); margin: 0 0 var(--space-2); color: var(--color-text); }
 .feature-card-text { font-size: var(--text-base); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
 .landing-steps-list {
@@ -4842,11 +4992,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-direction: column;
   align-items: flex-start;
   position: relative;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  background: hsl(var(--v3-surface) / 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-8) var(--space-6) var(--space-6);
+  transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
 }
+@supports not (backdrop-filter: blur(1px)) {
+  .step-card { background: hsl(var(--v3-surface-elevated)); }
+}
+.step-card:hover { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); }
 .step-card-number {
   position: absolute;
   top: var(--space-4);
@@ -4856,6 +5014,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: var(--text-2xl);
   color: var(--color-border-strong);
 }
+/* v3 (issue #416 Phase 3) — same recolor as .feature-card-icon above. */
 .step-card-icon {
   width: 40px;
   height: 40px;
@@ -4863,19 +5022,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--color-warning-bg);
-  color: var(--color-accent-700);
+  background: hsl(var(--v3-accent) / 0.12);
+  color: var(--v3-accent-ink, hsl(var(--v3-accent)));
   margin-bottom: var(--space-4);
 }
-/* issue #155 v2 Phase C — landing-only class, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .step-card-icon { background: var(--color-warning-bg); color: var(--color-accent-700); }
-.step-card-title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-base); margin: 0 0 var(--space-2); color: var(--color-text); }
+.step-card-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-base); margin: 0 0 var(--space-2); color: var(--color-text); }
 .step-card-text { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
 .landing-proof { text-align: center; padding: 0 var(--space-6) var(--space-12); }
-.landing-proof-text { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); color: var(--color-accent-700); max-width: 52ch; margin: 0 auto; }
-/* issue #155 v2 Phase C — landing-only, recolored; falls back to mint in light theme. */
-:root[data-theme='dark'] .landing-proof-text { color: var(--color-accent-700); }
+/* v3 (issue #416 Phase 3) — recolored from the v2 red/orange
+   --color-accent-700 to the v3 green accent, both themes (a single v3-token
+   rule now covers both, replacing the old light/dark conditional pair). */
+.landing-proof-text { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-lg); color: var(--v3-accent-ink, hsl(var(--v3-accent))); max-width: 52ch; margin: 0 auto; }
 
 /* issue #299 — design-system.md §2: "the accent runs as a field in exactly
    one pattern: poster statements (landing closing banner). Nowhere else."
@@ -4888,6 +5046,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    reads as a cutout against the field rather than a same-hue-on-same-hue
    button (accent-700 text on ink-on-accent bg measures 6.41:1 light /
    12.23:1 dark). */
+/* v3 (issue #416 Phase 3) — recolored from the v2 flat red/orange
+   --color-accent fill to the v3 brand gradient (design-system.md §2's
+   "gradients are back and encouraged... primary buttons" — this band is
+   effectively one large CTA surface). */
 .landing-cta {
   text-align: center;
   width: 100%;
@@ -4899,17 +5061,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   gap: var(--space-6);
   position: relative;
   overflow: hidden;
-  background: var(--color-accent);
+  background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end)));
 }
-.landing-cta-title { font-family: var(--font-display); font-weight: 800; font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); margin: 0; color: var(--color-ink-on-accent); position: relative; z-index: 1; max-width: 20ch; }
+/* intentional: fixed black text on the always-bright gradient fill above,
+   same both themes — matches .btn-primary's own "fixed black, same in both
+   themes" reasoning (design-system.md §5, issue #416 Phase 1). */
+.landing-cta-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 700; font-size: var(--text-3xl); letter-spacing: -0.015em; margin: 0; color: #000; position: relative; z-index: 1; max-width: 20ch; }
 .landing-cta .btn-primary {
   position: relative;
   z-index: 1;
-  background: var(--color-ink-on-accent);
-  color: var(--color-accent-700);
-  border-color: var(--color-ink-on-accent);
+  /* intentional: fixed black fill so the button reads as a solid "inverse"
+     CTA against the gradient band behind it, same both themes. */
+  background: #000;
+  color: hsl(var(--v3-gradient-start));
+  border-color: transparent;
+  box-shadow: none;
 }
-.landing-cta .btn-primary:hover:not(:disabled) { background: var(--color-ink-on-accent); border-color: var(--color-ink-on-accent); opacity: 0.9; }
+/* intentional: fixed black, same reasoning as the base rule above. */
+.landing-cta .btn-primary:hover:not(:disabled) { background: #000; opacity: 0.85; box-shadow: none; transform: translateY(-2px); }
 
 .landing-footer {
   display: flex;
