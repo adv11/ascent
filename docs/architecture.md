@@ -4956,6 +4956,13 @@ blind) that Phase 1 must use for any paragraph-size accent text in light mode; d
 accent already measures ~13:1 against its near-black background and needs no separate
 token.
 
+A follow-up issue (`#418`) was filed alongside this phase, blocked on `#416`'s full
+completion: once the v3 UI actually ships, the README screenshots, the generated demo
+video (`scripts/generate-demo-video.mjs` reads colors live from the app's own CSS tokens,
+so its output goes stale the moment those tokens change), and the GitHub repo "About"
+description all need a consistency pass, the same catch-up `#312` did after the v1 → v2
+transition. Filed now so it isn't lost or forgotten by the time Phase 5 closes.
+
 ### 2026-07-29 — Issue #420 — v3 visual redesign, Phase 1: tokens & primitives
 
 First phase of `#416`'s v3 redesign that actually touches `app.css`. Rather than
@@ -4989,10 +4996,3 @@ until a later phase's own pass. Verified with a live `npm run dev` walkthrough (
 dashboard, settings) that the restyled primitives render the v3 glass/gradient/glow look
 correctly against an otherwise-still-v2 page, confirming the parallel-token-layer approach
 lets phases land independently without a big-bang app-wide flip.
-
-A follow-up issue (`#418`) was filed alongside this phase, blocked on `#416`'s full
-completion: once the v3 UI actually ships, the README screenshots, the generated demo
-video (`scripts/generate-demo-video.mjs` reads colors live from the app's own CSS tokens,
-so its output goes stale the moment those tokens change), and the GitHub repo "About"
-description all need a consistency pass, the same catch-up `#312` did after the v1 → v2
-transition. Filed now so it isn't lost or forgotten by the time Phase 5 closes.
