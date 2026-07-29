@@ -5031,3 +5031,42 @@ service-worker cache that was serving pre-Phase-2 CSS during manual testing — 
 that `sw.js`'s cache-first strategy means a hard reload alone isn't always enough to see a
 fresh CSS change locally; unregistering the SW (or bumping `CACHE_VERSION`, already
 required by `scripts/check-cache-version.mjs`) is sometimes necessary too.
+
+### 2026-07-29 — Issue #426 — v3 visual redesign, Phase 3: first impressions
+
+The highest motion-recreation surface in the v3 rollout: the landing page hero, the auth
+shell, and the onboarding template picker cards — everything a signed-out visitor sees
+before reaching the app. New `src/ui/utils/scrollReveal.js` exports `observeReveal(el, {
+delay })`, an `IntersectionObserver`-based scroll-reveal helper (design-system.md §7's
+`whileInView`/stagger equivalent, rebuilt in vanilla JS since Framer Motion can't be added
+to this framework-less codebase) — adds `.is-revealed` once an element is ~80px into the
+viewport then unobserves, or adds it synchronously with no observer at all under
+`prefers-reduced-motion` (and, incidentally, in jsdom, which has no `IntersectionObserver`
+— the same code path covers both). `landing.js` wires it onto the hero's own children
+(fixed `reveal-delay-0` through `-4` steps, firing almost immediately since the hero is
+already in the viewport at load) and onto every section heading (features/steps/CTA).
+`.landing-page` gained a three-wash ambient `radial-gradient` background plus two
+decorative floating blurred orbs (`.landing-orb-1`/`-2`, `float`/`floatSlow` keyframes,
+`aria-hidden`) — both design-system.md §4/§7 calls the v2 "Modernist" era explicitly
+banned. `.text-gradient-brand` (flattened to a solid color during the v2 "no gradients"
+pass) is restored to a real `background-clip: text` gradient, and a new `.eyebrow-dot`
+glowing accent dot (also un-retired from an earlier design pass) pairs with every
+`.eyebrow` label. `.feature-card`/`.step-card`/`.landing-mock-card`/`.auth-card-lg`/
+`.template-card` all move onto the `.card` primitive's glass recipe from Phase 1 — glass
+surface, hairline divider, accent-tinted resting shadow, hover lift, each with its own
+`@supports not (backdrop-filter)` solid fallback — and the onboarding template grid drops
+its old shared-border ruled-grid look in favor of individually-glassed cards with real
+gaps, per design-system.md §4. Several v2 red/orange literals scoped to just these three
+surfaces (`.eyebrow`, `.landing-cta`'s background/button, `.landing-proof-text`,
+`.feature-card-icon`/`.step-card-icon`, `.landing-mock-check`/`-bar-fill`,
+`.auth-marketing-eyebrow`) were recolored to the v3 green accent in the same pass, found
+live via screenshot — leaving them on the old palette read as visibly broken next to the
+new green accent everywhere else on these pages, not a deliberate mid-rollout state worth
+preserving. Every other `--color-accent-700` call site on these same pages (template-card
+badges/counts, the app-wide `.link`/`.forgot-link` primitives) is left untouched — that
+recolor is broader than this phase's scope and shared with pages Phase 4/5 haven't reached
+yet. Also fixed, on Phase 2's own branch/PR (`#424`/`#425`), a CI E2E flake this phase's
+local testing surfaced: two tests that retry-loop opening a template card's ⋯ overflow
+menu (`accessibility.test.js`, `onboarding.test.js`) were tipping past their 15s retry
+window consistently once Phase 2's glass/`backdrop-filter` cards and two extra Google
+Fonts families slowed CI's first paint/layout settle — both raised to 25s.

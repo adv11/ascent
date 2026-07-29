@@ -2,6 +2,7 @@ import { el } from '../dom.js';
 import { createBrandMark } from '../components/brand.js';
 import { svgIcon } from '../utils/svg.js';
 import { TEMPLATES } from '../../data/templates/index.js';
+import { observeReveal } from '../utils/scrollReveal.js';
 
 // De-duplicated onto the shared svgIcon() helper (issue #107) — was a local
 // copy-pasted svgEl/iconSvg pair, same pattern authMarketingPanel.js/
@@ -114,35 +115,56 @@ function buildHeroMock() {
   ]);
 }
 
+// Hero children stagger in on mount via scrollReveal.js's IntersectionObserver
+// (design-system.md §7's "Staggered children" — a fixed set of hero elements,
+// not a generic stagger utility) — the hero is above the fold, so these fire
+// almost immediately rather than waiting for a real scroll.
 function buildHero() {
+  const eyebrow = el('p', { className: 'eyebrow landing-hero-eyebrow reveal' }, [
+    el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
+    'Your learning roadmap'
+  ]);
+  const title = el('h1', { className: 'landing-hero-title reveal' }, [
+    'Engineer your ',
+    el('span', { className: 'text-gradient-brand', text: 'next move' }),
+    '.'
+  ]);
+  const subtitle = el('p', { className: 'landing-hero-subtitle reveal', text: 'The roadmap tracker for anyone learning, revising, or leveling up. Pick a starting point, track every topic, and always know what’s next.' });
+  const actions = el('div', { className: 'landing-hero-actions reveal' }, [
+    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
+    el('a', { className: 'btn btn-secondary btn-lg', href: '#/signin', text: 'Sign in' })
+  ]);
+  const stat = el('p', { className: 'landing-hero-stat reveal', text: landingProofLine() });
+  const mock = buildHeroMock();
+  mock.classList.add('reveal');
+
+  [
+    [eyebrow, 0], [title, 1], [subtitle, 2], [actions, 3], [stat, 4], [mock, 2]
+  ].forEach(([node, delay]) => observeReveal(node, { delay }));
+
   return el('section', { className: 'landing-hero' }, [
-    el('div', { className: 'bg-grid-glow', 'aria-hidden': 'true' }),
-    el('div', { className: 'landing-hero-copy' }, [
-      el('p', { className: 'eyebrow landing-hero-eyebrow', text: 'Your learning roadmap' }),
-      el('h1', { className: 'landing-hero-title' }, [
-        'Engineer your ',
-        el('span', { className: 'text-gradient-brand', text: 'next move' }),
-        '.'
-      ]),
-      el('p', { className: 'landing-hero-subtitle', text: 'The roadmap tracker for anyone learning, revising, or leveling up. Pick a starting point, track every topic, and always know what’s next.' }),
-      el('div', { className: 'landing-hero-actions' }, [
-        el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
-        el('a', { className: 'btn btn-secondary btn-lg', href: '#/signin', text: 'Sign in' })
-      ]),
-      el('p', { className: 'landing-hero-stat', text: landingProofLine() })
-    ]),
-    buildHeroMock()
+    el('div', { className: 'landing-orb landing-orb-1', 'aria-hidden': 'true' }),
+    el('div', { className: 'landing-orb landing-orb-2', 'aria-hidden': 'true' }),
+    el('div', { className: 'landing-hero-copy' }, [eyebrow, title, subtitle, actions, stat]),
+    mock
   ]);
 }
 
 function buildSectionEyebrow(label) {
-  return el('p', { className: 'eyebrow landing-section-eyebrow', text: label });
+  return el('p', { className: 'eyebrow landing-section-eyebrow' }, [
+    el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
+    label
+  ]);
 }
 
+// Section headings scroll-reveal on entering the viewport (design-system.md
+// §7's whileInView equivalent) — reveals once, never re-triggers on scroll-back.
 function buildFeatures() {
+  const heading = el('h2', { className: 'landing-section-title reveal', text: 'Two ways to start' });
+  observeReveal(heading);
   return el('section', { className: 'landing-features', id: 'landing-features' }, [
     buildSectionEyebrow('Get started'),
-    el('h2', { className: 'landing-section-title', text: 'Two ways to start' }),
+    heading,
     el('div', { className: 'landing-feature-grid' }, FEATURES.map(f => el('div', { className: 'feature-card' }, [
       el('span', { className: 'feature-card-icon', 'aria-hidden': 'true' }, [f.icon()]),
       el('h3', { className: 'feature-card-title', text: f.title }),
@@ -152,9 +174,11 @@ function buildFeatures() {
 }
 
 function buildSteps() {
+  const heading = el('h2', { className: 'landing-section-title reveal', text: 'How it works' });
+  observeReveal(heading);
   return el('section', { className: 'landing-steps', id: 'landing-steps' }, [
     buildSectionEyebrow('The process'),
-    el('h2', { className: 'landing-section-title', text: 'How it works' }),
+    heading,
     el('ol', { className: 'landing-steps-list' }, STEPS.map((s, i) => el('li', { className: 'step-card' }, [
       el('span', { className: 'step-card-number', text: String(i + 1) }),
       el('span', { className: 'step-card-icon', 'aria-hidden': 'true' }, [s.icon()]),
@@ -165,9 +189,10 @@ function buildSteps() {
 }
 
 function buildCta() {
+  const heading = el('h2', { className: 'landing-cta-title reveal', text: 'Ready to engineer your next move?' });
+  observeReveal(heading);
   return el('section', { className: 'landing-cta' }, [
-    el('div', { className: 'bg-grid-glow', 'aria-hidden': 'true' }),
-    el('h2', { className: 'landing-cta-title', text: 'Ready to engineer your next move?' }),
+    heading,
     el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' })
   ]);
 }
