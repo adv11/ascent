@@ -631,6 +631,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(135deg, hsl(var(--v3-gradient-start) / 0.4), hsl(var(--v3-gradient-end) / 0.05));
+  /* intentional: mask-composite technique — #000 is an opaque-alpha marker for
+     the mask layer, not a rendered color (issue #416 Phase 1). */
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -758,6 +760,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    class ships on a phase-owned surface; not yet re-checked here. */
 .btn-primary {
   background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end)));
+  /* intentional: fixed black, same in both themes — the portfolio source's
+     gradient is always light green regardless of theme (issue #416 Phase 1). */
   color: #000;
   border-color: transparent;
   border-radius: var(--v3-radius-lg);
