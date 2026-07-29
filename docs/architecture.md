@@ -4962,3 +4962,37 @@ video (`scripts/generate-demo-video.mjs` reads colors live from the app's own CS
 so its output goes stale the moment those tokens change), and the GitHub repo "About"
 description all need a consistency pass, the same catch-up `#312` did after the v1 → v2
 transition. Filed now so it isn't lost or forgotten by the time Phase 5 closes.
+
+### 2026-07-29 — Issue #420 — v3 visual redesign, Phase 1: tokens & primitives
+
+First phase of `#416`'s v3 redesign that actually touches `app.css`. Rather than
+overwriting the live v2 `--color-*` token block in place (which would instantly ripple
+the new glass/glow/gradient look across every one of the ~40+ existing call sites in
+`app.css` before those surfaces have their own v3 pass), this phase adds a parallel
+`--v3-*`-prefixed HSL-component token layer — `--v3-bg`/`--v3-text`/`--v3-accent`/
+`--v3-surface`/`--v3-surface-elevated`/`--v3-divider`/`--v3-text-muted`/
+`--v3-gradient-start`/`--v3-gradient-end`/`--v3-accent-ink` (both themes) plus the
+theme-invariant `--v3-radius-sm/md/lg`, `--v3-shadow-glow`/`--v3-shadow-glow-lg`, and
+`--font-heading-v3`/`--font-body-v3`/`--font-mono-v3` — declared as raw HSL components
+(not full color values) so alpha compositing (`hsl(var(--v3-divider) / 0.6)`) works the
+same way the portfolio source's own tokens do. Only the primitives issue #420 explicitly
+scoped were restyled against this new layer: `.btn-primary` (gradient fill, `--radius-lg`,
+resting `--shadow-glow` → `--shadow-glow-lg` + lift on hover, literal black text per the
+portfolio's own convention), `.btn-secondary` (glass surface, `backdrop-filter: blur(8px)`,
+accent-tinted hover), `.field-input` (glass fill + an accent-glow focus ring stacked on top
+of, not replacing, the existing `:focus-visible` outline), `.tag-chip`/`.tag-chip-accent`
+(glass fill, `--radius-md`, replacing the old flat `--radius-full` pill), and a brand-new
+shared `.card` class (glass surface, a hairline gradient border via the `::before`
+mask-composite technique, resting glow shadow + inset highlight, hover lift to the `-lg`
+glow variant) — `.card` has zero call sites yet, same "built, not yet adopted" precedent
+`.tabs` set in issue #125; wiring it into `.phase-card`/`.template-card`/etc. is Phase 2+'s
+per-page work. Every new `backdrop-filter` surface has an `@supports not (backdrop-filter:
+blur(1px))` solid-fallback rule per design-system.md §4/§9's review checklist.
+`index.html`'s Google Fonts `<link>` now also requests Sora/Outfit/JetBrains Mono
+alongside the existing Archivo weights (no CSP change needed, `fonts.googleapis.com`/
+`fonts.gstatic.com` were already allowlisted) — no page's `--font-body`/`--font-heading`
+was repointed to the new families in this phase, so most rendered text is still Archivo
+until a later phase's own pass. Verified with a live `npm run dev` walkthrough (sign-in,
+dashboard, settings) that the restyled primitives render the v3 glass/gradient/glow look
+correctly against an otherwise-still-v2 page, confirming the parallel-token-layer approach
+lets phases land independently without a big-bang app-wide flip.
