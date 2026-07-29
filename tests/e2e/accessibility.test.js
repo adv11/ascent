@@ -377,12 +377,15 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     // trigger click and the menu-item click tears down the just-opened menu
     // (a fresh card/trigger with no open menu replaces it), so the item
     // click never lands. Retries the whole open+click pair rather than a
-    // single fire-and-forget click pair.
+    // single fire-and-forget click pair. Timeout raised 15s -> 25s in issue
+    // #416 Phase 2 (#424) — see onboarding.test.js's clickOverflowAction for
+    // why (glass/backdrop-filter cards + 2 new Google Fonts families slow
+    // CI's first paint/layout settle enough to tip this known race past 15s).
     const hideItem = page.locator('.dropdown-menu .dropdown-item', { hasText: 'Hide' });
     await expect(async () => {
       await page.locator('.template-card', { hasText: 'Learning Piano' }).locator('.template-card-overflow-btn').click();
       await hideItem.click({ timeout: 1_000 });
-    }).toPass({ timeout: 15_000 });
+    }).toPass({ timeout: 25_000 });
     const dialog = page.locator('.modal-overlay[aria-label*="Learning Piano"]');
     await expect(dialog).toBeVisible();
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label*="Learning Piano"]' });
