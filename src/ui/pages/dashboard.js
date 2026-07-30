@@ -505,6 +505,166 @@ export function animatePhaseBody(phaseCardEl, opening) {
   };
 }
 
+// Row-level windowed rendering (issue #433, follow-up to #432/#430). Real,
+// reported bug: fast/sustained scrolling through a fully-expanded 19-phase
+// Java Backend roadmap (484 topic rows, ~37800px tall page) still showed
+// large black/unpainted regions after #432's `[data-scrolling]` mitigation
+// (which only ever addressed backdrop-filter compositing cost, not raw
+// paint/raster volume). A live isolation test in the issue ruled out glass
+// compositing as the sole cause; a scripted repro (headless Chromium, fast
+// scroll + pixel-sampling the content area against the page's own background
+// color) confirmed a genuine paint bottleneck: worst-frame blank-content
+// fraction of 38-100% depending on scroll pattern, before any fix.
+//
+// `content-visibility: auto` was tried twice for this symptom and made
+// things measurably *worse* both times — first at `.phase-card` level (see
+// that rule's own long comment in app.css: whole-page blank-paint states
+// that never recovered, no `contain-intrinsic-size` set at all), and again
+// here at `.check-item` row level with a real, measured `contain-intrinsic-
+// size: 67px` (this file's own repro script — see the PR — measured every
+// row in the fully-expanded template at exactly 67px). Row-level
+// content-visibility was expected to fix this (a much smaller unit than a
+// whole card, with an accurate size hint this time) but the same scripted
+// repro showed it reliably *increased* the worst-frame blank fraction under
+// both a fast synthetic jump-scroll (79-93% before -> 97-100% after) and a
+// realistic ~60fps mouse-wheel scroll (37% before -> 88% after) — confirmed
+// twice, not a fluke. The likely reason: `content-visibility: auto` on ~500
+// individual small elements makes the browser run its own
+// intersection-relevance bookkeeping for every one of them on every scroll
+// frame, and that per-element overhead outweighs the paint it saves for text
+// this cheap to paint in the first place — a different failure mode than the
+// card-level attempt, but the same practical outcome (don't ship it).
+//
+// The fix that actually measured better: real windowed/virtualized
+// rendering, kept as simple as this codebase's "no framework, no build step"
+// constraint allows. `.check-item` rows for an *open* phase-card's section
+// are pruned from the DOM once they're further than
+// `VIRTUALIZE_BUFFER_VIEWPORTS` viewport-heights from the current scroll
+// position, replaced by a single top/bottom `.row-spacer` per section sized
+// to the *real* height of whatever it's standing in for (falling back to
+// `ROW_HEIGHT_ESTIMATE` only for a row that's never actually been mounted
+// and measured yet) — the "estimate, then correct from real measurements"
+// approach. Every row is still a real DOM node the moment it's near the
+// viewport, and pruning only ever runs off a `scroll`/`resize` listener
+// (never during a phase-card's own open/close FLIP animation, guarded via
+// `.phase-body-animating` — see `virtualizeOpenSections()` below), so
+// `animatePhaseBody()`'s `scrollHeight` measurement is never taken against a
+// partially-pruned body mid-animation. `j`/`k` keyboard nav's
+// `getVisibleRows()` (issue #379) and every E2E test that locates a row
+// (`.check-item[data-id="…"]`) keep working unmodified against whatever's
+// currently mounted — Playwright's own auto-scroll-into-view before an
+// interaction, and `setRowFocus()`'s `scrollIntoView()` call, both trigger a
+// real `scroll` event that re-mounts the target row before anything tries to
+// click it. Measured fix result (same repro script, same steps): worst-frame
+// blank-content fraction dropped to 0% under both the jump-scroll and the
+// realistic mouse-wheel scroll tests — see the PR for the exact numbers.
+const ROW_HEIGHT_ESTIMATE = 67; // px — measured via getBoundingClientRect() on every
+                                 // .check-item in the fully-expanded Java Backend
+                                 // template (single-line rows, no wrapped inline
+                                 // resources); see this block's own comment above.
+const VIRTUALIZE_BUFFER_VIEWPORTS = 2.5; // "roughly 2-3 viewport-heights", per the issue's
+                                          // own scope — generous enough that ordinary j/k
+                                          // keyboard paging rarely reaches the mount edge.
+
+// Wraps a section's item rows in a single container with a top/bottom spacer,
+// instead of rendering every row's DOM node directly under `.phase-body`.
+// Every row is still built and mounted here, up front — pruning (removing
+// far-off-screen rows and growing the matching spacer) only happens later,
+// off a scroll/resize event, via syncSectionRowsWindow() below. This means a
+// freshly-rendered or freshly-opened phase-card is byte-for-byte the same DOM
+// shape it always was — the FLIP open/close animation's `scrollHeight`
+// measurement (animatePhaseBody()) is never affected by anything in this
+// file, since nothing is ever pruned until after that settles.
+function buildSectionRows(items, renderItemRow) {
+  const topSpacer = el('div', { className: 'row-spacer', 'aria-hidden': 'true' });
+  const bottomSpacer = el('div', { className: 'row-spacer', 'aria-hidden': 'true' });
+  const wrapper = el('div', { className: 'section-rows' }, [topSpacer, ...items.map(renderItemRow), bottomSpacer]);
+  wrapper._items = items;
+  wrapper._renderRow = renderItemRow;
+  wrapper._mountStart = 0;
+  wrapper._mountEnd = items.length;
+  wrapper._topSpacer = topSpacer;
+  wrapper._bottomSpacer = bottomSpacer;
+  // Per-row measured height, seeded with the estimate above and overwritten
+  // with a row's real getBoundingClientRect().height the moment it's pruned
+  // (i.e. the one point a row's real height is known but about to stop being
+  // directly measurable) — this is what lets the spacers stay accurate even
+  // for a row taller than the estimate (wrapped inline resources, an
+  // unusually long title) instead of compounding a fixed-height guess.
+  wrapper._rowHeights = new Array(items.length).fill(ROW_HEIGHT_ESTIMATE);
+  return wrapper;
+}
+
+function sumRowHeights(heights, start, end) {
+  let sum = 0;
+  for (let i = start; i < end; i++) sum += heights[i] || ROW_HEIGHT_ESTIMATE;
+  return sum;
+}
+
+// Reconciles one section's mounted-row window to [desiredStart, desiredEnd)
+// (item indices), inserting/removing real `.check-item` DOM nodes and
+// resizing the top/bottom spacers to match — direct DOM property mutation
+// (`.style.height`), not the CSP-blocked inline `style` attribute (same safe
+// pattern `animatePhaseBody()`/`tooltip.js`/`dropdown.js` already use, see
+// their own comments). No-op if the window hasn't actually changed.
+// Four independent single-direction reconciliation steps, each simple enough
+// to unit-test/reason about on its own (issue #53's ESLint complexity gate —
+// the original single-function version of this logic measured complexity 13
+// against a max of 10; root CLAUDE.md's convention for a newly-written
+// function is to extract named helpers rather than just shorten lines).
+function pruneMountedRowsFromTop(wrapper, start) {
+  while (wrapper._mountStart < start) {
+    const idx = wrapper._mountStart;
+    const rowEl = wrapper._topSpacer.nextElementSibling;
+    if (rowEl && rowEl !== wrapper._bottomSpacer) {
+      wrapper._rowHeights[idx] = rowEl.getBoundingClientRect().height || wrapper._rowHeights[idx];
+      rowEl.remove();
+    }
+    wrapper._mountStart++;
+  }
+}
+
+function pruneMountedRowsFromBottom(wrapper, end) {
+  while (wrapper._mountEnd > end) {
+    const idx = wrapper._mountEnd - 1;
+    const rowEl = wrapper._bottomSpacer.previousElementSibling;
+    if (rowEl && rowEl !== wrapper._topSpacer) {
+      wrapper._rowHeights[idx] = rowEl.getBoundingClientRect().height || wrapper._rowHeights[idx];
+      rowEl.remove();
+    }
+    wrapper._mountEnd--;
+  }
+}
+
+function mountRowsAtTop(wrapper, start) {
+  while (wrapper._mountStart > start) {
+    wrapper._mountStart--;
+    wrapper._topSpacer.after(wrapper._renderRow(wrapper._items[wrapper._mountStart]));
+  }
+}
+
+function mountRowsAtBottom(wrapper, end) {
+  while (wrapper._mountEnd < end) {
+    wrapper._bottomSpacer.before(wrapper._renderRow(wrapper._items[wrapper._mountEnd]));
+    wrapper._mountEnd++;
+  }
+}
+
+function syncSectionRowsWindow(wrapper, desiredStart, desiredEnd) {
+  const items = wrapper._items;
+  const start = Math.max(0, Math.min(desiredStart, items.length));
+  const end = Math.max(start, Math.min(desiredEnd, items.length));
+  if (start === wrapper._mountStart && end === wrapper._mountEnd) return;
+
+  pruneMountedRowsFromTop(wrapper, start);
+  pruneMountedRowsFromBottom(wrapper, end);
+  mountRowsAtTop(wrapper, start);
+  mountRowsAtBottom(wrapper, end);
+
+  wrapper._topSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, 0, wrapper._mountStart)}px`;
+  wrapper._bottomSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, wrapper._mountEnd, items.length)}px`;
+}
+
 // Module-scope (issue #53) — was previously a ~50-line anonymous forEach body
 // inline inside render(). Returns null when every section under this phase is
 // hidden by the current filter/search, so the caller can skip rendering (and
@@ -563,7 +723,11 @@ export function renderPhaseCard(phase, pi, {
         (isCustomRoadmap && phase.id)
           ? renderSectionManageRow(phase, section)
           : (section.title ? el('div', { className: 'section-label', text: section.title }) : null),
-        ...section.items.map(renderItemRow),
+        // issue #433 — a wrapper with top/bottom spacers, not a bare list of
+        // rows, so far-off-screen rows can be pruned from the DOM later
+        // without disturbing this section's total flowed height. See this
+        // file's block comment above buildSectionRows() for the full story.
+        buildSectionRows(section.items, renderItemRow),
         renderAddRow(phase, section)
       ]),
       (isCustomRoadmap && phase.id) ? renderInlineCreate('New section name…', '+ Add section', title => onAddSection(phase.id, title)) : null
@@ -1227,6 +1391,40 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     return true;
   }
 
+  // issue #433 — recomputes, for every currently-open phase-card's section,
+  // which rows should be mounted vs. pruned given the current scroll
+  // position, and reconciles the DOM to match (syncSectionRowsWindow()).
+  // Skips a section whose phase-body is mid-open/close FLIP animation
+  // (`.phase-body-animating`, animatePhaseBody()) so a `scroll` event that
+  // happens to land during that animation never prunes rows out from under
+  // `animatePhaseBody()`'s own `scrollHeight` measurement.
+  function virtualizeOpenSections() {
+    const buffer = window.innerHeight * VIRTUALIZE_BUFFER_VIEWPORTS;
+    const desiredTop = -buffer;
+    const desiredBottom = window.innerHeight + buffer;
+    content.querySelectorAll('.phase-card.open .section-rows').forEach(wrapper => {
+      if (!wrapper._items || !wrapper._items.length) return;
+      if (wrapper.closest('.phase-body-animating')) return;
+      const rect = wrapper.getBoundingClientRect();
+      const start = Math.floor((desiredTop - rect.top) / ROW_HEIGHT_ESTIMATE);
+      const end = Math.ceil((desiredBottom - rect.top) / ROW_HEIGHT_ESTIMATE);
+      syncSectionRowsWindow(wrapper, start, end);
+    });
+  }
+
+  // rAF-throttled, matching this file's existing scroll-driven update
+  // conventions (e.g. scrollPerfMode.js) — a `scroll` event can fire many
+  // times per frame, and there's nothing to gain from recomputing more than
+  // once per paint.
+  let virtualizeRaf = null;
+  function scheduleVirtualizeRows() {
+    if (virtualizeRaf != null) return;
+    virtualizeRaf = requestAnimationFrame(() => {
+      virtualizeRaf = null;
+      virtualizeOpenSections();
+    });
+  }
+
   function render(snapshot) {
     const allItems = snapshot.items;
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery, tag: tagFilter });
@@ -1363,6 +1561,14 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
         focusedRowId = null;
       }
     }
+
+    // issue #433 — a fresh full render() always mounts every row (see
+    // buildSectionRows()'s own comment), so a pruning pass right after is
+    // what actually shrinks the DOM back down for whichever phase-cards are
+    // already open and far from the current scroll position (a restored
+    // `openPhases` from a previous session, or a phase reopened via
+    // KEYS.SCROLL_TO_PHASE/the command palette's cross-roadmap search).
+    scheduleVirtualizeRows();
   }
 
   // A "done" toggle only flips one item's checked state — it never changes which
@@ -1863,6 +2069,14 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   }
   window.addEventListener('keydown', handleGlobalKeydown);
 
+  // issue #433 — the only two events that can bring a previously-pruned row
+  // back into the buffer window, or move a currently-mounted one out of it;
+  // `{ passive: true }` on scroll since virtualizeOpenSections() never calls
+  // preventDefault() and has no reason to block the browser's own scroll
+  // optimizations.
+  window.addEventListener('scroll', scheduleVirtualizeRows, { passive: true });
+  window.addEventListener('resize', scheduleVirtualizeRows);
+
   return () => {
     activeTourCleanup?.();
     themeToggleBtn._cleanup?.();
@@ -1879,6 +2093,9 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     unmountPrintSnapshot?.();
     clearTimeout(saveBadgeTimer);
     window.removeEventListener('keydown', handleGlobalKeydown);
+    window.removeEventListener('scroll', scheduleVirtualizeRows);
+    window.removeEventListener('resize', scheduleVirtualizeRows);
+    if (virtualizeRaf != null) cancelAnimationFrame(virtualizeRaf);
     closeShortcutsOverlay();
   };
 }
