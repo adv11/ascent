@@ -1145,6 +1145,37 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background-color: rgba(255, 255, 255, 0.03);
   pointer-events: none;
 }
+/* v3 (issue #416 Phase 5 — #430) — same decorative floating-orb treatment
+   as `.landing-orb` (design-system.md §7), reused verbatim on this
+   always-dark panel rather than reading the theme-flipping --v3-accent
+   token, since the panel never changes with site theme (same reasoning as
+   every other fixed color on it, see the comment above
+   .auth-marketing-eyebrow). Disabled under prefers-reduced-motion by the
+   same global `float`/`floatSlow` keyframe rule `.landing-orb` already
+   relies on — no separate override needed here. */
+.auth-marketing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+.auth-marketing-orb-1 {
+  width: 260px;
+  height: 260px;
+  top: -50px;
+  right: -60px;
+  background: rgba(35, 246, 123, 0.22); /* intentional: fixed accent-green glow on this panel's always-dark background regardless of site theme (issue #116) */
+  animation: float 6s ease-in-out infinite;
+}
+.auth-marketing-orb-2 {
+  width: 200px;
+  height: 200px;
+  bottom: 60px;
+  left: -50px;
+  background: rgba(38, 217, 113, 0.18); /* intentional: same always-dark-panel reasoning as -orb-1 above */
+  animation: floatSlow 10s ease-in-out infinite;
+}
 .auth-marketing-inner {
   position: relative;
   z-index: 1;
@@ -1188,17 +1219,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .auth-marketing-values { display: grid; gap: 22px; list-style: none; padding: 0; margin: 8px 0 0; }
 .auth-marketing-value { display: flex; gap: 16px; align-items: flex-start; }
-/* intentional: fixed white-on-white-alpha, same always-dark panel as above (issue #116) */
+/* intentional: fixed white-alpha/accent-alpha, same always-dark panel as
+   above (issue #116) — v3 (issue #416 Phase 5 — #430): icon-tile glass
+   treatment (rounded, accent-tinted, subtle glow) replacing the flat
+   white-alpha square, the same "still looks like the old UI" gap flagged
+   live on this panel. */
 .auth-marketing-value-icon {
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--v3-radius-md);
+  background: rgba(35, 246, 123, 0.14);
+  border: 1px solid rgba(35, 246, 123, 0.3);
+  box-shadow: 0 8px 20px -12px rgba(35, 246, 123, 0.6);
   color: #fff;
 }
+/* intentional: fixed white/white-alpha, same always-dark panel as above (issue #116) */
 .auth-marketing-value-title { display: block; color: #fff; font-weight: 800; font-size: var(--text-base); margin-bottom: 2px; }
 .auth-marketing-value-text { display: block; color: rgba(255, 255, 255, 0.72); font-size: var(--text-sm); line-height: var(--leading-normal); }
 
@@ -5412,6 +5450,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    below the 4.5:1 WCAG AA floor for 14px bold text; --color-accent-600 clears
    it at ~4.94:1. Same token, same reasoning as .btn-primary above — keep
    both in sync if either's fill token ever changes. */
+/* v3 (issue #416 Phase 5 — #430) — border-radius moves off v2's literal `0`
+   onto the v3 pill/lg radius, and the shadow onto the v3 glow, matching
+   every other floating accent-fill affordance in the app
+   (.btn-primary/.progress-digest CTA). */
 .feedback-widget-trigger {
   position: fixed;
   bottom: max(24px, env(safe-area-inset-bottom));
@@ -5421,20 +5463,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   align-items: center;
   gap: 8px;
   padding: 12px 18px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-lg);
   border: none;
   background: var(--color-accent-600);
   color: var(--color-ink-on-accent);
   font-weight: 700;
   font-size: var(--text-sm);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--v3-shadow-glow);
   cursor: pointer;
   opacity: 0;
   transform: scale(0.85);
   transition: transform 220ms var(--ease-spring, ease), opacity 220ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 .feedback-widget-trigger.feedback-widget-visible { opacity: 1; transform: scale(1); }
-.feedback-widget-trigger:hover { box-shadow: var(--shadow-xl); background: color-mix(in srgb, var(--color-accent-600) 88%, black); }
+.feedback-widget-trigger:hover { box-shadow: var(--v3-shadow-glow-lg); background: color-mix(in srgb, var(--color-accent-600) 88%, black); transform: scale(1) translateY(-2px); }
 .feedback-widget-trigger:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 :root[data-theme='dark'] .feedback-widget-trigger:focus-visible { outline-color: var(--color-accent); }
 .feedback-widget-emoji { font-size: var(--text-lg); line-height: 1; }
@@ -5446,15 +5488,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .feedback-privacy-note { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; }
 
 .feedback-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+/* v3 (issue #416 Phase 5 — #430) — moved onto the glass-card recipe (was a
+   flat --color-surface-raised card with a plain 1px border, the single
+   clearest remaining "still looks like the old UI" surface flagged live
+   inside a modal that's otherwise already on the v3 `.modal-card` glass
+   treatment from earlier in this pass). */
 .feedback-type-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 20px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
+  border-radius: var(--v3-radius-lg);
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: hsl(var(--v3-surface) / 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   /* A <button> does not inherit `color`/`font` from the page by default (the
      UA stylesheet gives it its own `color: buttontext`, effectively black) —
      every custom button-like class in this app must set both explicitly, the
@@ -5465,15 +5514,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 700;
   font-size: var(--text-sm);
   cursor: pointer;
-  transition: border-color 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
-.feedback-type-card:hover { border-color: var(--color-accent); transform: translateY(-1px); }
-.feedback-type-card:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-/* issue #155 v2 Phase D3 — modal-scoped recolor; border/outline colors carry no
-   text-contrast requirement of their own, so a straight token swap is safe here
-   (unlike .import-step-badge above). Falls back to mint in light theme. */
-:root[data-theme='dark'] .feedback-type-card:hover { border-color: var(--color-accent); }
-:root[data-theme='dark'] .feedback-type-card:focus-visible { outline-color: var(--color-accent); }
+@supports not (backdrop-filter: blur(1px)) {
+  .feedback-type-card { background: hsl(var(--v3-surface-elevated)); }
+}
+.feedback-type-card:hover { border-color: hsl(var(--v3-accent) / 0.4); background: hsl(var(--v3-accent) / 0.1); transform: translateY(-1px); }
+.feedback-type-card:focus-visible { outline: 2px solid hsl(var(--v3-accent)); outline-offset: 2px; }
 .feedback-type-emoji { font-size: var(--text-2xl); }
 
 .feedback-form { display: flex; flex-direction: column; gap: 16px; }

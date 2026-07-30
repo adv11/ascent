@@ -51,11 +51,21 @@ const VALUE_PROPS = [
 export function createAuthMarketingPanel() {
   return el('aside', { className: 'auth-marketing', 'aria-hidden': 'true' }, [
     el('div', { className: 'auth-marketing-bg-pattern' }),
+    // v3 (issue #416 Phase 5 — #430) — same decorative floating-orb pattern
+    // the landing hero already uses (design-system.md §7), reused here
+    // rather than the panel staying a flat dark fill with no ambient depth
+    // — real user feedback: "welcome page is looking very simple."
+    el('div', { className: 'auth-marketing-orb auth-marketing-orb-1' }),
+    el('div', { className: 'auth-marketing-orb auth-marketing-orb-2' }),
     el('div', { className: 'auth-marketing-inner' }, [
       el('span', { className: 'brand auth-marketing-brand' }, createBrandMark()),
       el('div', { className: 'auth-marketing-content' }, [
         el('p', { className: 'eyebrow auth-marketing-eyebrow', text: 'Engineer your next move' }),
-        el('h2', { className: 'auth-marketing-headline', text: 'Engineer your next move.' }),
+        el('h2', { className: 'auth-marketing-headline' }, [
+          'Engineer your ',
+          el('span', { className: 'text-gradient-brand', text: 'next move' }),
+          '.'
+        ]),
         el('p', { className: 'auth-marketing-subhead', text: 'The roadmap tracker for anyone learning, revising, or leveling up — pick a starting point, track every topic, and always know what’s next.' }),
         el('ul', { className: 'auth-marketing-values' }, VALUE_PROPS.map(v => el('li', { className: 'auth-marketing-value' }, [
           el('span', { className: 'auth-marketing-value-icon', 'aria-hidden': 'true' }, [v.icon()]),
