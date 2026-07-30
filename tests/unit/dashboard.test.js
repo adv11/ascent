@@ -225,4 +225,26 @@ describe('renderPhaseCard (issue #53)', () => {
     const card = await build(emptyPhase, 0, { filteredIds: new Set() });
     expect(card).not.toBeNull();
   });
+
+  // Issue #433 — a section's items are wrapped in a `.section-rows` container
+  // with a top/bottom `.row-spacer` (buildSectionRows(), see that function's
+  // own comment in dashboard.js) instead of being rendered as bare siblings,
+  // so dashboard.js's scroll-driven row virtualization can prune far-off-screen
+  // rows without disturbing a section's flowed height. This only checks the
+  // static structure a fresh render produces — jsdom has no real layout, so
+  // syncSectionRowsWindow()'s scroll-driven pruning itself (which depends on
+  // getBoundingClientRect()) isn't exercised here; that's covered by the E2E
+  // suite and the manual scripted repro described in the PR.
+  it('wraps a section\'s rows in a .section-rows container with top/bottom spacers', async () => {
+    const card = await build(phase, 0, { openPhases: new Set([0]) });
+    const wrapper = card.querySelector('.section-rows');
+    expect(wrapper).not.toBeNull();
+    expect(wrapper.firstElementChild.className).toBe('row-spacer');
+    expect(wrapper.lastElementChild.className).toBe('row-spacer');
+    // Both items from the fixture phase should still be rendered as real DOM
+    // nodes between the two spacers on a fresh render (pruning only ever runs
+    // later, off a scroll/resize event — never on initial mount).
+    expect(wrapper.textContent).toContain('a');
+    expect(wrapper.textContent).toContain('b');
+  });
 });

@@ -3622,6 +3622,21 @@ html[data-scrolling] .tag-chip {
 .badge.P2 { background: color-mix(in srgb, var(--color-p2) 15%, transparent); color: var(--color-p2-ink); }
 .badge.P3 { background: color-mix(in srgb, var(--color-p3) 15%, transparent); color: var(--color-p3-ink); }
 
+/* issue #433 — `.section-rows` wraps a section's `.check-item` rows (plus a
+   top/bottom `.row-spacer`) so dashboard.js's row-level windowed rendering
+   can prune far-off-screen rows without disturbing the section's total
+   flowed height. Both are plain block boxes by default (matching
+   `.phase-body`'s own plain block layout, unaffected by this new wrapper
+   level) — the only thing either ever needs is `.row-spacer`'s height, set
+   directly by dashboard.js's `syncSectionRowsWindow()` via
+   `.style.height` (direct DOM property mutation, not the CSP-blocked inline
+   `style` attribute — see that function's own comment). No visual styling of
+   either class is needed; `:last-of-type`'s `border-bottom: none` rule below
+   still resolves correctly since `.row-spacer` isn't a `.check-item` and
+   doesn't participate in that selector. */
+.section-rows { display: block; }
+.row-spacer { display: block; height: 0; }
+
 /* Checklist items */
 .check-item {
   display: flex;
