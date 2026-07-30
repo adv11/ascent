@@ -988,7 +988,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border-radius: 0;
+  border-radius: var(--v3-radius-sm);
   line-height: 1;
 }
 .password-toggle:hover { color: var(--color-text); }
@@ -2638,7 +2638,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: 12px;
   font-weight: 800;
   padding: 6px 10px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   border: 1px solid var(--color-success);
   background: var(--color-success-bg);
   color: var(--color-success);
@@ -2673,7 +2673,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   padding: 6px 10px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   text-decoration: none;
   border: 1px solid var(--color-success);
   background: var(--color-success-bg);
@@ -2700,7 +2700,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   padding: 6px 10px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   cursor: pointer;
   border: 1px solid var(--color-warning);
   background: var(--color-warning-bg);
@@ -2733,7 +2733,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-accent-700);
   background: var(--color-warning-bg);
   border: 1px solid var(--color-border-strong);
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   padding: 6px 12px;
   margin-bottom: 10px;
 }
@@ -3229,7 +3229,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border-strong);
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   padding: 3px 9px;
   white-space: nowrap;
 }
@@ -3317,7 +3317,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-weight: 700;
   color: var(--color-accent-700);
   background: var(--color-warning-bg);
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   padding: 2px 8px;
   white-space: nowrap;
 }
@@ -3656,7 +3656,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   left: calc(var(--confetti-x, 50%));
   width: 8px;
   height: 14px;
-  border-radius: 0;
+  border-radius: 3px;
   animation: confetti-fall 1.4s var(--ease-out) both;
 }
 .confetti-piece-0 { background: var(--color-accent); left: 8%; }
@@ -4014,7 +4014,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-transform: uppercase;
   letter-spacing: 0.03em;
   padding: 2px 8px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-sm);
   background: var(--color-accent-600);
   color: #fff; /* intentional: fixed white on --color-accent-600, dark theme overrides below */
 }
@@ -4108,7 +4108,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: var(--text-xs);
   font-weight: 700;
   padding: 3px 9px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
@@ -4200,7 +4200,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--neutral-900);
   color: #fff;
   padding: 4px 8px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-sm);
   font-size: var(--text-xs);
   white-space: nowrap;
   pointer-events: none;
@@ -4468,7 +4468,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text);
   border: 1px solid var(--color-border);
   padding: 10px 14px;
-  border-radius: 0;
+  border-radius: var(--v3-radius-md);
   font-size: var(--text-sm);
   font-weight: 700;
   box-shadow: var(--shadow-md);
@@ -5596,7 +5596,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .my-report-title-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .my-report-title { flex: 1; }
 .my-report-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
-.my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: 0; background: var(--color-danger-bg); color: var(--color-danger); }
+.my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: var(--v3-radius-sm); background: var(--color-danger-bg); color: var(--color-danger); }
 .my-report-severity-low, .my-report-severity-medium { background: var(--color-warning-bg); color: var(--color-warning); }
 .my-report-details { padding: 0 14px 14px; font-size: var(--text-sm); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
 
