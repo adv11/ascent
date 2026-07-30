@@ -3463,6 +3463,42 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   backdrop-filter: none;
 }
 
+/* Scroll-perf mode (issue #432) — generalizes the `.phase-card.open` fix
+   directly above to every glass surface, for the duration of any scroll, not
+   just one element's expanded state. Real, reported bug: fast/sustained
+   scrolling visibly dropped frames and briefly showed blank/unpainted
+   regions, the same paint-lag symptom `.phase-card.open`'s own comment
+   documents at length — but not limited to expanded phase cards. Two other
+   sources: `.app-topbar`/`.app-sidebar` are sticky and permanently blurred,
+   so they must re-sample and re-blur the page content flowing underneath
+   them on *every* scroll frame, guaranteed, for as long as either is
+   on-screen (effectively the whole time you're scrolling the dashboard); and
+   a template/phase-card grid can have a dozen-plus `.card`/`.phase-card`/
+   `.template-card` glass surfaces simultaneously visible, each its own
+   independent blur compositing cost, all paid again every frame.
+   `src/services/scrollPerfMode.js` toggles `[data-scrolling]` on `<html>`
+   for as long as a scroll is actively happening (rAF-throttled, cleared
+   ~150ms after the last scroll event) — these rules drop backdrop-filter for
+   exactly that window and fall back to the same flat, opaque background
+   these surfaces already use for browsers with no backdrop-filter support at
+   all (the adjacent `@supports not (...)` rules above), so nothing new is
+   introduced here, just reused. The glass look is only ever missing while
+   motion itself has the user's attention, not while reading static content —
+   restored automatically the moment scrolling settles. Any future glass
+   surface (a new `.card`-based component, a new sticky/pinned element) needs
+   adding to this selector list too, or it'll keep paying this cost on every
+   scroll frame indefinitely. */
+html[data-scrolling] .app-topbar,
+html[data-scrolling] .app-sidebar,
+html[data-scrolling] .card,
+html[data-scrolling] .phase-card,
+html[data-scrolling] .template-card,
+html[data-scrolling] .tag-chip {
+  background: hsl(var(--v3-surface-elevated));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* Issue #6 Phase 4.2 — left-border priority accent, reusing the same
    --color-p0..--color-p3 tokens .badge/.priority-tag already use, so a phase card's
    priority reads consistently with every other priority-colored element. */
