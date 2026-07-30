@@ -14,6 +14,21 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
+// v3 (issue #416 Phase 5 — #430) — reads an HSL-*components* token (the
+// --v3-* layer's format, e.g. "146 88% 38%") and wraps it in hsl(...) for
+// use as a canvas fillStyle. Needed because this card's heatmap swatches
+// (below) still read the deprecated `--heat-0..4` names, which are still
+// defined in :root as literal hex — but as *red/orange* v2 leftovers, since
+// Phase 4 (#428/#429) migrated the real on-page heatmap to `--v3-heat-0..4`
+// (a green ramp) and left the old `--heat-*` tokens in place rather than
+// removing them, so this canvas kept silently reading the stale red ones
+// with no error anywhere (the same "cssVar() fallback hides a token miss"
+// bug class this file's own drawBackground() comment already documents).
+function cssHslVar(name, fallbackHex) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value ? `hsl(${value})` : fallbackHex;
+}
+
 // Archivo is index.html's only loaded webfont as of the v2 "Modernist"
 // redesign (issue #297) — `ensureFontLoaded()` used to load "Plus Jakarta
 // Sans", a font this app stopped fetching from Google Fonts entirely back in
@@ -36,6 +51,28 @@ async function ensureFontLoaded() {
 function rect(ctx, { x, y, width, height }) {
   ctx.beginPath();
   ctx.rect(x, y, width, height);
+  ctx.closePath();
+}
+
+// v3 (issue #416 Phase 5 — #430) — rounded-rect helper for this canvas-drawn
+// card, replacing the hard-edged-square drawing this file's own comments
+// used to justify as a deliberate v2 "Modernist" choice ("hard-edged
+// squares (radius 0)... design-system.md §5"). That spec has since been
+// fully rewritten (v3's 3-step radius scale, §4) and this card was never
+// revisited by any of Phases 0-5's per-component scope lists, so it kept
+// rendering the old flat-square look — found via live screenshot review
+// showing a sharp rectangle preview/heatmap next to an otherwise-rounded
+// `.share-modal-card`. `ctx.roundRect` has been broadly supported since
+// 2022 (Chrome 99+/Firefox 112+/Safari 16+, i.e. every browser this app's
+// CSS already assumes for backdrop-filter); falls back to a square `rect()`
+// on anything older rather than throwing.
+function roundedRect(ctx, { x, y, width, height, radius }) {
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, width, height, radius);
+  } else {
+    ctx.rect(x, y, width, height);
+  }
   ctx.closePath();
 }
 
@@ -127,30 +164,35 @@ function drawProgressBar(ctx, pct) {
 
 // Last 16 weeks x 7 days, condensed to ~48px tall total (per spec) —
 // derived from the same heatmapData shape the full page's heatmap uses,
-// just sliced to the most recent 112 cells instead of the full 364. Hard-
-// edged squares (radius 0) using the app's real 5-step heat ramp
-// (design-system.md §5), not an opacity scale over white — this card has no
-// dark background left to scale opacity against.
+// just sliced to the most recent 112 cells instead of the full 364. v3
+// (issue #416 Phase 5 — #430): reads --v3-heat-0..4 (the app's real,
+// current 5-step green ramp) instead of the deprecated --heat-0..4 red/
+// orange tokens, and draws each cell with the same rounded-square corner
+// treatment the real on-page `.heatmap-cell` uses (`--v3-radius-sm`),
+// replacing this file's old "hard-edged squares (radius 0)" v2-Modernist
+// convention — see cssHslVar()'s own comment above for how the color bug
+// was found.
 function drawCondensedHeatmap(ctx, activityLog, now) {
   const fullYear = computeHeatmap(activityLog, now);
   const cells = fullYear.slice(-CONDENSED_WEEKS * 7);
   const cellSize = 6;
+  const cellRadius = 1.5;
   const gap = 2;
   const startX = 64;
   const startY = 292;
   const levelColors = [
-    cssVar('--heat-0', '#EAE7E7'),
-    cssVar('--heat-1', '#FFC4B8'),
-    cssVar('--heat-2', '#FF9783'),
-    cssVar('--heat-3', '#FF563C'),
-    cssVar('--heat-4', '#DD2B0F')
+    cssHslVar('--v3-heat-0', '#EAE7E7'),
+    cssHslVar('--v3-heat-1', '#D4F7E3'),
+    cssHslVar('--v3-heat-2', '#70DB9F'),
+    cssHslVar('--v3-heat-3', '#0CB656'),
+    cssHslVar('--v3-heat-4', '#034E24')
   ];
 
   cells.forEach((cell, i) => {
     const col = Math.floor(i / 7);
     const row = i % 7;
     ctx.fillStyle = levelColors[cell.level];
-    rect(ctx, { x: startX + col * (cellSize + gap), y: startY + row * (cellSize + gap), width: cellSize, height: cellSize });
+    roundedRect(ctx, { x: startX + col * (cellSize + gap), y: startY + row * (cellSize + gap), width: cellSize, height: cellSize, radius: cellRadius });
     ctx.fill();
   });
 }

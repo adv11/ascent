@@ -3,6 +3,7 @@ import { createRoadmapStore } from './services/roadmapStore.js';
 import { createDailyTodoStore } from './services/dailyTodoStore.js';
 import { createActivityLogStore } from './services/activityLogStore.js';
 import { initTheme } from './services/theme.js';
+import { initScrollPerfMode } from './services/scrollPerfMode.js';
 import { migrateLocalStorageKeys } from './services/migration.js';
 import { startRouter, registerRoute, navigate, getRoute, getNavGeneration } from './ui/router.js';
 import { renderLanding } from './ui/pages/landing.js';
@@ -24,6 +25,7 @@ import './services/pwaInstall.js';
 
 migrateLocalStorageKeys();
 initTheme();
+initScrollPerfMode();
 registerServiceWorker();
 
 // Issue #19 — sw.js's network-first strategy already falls back to stale
