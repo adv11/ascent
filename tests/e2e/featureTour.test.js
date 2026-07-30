@@ -168,8 +168,25 @@ test.describe('onboarding-page tour (issue #293)', () => {
     await page.click('.tour-welcome-card [data-action="skip"]');
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 
-    await page.click('.onboarding-account-trigger');
-    await page.click('.dropdown-item:has-text("Take a tour")');
+    // Wrapped in `expect(...).toPass()` — same fix, same root cause, as
+    // `onboarding.test.js`'s `clickOverflowAction()` helper (see that
+    // file's own comment for the full history): issue #430 (v3 Phase 5)
+    // added `backdrop-filter`/glow-shadow treatment to nearly every surface
+    // in this app, including `.dropdown-menu` itself (previously a flat
+    // fill) — more composited-layer work per frame measurably slows first
+    // paint/layout settle in CI's headless Chromium specifically (not
+    // reproduced locally, including under a synthetic 6x CPU throttle,
+    // matching that other helper's own finding). A single fire-and-forget
+    // open+click pair has no slack for a DOM node it already resolved
+    // getting torn down and rebuilt (Playwright's "element was detached
+    // from the DOM, retrying") while paint is still catching up — retrying
+    // the whole open+click sequence, rather than just the click, is the
+    // same defense already proven for the structurally identical symptom
+    // on the template-card overflow menu.
+    await expect(async () => {
+      await page.click('.onboarding-account-trigger');
+      await page.click('.dropdown-item:has-text("Take a tour")', { timeout: 1_000 });
+    }).toPass({ timeout: 35_000 });
 
     await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 5_000 });
   });

@@ -19,12 +19,21 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 // Google Fonts families (index.html) measurably slow first paint/layout
 // settle in CI's headless Chromium, which was tipping this already-known
 // re-render race past the old window consistently (not flaking before).
+// Raised again 25s -> 35s in issue #430 (v3 Phase 5) — that PR's compliance
+// sweep added `backdrop-filter`/glow-shadow treatment to nearly every
+// remaining surface, including `.dropdown-menu` itself (previously a flat
+// fill), on top of Phase 2's already-identified paint-cost regression —
+// more composited-layer work per frame, same underlying re-render race,
+// just tipping the 25s window past its margin again in CI's headless
+// Chromium specifically (not reproduced locally even under a synthetic 6x
+// CPU throttle — this is a CI-runner-specific paint-cost margin, matching
+// Phase 2's own finding).
 async function clickOverflowAction(card, text) {
   const menuItem = card.page().locator('.dropdown-menu .dropdown-item', { hasText: text });
   await expect(async () => {
     await card.locator('.template-card-overflow-btn').click();
     await menuItem.click({ timeout: 1_000 });
-  }).toPass({ timeout: 25_000 });
+  }).toPass({ timeout: 35_000 });
 }
 
 test.describe('onboarding — starter template picker (issue #51)', () => {
