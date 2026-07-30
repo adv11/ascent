@@ -5114,3 +5114,24 @@ hue-rotate, and that work is already in Phase 4's own PR (#429, not yet merged);
 duplicating it risked conflicting with that more carefully tuned pass. See
 `CHANGELOG.md`'s `[Unreleased]` entry for the full verification list (lint/test/
 manual-browser pass) and every recolored selector.
+
+### 2026-07-30 — PR #431 — Scroll-perf mode for v3's glass surfaces (issue #432)
+
+New module `src/services/scrollPerfMode.js`, mounted once at app boot alongside
+`initTheme()` (`main.js`), app-lifetime, no teardown. Toggles `[data-scrolling]` on
+`<html>` for the duration of an active scroll (rAF-throttled scroll listener,
+`{ passive: true, capture: true }` so it also catches scroll bubbling from any
+scrollable descendant, cleared via a 150ms debounce after the last scroll event).
+`app.css` reads the attribute to drop `backdrop-filter` on every glass surface the v3
+redesign introduced (`.app-topbar`, `.app-sidebar`, `.card`, `.phase-card`,
+`.template-card`, `.tag-chip`) for exactly that window, falling back to the same
+opaque background these surfaces already use for browsers with no `backdrop-filter`
+support at all — no new color introduced. Generalizes the narrower
+`.phase-card.open` mitigation (issue #430) to every glass surface, for the whole
+duration of any scroll, not just one element's expanded state: the two sticky
+elements must otherwise re-blur the page content flowing underneath them on every
+single scroll frame, and a template/phase-card grid can have a dozen-plus
+simultaneously-visible glass cards each paying their own blur-compositing cost every
+frame. Verified live against a real 19-phase-card dashboard: computed
+`backdrop-filter` flips from `blur(...)` to `none` on scroll and restores at rest.
+Bumped `sw.js`'s `CACHE_VERSION` (73 → 74) for this `src/` change.
