@@ -563,11 +563,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    pass, since this file is component-level, not a token) and the glow shadow
    removed entirely (§2: "No glows, no drop-shadows on flat surfaces" — this was a
    leftover fixed gold-tinted rgba() glow from the pre-#297 Alpenglow direction). */
+/* Requested directly: the triangle glyph switches from white to black on
+   the green fill — this is now the app's one official brand mark (also
+   drives the favicon/PWA icons via scripts/generate-brand-assets.mjs,
+   which rasterizes public/favicon.svg — that file's own fill needs the
+   same black-on-green update, done alongside this, to stay in sync). */
 .brand-mark {
   width: 40px;
   height: 40px;
   background: var(--color-accent);
-  color: #fff;
+  color: #000;
   font-weight: 900;
   font-size: 20px;
   display: grid;
@@ -1877,6 +1882,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #299 — design-system.md §8: "Avatars: square, ink fill, ground-colored
    initial." Was a circular, accent-filled, fixed-white-text avatar left over
    from the pre-#297 direction (both fill and shape). */
+/* v3 (issue #416 Phase 5 — #430) — design-system.md §8: "avatars: --radius-lg
+   rounded square (not v2's hard square)." Real, reported gap: this class had
+   no border-radius at all, so every avatar app-wide (sidebar footer
+   identity, account dropdown trigger, comment/report authorship) stayed a
+   hard square even after every other card/chip/input in the app moved to
+   the v3 radius scale. */
 .avatar {
   display: grid;
   place-items: center;
@@ -1884,6 +1895,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-bg);
   font-weight: 800;
   flex-shrink: 0;
+  border-radius: var(--v3-radius-lg);
 }
 .avatar-sm { width: 28px; height: 28px; font-size: var(--text-xs); }
 .avatar-md { width: 36px; height: 36px; font-size: var(--text-sm); }
@@ -3409,6 +3421,28 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    layout-critical and kept as a real `border`, not folded into .card's own
    hairline-gradient ::before, since that pseudo-element has no way to carry
    a data-driven per-priority color. */
+/* v3 (issue #416 Phase 5 — #430) — real, reported bug: a dashboard with
+   many phase cards (the Java Backend template ships 19) each combining
+   `overflow: hidden` (for the rounded-corner clip below) with
+   `backdrop-filter: blur(12px)` forces the browser to keep a full
+   blurred+clipped composite layer resident for the card — cheap while
+   collapsed (~64px tall), but for a fully-expanded card (Core Java's 70
+   topics measures ~4500px tall) that composite cost is large enough that
+   ordinary scrolling visibly outran paint, leaving large blank regions
+   where topic rows should be. Verified as a genuine *paint*, not layout,
+   issue — `getBoundingClientRect()` on "missing" rows during the bug
+   always returned correct, fully-packed positions.
+   `content-visibility: auto` was tried first and made things *worse* —
+   combined with this many DOM nodes it produced whole-page blank-paint
+   states that didn't recover even after scrolling back to the top and
+   waiting, confirmed via DOM/computed-style inspection showing fully
+   correct layout (`.dashboard-content` sized/positioned/visible/opacity:1)
+   underneath nothing but unpainted pixels. Reverted — not used here.
+   The fix that actually held up under repeated testing: `.phase-card.open`
+   (below) drops the translucency/blur once a card is expanded, since
+   that's exactly when it can grow to thousands of pixels tall. A flat,
+   fully opaque fill costs the same to paint regardless of height; the
+   collapsed (default, most common) state keeps the full glass treatment. */
 .phase-card {
   position: relative;
   background: hsl(var(--v3-surface) / 0.85);
@@ -3422,6 +3456,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 @supports not (backdrop-filter: blur(1px)) {
   .phase-card { background: hsl(var(--v3-surface-elevated)); }
+}
+.phase-card.open {
+  background: hsl(var(--v3-surface));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Issue #6 Phase 4.2 — left-border priority accent, reusing the same
