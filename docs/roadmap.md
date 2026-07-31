@@ -11,10 +11,13 @@ tracker instead.
 
 As of this writing, per issue #11's Step 8 (Launch — the last step):
 
-- **#17** — First-time onboarding flow (welcome screen, feature tour) — PR open
-- **#240** — Refresh the in-app "What's New" changelog with the last ~2 months of
-  shipped features — not started
+- **#282** — Daily Todo reminders don't survive closing the browser (no background push)
+- **#286** — Support subscribable calendar sync instead of one-way `.ics` export
+- **#414** — App-wide developer/creator profile page — public contact surface for all visitors
+- **#415** — "What I'm reading" shuffled card feed, synced server-side from a Google Drive folder
 
 Everything else — Steps 1 through 7 (bug fixes, CI, hosting, auth, core architecture,
-the full UI/UX revamp, and feature expansion) plus the rest of Step 8 — is done. See
-issue #11 for the complete list, including closed/not-planned items.
+the full UI/UX revamp, and feature expansion) plus the rest of Step 8, including the
+full v3 "portfolio-synced" visual redesign (issue #416) and its post-launch consistency
+sweep (#418, #435) — is done. See issue #11 for the complete list, including
+closed/not-planned items.

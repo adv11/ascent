@@ -5225,3 +5225,17 @@ convention — still read as inconsistent; card-shaped surfaces keep
 `--color-surface-raised`, unaffected. Verified live: forcing
 `[data-scrolling]` on `<html>` now shows the sidebar/topbar pixel-identical
 to the page background, both themes.
+
+### 2026-07-31 — Issue #439 — Enterprise-level documentation pass
+
+Docs-only. Direct user request for documentation thorough enough for users,
+developers, and evaluators. `README.md` gained three new sections (Tech
+stack, Data & privacy, Security) and an expanded table of contents; a stale
+"1474 tests" prose mention (the #418 pass only fixed the badge, not this
+sentence) was corrected. New `SECURITY.md` documents the vulnerability
+disclosure policy/scope — previously this repo had no file a security
+researcher would look for first. New `docs/README.md` indexes every doc
+under `docs/` plus all 13 ADRs — no single entry point existed before.
+`docs/roadmap.md`'s "What's still open" list was stale (#17/#240, both
+shipped long ago); corrected to the actual current open items (#282, #286,
+#414, #415) per issue #11.
