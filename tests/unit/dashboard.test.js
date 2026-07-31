@@ -248,3 +248,81 @@ describe('renderPhaseCard (issue #53)', () => {
     expect(wrapper.textContent).toContain('b');
   });
 });
+
+// Issue #448 — real, reported bug: fast-scrolling a roadmap page on a phone viewport
+// showed content blanking out for a moment before reappearing. Root cause: #444's
+// mobile checklist-row layout (`.check-item { flex-wrap: wrap }`) made real mobile rows
+// taller than the fixed ROW_HEIGHT_ESTIMATE (67px, measured on desktop's single-line
+// rows), but every unmeasured row's spacer/scroll-index math used that constant
+// unconditionally — the spacers stayed undersized until enough rows were individually
+// measured, and the correction was a sudden, visible layout jump. jsdom has no real
+// layout (getBoundingClientRect() always returns 0), so this exercises the pure
+// running-average math directly (estimateRowHeight()/recordMeasuredHeight()/
+// sumRowHeights(), exported from dashboard.js for exactly this reason) rather than
+// through real DOM measurement — the scroll-driven wiring itself is covered by the E2E
+// suite and the manual scripted repro described in the PR, same precedent as #433's own
+// comment on the describe block above.
+describe('row-height virtualization estimate (issue #448)', () => {
+  async function buildWrapper(itemCount) {
+    const { buildSectionRows } = await import('../../src/ui/pages/dashboard.js');
+    const items = Array.from({ length: itemCount }, (_, i) => ({ id: `item-${i}` }));
+    return buildSectionRows(items, item => document.createElement('div'));
+  }
+
+  it('falls back to the 67px cold-start constant when nothing has been measured yet', async () => {
+    const { estimateRowHeight } = await import('../../src/ui/pages/dashboard.js');
+    const wrapper = await buildWrapper(3);
+    expect(estimateRowHeight(wrapper)).toBe(67);
+  });
+
+  it('uses the running average of real measured heights once at least one row has been measured', async () => {
+    const { estimateRowHeight, recordMeasuredHeight } = await import('../../src/ui/pages/dashboard.js');
+    const wrapper = await buildWrapper(3);
+    // Mobile's wrapped multi-line rows measure taller than the 67px desktop estimate —
+    // this is what the estimate must adapt to instead of staying pinned to 67.
+    recordMeasuredHeight(wrapper, 0, 120);
+    recordMeasuredHeight(wrapper, 1, 140);
+    expect(estimateRowHeight(wrapper)).toBe(130);
+  });
+
+  it('re-measuring the same row updates the average without double-counting it', async () => {
+    const { estimateRowHeight, recordMeasuredHeight } = await import('../../src/ui/pages/dashboard.js');
+    const wrapper = await buildWrapper(3);
+    recordMeasuredHeight(wrapper, 0, 100);
+    recordMeasuredHeight(wrapper, 0, 200); // same index, re-measured (e.g. re-pruned later)
+    expect(estimateRowHeight(wrapper)).toBe(200);
+  });
+
+  it('ignores a zero-height measurement (jsdom/pre-layout) rather than polluting the average', async () => {
+    const { estimateRowHeight, recordMeasuredHeight } = await import('../../src/ui/pages/dashboard.js');
+    const wrapper = await buildWrapper(3);
+    recordMeasuredHeight(wrapper, 0, 0);
+    expect(estimateRowHeight(wrapper)).toBe(67);
+  });
+
+  it('sumRowHeights uses the caller-provided fallback for any still-unmeasured index', async () => {
+    const { sumRowHeights } = await import('../../src/ui/pages/dashboard.js');
+    // index 0 measured; 1 and 2 still unmeasured — real _rowHeights arrays are seeded
+    // with 0 ("unknown"), not the ROW_HEIGHT_ESTIMATE constant, specifically so a
+    // falsy/unmeasured entry always falls through to the caller-supplied fallback
+    // instead of silently trusting a stale placeholder (see buildSectionRows()'s own
+    // comment on why a truthy seed value would make this fallback unreachable).
+    const heights = [100, 0, 0];
+    expect(sumRowHeights(heights, 0, 3, 130)).toBe(100 + 130 + 130);
+  });
+
+  it('syncSectionRowsWindow sizes spacers using the adaptive estimate, not the fixed 67px constant', async () => {
+    const { buildSectionRows, syncSectionRowsWindow, recordMeasuredHeight } = await import('../../src/ui/pages/dashboard.js');
+    const items = Array.from({ length: 10 }, (_, i) => ({ id: `item-${i}` }));
+    const wrapper = buildSectionRows(items, () => document.createElement('div'));
+    // Simulate every row having already been measured as mobile-tall (120px) by
+    // seeding the running average before the window narrows — mirrors what
+    // measureMountedRows()/pruneMountedRows* do against real DOM in production.
+    for (let i = 0; i < items.length; i++) recordMeasuredHeight(wrapper, i, 120);
+    syncSectionRowsWindow(wrapper, 4, 6);
+    // Rows [0,4) and [6,10) are now off-window — their spacers must reflect the real
+    // 120px measured height, not the stale 67px desktop constant.
+    expect(wrapper._topSpacer.style.height).toBe(`${4 * 120}px`);
+    expect(wrapper._bottomSpacer.style.height).toBe(`${4 * 120}px`);
+  });
+});

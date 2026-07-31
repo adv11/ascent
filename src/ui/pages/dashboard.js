@@ -561,10 +561,40 @@ export function animatePhaseBody(phaseCardEl, opening) {
 const ROW_HEIGHT_ESTIMATE = 67; // px — measured via getBoundingClientRect() on every
                                  // .check-item in the fully-expanded Java Backend
                                  // template (single-line rows, no wrapped inline
-                                 // resources); see this block's own comment above.
+                                 // resources); see this block's own comment above. Used
+                                 // only as the cold-start fallback before any row in a
+                                 // given section has actually been measured — see
+                                 // `estimateRowHeight()` below for why a single global
+                                 // constant is no longer used on its own.
 const VIRTUALIZE_BUFFER_VIEWPORTS = 2.5; // "roughly 2-3 viewport-heights", per the issue's
                                           // own scope — generous enough that ordinary j/k
                                           // keyboard paging rarely reaches the mount edge.
+
+// issue #444 follow-up — real, reported bug: fast-scrolling a roadmap page on a phone
+// viewport showed content blanking out for a moment before reappearing. Root cause:
+// #444's mobile checklist-row layout fix (`.check-item { flex-wrap: wrap }`, Edit/⏱
+// controls pushed onto their own row under `≤480px`) made real mobile rows
+// significantly taller than `ROW_HEIGHT_ESTIMATE` (67px, measured on desktop's
+// single-line rows) — but both the top/bottom spacer sizing (`sumRowHeights()`) and the
+// scroll-position-to-row-index math (`virtualizeOpenSections()`) used that fixed
+// constant as their *only* estimate for any row not yet individually measured. Every
+// row starts unmeasured (a real height is only captured the moment a row is pruned out
+// of the mounted window — see `pruneMountedRowsFromTop/Bottom` below), so on a phone,
+// where every row is taller than the estimate, the spacers stayed systematically
+// undersized and the index math mounted the wrong window — both self-correct once
+// enough rows get individually measured, but the correction itself is a sudden,
+// visible layout jump (spacer heights snapping to their real size mid-scroll), which is
+// what a fast scroll perceives as a momentary blank/disappearing region before content
+// reappears in the right place.
+//
+// Fix: track a running average of every row height actually measured so far
+// (`_measuredHeightSum`/`_measuredHeightCount`, updated by `recordMeasuredHeight()`)
+// and use that average — not the fixed constant — as the estimate for any row that
+// hasn't been individually measured yet. `measureMountedRows()` also seeds this average
+// from whatever's already mounted the first time a section is virtualized, instead of
+// waiting for the first prune to happen, so the very first scroll on a phone already
+// uses a mobile-accurate estimate rather than the desktop-tuned constant. The constant
+// itself is kept only as the true cold-start fallback (nothing measured anywhere yet).
 
 // Wraps a section's item rows in a single container with a top/bottom spacer,
 // instead of rendering every row's DOM node directly under `.phase-body`.
@@ -575,7 +605,7 @@ const VIRTUALIZE_BUFFER_VIEWPORTS = 2.5; // "roughly 2-3 viewport-heights", per 
 // shape it always was — the FLIP open/close animation's `scrollHeight`
 // measurement (animatePhaseBody()) is never affected by anything in this
 // file, since nothing is ever pruned until after that settles.
-function buildSectionRows(items, renderItemRow) {
+export function buildSectionRows(items, renderItemRow) {
   const topSpacer = el('div', { className: 'row-spacer', 'aria-hidden': 'true' });
   const bottomSpacer = el('div', { className: 'row-spacer', 'aria-hidden': 'true' });
   const wrapper = el('div', { className: 'section-rows' }, [topSpacer, ...items.map(renderItemRow), bottomSpacer]);
@@ -585,19 +615,71 @@ function buildSectionRows(items, renderItemRow) {
   wrapper._mountEnd = items.length;
   wrapper._topSpacer = topSpacer;
   wrapper._bottomSpacer = bottomSpacer;
-  // Per-row measured height, seeded with the estimate above and overwritten
-  // with a row's real getBoundingClientRect().height the moment it's pruned
-  // (i.e. the one point a row's real height is known but about to stop being
-  // directly measurable) — this is what lets the spacers stay accurate even
-  // for a row taller than the estimate (wrapped inline resources, an
-  // unusually long title) instead of compounding a fixed-height guess.
-  wrapper._rowHeights = new Array(items.length).fill(ROW_HEIGHT_ESTIMATE);
+  // Per-row measured height, seeded with 0 ("unknown" — a real rendered row is never
+  // 0px tall) and overwritten with a row's real getBoundingClientRect().height the
+  // moment it's pruned (i.e. the one point a row's real height is known but about to
+  // stop being directly measurable) — this is what lets the spacers stay accurate even
+  // for a row taller than the estimate (wrapped inline resources, an unusually long
+  // title, or #444's mobile-wrapped layout) instead of compounding a fixed-height
+  // guess. Deliberately *not* seeded with ROW_HEIGHT_ESTIMATE: `sumRowHeights()` below
+  // only falls back to its caller-supplied estimate for a falsy entry, so a truthy
+  // placeholder here would make that fallback unreachable for any row that hasn't
+  // actually been measured yet — silently reintroducing the exact "always trust the
+  // 67px constant" bug this whole block exists to fix.
+  wrapper._rowHeights = new Array(items.length).fill(0);
+  // Parallel to `_rowHeights` — tracks which indices hold a *real* measured height,
+  // so `recordMeasuredHeight()` can maintain a running sum/count without
+  // double-counting a row measured twice.
+  wrapper._rowMeasured = new Array(items.length).fill(false);
+  wrapper._measuredHeightSum = 0;
+  wrapper._measuredHeightCount = 0;
+  wrapper._initiallyMeasured = false;
   return wrapper;
 }
 
-function sumRowHeights(heights, start, end) {
+// Running-average estimate of this section's real row height, falling back to the
+// cold-start constant only until at least one row has actually been measured — see
+// this block's own comment above for why a single fixed constant isn't enough.
+export function estimateRowHeight(wrapper) {
+  return wrapper._measuredHeightCount > 0
+    ? wrapper._measuredHeightSum / wrapper._measuredHeightCount
+    : ROW_HEIGHT_ESTIMATE;
+}
+
+// Records (or updates) index `idx`'s real measured height, keeping
+// `_measuredHeightSum`/`_measuredHeightCount` in sync so `estimateRowHeight()` stays a
+// true running average rather than drifting on repeated re-measurement of the same row.
+export function recordMeasuredHeight(wrapper, idx, height) {
+  if (!height) return;
+  if (wrapper._rowMeasured[idx]) {
+    wrapper._measuredHeightSum += height - wrapper._rowHeights[idx];
+  } else {
+    wrapper._rowMeasured[idx] = true;
+    wrapper._measuredHeightSum += height;
+    wrapper._measuredHeightCount++;
+  }
+  wrapper._rowHeights[idx] = height;
+}
+
+// Seeds the running average from whatever's already mounted, the first time a section
+// is virtualized — without this, the very first scroll pass has nothing measured yet
+// and falls all the way back to the desktop-tuned `ROW_HEIGHT_ESTIMATE`, which is
+// exactly the mismatch that caused the mobile blank-flash bug this block fixes.
+function measureMountedRows(wrapper) {
+  if (wrapper._initiallyMeasured) return;
+  wrapper._initiallyMeasured = true;
+  let node = wrapper._topSpacer.nextElementSibling;
+  let idx = wrapper._mountStart;
+  while (node && node !== wrapper._bottomSpacer) {
+    recordMeasuredHeight(wrapper, idx, node.getBoundingClientRect().height);
+    node = node.nextElementSibling;
+    idx++;
+  }
+}
+
+export function sumRowHeights(heights, start, end, fallback) {
   let sum = 0;
-  for (let i = start; i < end; i++) sum += heights[i] || ROW_HEIGHT_ESTIMATE;
+  for (let i = start; i < end; i++) sum += heights[i] || fallback;
   return sum;
 }
 
@@ -617,7 +699,7 @@ function pruneMountedRowsFromTop(wrapper, start) {
     const idx = wrapper._mountStart;
     const rowEl = wrapper._topSpacer.nextElementSibling;
     if (rowEl && rowEl !== wrapper._bottomSpacer) {
-      wrapper._rowHeights[idx] = rowEl.getBoundingClientRect().height || wrapper._rowHeights[idx];
+      recordMeasuredHeight(wrapper, idx, rowEl.getBoundingClientRect().height);
       rowEl.remove();
     }
     wrapper._mountStart++;
@@ -629,7 +711,7 @@ function pruneMountedRowsFromBottom(wrapper, end) {
     const idx = wrapper._mountEnd - 1;
     const rowEl = wrapper._bottomSpacer.previousElementSibling;
     if (rowEl && rowEl !== wrapper._topSpacer) {
-      wrapper._rowHeights[idx] = rowEl.getBoundingClientRect().height || wrapper._rowHeights[idx];
+      recordMeasuredHeight(wrapper, idx, rowEl.getBoundingClientRect().height);
       rowEl.remove();
     }
     wrapper._mountEnd--;
@@ -650,7 +732,7 @@ function mountRowsAtBottom(wrapper, end) {
   }
 }
 
-function syncSectionRowsWindow(wrapper, desiredStart, desiredEnd) {
+export function syncSectionRowsWindow(wrapper, desiredStart, desiredEnd) {
   const items = wrapper._items;
   const start = Math.max(0, Math.min(desiredStart, items.length));
   const end = Math.max(start, Math.min(desiredEnd, items.length));
@@ -661,8 +743,9 @@ function syncSectionRowsWindow(wrapper, desiredStart, desiredEnd) {
   mountRowsAtTop(wrapper, start);
   mountRowsAtBottom(wrapper, end);
 
-  wrapper._topSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, 0, wrapper._mountStart)}px`;
-  wrapper._bottomSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, wrapper._mountEnd, items.length)}px`;
+  const fallback = estimateRowHeight(wrapper);
+  wrapper._topSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, 0, wrapper._mountStart, fallback)}px`;
+  wrapper._bottomSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, wrapper._mountEnd, items.length, fallback)}px`;
 }
 
 // Module-scope (issue #53) — was previously a ~50-line anonymous forEach body
@@ -1405,9 +1488,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     content.querySelectorAll('.phase-card.open .section-rows').forEach(wrapper => {
       if (!wrapper._items || !wrapper._items.length) return;
       if (wrapper.closest('.phase-body-animating')) return;
+      measureMountedRows(wrapper);
+      const rowHeight = estimateRowHeight(wrapper);
       const rect = wrapper.getBoundingClientRect();
-      const start = Math.floor((desiredTop - rect.top) / ROW_HEIGHT_ESTIMATE);
-      const end = Math.ceil((desiredBottom - rect.top) / ROW_HEIGHT_ESTIMATE);
+      const start = Math.floor((desiredTop - rect.top) / rowHeight);
+      const end = Math.ceil((desiredBottom - rect.top) / rowHeight);
       syncSectionRowsWindow(wrapper, start, end);
     });
   }

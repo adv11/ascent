@@ -2179,6 +2179,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   height: 28px;
   border-radius: var(--radius-full);
 }
+/* Real, reported bug (issue #448 follow-up): the #435 fix above still left
+   `.theme-toggle` visibly overlapping the pill's border in both themes,
+   unlike its two siblings. Root cause: unlike `.app-topbar-command-btn`/
+   `.app-topbar-bell` (bare buttons with no shared base class), `.theme-toggle`
+   is also `.btn` (`themeToggle.js`'s className is `'btn btn-ghost btn-icon
+   theme-toggle'`) — and the base `.btn` rule sets `min-height: 40px`. A
+   `min-height` floors the box's *used* height even when a more specific rule
+   sets a smaller explicit `height`, so this selector's own `height: 28px`
+   above was silently overridden back up to 40px, taller than the group's
+   36px padding box, reproducing the exact overflow #435 already fixed for
+   the other two buttons. `min-height`/`min-width: 0` here removes that
+   floor so the explicit 28px (46px under pointer:coarse, below) actually
+   wins — .app-topbar-command-btn/.app-topbar-bell never needed this since
+   neither carries `.btn` in the first place. */
+.icon-btn-group .theme-toggle.btn-icon {
+  min-width: 0;
+  min-height: 0;
+}
 .app-topbar-actions .sync-pill { display: inline-flex; align-items: center; }
 /* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
    bare unstyled-until-hover button (matches .app-topbar-hamburger's
