@@ -82,6 +82,15 @@ Rules:
 
 ## 3. Type scale
 
+> **Superseded by direct product-owner decision (issue #435, 2026-07-31):** this
+> section's Sora/Outfit-everywhere rule was implemented once (briefly repointing the
+> base `--font-heading`/`--font-body` tokens) and then explicitly reverted after the
+> user compared both fonts live and asked to keep Archivo app-wide. Do not re-attempt
+> this migration without re-confirming with the user first — this doc section is
+> stale on this one point. `--font-heading-v3`/`--font-body-v3` (Sora/Outfit) remain
+> defined in `app.css` and are still used by the landing/auth surfaces that already
+> opt into them explicitly; nothing else should default to them.
+
 - Headings: **Sora** 600/700 (Sora ships 400–800; use 600 for section titles, 700 for
   hero/page titles), tight tracking (`-0.02em` to `-0.015em`), `line-height 1.1–1.15`.
   Hero up to 72px, page titles 32–48px, section titles 28–36px.

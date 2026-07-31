@@ -127,6 +127,15 @@
      --color-ink-on-gold. */
   --color-ink-on-accent: #F3F2F2;
 
+  /* issue #435 — design-system.md §3's v3 redesign added --font-heading-v3/
+     --font-body-v3 (Sora/Outfit) below, used explicitly by ~10 landing/auth
+     call sites via a `var(--font-heading-v3, var(--font-display))` fallback
+     chain. An app-wide switch of these *base* tokens to Sora/Outfit was
+     tried in this same PR and explicitly rejected after a direct side-by-side
+     comparison — the product owner prefers the existing Archivo look
+     app-wide and asked to keep it. Base tokens stay on Archivo; the -v3
+     tokens remain available for any call site that wants to opt in
+     explicitly, but nothing should read them by default going forward. */
   --font-body:    "Archivo", system-ui, sans-serif;
   --font-heading: "Archivo", system-ui, sans-serif;
   /* --font-display is kept as an alias (not removed) so the ~8 existing
@@ -259,16 +268,6 @@
   --duration-enter: 480ms;
 
   --stagger-base: 40ms;
-
-  /* Activity heatmap intensity scale — design-system.md §5: "hard-edged
-     squares, 5 steps" — the exact 5 hex stops from the spec/design-tokens.css.
-     Superseded by --v3-heat-0..4 below (issue #416 Phase 4) — kept only until
-     every call site migrates off it; do not add a new reader of --heat-*. */
-  --heat-0: var(--color-neutral-200);
-  --heat-1: #FFC4B8;
-  --heat-2: #FF9783;
-  --heat-3: #FF563C;
-  --heat-4: #DD2B0F;
 
   /* v3 "developer portfolio" redesign (issue #416, Phase 4 — #428):
      design-system.md §5 "5-step green ramp replacing v2's red ramp — needs
@@ -411,12 +410,6 @@
   --color-p3-bg:  var(--color-neutral-100);
 
   --color-ink-on-accent: #141312;
-
-  --heat-0: var(--color-neutral-200);
-  --heat-1: #4D170E;
-  --heat-2: #AE1800;
-  --heat-3: #FF563C;
-  --heat-4: #FF9783;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.18);
   --shadow-sm: 0 1px 2px  rgba(0,0,0,.5);
@@ -666,7 +659,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text-muted);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .tag-chip { background: hsl(var(--v3-surface-elevated)); }
+  .tag-chip { background: var(--color-surface-raised); }
 }
 .tag-chip-accent { background: hsl(var(--v3-accent) / 0.12); border-color: hsl(var(--v3-accent) / 0.4); color: var(--v3-accent-ink, var(--color-accent-700)); }
 
@@ -691,7 +684,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .card { background: hsl(var(--v3-surface-elevated)); }
+  .card { background: var(--color-surface-raised); }
 }
 /* Hairline gradient border (mask-composite technique, portfolio's
    `.card::before` verbatim) — a 1px gradient ring drawn as a pseudo-element
@@ -853,7 +846,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--v3-radius-lg);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .btn-secondary { background: hsl(var(--v3-surface-elevated)); }
+  .btn-secondary { background: var(--color-surface-raised); }
 }
 .btn-secondary:hover:not(:disabled) { border-color: hsl(var(--v3-accent) / 0.4); color: var(--v3-accent-ink, var(--color-accent)); transform: translateY(-2px); }
 
@@ -930,7 +923,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .field-input { background: hsl(var(--v3-surface-elevated)); }
+  .field-input { background: var(--color-surface-raised); }
 }
 /* §6 — accent-glow ring on focus, in addition to (not instead of) the
    :focus-visible outline every other focusable element already has. */
@@ -1295,7 +1288,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   overflow: hidden;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .auth-card-lg { background: hsl(var(--v3-surface-elevated)); }
+  .auth-card-lg { background: var(--color-surface-raised); }
 }
 
 .auth-card-head { padding: 28px 28px 0; }
@@ -1380,7 +1373,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   position: relative;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .template-card { background: hsl(var(--v3-surface-elevated)); }
+  .template-card { background: var(--color-surface-raised); }
 }
 .template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); border-color: hsl(var(--v3-accent) / 0.4); }
 .template-card.is-disabled { cursor: not-allowed; opacity: 0.6; transform: none; pointer-events: none; }
@@ -1724,7 +1717,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: width var(--duration-base) var(--ease-out);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .app-sidebar { background: hsl(var(--v3-surface-elevated)); }
+  .app-sidebar { background: var(--color-surface-raised); }
 }
 
 /* issue #298 — design-system.md §4's 2px major-section rule, under the brand block. */
@@ -1978,7 +1971,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   z-index: 210;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .dropdown-menu { background: hsl(var(--v3-surface-elevated)); }
+  .dropdown-menu { background: var(--color-surface-raised); }
 }
 .dropdown-menu.open { display: flex; }
 .dropdown-item {
@@ -2094,7 +2087,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   min-height: var(--topbar-h);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .app-topbar { background: hsl(var(--v3-surface-elevated)); }
+  .app-topbar { background: var(--color-surface-raised); }
 }
 .app-topbar-breadcrumb {
   font-weight: 700;
@@ -2120,6 +2113,25 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .app-topbar-actions .icon-btn-group {
   height: 36px;
   box-sizing: border-box;
+}
+/* Real, reported bug (issue #435): forcing `.icon-btn-group`'s own box to
+   36px (above) without shrinking its children left the group's 3px padding +
+   1px border with only 28px of usable content height, while its icon-only
+   children (`.app-topbar-command-btn`/`.app-topbar-bell`/`.theme-toggle`, all
+   independently sized to 36px) kept rendering at their full standalone size —
+   overflowing the padding box, so each icon's `:hover` fill painted directly
+   over the group's own rounded border on that side instead of staying inside
+   it. Shrinking the children to the group's real content-box size (not
+   growing the group back to 44px, which would re-break the #309 row-height
+   alignment with `.sync-pill`/`.btn-sm` next to it) is the fix — mirrored
+   under `pointer: coarse` below with the group grown to fit a real 46px WCAG
+   touch target instead, since that breakpoint already bumps sibling row
+   controls (`.btn-sm`, `.filter-chip`) past 36px too. */
+.icon-btn-group .app-topbar-command-btn,
+.icon-btn-group .app-topbar-bell,
+.icon-btn-group .theme-toggle.btn-icon {
+  width: 28px;
+  height: 28px;
 }
 .app-topbar-actions .sync-pill { display: inline-flex; align-items: center; }
 /* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
@@ -2411,7 +2423,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   max-width: 420px;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .modal-card { background: hsl(var(--v3-surface-elevated)); }
+  .modal-card { background: var(--color-surface-raised); }
 }
 /* design-system.md §5 — "modal/dialog... 2px title rules" (issue #301
    follow-up; this modal title previously had no rule at all, just a margin
@@ -2876,7 +2888,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .kpi-tile { background: hsl(var(--v3-surface-elevated)); }
+  .kpi-tile { background: var(--color-surface-raised); }
 }
 .kpi-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 /* issue #300 — spec's "uppercase kickers" for the progress stat row. */
@@ -3007,7 +3019,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .filter-chip:hover { transform: translateY(-1px); border-color: var(--color-border-strong); }
 .filter-chip:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-.filter-chip.active { background: var(--color-text); border-color: var(--color-text); color: var(--color-bg); }
+/* Real, reported bug (issue #435): the generic chip (`All`, `Resources`,
+   `Review due` — anything with no `data-p` attribute) used a completely
+   different active-state recipe (solid `--color-text` fill) from the
+   priority-specific chips right below (tint + colored border + colored ink),
+   so the row read as three or four unrelated button styles instead of one
+   "this filter is active" language. Same tint/border/ink shape as the
+   priority variants, using the accent tokens — matches `P0`'s treatment
+   exactly, since a generic filter has no priority hue of its own to borrow. */
+.filter-chip.active { background: color-mix(in srgb, var(--color-accent) 15%, transparent); border-color: var(--color-accent); color: var(--color-accent-800); }
 /* issue #206 §3.6 — same tinted-pill treatment as .badge.P0-P3 above, so the
    two priority-indicator patterns in the app read as one consistent system. */
 .filter-chip[data-p="P0"].active { background: color-mix(in srgb, var(--color-p0) 15%, transparent); border-color: var(--color-p0); color: var(--color-p0-ink); }
@@ -3129,7 +3149,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: var(--space-6);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .daily-todo-panel { background: hsl(var(--v3-surface-elevated)); }
+  .daily-todo-panel { background: var(--color-surface-raised); }
 }
 /* On the onboarding "all roadmaps" page, .onboarding-inner already caps
    width at 880px and every sibling (header, template-grid) sits flush
@@ -3455,10 +3475,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   overflow: hidden;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .phase-card { background: hsl(var(--v3-surface-elevated)); }
+  .phase-card { background: var(--color-surface-raised); }
 }
 .phase-card.open {
-  background: hsl(var(--v3-surface));
+  /* issue #435 — matches `.phase-card`'s own @supports-not-backdrop-filter
+     fallback two rules up (--color-surface-raised) rather than the
+     --v3-surface HSL token, which is a cooler blue-gray hue than this app's
+     actual warm-neutral surface palette (--color-*) — the mismatch was
+     invisible while blurred/translucent (picks up hue from what's behind
+     it) but read as a jarring "gets lighter" flash the instant the blur
+     drops to this flat fill, real user report. */
+  background: var(--color-surface-raised);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -3494,7 +3521,7 @@ html[data-scrolling] .card,
 html[data-scrolling] .phase-card,
 html[data-scrolling] .template-card,
 html[data-scrolling] .tag-chip {
-  background: hsl(var(--v3-surface-elevated));
+  background: var(--color-surface-raised);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -4358,7 +4385,7 @@ html[data-scrolling] .tag-chip {
   max-width: 320px;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .tour-popover { background: hsl(var(--v3-surface-elevated)); }
+  .tour-popover { background: var(--color-surface-raised); }
 }
 .tour-popover-progress {
   position: absolute;
@@ -4480,7 +4507,7 @@ html[data-scrolling] .tag-chip {
   box-shadow: var(--v3-shadow-glow-lg);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .command-palette-card { background: hsl(var(--v3-surface-elevated)); }
+  .command-palette-card { background: var(--color-surface-raised); }
 }
 .command-palette-input {
   font: inherit;
@@ -4681,7 +4708,7 @@ html[data-scrolling] .tag-chip {
   gap: var(--space-4);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .settings-section { background: hsl(var(--v3-surface-elevated)); }
+  .settings-section { background: var(--color-surface-raised); }
 }
 .settings-section-title { margin: 0; font-size: var(--text-lg); }
 
@@ -4731,7 +4758,7 @@ html[data-scrolling] .tag-chip {
   max-width: 480px;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .settings-guest-card { background: hsl(var(--v3-surface-elevated)); }
+  .settings-guest-card { background: var(--color-surface-raised); }
 }
 .settings-guest-card h2 { margin: 0; }
 .settings-guest-card p { margin: 0; color: var(--color-text-muted); }
@@ -4795,7 +4822,7 @@ html[data-scrolling] .tag-chip {
   min-width: 0;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .progress-card { background: hsl(var(--v3-surface-elevated)); }
+  .progress-card { background: var(--color-surface-raised); }
 }
 .progress-card-title { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
 
@@ -5129,7 +5156,7 @@ html[data-scrolling] .tag-chip {
   border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .landing-nav { background: hsl(var(--v3-surface-elevated)); }
+  .landing-nav { background: var(--color-surface-raised); }
 }
 .landing-nav-inner {
   display: flex;
@@ -5211,7 +5238,7 @@ html[data-scrolling] .tag-chip {
   overflow: hidden;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .landing-mock-card { background: hsl(var(--v3-surface-elevated)); }
+  .landing-mock-card { background: var(--color-surface-raised); }
 }
 .landing-mock-head { display: flex; gap: 6px; padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border); }
 .landing-mock-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border-strong); }
@@ -5276,7 +5303,7 @@ html[data-scrolling] .tag-chip {
   transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .feature-card { background: hsl(var(--v3-surface-elevated)); }
+  .feature-card { background: var(--color-surface-raised); }
 }
 .feature-card:hover { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); }
 /* v3 (issue #416 Phase 3) — recolored from the v2 red/orange
@@ -5322,7 +5349,7 @@ html[data-scrolling] .tag-chip {
   transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .step-card { background: hsl(var(--v3-surface-elevated)); }
+  .step-card { background: var(--color-surface-raised); }
 }
 .step-card:hover { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); }
 .step-card-number {
@@ -5607,7 +5634,7 @@ html[data-scrolling] .tag-chip {
   transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .feedback-type-card { background: hsl(var(--v3-surface-elevated)); }
+  .feedback-type-card { background: var(--color-surface-raised); }
 }
 .feedback-type-card:hover { border-color: hsl(var(--v3-accent) / 0.4); background: hsl(var(--v3-accent) / 0.1); transform: translateY(-1px); }
 .feedback-type-card:focus-visible { outline: 2px solid hsl(var(--v3-accent)); outline-offset: 2px; }
@@ -5738,6 +5765,17 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
   .feedback-widget-trigger { min-height: 46px; }
   .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
+  /* issue #435 — same border-clip bug as the base rule above, at the touch
+     tier: the group must grow to actually fit a real 46px touch target
+     (46px child + 2*1px border + 2*3px padding = 54px), not stay pinned to
+     36px like the mouse/desktop row. */
+  .app-topbar-actions .icon-btn-group { height: 54px; }
+  .icon-btn-group .app-topbar-command-btn,
+  .icon-btn-group .app-topbar-bell,
+  .icon-btn-group .theme-toggle.btn-icon {
+    width: 46px;
+    height: 46px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5779,19 +5817,23 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
    gone stale the moment Phase 1 (#297) repointed those tokens to
    accent/accent-400/neutral-500/neutral-300, and nothing print-specific was
    touched in any phase since. A solid-fill-plus-white-text badge (the old
-   approach) cannot work with the new palette at all — re-verified via a real
-   relative-luminance calculation, white text on these current tokens'
-   literal hex values (#EC3013/#FF9783/#9B9797/#D7D3D3) measures only
-   4.20/2.10/2.89/1.48:1, all failing WCAG AA. Print badges now follow this
-   app's own on-screen `.badge` pattern instead — a light ~15% tint
+   approach) cannot work with the new palette at all. Print badges follow
+   this app's own on-screen `.badge` pattern instead — a light tint
    background with full-opacity ink-variant text, not a solid fill — which is
-   exactly what already makes the on-screen badges contrast-safe: text in
-   #7C1405/#AE1800/#444141/#605D5D (the light theme's --color-p0-ink through
-   --color-p3-ink) on their own literal ~15%-tint-on-white background
-   (#fce0dc/#ffefec/#f0efef/#f9f8f8) measures 10.72/7.17/10.10/6.52:1, all
-   comfortably passing. Phase border-left accents (no text-contrast concern,
-   just a colored rule) use the base hue directly:
-   #EC3013/#FF9783/#9B9797/#D7D3D3. */
+   what makes the on-screen badges contrast-safe.
+   **Issue #435**: this comment's own literal hex values had gone stale a
+   second time — v3's redesign (issue #416) repointed `--color-p0`/`-p1` from
+   the v2 red/orange-pink family to the current green accent family
+   (`--color-accent`/`--color-accent-400`), but this print stylesheet was
+   never updated to match, so a printed roadmap's P0/P1 accents still showed
+   the old red/pink even after the on-screen app fully moved to green.
+   Current values: phase border-left accents (no text-contrast concern, just
+   a colored rule) use the base hue directly — #0CB656/#70DB9F/#9B9797/#D7D3D3
+   (P0-P3). Priority badges use a light tint background with full-opacity ink
+   text — #ECFEF4/#05612D (P0), #ECFEF4/#034E24 (P1), #f0efef/#444141 (P2),
+   #f9f8f8/#605D5D (P3) — each pairing re-verified against the current
+   `--color-p*-bg`/`--color-p*-ink` (light theme) token values documented at
+   their `:root` definitions. */
 @media print {
   /* `@page { margin: 0 }` removes the blank margin band Chrome/Firefox
      otherwise reserve for their own browser-injected print chrome — the
@@ -5955,8 +5997,8 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
     border-left: 4px solid #94a3b8; /* intentional: fixed neutral print accent, phase priority unmapped */
     page-break-inside: avoid;
   }
-  .print-phase-P0 { border-left-color: #EC3013; } /* intentional: fixed print accent, matches --color-p0 (light theme) */
-  .print-phase-P1 { border-left-color: #FF9783; } /* intentional: fixed print accent, matches --color-p1 (light theme) */
+  .print-phase-P0 { border-left-color: #0CB656; } /* intentional: fixed print accent, matches --color-p0 (light theme) — issue #435, was still #EC3013 from before v3's green accent */
+  .print-phase-P1 { border-left-color: #70DB9F; } /* intentional: fixed print accent, matches --color-p1 (light theme) — issue #435, was still #FF9783 */
   .print-phase-P2 { border-left-color: #9B9797; } /* intentional: fixed print accent, matches --color-p2 (light theme) */
   .print-phase-P3 { border-left-color: #D7D3D3; } /* intentional: fixed print accent, matches --color-p3 (light theme) */
   .print-phase-title { font-size: 18px; margin: 20px 0 8px; }
@@ -5979,8 +6021,8 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
     margin-left: 6px;
     /* radius 0 — design-system.md §4, matches every on-screen chip/badge */
   }
-  .print-priority-badge.print-priority-P0 { background: #fce0dc; color: #7C1405; } /* intentional: fixed print tint+ink, matches --color-p0-bg/-ink (light theme) */
-  .print-priority-badge.print-priority-P1 { background: #ffefec; color: #AE1800; } /* intentional: fixed print tint+ink, matches --color-p1-bg/-ink (light theme) */
+  .print-priority-badge.print-priority-P0 { background: #ECFEF4; color: #05612D; } /* intentional: fixed print tint+ink, matches --color-p0-bg/-ink (light theme) — issue #435, was still the pre-v3 red/pink pairing */
+  .print-priority-badge.print-priority-P1 { background: #ECFEF4; color: #034E24; } /* intentional: fixed print tint+ink, matches --color-p1-bg/-ink (light theme) — issue #435, was still the pre-v3 red/pink pairing */
   .print-priority-badge.print-priority-P2 { background: #f0efef; color: #444141; } /* intentional: fixed print tint+ink, matches --color-p2-bg/-ink (light theme) */
   .print-priority-badge.print-priority-P3 { background: #f9f8f8; color: #605D5D; } /* intentional: fixed print tint+ink, matches --color-p3-bg/-ink (light theme) */
   .print-item-notes { font-size: 12px; color: #333; margin: 2px 0 2px 24px; white-space: pre-wrap; /* intentional: fixed print text color */ }

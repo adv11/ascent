@@ -16,14 +16,10 @@ function cssVar(name, fallback) {
 
 // v3 (issue #416 Phase 5 — #430) — reads an HSL-*components* token (the
 // --v3-* layer's format, e.g. "146 88% 38%") and wraps it in hsl(...) for
-// use as a canvas fillStyle. Needed because this card's heatmap swatches
-// (below) still read the deprecated `--heat-0..4` names, which are still
-// defined in :root as literal hex — but as *red/orange* v2 leftovers, since
-// Phase 4 (#428/#429) migrated the real on-page heatmap to `--v3-heat-0..4`
-// (a green ramp) and left the old `--heat-*` tokens in place rather than
-// removing them, so this canvas kept silently reading the stale red ones
-// with no error anywhere (the same "cssVar() fallback hides a token miss"
-// bug class this file's own drawBackground() comment already documents).
+// use as a canvas fillStyle. Reads `--v3-heat-0..4` (the app's real,
+// current 5-step green heatmap ramp) directly — the old red/orange
+// `--heat-0..4` v2 leftovers this comment used to warn about were removed
+// entirely in issue #435, once nothing (including this file) still read them.
 function cssHslVar(name, fallbackHex) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return value ? `hsl(${value})` : fallbackHex;
@@ -100,7 +96,7 @@ function drawBackground(ctx) {
 }
 
 function drawWordmark(ctx) {
-  ctx.fillStyle = cssVar('--color-accent', '#EC3013');
+  ctx.fillStyle = cssVar('--color-accent', '#0CB656');
   ctx.beginPath();
   ctx.moveTo(64, 76);
   ctx.lineTo(84, 108);
@@ -157,7 +153,7 @@ function drawProgressBar(ctx, pct) {
   rect(ctx, { x, y, width, height });
   ctx.fill();
   const fillWidth = Math.max(0, (Math.max(0, Math.min(100, pct)) / 100) * width);
-  ctx.fillStyle = cssVar('--color-accent', '#EC3013');
+  ctx.fillStyle = cssVar('--color-accent', '#0CB656');
   rect(ctx, { x, y, width: fillWidth, height });
   ctx.fill();
 }
@@ -239,7 +235,7 @@ export async function generateShareCard(analytics, activityLog, now = Date.now()
 function drawBadgeGlyph(ctx) {
   ctx.font = '700 96px "Archivo", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillStyle = cssVar('--color-accent', '#EC3013');
+  ctx.fillStyle = cssVar('--color-accent', '#0CB656');
   ctx.fillText('🏆', CARD_WIDTH / 2, 220);
   ctx.textAlign = 'left';
 }

@@ -86,7 +86,7 @@ describe('createBarChart', () => {
   it('falls back to the light-theme default colors when a token is unset', async () => {
     const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
     const chart = await createBarChart(fakeCanvas(), { labels: [], counts: [], rollingAverage: [] });
-    expect(chart.config.data.datasets[0].backgroundColor).toBe('#EC3013');
+    expect(chart.config.data.datasets[0].backgroundColor).toBe('#0CB656');
     expect(chart.config.options.scales.y.ticks.color).toBe('#6b6156');
   });
 });

@@ -302,6 +302,15 @@ function buildPreferencesSection() {
       installRow.hidden = !isInstallable();
     }
   });
+  // issue #435 — real user report: this button reads as broken because
+  // clicking it just silently removes the row with no other feedback (the
+  // one action on this page with no toast, unlike every other Preferences
+  // control right above it — see `filterSelect`'s "Default filter saved."
+  // toast a few lines up). It IS wired correctly (dismissInstallPrompt()
+  // permanently hides this "install to your device" prompt via
+  // KEYS.PWA_INSTALL_DISMISSED, same purpose as dismissing any other
+  // one-time nag in this app) — the fix is a confirmation toast, not new
+  // logic, so a user can tell the click actually did something.
   const dismissInstallBtn = el('button', {
     type: 'button',
     className: 'btn btn-ghost btn-sm',
@@ -310,6 +319,7 @@ function buildPreferencesSection() {
       dismissFeatureBadge('pwa-install');
       dismissInstallPrompt();
       installRow.hidden = true;
+      showToast('Install prompt dismissed.', 'success');
     }
   });
   const installRow = el('div', { className: 'settings-row', hidden: !isInstallable() }, [
