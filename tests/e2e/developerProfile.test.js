@@ -15,7 +15,7 @@ test('/creator renders the profile name and every link as a real, safe anchor', 
   await page.goto('/#/creator');
   await expect(page.locator('.developer-profile-name')).toBeVisible({ timeout: 10_000 });
   const cards = page.locator('.developer-profile-link-card');
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(6);
   for (const card of await cards.all()) {
     await expect(card).toHaveAttribute('target', '_blank');
     await expect(card).toHaveAttribute('rel', 'noopener noreferrer');

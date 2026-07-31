@@ -29,17 +29,49 @@ function initialsFromName(name = '') {
   return '?';
 }
 
+// Points at '#/', not history.back() — '/' already redirects a signed-in
+// visitor straight to '/app' (main.js's own registerRoute('/', ...)), so this
+// single target is correct whether this page was reached signed in or signed
+// out, and doesn't depend on there being any browser history to go back to
+// (e.g. a bookmarked or directly-shared '#/creator' link).
+function buildBackLink() {
+  return el('a', { className: 'developer-profile-back', href: '#/' }, [
+    createIcon('collapse', { size: 'sm' }),
+    'Back'
+  ]);
+}
+
 function buildHeader() {
   return el('header', { className: 'landing-nav' }, [
     el('div', { className: 'landing-nav-inner' }, [
-      el('a', { className: 'brand', href: '#/', 'aria-label': 'Home' }, createBrandMark())
+      el('a', { className: 'brand', href: '#/', 'aria-label': 'Home' }, createBrandMark()),
+      buildBackLink()
     ])
   ]);
 }
 
+// avatarUrl is a hardcoded local asset path in developerProfile.js (this
+// page's own static data file, not something sourced from Firebase/
+// localStorage), so it's exempt from isValidUrl()'s http/https-only check —
+// that check exists for store-sourced URLs (root CLAUDE.md), and a
+// same-origin relative path like '/developer-avatar.webp' isn't even a valid
+// absolute URL for `new URL()` to parse without a base.
+function buildAvatar(profile) {
+  if (profile.avatarUrl) {
+    return el('img', {
+      className: 'developer-profile-avatar developer-profile-avatar-photo',
+      src: profile.avatarUrl,
+      alt: profile.name,
+      width: '96',
+      height: '96'
+    });
+  }
+  return el('div', { className: 'developer-profile-avatar', 'aria-hidden': 'true', text: initialsFromName(profile.name) });
+}
+
 function buildHero(profile) {
   return el('section', { className: 'developer-profile-hero' }, [
-    el('div', { className: 'developer-profile-avatar', 'aria-hidden': 'true', text: initialsFromName(profile.name) }),
+    buildAvatar(profile),
     el('p', { className: 'eyebrow developer-profile-eyebrow' }, [
       el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
       'About the developer'
