@@ -5239,3 +5239,15 @@ under `docs/` plus all 13 ADRs — no single entry point existed before.
 `docs/roadmap.md`'s "What's still open" list was stale (#17/#240, both
 shipped long ago); corrected to the actual current open items (#282, #286,
 #414, #415) per issue #11.
+
+Same-PR follow-ups from further review: (1) filter-chip active-state color —
+`.filter-chip[data-p="P2"|"P3"].active` still read the neutral-gray
+`--color-p2`/`--color-p3` tokens, a leftover #435 missed when it unified the
+generic chips onto the accent tint; removed the per-priority override
+entirely so every filter chip's active state shares one accent recipe. (2)
+the README's demo-video embed went through three states in this PR: the
+original stale `user-attachments` link (404, pre-existing), a clickable
+thumbnail (interim — fabricating a new `user-attachments` URL by hand is
+exactly the mistake issue #411 already fixed once), then the real inline
+embed once the video was actually uploaded through GitHub's web UI, the only
+way to mint a genuine asset URL.

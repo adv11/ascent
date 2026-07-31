@@ -22,19 +22,9 @@
   <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square">
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/issue-418/dashboard-dark.png" alt="Ascent dashboard" width="100%">
-</p>
-
 ## Demo video
 
-**[▶ Watch the demo video](https://github.com/adv11/ascent/releases/download/demo-video-v2/demo-video.mp4)** (v2 — recaptured against the v3 "portfolio-synced" theme, issue #418)
-
-<p align="center">
-  A ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
-  Progress heatmap, roadmap sharing, and more — generated automatically by
-  <a href="scripts/generate-demo-video.mjs"><code>scripts/generate-demo-video.mjs</code></a> (issue #397).
-</p>
+https://github.com/user-attachments/assets/50f4314a-e3d6-4ad4-a38f-bdd67076d4ae
 
 <p align="center">
   <a href="#what-it-is">What it is</a> ·
