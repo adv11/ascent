@@ -3053,13 +3053,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    "this filter is active" language. Same tint/border/ink shape as the
    priority variants, using the accent tokens — matches `P0`'s treatment
    exactly, since a generic filter has no priority hue of its own to borrow. */
+/* Real, reported bug (issue #440 follow-up): every filter chip's active
+   state — `All`/`Resources`/`Review due` and every `P0`-`P3` priority chip
+   alike — now reads this exact same accent tint/border/ink. Previously
+   `P0`/`P1` used the accent (green) here but `P2`/`P3` had their own
+   `.filter-chip[data-p="P2"|"P3"].active` override reading `--color-p2`/
+   `--color-p3` (neutral grays, design-system.md §2's original "P2 = neutral
+   tint" mapping) — so the row still showed two different active colors
+   after the earlier #435 fix unified the generic chips onto the accent.
+   Priority hue differentiation stays on the always-visible `.badge.P0`-`P3`
+   tags elsewhere in each row, which aren't toggle buttons and don't need
+   this "one active-state language" consistency requirement. */
 .filter-chip.active { background: color-mix(in srgb, var(--color-accent) 15%, transparent); border-color: var(--color-accent); color: var(--color-accent-800); }
-/* issue #206 §3.6 — same tinted-pill treatment as .badge.P0-P3 above, so the
-   two priority-indicator patterns in the app read as one consistent system. */
-.filter-chip[data-p="P0"].active { background: color-mix(in srgb, var(--color-p0) 15%, transparent); border-color: var(--color-p0); color: var(--color-p0-ink); }
-.filter-chip[data-p="P1"].active { background: color-mix(in srgb, var(--color-p1) 15%, transparent); border-color: var(--color-p1); color: var(--color-p1-ink); }
-.filter-chip[data-p="P2"].active { background: color-mix(in srgb, var(--color-p2) 15%, transparent); border-color: var(--color-p2); color: var(--color-p2-ink); }
-.filter-chip[data-p="P3"].active { background: color-mix(in srgb, var(--color-p3) 15%, transparent); border-color: var(--color-p3); color: var(--color-p3-ink); }
 .chip-count { opacity: 0.75; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
 
 /* Issue #6 Phase 4.3 — subtle hover highlight, flattened from a swept

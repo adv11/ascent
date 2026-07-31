@@ -22,28 +22,23 @@
   <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square">
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/issue-418/dashboard-dark.png" alt="Ascent dashboard" width="100%">
-</p>
-
 ## Demo video
 
-**[▶ Watch the demo video](https://github.com/adv11/ascent/releases/download/demo-video-v2/demo-video.mp4)** (v2 — recaptured against the v3 "portfolio-synced" theme, issue #418)
-
-<p align="center">
-  A ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
-  Progress heatmap, roadmap sharing, and more — generated automatically by
-  <a href="scripts/generate-demo-video.mjs"><code>scripts/generate-demo-video.mjs</code></a> (issue #397).
-</p>
+https://github.com/user-attachments/assets/50f4314a-e3d6-4ad4-a38f-bdd67076d4ae
 
 <p align="center">
   <a href="#what-it-is">What it is</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#features">Features</a> ·
+  <a href="#tech-stack">Tech stack</a> ·
   <a href="#architecture-at-a-glance">Architecture</a> ·
+  <a href="#data--privacy">Data & privacy</a> ·
+  <a href="#security">Security</a> ·
   <a href="#getting-started">Getting started</a> ·
   <a href="#contributing">Contributing</a> ·
-  <a href="#project-status">Project status</a>
+  <a href="#project-status">Project status</a> ·
+  <a href="#deploying">Deploying</a> ·
+  <a href="#license">License</a>
 </p>
 
 ---
@@ -112,6 +107,21 @@ roadmap in one click.
   <img src="docs/screenshots/issue-418/sharing.png" alt="Sharing a read-only roadmap link" width="49%">
 </p>
 
+## Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| **Frontend** | Vanilla JavaScript, native ES modules | No build step, no framework, no bundler — `npm run dev` is a small Node-only static server (`scripts/dev-server.mjs`). Keeps the whole codebase readable without a compile step between editing and reloading. |
+| **Auth** | Firebase Authentication | Email/password + anonymous "guest" sessions, so trying the product needs no signup. |
+| **Data** | Firebase Realtime Database | Per-user roadmap sync across devices; security rules in [`firebase/database.rules.json`](firebase/database.rules.json) enforce every read/write server-side, not just in client code. |
+| **Offline** | `localStorage` + a Service Worker | The app keeps working with no connection — reads/writes fall back to `localStorage`, and a Service Worker (`sw.js`) precaches the app shell for installable/offline use. |
+| **Charts** | Chart.js (lazy-loaded) | Only fetched the first time the Progress page's charts render — not part of the initial page load. |
+| **Testing** | Vitest (unit/integration) + Playwright (E2E, incl. `@axe-core/playwright` accessibility scans) | Every PR runs the full suite in CI against a real Firebase emulator, not mocks. |
+| **Hosting/CI** | Firebase Hosting + GitHub Actions | Every push to `main` auto-deploys, gated on CI passing first (see [Deploying](#deploying)); every PR gets a temporary preview URL. |
+
+See [`docs/architecture.md`](docs/architecture.md) for the full module-by-module
+breakdown and the reasoning behind each of these choices.
+
 ## Architecture at a glance
 
 No build step, no framework, no server you have to run — the browser talks
@@ -140,7 +150,49 @@ Vanilla JavaScript over native ES modules — **no build step, no bundler, no
 framework.** Vitest for unit/integration tests, Playwright for E2E. See
 [`docs/architecture.md`](docs/architecture.md) for the full data model and file
 layout, and [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) for the conventions
-this codebase follows.
+this codebase follows. [`docs/README.md`](docs/README.md) indexes every deeper
+reference doc and Architecture Decision Record (ADR) in this repo.
+
+## Data & privacy
+
+- **Your roadmap data belongs to you.** It's stored under your own Firebase user
+  ID, scoped by security rules so no other account can read or write it (see
+  [`firebase/database.rules.json`](firebase/database.rules.json)) — the one
+  deliberate exception is a roadmap you explicitly publish via "Share this
+  roadmap…", which creates a separate, unauthenticated-readable read-only
+  snapshot at its own link (revocable any time from the same menu).
+- **Guest sessions are real accounts, not local-only demos** — an anonymous
+  Firebase Auth identity, so your progress syncs across a tab reload or a second
+  device using the same browser profile. If you never link a guest session to a
+  real email/password account and sign out, that anonymous account and its data
+  are deleted, not left orphaned.
+- **No third-party analytics or tracking scripts.** The only outbound network
+  calls are to Firebase (auth/data) and, if you use it, a lazily-loaded Chart.js
+  bundle from a pinned jsDelivr CDN URL — see `index.html`'s Content Security
+  Policy for the exact allowlisted origins.
+- **Exporting and deleting your data** are both first-class, no-support-ticket-needed
+  actions in Settings: download a full JSON backup, or permanently delete your
+  account (which deletes your database data before the Auth record itself, so
+  nothing is ever left orphaned).
+
+## Security
+
+Found a security issue? Please report it privately rather than opening a public
+GitHub issue — see [`SECURITY.md`](SECURITY.md) for how. A few of the concrete
+measures already in place, for anyone evaluating this codebase:
+
+- **Content Security Policy + Subresource Integrity** on every third-party script
+  (`index.html`) — see [`docs/adr/ADR-002-csp-sri-security.md`](docs/adr/ADR-002-csp-sri-security.md).
+- **Server-side validation**, not just client-side — Realtime Database security
+  rules enforce field-level shape/length caps and per-user scoping independently
+  of what the JavaScript client does (`firebase/database.rules.json`).
+- **No `innerHTML` anywhere in the codebase** — every render path goes through
+  `textContent`, eliminating an entire class of XSS (enforced by `npm run lint`).
+- **Automated, encrypted daily database backups** (`.github/workflows/db-backup.yml`)
+  with a documented retention/restore procedure ([`docs/architecture.md`](docs/architecture.md) §6a).
+- **CI-gated production deploys** — a push to `main` only reaches production if
+  that exact commit's CI run (lint, unit/integration tests, E2E, a secret scan)
+  passed first (`.github/workflows/deploy.yml`).
 
 ## Getting started
 
@@ -254,7 +306,7 @@ source of truth for current status — see it for the full, up-to-date list of w
 left. See [`CHANGELOG.md`](CHANGELOG.md) for the detailed change history and
 [`docs/roadmap.md`](docs/roadmap.md) for a pointer to the same tracker.
 
-Tests run via `npm test` (Vitest unit + integration, 1474 tests) and `npm run test:e2e`
+Tests run via `npm test` (Vitest unit + integration, 1484 tests) and `npm run test:e2e`
 (Playwright). Run `npm run lint` to check for security and quality issues. See the
 "Verifying changes" section of [`CLAUDE.md`](CLAUDE.md) for the full checklist.
 
