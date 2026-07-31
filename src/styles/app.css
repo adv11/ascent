@@ -990,6 +990,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .form-message { min-height: 20px; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-muted); }
 .form-message.error { color: var(--color-danger); }
 .form-message.success { color: var(--color-success); }
+/* Issue #444 — inside a `.modal-card`'s translucent/blurred glass background
+   (unlike the opaque page backgrounds every other `.form-message` call site
+   sits on), `--color-text-muted`'s contrast against whatever page content is
+   blurred underneath is close enough to the 4.5:1 AA floor that ordinary
+   render variance (scroll position, which dashboard content happens to be
+   behind the modal) can tip it under — reproduced locally as a real,
+   non-sampler-false-positive axe failure (measured 4.48:1), independent of
+   any other change in this PR. Full-contrast `--color-text` inside a modal
+   is comfortably clear of this regardless of what's rendered behind it. */
+.modal-card .form-message { color: var(--color-text); }
 /* Issue #121 item 1 — deliberately not .form-message.error: a Playwright
    locator scoped to that class needs to match exactly one element
    (summaryMsg's "N things need fixing" line), never this callout too. */
@@ -2446,9 +2456,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    design-system.md §5's overlay rule — was a flat --color-surface fill +
    --shadow-lg. Applies to every hand-rolled overlay built on `.modal-card`
    (confirmDialog, deleteAccountModal, itemPanel, newRoadmapModal,
-   importRoadmapModal, share/comparison/feedback modals, guide modals). */
+   importRoadmapModal, share/comparison/feedback modals, guide modals).
+   Issue #444 — the 0.9 opacity let enough of whatever's blurred behind the
+   modal (page content varies by which modal/route it's opened from) bleed
+   through to occasionally drop `--color-text-muted`'s contrast on top of it
+   below the 4.5:1 AA floor (measured 4.48:1, reproduced independent of any
+   other change) — real, not an axe sampler false positive, since the
+   composited colors axe reported were mathematically consistent with the
+   actual token math. 0.97 keeps the glass look while leaving negligible
+   backdrop bleed-through, so text contrast no longer depends on what
+   happens to be rendered behind the modal at open time. */
 .modal-card {
-  background: hsl(var(--v3-surface) / 0.9);
+  background: hsl(var(--v3-surface) / 0.97);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border: 1px solid hsl(var(--v3-divider) / 0.6);
@@ -2473,7 +2492,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: 20px;
   font-weight: 800;
   color: var(--color-text);
-  margin-bottom: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
 }
 .delete-modal-body {
   font-size: var(--text-base);
@@ -5569,6 +5589,18 @@ html[data-scrolling] .tag-chip {
 @media (max-width: 480px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 16px 12px 88px; }
+  /* Issue #444 — live-reported, screenshotted: `.stat-strip`'s
+     `repeat(auto-fit, minmax(200px, 1fr))` let two `.stat-tile`s keep
+     sitting side by side at a 200px column width even though 200px isn't
+     wide enough for one tile's own content (icon + "0 / 484" + "Items
+     done") on one line — the grid track itself satisfied the 200px floor,
+     so it never wrapped to a single column; the wrapping happened *inside*
+     each tile's text instead ("0" / "/ 484" / "Items" / "done" each on
+     their own line), reading as broken layout rather than a normal
+     responsive stack. Forcing a single column below this tier gives each
+     tile its full width back, which is comfortably enough for the content
+     to stay on one line. */
+  .stat-strip { grid-template-columns: 1fr; }
   /* issue #6 Phase 8 — full-screen slide-up from the bottom instead of a
      side-slide panel on phone widths; the ≥481px side-slide behavior above
      is unchanged. */
