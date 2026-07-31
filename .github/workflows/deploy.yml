@@ -155,9 +155,39 @@ jobs:
             cp src/services/firebase.config.example.js src/services/firebase.config.js
           fi
 
-      # main push, CI green → deploy to the live production channel.
+      # Issue #448 — label-gated deploy skip. An intermediate phase PR (CI-green
+      # but not yet a complete, shippable state — e.g. a mid-rollout phase of a
+      # #416-shaped multi-PR effort) gets `deploy:hold` applied at PR-author time,
+      # the same moment the type:/priority:/domain: labels are applied. Look up
+      # the labels on whichever PR the just-passed commit belongs to and skip the
+      # production `firebase deploy` steps below if `deploy:hold` is present —
+      # CI, tests, and the PR preview channel are unaffected either way. Fails
+      # safe: if the PR lookup itself can't resolve an associated PR (e.g. a
+      # direct-commit edge case, though branch protection should prevent this),
+      # treat it as held rather than guessing — skip the deploy, don't error the
+      # job, and don't silently ship an unverified commit.
+      - name: Check deploy:hold label
+        id: hold-check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set +e
+          LABELS=$(gh api "repos/${{ github.repository }}/commits/$SHA/pulls" --jq '.[].labels[].name' 2>/dev/null)
+          STATUS=$?
+          if [ $STATUS -ne 0 ] || [ -z "$LABELS" ]; then
+            echo "⚠️  Could not resolve a PR for $SHA — skipping deploy as a fail-safe."
+            echo "hold=true" >> "$GITHUB_OUTPUT"
+          elif echo "$LABELS" | grep -qx "deploy:hold"; then
+            echo "⏸️  deploy:hold label present — skipping production deploy for this commit."
+            echo "hold=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hold=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # main push, CI green, not held → deploy to the live production channel.
       - name: Deploy to production (main)
-        if: steps.ready.outputs.ok == 'true'
+        if: steps.ready.outputs.ok == 'true' && steps.hold-check.outputs.hold != 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -178,7 +208,7 @@ jobs:
       # GOOGLE_APPLICATION_CREDENTIALS pointing at the same service-account
       # JSON already used for the hosting deploy above, no new secret needed.
       - name: Deploy database rules (main)
-        if: steps.ready.outputs.ok == 'true'
+        if: steps.ready.outputs.ok == 'true' && steps.hold-check.outputs.hold != 'true'
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWITCHPREP_ADV26 }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json

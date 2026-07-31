@@ -5300,3 +5300,36 @@ new "About the developer" link in `landing.js`'s footer for signed-out
 visitors, and a new "About the developer" item in `sidebar.js`'s account
 dropdown (`buildAccountMenu()`, next to "My reports") for every signed-in
 identity, including anonymous guests.
+
+### 2026-08-01 — Issue #448 — Label-gated production deploy skip (`deploy:hold`)
+
+Follow-up to #446, a research-only issue that surveyed four ways to stop an
+incomplete phase of multi-PR work (the #416-shaped pattern) from
+auto-deploying to production. #446's own recommendation —
+`environment: production` + a required reviewer — was rejected on review
+because it puts a manual approval click in front of *every* merge to `main`,
+including the vast majority of ordinary single-PR fixes that don't need
+gating. This implements #446's label-gated option instead, inverted to an
+opt-out model so it adds friction only to phased work.
+
+New `deploy:hold` repo label (workflow-control, additive to the existing
+type:/priority:/domain: taxonomy, not a fourth mandatory category).
+`.github/workflows/deploy.yml`'s `production-deploy` job gained one step,
+"Check deploy:hold label", inserted between "Write Firebase client config"
+and "Deploy to production (main)": it calls
+`gh api repos/{owner}/{repo}/commits/{sha}/pulls` for the exact commit CI
+just passed (`github.event.workflow_run.head_sha`) and sets a `hold` step
+output. Both deploy steps ("Deploy to production (main)" and "Deploy
+database rules (main)") now gate on `steps.hold-check.outputs.hold !=
+'true'` in addition to the existing `steps.ready.outputs.ok == 'true'`
+readiness check. The lookup fails safe: if the PR-lookup call errors or
+resolves no associated PR (a direct-commit edge case branch protection
+should already prevent), `hold` is set to `true` and the deploy is skipped
+rather than proceeding on an unresolved lookup — the job itself still
+succeeds, it just doesn't deploy. CI and the PR preview-channel deploy
+(`preview-deploy`, still triggered directly off `pull_request`) are
+untouched by this change; only the production `firebase deploy` steps
+became conditional. An intermediate phase PR gets `deploy:hold` applied at
+PR-author time (see `open-pr` skill's new "Phased multi-PR work" section);
+the final phase's PR omits it, so merging it deploys everything held back
+in one shot.
