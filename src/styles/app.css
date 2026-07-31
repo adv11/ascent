@@ -752,12 +752,21 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* Bordered pill container that visually groups adjacent icon-only buttons
    (the reference's search/mail/sign-in icon cluster) — a shared wrapper,
    not a change to the icon buttons themselves. */
+/* Issue #444 — this container was described as a "pill" in the comment
+   above but rendered at --chip-radius (12px, a rounded rect), while every
+   other chip/badge-shaped element in the app (.badge, .filter-chip,
+   .resource-count, .sync-pill next to it in this same row, etc.) uses the
+   fully-rounded --radius-full capsule shape — a real, live-reported "topbar
+   controls don't match the rest of the app's shape language" bug.
+   --radius-full here, and on the child buttons/.sync-pill below, makes this
+   container an actual pill, matching the rest of the app instead of being
+   the one rounded-rect outlier next to it. */
 .icon-btn-group {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: var(--chip-radius);
+  border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
 }
@@ -2158,6 +2167,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .icon-btn-group .theme-toggle.btn-icon {
   width: 28px;
   height: 28px;
+  border-radius: var(--radius-full);
 }
 .app-topbar-actions .sync-pill { display: inline-flex; align-items: center; }
 /* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
@@ -2176,7 +2186,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: none;
   color: var(--color-text);
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
 }
 .app-topbar-bell:hover { background: var(--color-surface-raised); }
 .app-topbar-bell .notification-badge-dot { position: absolute; top: 6px; right: 6px; }
@@ -2193,7 +2203,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: none;
   color: var(--color-text);
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
 }
 .app-topbar-command-btn:hover { background: var(--color-surface-raised); }
 .app-topbar-hamburger {
@@ -2451,16 +2461,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 @supports not (backdrop-filter: blur(1px)) {
   .modal-card { background: var(--color-surface-raised); }
 }
-/* design-system.md §5 — "modal/dialog... 2px title rules" (issue #301
-   follow-up; this modal title previously had no rule at all, just a margin
-   gap). */
+/* Issue #444 — the flat 2px border-bottom rule (added in #301, back when the
+   design system was still the flat v2 "Modernist" system) reads as a bare
+   grey line floating under the title on today's v3 glass `.modal-card`,
+   which already carries its own border/glow/blur — live-reported as
+   unpolished ("one grey line") next to the dialog's actual content. Dropped
+   the rule entirely in favor of spacing alone (matches how every other v3
+   surface — cards, panels — separates a heading from its body: whitespace,
+   not a ruled line). */
 .modal-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--color-text);
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--color-divider);
+  margin-bottom: 12px;
 }
 .delete-modal-body {
   font-size: var(--text-base);
@@ -2688,7 +2701,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: 12px;
   font-weight: 800;
   padding: 6px 10px;
-  border-radius: var(--v3-radius-md);
+  border-radius: var(--radius-full);
   border: 1px solid var(--color-success);
   background: var(--color-success-bg);
   color: var(--color-success);
@@ -5590,6 +5603,30 @@ html[data-scrolling] .tag-chip {
   .filter-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .filter-row::-webkit-scrollbar { display: none; }
   .filter-chip { flex-shrink: 0; }
+
+  /* Issue #444 — live-reported, screenshotted: on a phone width, a checklist
+     row's title/priority-tag/resource-badge (`.check-body`, `flex-wrap:
+     wrap`) could grow to 2-3 lines while `.check-box`/`.check-actions` (a
+     single-line-tall checkbox and Edit button) stayed vertically centered
+     against that *combined* row height (`.check-item`'s base `align-items:
+     center`) — the same "child centers against a taller wrapped sibling"
+     shape this file's breakpoint-scale comment already documents for
+     `.app-topbar`'s hamburger. `flex-start` keeps the checkbox level with
+     the title's first line regardless of how many lines the body wraps to.
+     `.check-actions` (Edit, and on `(hover: none)`/`(pointer: coarse)`
+     always visible, not hover-revealed — see the touch-target rule above)
+     is pushed onto its own full-width row below the title/badges instead of
+     competing with them for the same horizontal space, which is what was
+     forcing the title down to a cramped, wrapped 2-3-word measure. */
+  .check-item { align-items: flex-start; flex-wrap: wrap; }
+  .check-actions {
+    display: flex;
+    align-items: center;
+    flex-basis: 100%;
+    justify-content: flex-end;
+    margin-left: 32px;
+    margin-top: 4px;
+  }
 }
 
 /* In-app feedback widget (issue #9) — floating trigger + modal + form
@@ -5945,18 +5982,43 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   body:not(.print-mode) .tour-popover {
     display: none !important;
   }
+
+  /* Issue #444 — the raw-reflow fallback above used to also apply to
+     Settings/Progress/onboarding's roadmap-picker grid, none of which have
+     any print layout of their own: a native print triggered from any of
+     those pages just reflowed their raw, un-print-styled DOM across
+     arbitrary page breaks (live report/screenshot — printing Settings
+     produced two broken, unthemed pages). Printing must only ever produce
+     the roadmap checklist itself. `.dashboard-content` is the one real
+     exception, and only as a last-resort safety net — dashboard.js's own
+     beforeprint/matchMedia listener (issue #292/#254) already swaps in the
+     branded `.print-roadmap` snapshot (toggling `.print-mode`) before a
+     dashboard print ever reaches this fallback in practice. Every other
+     page shows a plain "nothing to print" message instead of its raw
+     content. */
   body:not(.print-mode) .app-shell-2,
   body:not(.print-mode) .app-shell-main,
   body:not(.print-mode) .app-topbar,
-  body:not(.print-mode) .dashboard-content,
-  body:not(.print-mode) .progress-content,
-  body:not(.print-mode) .onboarding-page,
-  body:not(.print-mode) .onboarding-inner {
+  body:not(.print-mode) .dashboard-content {
     display: block !important;
     position: static !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+  body:not(.print-mode):not(:has(.dashboard-content)) .app-shell-2,
+  body:not(.print-mode):not(:has(.dashboard-content)) .app-shell-main,
+  body:not(.print-mode):not(:has(.dashboard-content)) .app-topbar,
+  body:not(.print-mode):not(:has(.dashboard-content)) .onboarding-page {
+    display: none !important;
+  }
+  body:not(.print-mode):not(:has(.dashboard-content))::before {
+    content: 'Nothing to print here — open a roadmap to print it.';
+    display: block;
+    padding: 80px 40px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: #111111; /* intentional: fixed print text color, see block comment above this @media print block */
   }
 
   body.print-mode .print-roadmap {
