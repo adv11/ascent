@@ -216,6 +216,13 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
+  test('developer profile page has zero critical/serious axe violations', async ({ page }) => {
+    await page.goto('/#/creator');
+    await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 10_000 });
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true });
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
   test('sign-in page has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/signin');
     await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 10_000 });
@@ -502,6 +509,14 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     await expect(page.locator('.landing-page')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page);
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+  });
+
+  test('developer profile page has zero critical/serious axe violations in dark theme', async ({ page }) => {
+    await page.goto('/#/creator');
+    await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 

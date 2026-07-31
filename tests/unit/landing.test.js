@@ -46,6 +46,13 @@ describe('landing page', () => {
     expect(stat).toContain(String(TEMPLATES.length));
   });
 
+  it('links the footer to the developer profile page (issue #414)', () => {
+    const app = setup();
+    const link = app.querySelector('.landing-footer-link');
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toBe('#/creator');
+  });
+
   it('never hardcodes the brand name outside brand.js', () => {
     const app = setup();
     const footerCopy = app.querySelector('.landing-footer-copy').textContent;

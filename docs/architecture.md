@@ -5251,3 +5251,52 @@ thumbnail (interim — fabricating a new `user-attachments` URL by hand is
 exactly the mistake issue #411 already fixed once), then the real inline
 embed once the video was actually uploaded through GitHub's web UI, the only
 way to mint a genuine asset URL.
+
+### 2026-08-01 — Issue #414 — App-wide developer/creator profile page
+
+New `src/data/developerProfile.js` (a single exported `DEVELOPER_PROFILE`
+constant — name/tagline/bio/links, no build step, same "one file, one edit"
+convention as `changelog.js`) and new `src/ui/pages/developerProfile.js`, a
+public page at `#/creator` reachable whether or not a visitor is signed in.
+This is the app's one owner-authored, app-wide identity surface — distinct
+from `settings.js`'s per-user "Name" field (issue #267), which belongs to
+each end user, not the product owner.
+
+`main.js` registers `/creator` directly (`registerRoute('/creator', () =>
+renderDeveloperProfile(app))`), outside `guardApp`/`lazyGuard` entirely —
+same treatment as `/shared*`, since this route renders static, owner-
+controlled content rather than the signed-in user's own store-backed data.
+The route is deliberately *not* folded into the existing `publicRoutes`
+array the `authApi.onChange` listener reads: that array also gates the
+"bounce an already-onboarded user off a public route back to `/app`" redirect,
+which only fires on a genuine sign-in transition — adding `/creator` there
+would send a signed-in visitor loading the page directly straight back to
+`/app` instead of showing them the profile. A dedicated `isCreatorRoute`
+check, checked alongside `isSharedRoute`, opts the route out of both the
+signed-out redirect-to-`/signin` and the signed-in bounce-to-`/app` paths.
+
+Visually built entirely on the v3 "portfolio-synced" glass primitives
+already shipped by issue #416 (`.card`, `.icon-tile`, `.eyebrow`) rather than
+a bespoke visual system for one page — the issue's own text described a v2
+"Modernist" flush-left/square-avatar treatment, which predates v3's full
+rollout (#431) and was superseded before this issue was picked up. New
+CSS is limited to page-scoped layout classes (`.developer-profile-hero`,
+`.developer-profile-avatar`, `.developer-profile-links`,
+`.developer-profile-link-card`) plus a small `.landing-footer-link` addition
+for the footer's own discoverability link.
+
+`src/ui/components/icons.js` gained three brand-mark icons (`github`,
+`linkedin`, `x` — real Lucide/Simple-Icons-sourced 24×24 paths rendered
+`fill: currentColor, stroke: none`, per design-system.md §5's brand-mark
+split) plus two ordinary line icons (`mail`, `globe`, `stroke-2` like every
+other icon in the set). Every profile link is validated before being used as
+an `href`: `isValidUrl()` (`dom.js`) is intentionally http/https-only for
+every other resource-URL call site in the app, so this page carries its own
+small `isValidProfileLinkUrl()` that adds `mailto:` to the allowed set for
+the one legitimate email link — the shared helper itself was not widened.
+
+Discoverability (per the issue's explicit "visible to *all* users" ask): a
+new "About the developer" link in `landing.js`'s footer for signed-out
+visitors, and a new "About the developer" item in `sidebar.js`'s account
+dropdown (`buildAccountMenu()`, next to "My reports") for every signed-in
+identity, including anonymous guests.

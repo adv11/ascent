@@ -584,3 +584,34 @@ sign-out.
 |---|---|---|
 | `createFeatureBadge` | `(featureKey: string) => HTMLSpanElement \| null` | Returns `null` when not eligible, so call sites can drop it straight into an `el()` children array with the existing `.filter(Boolean)` convention. Renders `<span class="feature-new-badge">New</span>` when eligible. |
 | `dismissFeatureBadge` | re-exported from `featureBadgeSeen.js` | Convenience re-export so a UI call site only needs one import. |
+
+## `src/data/developerProfile.js` — developer/creator profile data (issue #414)
+
+A static, owner-authored data file — the single "one file, one edit, no rebuild"
+source of truth for the app-wide developer/creator profile page (`#/creator`),
+same convention as `changelog.json`/`changelog.js` above. Not a store — no
+subscribe/notify, no Firebase, no per-user data.
+
+```
+{
+  name: string,
+  tagline: string,
+  bio: string,
+  links: [{
+    id: string,       // stable identifier, e.g. 'github'
+    label: string,    // user-facing link label, e.g. "GitHub"
+    url: string,       // http(s):// or mailto: only
+    icon: string        // a name registered in src/ui/components/icons.js
+  }]
+}
+```
+
+`avatarUrl` is deliberately not part of this shape — there is no photo-upload
+layer for this (or any) profile in the app; `developerProfile.js` (the page)
+falls back to initials derived from `name`, the same convention `avatar.js`
+already uses for a user with no photo. Every `links[].url` is validated
+before being rendered as an `href` — the page's own `isValidProfileLinkUrl()`
+extends `isValidUrl()`'s http/https-only allowlist with `mailto:` for the one
+email link, without widening the shared helper itself; a link that fails
+validation is dropped from the rendered list entirely, never rendered as an
+unsafe `href`.
