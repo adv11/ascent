@@ -5581,6 +5581,30 @@ html[data-scrolling] .tag-chip {
   border-radius: var(--v3-radius-lg);
   margin-bottom: var(--space-6);
 }
+/* The source photo (public/developer-avatar.webp) is a tight square headshot
+   crop, matching this frame's own 1:1 aspect ratio exactly — object-fit:
+   cover therefore never needs to crop into the head/hair at any size, it
+   only scales. object-position: center top is kept as a safety margin
+   anyway, so any future replacement photo that isn't a perfect square still
+   keeps the top of the head in frame rather than centering vertically (which
+   would bias toward cropping the top on a taller-than-square source). */
+.developer-profile-avatar-photo {
+  object-fit: cover;
+  object-position: center top;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+}
+.developer-profile-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: var(--text-base);
+  text-decoration: none;
+}
+.developer-profile-back:hover { color: var(--color-text); }
+.developer-profile-back:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .developer-profile-eyebrow { justify-content: center; }
 .developer-profile-name {
   font-family: var(--font-heading-v3, var(--font-display));

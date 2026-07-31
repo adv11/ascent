@@ -6,7 +6,7 @@ const ICON_NAMES = [
   'check', 'search', 'timer', 'note', 'info', 'trash', 'close', 'plus', 'edit', 'sparkle',
   'flame', 'trendingUp', 'progress', 'share', 'bell', 'link', 'overflow',
   // issue #414 — developer profile page brand marks + mail/globe
-  'github', 'linkedin', 'x', 'mail', 'globe'
+  'github', 'linkedin', 'x', 'mail', 'globe', 'leetcode'
 ];
 
 describe('icons.js', () => {

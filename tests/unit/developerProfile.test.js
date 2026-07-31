@@ -82,4 +82,41 @@ describe('developer profile page', () => {
     const app = setup();
     expect(app.querySelector('.developer-profile-page')).not.toBeNull();
   });
+
+  it('renders a Back link pointing at "/" (which itself redirects a signed-in visitor to /app)', () => {
+    const app = setup();
+    const back = app.querySelector('.developer-profile-back');
+    expect(back).not.toBeNull();
+    expect(back.getAttribute('href')).toBe('#/');
+    expect(back.textContent).toContain('Back');
+  });
+
+  it('renders the avatar as a photo <img>, not initials, when avatarUrl is set', () => {
+    const app = setup();
+    const img = app.querySelector('.developer-profile-avatar-photo');
+    expect(img).not.toBeNull();
+    expect(img.tagName).toBe('IMG');
+    expect(img.getAttribute('src')).toBe(DEVELOPER_PROFILE.avatarUrl);
+    expect(img.getAttribute('alt')).toBe(DEVELOPER_PROFILE.name);
+  });
+
+  it('falls back to initials when avatarUrl is unset', async () => {
+    vi.resetModules();
+    vi.doMock('../../src/data/developerProfile.js', () => ({
+      DEVELOPER_PROFILE: {
+        name: 'Test Dev',
+        tagline: 'Tagline',
+        bio: 'Bio.',
+        links: []
+      }
+    }));
+    const { renderDeveloperProfile: renderNoPhoto } = await import('../../src/ui/pages/developerProfile.js');
+    const app = document.createElement('div');
+    document.body.appendChild(app);
+    renderNoPhoto(app);
+    expect(app.querySelector('.developer-profile-avatar-photo')).toBeNull();
+    expect(app.querySelector('.developer-profile-avatar').textContent).toBe('TD');
+    vi.doUnmock('../../src/data/developerProfile.js');
+    vi.resetModules();
+  });
 });
