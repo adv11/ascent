@@ -154,7 +154,7 @@ describe('renderSettings — signed-in view (issue #16)', () => {
     window.dispatchEvent(event);
     expect(installRow.hidden).toBe(false);
 
-    const dismissBtn = Array.from(installRow.querySelectorAll('button')).find(b => b.textContent === 'Dismiss');
+    const dismissBtn = Array.from(installRow.querySelectorAll('button')).find(b => b.textContent === "Don't show this again");
     dismissBtn.click();
     expect(installRow.hidden).toBe(true);
   });

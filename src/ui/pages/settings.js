@@ -311,10 +311,13 @@ function buildPreferencesSection() {
   // KEYS.PWA_INSTALL_DISMISSED, same purpose as dismissing any other
   // one-time nag in this app) — the fix is a confirmation toast, not new
   // logic, so a user can tell the click actually did something.
+  // issue #450 follow-up — click registered fine, but "Dismiss" didn't say
+  // what it does (permanently hide this row) — relabeled, plus a `title`
+  // tooltip noting it's permanent (unlike a snoozable banner).
   const dismissInstallBtn = el('button', {
-    type: 'button',
-    className: 'btn btn-ghost btn-sm',
-    text: 'Dismiss',
+    type: 'button', className: 'btn btn-ghost btn-sm',
+    text: "Don't show this again",
+    title: "Hides this install prompt for good. You can still install Ascent later from your browser's own menu.",
     onClick: () => {
       dismissFeatureBadge('pwa-install');
       dismissInstallPrompt();
