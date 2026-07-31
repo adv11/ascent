@@ -25,14 +25,18 @@ function cssHslVar(name, fallbackHex) {
   return value ? `hsl(${value})` : fallbackHex;
 }
 
-// Archivo is index.html's only loaded webfont as of the v2 "Modernist"
-// redesign (issue #297) — `ensureFontLoaded()` used to load "Plus Jakarta
-// Sans", a font this app stopped fetching from Google Fonts entirely back in
-// that same phase, silently falling back to the canvas default font ever
-// since (no error surfaced anywhere — the same "stale asset nobody noticed"
-// bug class #307's chartWrapper.js fix and this file's own background
-// rewrite below both hit). `document.fonts.load()` resolves immediately from
-// cache once the font's already loaded, so this is safe to call every time.
+// Archivo is the app's own body/heading font (--font-body/--font-heading,
+// unchanged since issue #297's v2 rollout — v3's redesign, issue #416, added
+// Sora/Outfit/JetBrains Mono to index.html's Google Fonts link but a direct
+// product-owner decision (issue #435) kept the base tokens on Archivo, so
+// this card matches every other Archivo-rendered surface in the app).
+// `ensureFontLoaded()` used to load "Plus Jakarta Sans", a font this app
+// stopped fetching from Google Fonts entirely back in the #297 phase,
+// silently falling back to the canvas default font ever since (no error
+// surfaced anywhere — the same "stale asset nobody noticed" bug class #307's
+// chartWrapper.js fix and this file's own background rewrite below both
+// hit). `document.fonts.load()` resolves immediately from cache once the
+// font's already loaded, so this is safe to call every time.
 async function ensureFontLoaded() {
   try {
     await document.fonts.load('800 40px "Archivo"');

@@ -5181,3 +5181,25 @@ user reviewed both side by side and asked to keep Archivo. Reverted; the `-v3`
 font tokens remain defined and still used by the ~10 landing/auth call sites that
 already opted into them explicitly, but the base tokens are not repointed.
 Bumped `sw.js`'s `CACHE_VERSION` (73 → 74) for this `src/` change.
+
+### 2026-07-31 — Issue #418 — Post-v3-redesign consistency sweep
+
+Docs/assets pass, plus one comment-only correction in `shareCard.js` (no logic
+change). README screenshots recaptured against the
+finished v3 UI (`docs/screenshots/issue-418/`, replacing the v2-era `issue-312`
+set); test-count and stack badges updated off stale counts/pre-v2 gold color.
+Demo video regenerated via `scripts/generate-demo-video.mjs` and published as
+GitHub Release asset `demo-video-v2` (superseding, not overwriting,
+`demo-video-v1`) — linked directly rather than via a fabricated
+`user-attachments` URL, since that format can only be minted through GitHub's
+own web upload flow (issue #411 already hit and fixed this exact mistake
+once). Found and fixed two stale "v2 is current" references outside any
+historical narrative: root `CLAUDE.md`'s own agent memory map was still
+calling `design-system.md` "the binding v2 'Modernist' visual identity", and
+`.claude/rules/ui-styling.md`'s pointer paragraph to the same file repeated
+the error plus a stale "radius is 0" claim — both corrected to describe the
+actual current v3 identity. GitHub repo "About" description and this file's
+own non-Build-Log sections were audited and found already accurate — every
+other "Modernist"/v2 reference left in the repo (CHANGELOG.md, this file's
+own Build Log, ADR-013's context section) is correctly framed as dated
+history and was deliberately left unchanged, per this issue's own scope.

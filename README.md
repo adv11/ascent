@@ -12,8 +12,8 @@
 </p>
 
 <p align="center">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-1474%20passing-15803d?style=flat-square">
-  <img alt="Stack" src="https://img.shields.io/badge/stack-vanilla%20JS%20%C2%B7%20no%20build%20step-D9A441?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-1484%20passing-0CB656?style=flat-square">
+  <img alt="Stack" src="https://img.shields.io/badge/stack-vanilla%20JS%20%C2%B7%20no%20build%20step-0CB656?style=flat-square">
   <img alt="Firebase" src="https://img.shields.io/badge/backend-Firebase-FFA000?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-all%20rights%20reserved-333333?style=flat-square">
   <br>
@@ -23,12 +23,12 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/issue-312/dashboard-dark.png" alt="Ascent dashboard" width="100%">
+  <img src="docs/screenshots/issue-418/dashboard-dark.png" alt="Ascent dashboard" width="100%">
 </p>
 
 ## Demo video
 
-https://github.com/user-attachments/assets/42be1006-d3cf-4d27-8e03-8e8b0f67248a
+**[▶ Watch the demo video](https://github.com/adv11/ascent/releases/download/demo-video-v2/demo-video.mp4)** (v2 — recaptured against the v3 "portfolio-synced" theme, issue #418)
 
 <p align="center">
   A ~60-90s silent, captioned tour of onboarding, the dashboard, Daily Todos, the
@@ -106,10 +106,10 @@ roadmap in one click.
 - **Installable as a PWA** with offline support.
 
 <p align="center">
-  <img src="docs/screenshots/issue-312/onboarding-light.png" alt="Starter template picker, with Daily Todos and Create your own roadmap" width="49%">
-  <img src="docs/screenshots/issue-312/progress-dark.png" alt="Progress analytics — streaks, activity heatmap, cumulative progress" width="49%">
-  <img src="docs/screenshots/issue-312/ai-import.png" alt="AI-assisted roadmap creation" width="49%">
-  <img src="docs/screenshots/issue-312/sharing.png" alt="Sharing a read-only roadmap link" width="49%">
+  <img src="docs/screenshots/issue-418/onboarding-light.png" alt="Starter template picker, with Daily Todos and Create your own roadmap" width="49%">
+  <img src="docs/screenshots/issue-418/progress-dark.png" alt="Progress analytics — streaks, activity heatmap, cumulative progress" width="49%">
+  <img src="docs/screenshots/issue-418/ai-import.png" alt="AI-assisted roadmap creation" width="49%">
+  <img src="docs/screenshots/issue-418/sharing.png" alt="Sharing a read-only roadmap link" width="49%">
 </p>
 
 ## Architecture at a glance
