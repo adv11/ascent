@@ -80,10 +80,10 @@ function axisOptions() {
 // layout, in which case a flat --v3-accent stroke covers that edge case.
 function gradientLineStroke(ctx, canvas) {
   const width = canvas.clientWidth;
-  if (!width) return cssVarHsl('--v3-accent', cssVar('--color-accent', '#EC3013'));
+  if (!width) return cssVarHsl('--v3-accent', cssVar('--color-accent', '#0CB656'));
   const gradient = ctx.createLinearGradient(0, 0, width, 0);
-  gradient.addColorStop(0, cssVarHsl('--v3-gradient-start', cssVar('--color-accent', '#EC3013')));
-  gradient.addColorStop(1, cssVarHsl('--v3-gradient-end', cssVar('--color-accent', '#EC3013')));
+  gradient.addColorStop(0, cssVarHsl('--v3-gradient-start', cssVar('--color-accent', '#0CB656')));
+  gradient.addColorStop(1, cssVarHsl('--v3-gradient-end', cssVar('--color-accent', '#0CB656')));
   return gradient;
 }
 
@@ -124,7 +124,7 @@ export async function createLineChart(canvas, { labels, totals }) {
 // distinguishing it visually from the solid-accent bars beneath it.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
-  const accentColor = cssVarHsl('--v3-accent', cssVar('--color-accent', '#EC3013'));
+  const accentColor = cssVarHsl('--v3-accent', cssVar('--color-accent', '#0CB656'));
   const accentMutedColor = cssVarHsl('--v3-accent-muted', cssVar('--color-accent-700', '#AE1800'));
   const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
@@ -168,7 +168,7 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
 // theme-flipping --color-* tokens (no v3 equivalent needed for a muted/
 // neutral bucket).
 const BUCKET_TOKENS = { high: '--v3-accent', medium: '--color-text-faint', low: '--color-border-strong' };
-const BUCKET_FALLBACKS = { high: '#EC3013', medium: '#9c9184', low: '#d3ccc0' };
+const BUCKET_FALLBACKS = { high: '#0CB656', medium: '#9c9184', low: '#d3ccc0' };
 export const BUCKET_LEGEND = [
   { bucket: 'high', label: 'High' },
   { bucket: 'medium', label: 'Medium' },

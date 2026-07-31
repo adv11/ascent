@@ -5134,4 +5134,50 @@ single scroll frame, and a template/phase-card grid can have a dozen-plus
 simultaneously-visible glass cards each paying their own blur-compositing cost every
 frame. Verified live against a real 19-phase-card dashboard: computed
 `backdrop-filter` flips from `blur(...)` to `none` on scroll and restores at rest.
+
+### 2026-07-31 — Issue #435 — v3 compliance follow-up sweep
+
+No new modules. A real user reported several leftover bugs after the v3 redesign
+(issue #416) fully rolled out; this pass fixes each. Root-cause common thread for
+three of them: the v3 rollout left two parallel token systems in `app.css` — the
+production `--color-*` tokens (hex literals, warm-neutral) most components read,
+and a `--v3-*` HSL layer (introduced during the phased rollout, e.g.
+`--v3-surface-elevated`, cool blue-gray hue) that some glass-surface *fallback*
+declarations never migrated off of. This was invisible while blurred/translucent
+(a blurred surface picks up hue from whatever's behind it) and only became visible
+the instant a surface dropped to its flat opaque fallback — during any scroll
+(`[data-scrolling]`, issue #432) or with `.phase-card.open`'s always-flat fill.
+Fixed by repointing all 25 opaque-fallback call sites (every
+`@supports not (backdrop-filter)` block, plus the two scroll/expanded-state rules)
+from `hsl(var(--v3-surface-elevated))`/`hsl(var(--v3-surface))` to
+`var(--color-surface-raised)` — the same token every non-glass elevated surface
+(button hovers, etc.) already reads. This is a narrower, more targeted fix than a
+full `--v3-*` → `--color-*` migration across every live glass declaration (the
+translucent/blurred rules were untouched — they read fine live, and a full
+migration was judged out of scope for a bug-driven pass); flagged here in case a
+future audit wants to finish that migration properly.
+
+Also fixed in the same PR: `.icon-btn-group`'s topbar children (search/
+notification/theme-toggle) overflowed the pill's padding+border once the group's
+own height was forced to 36px (issue #309), so a hovered icon's fill painted over
+the pill's border — children resized to the group's real content-box at both the
+mouse (28px) and `pointer: coarse` (46px, WCAG target) tiers. `.filter-chip.active`
+(no `data-p`) unified onto the same tint+border+ink recipe the priority variants
+already used, instead of a separate solid-fill treatment. `manifest.json`/
+`index.html`'s `theme_color` and every icon URL's `?v=` cache-buster updated (icon
+PNGs themselves were already correct from Phase 5 — only the browser/OS-side icon
+cache and the stale meta color were the bug). `chartWrapper.js`/`shareCard.js`
+fallback literals, the print stylesheet's P0/P1 accents, and the fully-dead
+`--heat-0..4` v2 ramp tokens (superseded by `--v3-heat-0..4`, zero remaining
+readers) were cleaned up. Settings' "Install Ascent" `Dismiss` button (already
+correctly wired) gained a confirmation toast, since silently removing its own row
+with zero feedback read as broken.
+
+**Explicit product-owner decision, reversing this PR's own earlier attempt:**
+`--font-heading`/`--font-body` were briefly repointed from Archivo to the v3
+`-v3` Sora/Outfit tokens (the same "base token never got the `--v3-*` alias"
+class of bug as `--radius-*`/`--color-accent` already had fixed in Phase 5) — the
+user reviewed both side by side and asked to keep Archivo. Reverted; the `-v3`
+font tokens remain defined and still used by the ~10 landing/auth call sites that
+already opted into them explicitly, but the base tokens are not repointed.
 Bumped `sw.js`'s `CACHE_VERSION` (73 → 74) for this `src/` change.
