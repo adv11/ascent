@@ -2179,6 +2179,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   height: 28px;
   border-radius: var(--radius-full);
 }
+/* Real, reported bug (issue #450 follow-up): the #435 fix above still left
+   `.theme-toggle` visibly overlapping the pill's border in both themes,
+   unlike its two siblings. Root cause: unlike `.app-topbar-command-btn`/
+   `.app-topbar-bell` (bare buttons with no shared base class), `.theme-toggle`
+   is also `.btn` (`themeToggle.js`'s className is `'btn btn-ghost btn-icon
+   theme-toggle'`) — and the base `.btn` rule sets `min-height: 40px`. A
+   `min-height` floors the box's *used* height even when a more specific rule
+   sets a smaller explicit `height`, so this selector's own `height: 28px`
+   above was silently overridden back up to 40px, taller than the group's
+   36px padding box, reproducing the exact overflow #435 already fixed for
+   the other two buttons. `min-height`/`min-width: 0` here removes that
+   floor so the explicit 28px (46px under pointer:coarse, below) actually
+   wins — .app-topbar-command-btn/.app-topbar-bell never needed this since
+   neither carries `.btn` in the first place. */
+.icon-btn-group .theme-toggle.btn-icon {
+  min-width: 0;
+  min-height: 0;
+}
 .app-topbar-actions .sync-pill { display: inline-flex; align-items: center; }
 /* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
    bare unstyled-until-hover button (matches .app-topbar-hamburger's
@@ -2881,11 +2899,29 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    pattern. */
 :root[data-theme='dark'] .stat-tile-icon { background: var(--color-warning-bg); color: var(--color-accent-700); }
 
-.stat-tile-value { display: flex; align-items: baseline; gap: 4px; }
+/* issue #450 follow-up — real, reported bug: #444's "force a single grid
+   column below 480px" fix (see that issue's own comment on `.stat-strip`
+   below) assumed a single column left "comfortably enough" width for the
+   tile's icon + value + label to sit on one row, but that assumption still
+   broke on a narrow-enough phone: `.stat-tile-value`/`.stat-tile-label` had
+   no `white-space: nowrap`, so once the icon + all three text pieces
+   couldn't fit on one flex row, the text wrapped *inside itself* instead
+   ("0" / "/" / "484" each on their own line, "Items" / "done" each on their
+   own line) — the exact "broken layout, not a normal responsive stack"
+   symptom #444 already diagnosed once, just not fully closed. Fixing this by
+   assuming a wider available width a second time would only move the same
+   failure to the next narrower device; the real fix is structural: value and
+   label are wrapped in `.stat-tile-body` (a column, dashboard.js) so the tile
+   only ever needs to fit the icon alongside one column's worth of width
+   (whichever of "0 / 484" or "Items done" is wider), not all three pieces
+   side by side — and `nowrap` on both guarantees neither can ever break
+   mid-text regardless of how narrow that column gets. */
+.stat-tile-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat-tile-value { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
 .stat-tile-number { font-size: var(--text-3xl); font-weight: 900; color: var(--color-accent-700); font-variant-numeric: tabular-nums; }
 :root[data-theme='dark'] .stat-tile-number { color: var(--color-accent-700); }
 .stat-tile-total { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat-tile-label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; }
+.stat-tile-label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; white-space: nowrap; }
 
 .stat-tile-ring { justify-content: flex-start; }
 .stat-tile-ring-wrap { position: relative; display: grid; place-items: center; flex-shrink: 0; }
