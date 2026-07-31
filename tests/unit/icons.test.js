@@ -4,7 +4,9 @@ import { createIcon } from '../../src/ui/components/icons.js';
 const ICON_NAMES = [
   'dashboard', 'roadmaps', 'settings', 'signOut', 'menu', 'collapse', 'chevron',
   'check', 'search', 'timer', 'note', 'info', 'trash', 'close', 'plus', 'edit', 'sparkle',
-  'flame', 'trendingUp', 'progress', 'share', 'bell', 'link', 'overflow'
+  'flame', 'trendingUp', 'progress', 'share', 'bell', 'link', 'overflow',
+  // issue #414 — developer profile page brand marks + mail/globe
+  'github', 'linkedin', 'x', 'mail', 'globe'
 ];
 
 describe('icons.js', () => {

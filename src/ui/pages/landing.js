@@ -205,7 +205,11 @@ function buildCta() {
 function buildFooter() {
   return el('footer', { className: 'landing-footer' }, [
     el('span', { className: 'brand' }, createBrandMark()),
-    el('p', { className: 'landing-footer-copy', text: `© ${new Date().getFullYear()} · Engineer your next move.` })
+    el('p', { className: 'landing-footer-copy', text: `© ${new Date().getFullYear()} · Engineer your next move.` }),
+    // Issue #414 — the app-wide developer/creator profile, the one
+    // signed-out discoverability surface the issue's "Discoverability"
+    // section requires alongside the sidebar account-menu item.
+    el('a', { className: 'landing-footer-link', href: '#/creator', text: 'About the developer' })
   ]);
 }
 

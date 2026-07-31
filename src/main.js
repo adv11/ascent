@@ -7,6 +7,7 @@ import { initScrollPerfMode } from './services/scrollPerfMode.js';
 import { migrateLocalStorageKeys } from './services/migration.js';
 import { startRouter, registerRoute, navigate, getRoute, getNavGeneration } from './ui/router.js';
 import { renderLanding } from './ui/pages/landing.js';
+import { renderDeveloperProfile } from './ui/pages/developerProfile.js';
 import { renderSharedRoadmapView } from './ui/pages/sharedRoadmapView.js';
 import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
 import { registerServiceWorker } from './services/serviceWorkerRegistration.js';
@@ -223,12 +224,24 @@ authApi.onChange(async user => {
   // signed-in — showing someone else's shared roadmap must never force a
   // detour through sign-in.
   const isSharedRoute = route.startsWith('/shared');
+  // '/creator' (issue #414) — a static, owner-authored profile page,
+  // reachable signed-in or signed-out. Deliberately NOT folded into
+  // `publicRoutes` above: that array is also read by the "bounce an
+  // already-onboarded user off a public route back to /app" logic further
+  // down, which only fires on a genuine sign-in transition — a signed-in
+  // user's session resolving while they're sitting on '/creator' (e.g. a
+  // direct page load at '#/creator' with a persisted session) would
+  // otherwise get redirected straight to '/app' instead of seeing the
+  // profile, defeating the point of the page. Same `isSharedRoute`-shaped
+  // carve-out, checked and returned on before either the sign-out-redirect
+  // or onboarding-redirect logic below can touch it.
+  const isCreatorRoute = route === '/creator';
 
   if (!user) {
-    if (!publicRoutes.includes(route) && !isSharedRoute) navigate('/signin', true);
+    if (!publicRoutes.includes(route) && !isSharedRoute && !isCreatorRoute) navigate('/signin', true);
     return;
   }
-  if (isSharedRoute) return;
+  if (isSharedRoute || isCreatorRoute) return;
 
   if (!store.getSnapshot().onboardingDone) {
     if (route !== '/onboarding') navigate('/onboarding', true);
@@ -268,6 +281,12 @@ registerRoute('/progress', lazyGuard(() => import('./ui/pages/progress.js'), 're
 // through guardApp, since it renders someone else's published snapshot, not
 // the current user's own data (see router.js's matchRoute for the pattern).
 registerRoute('/shared*', () => renderSharedRoadmapView(app));
+// Static, owner-authored developer/creator profile (issue #414) —
+// unauthenticated-reachable like '/shared*' above, since it renders the same
+// content regardless of who's signed in (or not); never routed through
+// guardApp/lazyGuard, which exist to thread the current user/store into a
+// route that actually needs them.
+registerRoute('/creator', () => renderDeveloperProfile(app));
 // Marketing landing page for signed-out visitors (issue #6 Phase 6); an
 // already-signed-in user is bounced to '/app' here instead of ever rendering
 // it — the authApi.onChange listener above additionally treats '/' as a

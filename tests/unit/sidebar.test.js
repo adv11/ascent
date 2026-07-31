@@ -124,7 +124,19 @@ describe('createSidebar — account identity', () => {
     node.querySelector('.app-sidebar-identity').click();
     expect(document.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Settings', 'My reports', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Export as Markdown', 'Import backup…', 'Print roadmap…']);
+    expect(itemText).toEqual(['Settings', 'My reports', 'About the developer', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Export as Markdown', 'Import backup…', 'Print roadmap…']);
+  });
+
+  // Issue #414 — "About the developer" account-menu item.
+  it('navigates to /creator when "About the developer" is clicked', async () => {
+    const { navigate } = await import('../../src/ui/router.js');
+    const node = await freshSidebar({ activeRoute: '/app', user: { isAnonymous: true }, store: fakeStore() });
+    document.body.append(node);
+    node.querySelector('.app-sidebar-identity').click();
+    const item = Array.from(document.querySelectorAll('.dropdown-item')).find(el => el.textContent === 'About the developer');
+    expect(item).toBeTruthy();
+    item.click();
+    expect(navigate).toHaveBeenCalledWith('/creator');
   });
 
   // Issue #17 — only the dashboard's sidebar instance passes onStartTour;

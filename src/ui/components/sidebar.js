@@ -61,6 +61,10 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
   if (onStartTour) dropdownItems.push({ text: 'Take a tour', onClick: onStartTour });
   dropdownItems.push(
     { text: 'My reports', onClick: () => openMyReports({ user }) },
+    // Issue #414 — the app-wide developer/creator profile, visible to every
+    // signed-in identity (never gated behind !user.isAnonymous, matching
+    // "My reports"/backup export just above and below).
+    { text: 'About the developer', onClick: () => navigate('/creator') },
     { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
     { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
     { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
