@@ -1916,8 +1916,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
           el('div', { className: 'stat-strip' }, [
             el('div', { className: 'stat-tile' }, [
               el('span', { className: 'stat-tile-icon' }, [createIcon('check', { size: 'sm' })]),
-              el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
-              el('span', { className: 'stat-tile-label', text: 'Items done' })
+              el('div', { className: 'stat-tile-body' }, [
+                el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
+                el('span', { className: 'stat-tile-label', text: 'Items done' })
+              ])
             ]),
             el('div', { className: 'stat-tile stat-tile-ring' }, [
               el('div', { className: 'stat-tile-ring-wrap' }, [
