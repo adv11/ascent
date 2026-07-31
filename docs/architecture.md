@@ -5203,3 +5203,25 @@ own non-Build-Log sections were audited and found already accurate — every
 other "Modernist"/v2 reference left in the repo (CHANGELOG.md, this file's
 own Build Log, ADR-013's context section) is correctly framed as dated
 history and was deliberately left unchanged, per this issue's own scope.
+
+### 2026-07-31 — Issue #440 — --v3-surface/--v3-bg token hue mismatch, live glass surfaces
+
+Follow-up to #435, same PR class. #435 fixed the opaque-fallback paths only
+(`@supports not (backdrop-filter)`, `[data-scrolling]`, `.phase-card.open`);
+every live, at-rest translucent glass declaration (`.app-topbar`,
+`.app-sidebar`, `.card`, etc.) still read the `--v3-*` HSL token layer
+directly, which had a cool blue-gray hue unrelated to the app's real
+`--color-*` hex values — visible as a persistent, always-on lighter/greyer
+topbar, not just a scroll-triggered flash. Root-cause fix: `--v3-bg`/
+`--v3-surface`/`--v3-surface-elevated` retuned to the exact HSL-component
+equivalent of `--color-bg`/`--color-surface`/`--color-surface-raised`'s real
+values, both themes — every one of the dozens of `hsl(var(--v3-surface...`
+readers across `app.css` now resolves consistently without a per-selector
+patch. Also split the `.app-topbar`/`.app-sidebar` fallback (`@supports not`
+and `[data-scrolling]`) onto `--color-bg` specifically rather than
+`--color-surface-raised`, per direct follow-up feedback that nav chrome
+reading even slightly lighter than the page — the "elevated chrome"
+convention — still read as inconsistent; card-shaped surfaces keep
+`--color-surface-raised`, unaffected. Verified live: forcing
+`[data-scrolling]` on `<html>` now shows the sidebar/topbar pixel-identical
+to the page background, both themes.
