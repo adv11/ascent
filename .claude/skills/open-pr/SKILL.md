@@ -39,3 +39,14 @@ satisfied before opening: `CHANGELOG.md` always; `CLAUDE.md`/the relevant
 `.claude/rules/*.md` file if a convention changed; `docs/architecture.md` (+ Build Log
 entry) if structure/CI/data-flow/test setup changed; `docs/api.md` if a public
 store/service contract changed.
+
+## Phased multi-PR work — apply `deploy:hold`
+
+If this PR is one intermediate phase of a larger multi-PR effort (the #416-shaped
+pattern — a redesign or feature rolled out across several sequential PRs) and merging
+it alone would leave `main`/production in a visibly incomplete or partially-broken
+state, apply the `deploy:hold` label alongside the usual type:/priority:/domain: set
+before merging (issue #448). This skips only the production `firebase deploy` step —
+CI and the PR preview channel still run normally. Omit the label on the final phase's
+PR so merging it deploys everything held back in one shot. A single self-contained PR
+never needs this label.
