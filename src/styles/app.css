@@ -318,13 +318,21 @@
      rollout note — do not delete the --color-* block above until every
      phase lands. Dark-theme values for the theme-flipping tokens below
      live in `:root[data-theme='dark']`. */
-  --v3-bg:               0 0% 100%;
+  /* issue #440 — --v3-bg/--v3-surface/--v3-surface-elevated used to be a pure
+     white/cool-blue-white HSL triple with no relation to this app's actual
+     warm-neutral --color-bg/--color-surface/--color-surface-raised hex
+     values. Harder to notice in light theme (white vs. off-white reads
+     similar), but the same mismatch is stark in dark theme (see that block's
+     own comment) — retuned to the exact HSL-component equivalent of the real
+     tokens so every live glass surface (not just the opaque fallback paths
+     #435 already fixed) renders the correct, consistent hue. */
+  --v3-bg:               0 4% 95%;
   --v3-text:             220 20% 8%;
   --v3-accent:           146 88% 38%;
   --v3-accent-muted:     146 92% 30%;
   --v3-accent-glow-alpha: 0.28;
-  --v3-surface:          0 0% 100%;
-  --v3-surface-elevated: 210 20% 98%;
+  --v3-surface:          0 2% 92%;
+  --v3-surface-elevated: 0 22% 96%;
   --v3-divider:          220 12% 90%;
   --v3-text-muted:       220 10% 44%;
   --v3-gradient-start:   146 88% 38%;
@@ -422,14 +430,25 @@
      tokens. See the light `:root` block's matching comment above --v3-bg
      for why this is a separate `--v3-*` layer, not an overwrite of
      --color-* above. --v3-radius-*/--v3-shadow-glow*/--font-*-v3 are
-     theme-invariant, declared once in the light block only. */
-  --v3-bg:               220 30% 4%;
+     theme-invariant, declared once in the light block only.
+     issue #440 — --v3-bg/--v3-surface/--v3-surface-elevated were a cool
+     blue-gray (hue 220) with no relation to this app's actual warm-neutral
+     --color-bg/--color-surface/--color-surface-raised (#141312/#1E1C1B/
+     #252221) — real, reported bug: every *live* glass surface reading these
+     tokens directly (`.app-topbar`, `.app-sidebar`, `.card`, etc. — not just
+     the opaque `@supports`/`[data-scrolling]` fallback paths #435 already
+     fixed) rendered a visibly lighter, cooler-toned band at all times, not
+     only during scroll, most obvious on the always-sticky/always-blurred
+     topbar. Retuned to the exact HSL-component equivalent of the real hex
+     values so every reader — live and fallback alike — resolves to one
+     consistent color. */
+  --v3-bg:               30 5% 7%;
   --v3-text:             0 0% 98%;
   --v3-accent:           145 92% 55%;
   --v3-accent-muted:     145 92% 45%;
   --v3-accent-glow-alpha: 0.38;
-  --v3-surface:          220 20% 10%;
-  --v3-surface-elevated: 220 18% 14%;
+  --v3-surface:          20 5% 11%;
+  --v3-surface-elevated: 15 6% 14%;
   --v3-divider:          220 12% 22%;
   --v3-text-muted:       220 12% 70%;
   --v3-gradient-start:   145 92% 55%;
@@ -1717,7 +1736,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   transition: width var(--duration-base) var(--ease-out);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .app-sidebar { background: var(--color-surface-raised); }
+  /* issue #440 — nav chrome (sidebar/topbar) reads --color-bg, not the
+     "elevated" --color-surface-raised every card-shaped surface's own
+     fallback uses: real, repeated user report that the sidebar/topbar
+     visibly lighter than the page (even just slightly) reads as
+     inconsistent, not as an intentional "this is chrome" cue. */
+  .app-sidebar { background: var(--color-bg); }
 }
 
 /* issue #298 — design-system.md §4's 2px major-section rule, under the brand block. */
@@ -2087,7 +2111,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   min-height: var(--topbar-h);
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .app-topbar { background: var(--color-surface-raised); }
+  /* issue #440 — see .app-sidebar's matching fallback above for why nav
+     chrome reads --color-bg here, not --color-surface-raised. */
+  .app-topbar { background: var(--color-bg); }
 }
 .app-topbar-breadcrumb {
   font-weight: 700;
@@ -3515,8 +3541,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    surface (a new `.card`-based component, a new sticky/pinned element) needs
    adding to this selector list too, or it'll keep paying this cost on every
    scroll frame indefinitely. */
+/* issue #440 — nav chrome (topbar/sidebar) reads --color-bg during the
+   scroll window, not --color-surface-raised: real, repeated user report
+   that the sidebar/topbar turning visibly lighter than the page for the
+   duration of every scroll (this rule's whole purpose) reads as a bug, not
+   as an intentional "this is chrome" elevation cue. Card-shaped surfaces
+   (.card/.phase-card/.template-card/.tag-chip) keep --color-surface-raised
+   — those are meant to read as distinct cards regardless of scroll state,
+   same as their @supports-not-backdrop-filter fallback above. */
 html[data-scrolling] .app-topbar,
-html[data-scrolling] .app-sidebar,
+html[data-scrolling] .app-sidebar {
+  background: var(--color-bg);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 html[data-scrolling] .card,
 html[data-scrolling] .phase-card,
 html[data-scrolling] .template-card,
