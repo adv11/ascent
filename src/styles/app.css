@@ -3578,14 +3578,31 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   .phase-card { background: var(--color-surface-raised); }
 }
 .phase-card.open {
-  /* issue #435 — matches `.phase-card`'s own @supports-not-backdrop-filter
-     fallback two rules up (--color-surface-raised) rather than the
-     --v3-surface HSL token, which is a cooler blue-gray hue than this app's
-     actual warm-neutral surface palette (--color-*) — the mismatch was
-     invisible while blurred/translucent (picks up hue from what's behind
-     it) but read as a jarring "gets lighter" flash the instant the blur
-     drops to this flat fill, real user report. */
-  background: var(--color-surface-raised);
+  /* issue #455 — further revises #435/#440's own history here, it doesn't
+     just revert a plain regression. #435 (before #440) had a real reason to
+     avoid --v3-surface: at that time it was a cooler blue-gray hue than
+     this app's warm-neutral --color-* palette, so switching to the flat,
+     opaque --color-surface-raised (matching `.phase-card`'s own
+     @supports-not-backdrop-filter fallback) fixed a jarring "gets lighter"
+     flash. #440 then retuned --v3-bg/--v3-surface/--v3-surface-elevated to
+     the *exact* HSL-component equivalent of the real --color-bg/
+     --color-surface hex values (see that token's own comment in
+     :root[data-theme='dark']) — fixing the hue mismatch #435 was working
+     around — but *deliberately* left card-shaped surfaces on
+     --color-surface-raised anyway, on the stated theory that "these are
+     meant to read as distinct cards regardless of scroll state" (see the
+     history in the [data-scrolling] rule below). Real, live user feedback
+     in #455 (screenshots) says that theory doesn't hold once a long,
+     expanded roadmap has several/a dozen-plus open phase-cards covering
+     most of the viewport at once — the lighter fill reads as the whole
+     page flashing grey, not as individually-elevated cards. Same revision
+     #440 already made for the topbar/sidebar for the identical reason.
+     hsl(var(--v3-surface)) is opaque here (alpha omitted, unlike the
+     translucent 0.85 resting state two rules up) since backdrop-filter is
+     dropped — it's the same hue/lightness the blurred glass state already
+     reads against this app's near-black background, so dropping the blur
+     is now visually seamless instead of a color jump. */
+  background: hsl(var(--v3-surface));
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -3619,21 +3636,33 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    scroll window, not --color-surface-raised: real, repeated user report
    that the sidebar/topbar turning visibly lighter than the page for the
    duration of every scroll (this rule's whole purpose) reads as a bug, not
-   as an intentional "this is chrome" elevation cue. Card-shaped surfaces
-   (.card/.phase-card/.template-card/.tag-chip) keep --color-surface-raised
-   — those are meant to read as distinct cards regardless of scroll state,
-   same as their @supports-not-backdrop-filter fallback above. */
+   as an intentional "this is chrome" elevation cue. */
 html[data-scrolling] .app-topbar,
 html[data-scrolling] .app-sidebar {
   background: var(--color-bg);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+/* issue #455 — card-shaped surfaces (.card/.phase-card/.template-card/
+   .tag-chip) used to keep --color-surface-raised here on #440's stated
+   theory that "these are meant to read as distinct cards regardless of
+   scroll state" (see .phase-card.open's own comment above for the full
+   #435→#440 history). Real, live user feedback (screenshots) says that
+   theory doesn't hold in practice: with several/a dozen-plus of these
+   simultaneously visible during a scroll through a long expanded roadmap,
+   --color-surface-raised (meaningfully lighter than both the page
+   background and these surfaces' own resting hsl(var(--v3-surface)) glass
+   fill) reads as the entire visible page flashing grey, not as
+   individually-elevated cards. Matching .phase-card.open's revision:
+   opaque hsl(var(--v3-surface)), the same hue the translucent resting
+   state already reads against this app's near-black background, so
+   dropping backdrop-filter for the scroll window is seamless instead of a
+   visible color jump. */
 html[data-scrolling] .card,
 html[data-scrolling] .phase-card,
 html[data-scrolling] .template-card,
 html[data-scrolling] .tag-chip {
-  background: var(--color-surface-raised);
+  background: hsl(var(--v3-surface));
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
