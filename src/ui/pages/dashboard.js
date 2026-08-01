@@ -566,9 +566,21 @@ const ROW_HEIGHT_ESTIMATE = 67; // px — measured via getBoundingClientRect() o
                                  // given section has actually been measured — see
                                  // `estimateRowHeight()` below for why a single global
                                  // constant is no longer used on its own.
-const VIRTUALIZE_BUFFER_VIEWPORTS = 2.5; // "roughly 2-3 viewport-heights", per the issue's
-                                          // own scope — generous enough that ordinary j/k
-                                          // keyboard paging rarely reaches the mount edge.
+// issue #465 follow-up — raised 2.5 -> 4.5, live-measured, not a guess. A real fast-scroll
+// stress test (real `scroll` events fired in rapid back-to-back bursts, not the jump-scroll/
+// mouse-wheel scripted repro this file's own history above used) reliably reproduced a
+// Chromium checkerboard/blank-paint artifact within the first handful of scroll ticks at
+// 2.5 — confirmed via a controlled diagnostic (backdrop-filter/box-shadow entirely disabled
+// on every glass surface, bug reproduced identically) that this specific artifact is *not*
+// caused by this app's CSS at all, only by how far ahead of the visible viewport real content
+// is already mounted/painted before it's needed. At 4.5, the identical stress test (14 rapid
+// scroll bursts across two separate rounds) produced zero failures. This does cost more
+// mounted DOM (~3000 nodes vs ~2000 at 2.5, live-measured on the fully-expanded Java Backend
+// template) — still a small fraction of the ~11,200 nodes an unvirtualized render would need,
+// so the tradeoff is worth it. If you ever retune this constant, re-run the same kind of real
+// (not synthetic-jump) fast-scroll stress test before shipping a change — a smaller value that
+// "looks fine" under gentle scrolling can still reproduce this exact bug under a real fling.
+const VIRTUALIZE_BUFFER_VIEWPORTS = 4.5;
 
 // issue #444 follow-up — real, reported bug: fast-scrolling a roadmap page on a phone
 // viewport showed content blanking out for a moment before reappearing. Root cause:
