@@ -1902,54 +1902,67 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
         progressDigestBanner,
         offlineBanner,
         el('header', { className: 'dashboard-header' }, [
-          // Issue #6 Phase 4.4 — the "Official/read-only" lock-badge concept
-          // from the original spec is stale post-#4/#58 (every roadmap is
-          // equally "yours" now); this extends the existing identity badge
-          // with a meta row instead of a separate header section.
-          el('div', { className: 'roadmap-header' }, [
-            el('div', { className: 'current-roadmap-badge' }, [
-              roadmapBadgeIconSlot,
-              roadmapBadgeNameEl
+          // Issue #460 — the identity badge/meta row and the two stat tiles
+          // used to be three separately-bordered blocks stacked with their
+          // own independent margins (real feedback: read as "cluttered,
+          // scattered," not a cohesive header). Consolidated into one glass
+          // `.card` (`.roadmap-summary-card`) — identity on the left, stats
+          // on the right, wrapping to a stacked layout on narrow viewports.
+          // `.current-roadmap-badge`/`.stat-tile-number`/etc. keep their
+          // existing class names (several E2E specs assert on
+          // `.current-roadmap-badge`'s text directly), only the surrounding
+          // wrapper structure changed.
+          el('div', { className: 'card roadmap-summary-card' }, [
+            el('div', { className: 'roadmap-summary-identity' }, [
+              el('div', { className: 'current-roadmap-badge' }, [
+                roadmapBadgeIconSlot,
+                roadmapBadgeNameEl
+              ]),
+              roadmapMetaRow
             ]),
-            roadmapMetaRow
+            el('div', { className: 'roadmap-summary-stats' }, [
+              el('div', { className: 'stat-tile' }, [
+                el('span', { className: 'stat-tile-icon' }, [createIcon('check', { size: 'sm' })]),
+                el('div', { className: 'stat-tile-body' }, [
+                  el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
+                  el('span', { className: 'stat-tile-label', text: 'Items done' })
+                ])
+              ]),
+              el('div', { className: 'stat-tile stat-tile-ring' }, [
+                el('div', { className: 'stat-tile-ring-wrap' }, [
+                  percentRing,
+                  el('div', { className: 'stat-tile-ring-value' }, [percentStat, el('span', { text: '%' })])
+                ]),
+                el('span', { className: 'stat-tile-label', text: 'Complete' })
+              ])
+            ])
           ]),
-          el('div', { className: 'stat-strip' }, [
-            el('div', { className: 'stat-tile' }, [
-              el('span', { className: 'stat-tile-icon' }, [createIcon('check', { size: 'sm' })]),
-              el('div', { className: 'stat-tile-body' }, [
-                el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
-                el('span', { className: 'stat-tile-label', text: 'Items done' })
+          // Issue #460 — the Priority and Tags filter rows used to be two
+          // separate free-floating `.toolbar` rows with a full section gap
+          // between them; wrapped in one glass `.card` (`.roadmap-filters-card`)
+          // so the whole filtering area reads as a single panel. Each row
+          // keeps its own `.toolbar` class (and therefore its existing
+          // responsive grid-column behavior) — only the outer `max-width`/
+          // centered-margin now lives on the wrapping card instead of being
+          // duplicated on every row (see the removed comment below this one
+          // in git blame for why that duplication existed in the first place).
+          el('div', { className: 'card roadmap-filters-card' }, [
+            el('div', { className: 'toolbar' }, [
+              el('div', { className: 'toolbar-block' }, [
+                el('span', { className: 'toolbar-label', text: 'Priority' }),
+                filterContainer
+              ]),
+              el('div', { className: 'toolbar-block toolbar-right' }, [
+                clearFiltersBtn,
+                searchInput,
+                toggleAllBtn
               ])
             ]),
-            el('div', { className: 'stat-tile stat-tile-ring' }, [
-              el('div', { className: 'stat-tile-ring-wrap' }, [
-                percentRing,
-                el('div', { className: 'stat-tile-ring-value' }, [percentStat, el('span', { text: '%' })])
-              ]),
-              el('span', { className: 'stat-tile-label', text: 'Complete' })
-            ])
-          ]),
-          el('div', { className: 'toolbar' }, [
-            el('div', { className: 'toolbar-block' }, [
-              el('span', { className: 'toolbar-label', text: 'Priority' }),
-              filterContainer
-            ]),
-            el('div', { className: 'toolbar-block toolbar-right' }, [
-              clearFiltersBtn,
-              searchInput,
-              toggleAllBtn
-            ])
-          ]),
-          // Wrapped in `.toolbar` (not a bare `.toolbar-block`) so this row
-          // gets the exact same `max-width`/centered-margin treatment as the
-          // Priority row above it — a bare `.toolbar-block` here had no width
-          // constraint of its own and spanned the full (wider) `.dashboard-header`
-          // padding box, misaligning the "Tags" label ~55px left of "Priority"
-          // (issue #301 Phase 5 follow-up, found via live screenshot review).
-          el('div', { className: 'toolbar' }, [
-            el('div', { className: 'toolbar-block' }, [
-              el('span', { className: 'toolbar-label', text: 'Tags' }),
-              tagFilterContainer
+            el('div', { className: 'toolbar' }, [
+              el('div', { className: 'toolbar-block' }, [
+                el('span', { className: 'toolbar-label', text: 'Tags' }),
+                tagFilterContainer
+              ])
             ])
           ]),
           reviewTagGroupBanner
