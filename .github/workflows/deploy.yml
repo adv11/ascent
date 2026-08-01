@@ -166,6 +166,36 @@ jobs:
       # direct-commit edge case, though branch protection should prevent this),
       # treat it as held rather than guessing — skip the deploy, don't error the
       # job, and don't silently ship an unverified commit.
+      #
+      # Issue #458 — the original version of this step conflated "the PR lookup
+      # itself failed" with "the PR was found but simply has no labels at all,"
+      # both under a single `[ -z "$LABELS" ]` check on the *extracted label
+      # list*. Since PRs in this repo are almost never labeled at all (only
+      # issues carry the type:/priority:/domain: taxonomy — see root CLAUDE.md),
+      # `jq '.[].labels[].name'` legitimately produces empty output for nearly
+      # every real PR, which the old check couldn't distinguish from a failed
+      # `gh api` call — so the fail-safe fired on every single merge since #448
+      # shipped, silently skipping the real `firebase deploy` step below while
+      # the job still reported overall success. Confirmed live: production sat
+      # on a build several merges/CACHE_VERSION bumps behind `main` for hours
+      # with every "Deploy to Firebase Hosting" run showing green the whole
+      # time — nothing in the Actions UI surfaced this on its own. Fixed by
+      # checking the *raw PR lookup* (did `gh api` succeed, and did it find at
+      # least one PR for this commit) completely separately from whether that
+      # PR's own label list happens to contain `deploy:hold` — an empty label
+      # list on a successfully-resolved PR is a normal, common, not-held state.
+      #
+      # A second, independent bug found while verifying the fix above: piping
+      # the API response through a bash variable and `echo` (`echo "$VAR" |
+      # jq ...`) corrupts any JSON string field containing a literal `\n`
+      # escape (e.g. a multi-paragraph PR body/description, which every real
+      # PR in this repo has) — this shell's `echo` interprets `\n` as an
+      # actual newline byte before `jq` ever sees it, breaking the JSON
+      # structure and making `jq` fail to parse it at all. Reproduced directly
+      # against this repo's own PR #457. Writing the response straight to a
+      # file with `gh api ... > file` and having every `jq` call read from
+      # that file (never round-tripping the raw JSON through a shell
+      # variable/echo) sidesteps the whole class of shell-escaping bugs.
       - name: Check deploy:hold label
         id: hold-check
         env:
@@ -173,12 +203,13 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set +e
-          LABELS=$(gh api "repos/${{ github.repository }}/commits/$SHA/pulls" --jq '.[].labels[].name' 2>/dev/null)
+          gh api "repos/${{ github.repository }}/commits/$SHA/pulls" > /tmp/commit-prs.json 2>/dev/null
           STATUS=$?
-          if [ $STATUS -ne 0 ] || [ -z "$LABELS" ]; then
+          PR_COUNT=$(jq 'length' /tmp/commit-prs.json 2>/dev/null)
+          if [ $STATUS -ne 0 ] || [ -z "$PR_COUNT" ] || [ "$PR_COUNT" -eq 0 ]; then
             echo "⚠️  Could not resolve a PR for $SHA — skipping deploy as a fail-safe."
             echo "hold=true" >> "$GITHUB_OUTPUT"
-          elif echo "$LABELS" | grep -qx "deploy:hold"; then
+          elif jq -e '[.[].labels[].name] | index("deploy:hold")' /tmp/commit-prs.json >/dev/null 2>&1; then
             echo "⏸️  deploy:hold label present — skipping production deploy for this commit."
             echo "hold=true" >> "$GITHUB_OUTPUT"
           else
