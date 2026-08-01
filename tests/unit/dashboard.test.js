@@ -326,3 +326,88 @@ describe('row-height virtualization estimate (issue #450)', () => {
     expect(wrapper._bottomSpacer.style.height).toBe(`${4 * 120}px`);
   });
 });
+
+// issue #465 follow-up — real, live-reproduced bug (Retina Mac, real fast
+// scroll, not the scripted repro's synthetic pacing): a fast scroll can jump
+// the desired mount window past the currently-mounted range with zero
+// overlap. pruneMountedRowsFromTop()/pruneMountedRowsFromBottom() never
+// resync each other's pointer once that happens, so mountRowsAtBottom() goes
+// on to mount rows starting from a stale, too-low _mountEnd — re-inserting
+// real rows that fall *before* the new _mountStart and are already summed
+// into the top spacer's height, double-counting them and corrupting the
+// section's layout (large blank gaps with isolated floating rows). These
+// tests fail against the pre-fix code (verified by reverting the
+// non-overlap guard in syncSectionRowsWindow() locally and re-running) and
+// pass against the fix.
+describe('syncSectionRowsWindow — non-overlapping window jump (issue #465 follow-up)', () => {
+  function buildWrapperWithTaggedRows(itemCount) {
+    let renderCount = 0;
+    const items = Array.from({ length: itemCount }, (_, i) => ({ id: `item-${i}` }));
+    const wrapper = buildSectionRowsRef(items, item => {
+      renderCount++;
+      const el = document.createElement('div');
+      el.dataset.itemId = item.id;
+      return el;
+    });
+    return { wrapper, getRenderCount: () => renderCount };
+  }
+  let buildSectionRowsRef;
+
+  beforeEach(async () => {
+    ({ buildSectionRows: buildSectionRowsRef } = await import('../../src/ui/pages/dashboard.js'));
+  });
+
+  function mountedRowIds(wrapper) {
+    return Array.from(wrapper.querySelectorAll('[data-item-id]')).map(el => el.dataset.itemId);
+  }
+
+  it('a forward jump past the old mounted range leaves no stale rows behind and mounts exactly the new range', async () => {
+    const { syncSectionRowsWindow } = await import('../../src/ui/pages/dashboard.js');
+    const { wrapper } = buildWrapperWithTaggedRows(30);
+
+    syncSectionRowsWindow(wrapper, 0, 10); // initial window: rows 0-9 mounted
+    expect(mountedRowIds(wrapper)).toEqual(Array.from({ length: 10 }, (_, i) => `item-${i}`));
+
+    // A fast scroll skips the buffer zone entirely — the next desired window
+    // (20-24) has no overlap at all with the old one (0-9).
+    syncSectionRowsWindow(wrapper, 20, 25);
+
+    expect(mountedRowIds(wrapper)).toEqual(['item-20', 'item-21', 'item-22', 'item-23', 'item-24']);
+    expect(wrapper._mountStart).toBe(20);
+    expect(wrapper._mountEnd).toBe(25);
+    // Every real DOM row must be accounted for exactly once — no leftover
+    // node from the old [0,10) window still sitting in the wrapper.
+    expect(wrapper.querySelectorAll('[data-item-id]').length).toBe(5);
+  });
+
+  it('a backward jump past the old mounted range leaves no stale rows behind and mounts exactly the new range', async () => {
+    const { syncSectionRowsWindow } = await import('../../src/ui/pages/dashboard.js');
+    const { wrapper } = buildWrapperWithTaggedRows(30);
+
+    syncSectionRowsWindow(wrapper, 20, 25); // initial window: rows 20-24 mounted
+    syncSectionRowsWindow(wrapper, 0, 5); // fast scroll back up, no overlap with 20-24
+
+    expect(mountedRowIds(wrapper)).toEqual(['item-0', 'item-1', 'item-2', 'item-3', 'item-4']);
+    expect(wrapper._mountStart).toBe(0);
+    expect(wrapper._mountEnd).toBe(5);
+    expect(wrapper.querySelectorAll('[data-item-id]').length).toBe(5);
+  });
+
+  it('spacer heights never double-count a row that is also still a real mounted node after a non-overlapping jump', async () => {
+    const { syncSectionRowsWindow, recordMeasuredHeight } = await import('../../src/ui/pages/dashboard.js');
+    const { wrapper } = buildWrapperWithTaggedRows(30);
+    for (let i = 0; i < 30; i++) recordMeasuredHeight(wrapper, i, 67);
+
+    syncSectionRowsWindow(wrapper, 0, 10);
+    syncSectionRowsWindow(wrapper, 20, 25);
+
+    // Top spacer covers items [0,20) = 20 rows; bottom spacer covers [25,30) = 5 rows.
+    // Before the fix, the top spacer's sum included rows that were *also* still
+    // real mounted DOM nodes, inflating the section's total height.
+    expect(wrapper._topSpacer.style.height).toBe(`${20 * 67}px`);
+    expect(wrapper._bottomSpacer.style.height).toBe(`${5 * 67}px`);
+    const totalRealRowHeight = wrapper.querySelectorAll('[data-item-id]').length * 67;
+    const spacerTotal = 20 * 67 + 5 * 67;
+    expect(spacerTotal + totalRealRowHeight).toBe(30 * 67); // no double-counted row anywhere
+  });
+});

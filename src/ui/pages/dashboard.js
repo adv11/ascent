@@ -738,6 +738,35 @@ export function syncSectionRowsWindow(wrapper, desiredStart, desiredEnd) {
   const end = Math.max(start, Math.min(desiredEnd, items.length));
   if (start === wrapper._mountStart && end === wrapper._mountEnd) return;
 
+  // Real, reported bug (live-reproduced, issue #465 follow-up): a fast scroll
+  // can jump the desired [start, end) window past the currently mounted
+  // range with zero overlap — the buffer zone gets skipped entirely between
+  // two virtualize passes. `pruneMountedRowsFromTop()` only ever removes a
+  // real DOM row and advances `_mountStart`; once it walks past the last
+  // real row (hits `_bottomSpacer`) it silently no-ops the removal but keeps
+  // incrementing `_mountStart` regardless — so `_mountStart` can end up past
+  // the *old*, now-stale `_mountEnd`, which neither prune function ever
+  // resyncs (pruneFromTop never touches `_mountEnd`; pruneFromBottom only
+  // ever *decreases* it). `mountRowsAtBottom()` then mounts starting from
+  // that stale, too-low `_mountEnd` — re-inserting real rows that fall
+  // *before* the new `_mountStart` and are already accounted for in the top
+  // spacer's height sum, double-counting their height and corrupting the
+  // whole section's layout (live-reproduced as large blank/black gaps with
+  // isolated floating rows — the DOM position math was correct, but two
+  // representations of the same rows, a spacer and real nodes, were both
+  // consuming space at once). Detect the non-overlapping case up front and
+  // fully collapse the old window to empty *before* repositioning both
+  // pointers to the new `start` — this reuses `pruneMountedRowsFromBottom()`
+  // (which already records each removed row's real measured height) rather
+  // than inventing a second removal path, and guarantees `_mountStart`/
+  // `_mountEnd` start the normal four-step reconciliation below from a
+  // consistent, fully-empty baseline instead of a stale overlapping one.
+  if (start >= wrapper._mountEnd || end <= wrapper._mountStart) {
+    pruneMountedRowsFromBottom(wrapper, wrapper._mountStart);
+    wrapper._mountStart = start;
+    wrapper._mountEnd = start;
+  }
+
   pruneMountedRowsFromTop(wrapper, start);
   pruneMountedRowsFromBottom(wrapper, end);
   mountRowsAtTop(wrapper, start);

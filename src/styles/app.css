@@ -3018,6 +3018,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .stat-tile-ring-value .stat-tile-number { font-size: var(--text-lg); }
 .stat-tile-ring-value span:not(.stat-tile-number) { font-size: var(--text-xs); margin-left: 1px; }
 
+/* Real, reported bug (live screenshot): `.stat-strip`'s base grid declaration
+   was missing entirely — the only rule anywhere in this file mentioning
+   `.stat-strip` was the `≤480px` override below forcing a single column,
+   with nothing above it establishing what that override was narrowing
+   *from*. With no `display: grid` (or any explicit `display` at all) on the
+   container, every `.kpi-tile` child rendered as a plain full-width
+   block-level div, stacked one per row, instead of the "4-equal-width KPI
+   card" grid this component was actually built for (see `.kpi-tile`'s own
+   comment below) — reported live as "square boxes" turning into full-width
+   rectangular bars on the Progress page. `repeat(auto-fit, minmax(220px,
+   1fr))` matches this app's own established card-grid convention (see
+   `.claude/rules/ui-styling.md`'s "Card/grid layout" entry) so it reflows
+   responsively across tile counts/widths without a bespoke media query per
+   breakpoint — the `≤480px` override further down still forces a guaranteed
+   single column once even one tile can't comfortably fit at 220px, since
+   `auto-fit` alone doesn't guarantee that on its own. */
+.stat-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); align-items: stretch; }
+
 /* issue #155 v2 Phase B — a distinct new component, `.kpi-tile`, not a `.stat-tile`
    variant despite the issue's own bullet naming it "`.stat-tile`": `.stat-tile` above
    is already shipped (issue #6 Phase 4.1) as a horizontal icon-left/number-right row
@@ -3741,13 +3759,51 @@ html[data-scrolling] .app-sidebar {
    state already reads against this app's near-black background, so
    dropping backdrop-filter for the scroll window is seamless instead of a
    visible color jump. */
+/* Real, reported bug (live screenshots, Retina Mac/Brave — genuine Chromium
+   checkerboarding: correct layout, unrasterized tiles painting as flat grey
+   during/after a fast scroll). Two compounding gaps in this rule, neither
+   caught by the non-Retina scripted repro this file's own history describes
+   (Retina's 4x pixel density multiplies every raster cost below):
+   (1) this rule dropped `backdrop-filter` but never the identical
+   `box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25)` glow every one
+   of these surfaces also carries — a blurred box-shadow costs the GPU just as
+   much to raster/composite as `backdrop-filter` does, so it stayed fully
+   active through every scroll frame regardless of `[data-scrolling]`.
+   (2) every selector in this app that independently duplicates `.card`'s
+   exact background/backdrop-filter/box-shadow glass treatment — instead of
+   composing the `.card` class itself — never got *any* scroll-perf
+   mitigation at all, not even the original backdrop-filter drop:
+   `.kpi-tile` (Progress page stat tiles), `.progress-card`,
+   `.daily-todo-panel`, `.settings-section`/`.settings-guest-card`,
+   `.feature-card`/`.step-card` (landing page), `.auth-card-lg` (sign-in/
+   sign-up), `.command-palette-card` (Cmd/Ctrl+K, whose own results list can
+   scroll while the palette stays open), and `.landing-mock-card`. Found by
+   grepping every `hsl(var(--v3-surface) / 0.85)` occurrence in this file,
+   not assumed from the four selectors this rule already listed. Both gaps
+   are fixed the same way: every selector below gets the identical
+   opaque-background/no-blur/no-shadow override for the scroll window,
+   restored automatically the instant scrolling settles, same as every other
+   property this rule already toggles. Any future component that copies this
+   glass treatment (rather than composing `.card`) needs adding here too, or
+   it'll silently carry the identical uncovered cost. */
 html[data-scrolling] .card,
 html[data-scrolling] .phase-card,
 html[data-scrolling] .template-card,
-html[data-scrolling] .tag-chip {
+html[data-scrolling] .tag-chip,
+html[data-scrolling] .kpi-tile,
+html[data-scrolling] .progress-card,
+html[data-scrolling] .daily-todo-panel,
+html[data-scrolling] .settings-section,
+html[data-scrolling] .settings-guest-card,
+html[data-scrolling] .feature-card,
+html[data-scrolling] .step-card,
+html[data-scrolling] .auth-card-lg,
+html[data-scrolling] .command-palette-card,
+html[data-scrolling] .landing-mock-card {
   background: hsl(var(--v3-surface));
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+  box-shadow: none;
 }
 
 /* Issue #6 Phase 4.2 — left-border priority accent, reusing the same
