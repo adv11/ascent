@@ -96,32 +96,40 @@
   --color-warning:     var(--color-accent-700);
   --color-warning-bg:  var(--color-accent-100);
 
-  /* Priority mapping — design-system.md §2: "P0 = accent tint, P1 = lighter
-     accent tint or outline, P2 = neutral tint." The v2 spec has only three
-     priority tiers (P0/P1/P2); this app's data model has a fourth (P3).
-     A prior pass here repointed every --color-p3/--color-p3-ink call site
-     directly to --color-p2/--color-p2-ink, making P3 visually identical to
-     P2 — reported live (screenshot) as "priority filter colors are missing"
-     once someone actually clicked through P0-P3 in sequence and P2/P3 read
-     as the exact same chip. Restored as its own token pair instead: a
-     lighter neutral tint (--color-neutral-300, one step lighter than P2's
-     -500) so P3 reads as "even more de-emphasized than P2," not identical to
-     it — live-verified contrast (relative-luminance calc, this file's usual
-     discipline): --color-p3-ink on its own 15%-tint background clears
-     5.23:1 light / 6.89:1 dark, both comfortably passing WCAG AA for the
-     9px badge text this pairs with. */
+  /* Priority mapping — issue #462, a direct product-owner override of
+     design-system.md §2's original "P0 = accent tint, P1 = lighter accent
+     tint or outline, P2 = neutral tint" mapping (same status as issue #435's
+     Archivo-over-Sora override: a deliberate, explicit decision to diverge
+     from that spec's default, not a bug). Real live feedback: P0/P1's green
+     borders sitting next to P2/P3's grey ones on the phase-card list read as
+     visually inconsistent, like a rendering glitch, not an intentional
+     priority signal — "why are some borders green and some grey." All four
+     tiers now read as *shades of the same green accent ramp*, descending in
+     intensity from P0 (most vivid/prominent) to P3 (most muted/pale), so the
+     whole set reads as one coherent color story. Live-verified contrast
+     (relative-luminance calc, this file's usual discipline) for the two
+     newly-added ink shades against every surface they can realistically sit
+     on: light-theme --color-accent-700 (P2-ink, reused from P1) clears
+     8.87:1 on --color-bg, 8.18:1 on --color-surface; --color-accent-600
+     (P3-ink) clears 5.28:1 on --color-bg, 4.87:1 on --color-surface — both
+     comfortably passing WCAG AA for the 9px badge text and small
+     .priority-tag text this pairs with (the same use cases the previous
+     grey P2/P3 tokens covered). Never drop P3-ink below --color-accent-600
+     in light theme — the next step down, the base --color-accent (500)
+     itself, clears only 2.68:1 on white and fails AA outright (documented
+     on --color-accent's own comment above). */
   --color-p0:     var(--color-accent);
   --color-p0-ink: var(--color-accent-800);
   --color-p0-bg:  var(--color-accent-100);
   --color-p1:     var(--color-accent-400);
   --color-p1-ink: var(--color-accent-700);
   --color-p1-bg:  var(--color-accent-100);
-  --color-p2:     var(--color-neutral-500);
-  --color-p2-ink: var(--color-neutral-800);
-  --color-p2-bg:  var(--color-neutral-200);
-  --color-p3:     var(--color-neutral-300);
-  --color-p3-ink: var(--color-neutral-700);
-  --color-p3-bg:  var(--color-neutral-100);
+  --color-p2:     var(--color-accent-300);
+  --color-p2-ink: var(--color-accent-700);
+  --color-p2-bg:  var(--color-accent-100);
+  --color-p3:     var(--color-accent-200);
+  --color-p3-ink: var(--color-accent-600);
+  --color-p3-bg:  var(--color-accent-100);
 
   /* Text on solid accent fills (buttons, filled badges) — replaces
      --color-ink-on-gold. */
@@ -404,18 +412,30 @@
   --color-warning:     var(--color-accent-700);
   --color-warning-bg:  var(--color-accent-100);
 
+  /* issue #462 — dark-theme half of the light block's P2/P3 override above
+     (see that comment for the full rationale). Dark theme's accent ramp
+     runs the opposite direction from light's (100 is near-black, 900 is
+     palest — see --color-accent's own dark-theme comment), so "descending
+     intensity toward P3" here means stepping *down* toward the ramp's darker
+     end (300 → 200), the same direction P1 already uses relative to P0
+     (400, darker/more muted than the vivid 500 base). Live-verified: P2-ink
+     (--color-accent-700, reused from P1) clears 13.70:1 on --color-bg,
+     12.53:1 on --color-surface; P3-ink (--color-accent-600) clears 13.02:1
+     on --color-bg, 11.91:1 on --color-surface — both far past WCAG AA,
+     dark theme's accent ramp stays highly legible at every step unlike
+     light theme's tighter margin at the low end. */
   --color-p0:     var(--color-accent);
   --color-p0-ink: var(--color-accent-800);
   --color-p0-bg:  var(--color-accent-100);
   --color-p1:     var(--color-accent-400);
   --color-p1-ink: var(--color-accent-700);
   --color-p1-bg:  var(--color-accent-100);
-  --color-p2:     var(--color-neutral-500);
-  --color-p2-ink: var(--color-neutral-800);
-  --color-p2-bg:  var(--color-neutral-200);
-  --color-p3:     var(--color-neutral-300);
-  --color-p3-ink: var(--color-neutral-700);
-  --color-p3-bg:  var(--color-neutral-100);
+  --color-p2:     var(--color-accent-300);
+  --color-p2-ink: var(--color-accent-700);
+  --color-p2-bg:  var(--color-accent-100);
+  --color-p3:     var(--color-accent-200);
+  --color-p3-ink: var(--color-accent-600);
+  --color-p3-bg:  var(--color-accent-100);
 
   --color-ink-on-accent: #141312;
 
@@ -2144,7 +2164,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.app-topbar-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+/* issue #463 — `.app-topbar-status` replaces the old `.app-topbar-actions`
+   wrapper, scoped to just the account/sync-status controls (review-due,
+   daily-todo, sync-state pill, "Create account") now that `.icon-btn-group`
+   is a direct `.app-topbar` sibling instead of nested alongside it — see
+   that rule's own comment further down for why the split exists. */
+.app-topbar-status { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 /* Real, reported bug (issue #309): the guest/sync pill (32px, padding-driven),
    the "Create account" `.btn-sm` (34px), and `.icon-btn-group` (~44-48px,
    padding+border around its 36px icon buttons) had three different heights
@@ -2153,9 +2178,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    change) since both classes are used elsewhere with their own, independently
    fine sizing — 36px matches the icon buttons' own natural size, the
    "anchor" control already appearing three times over in this same row. */
-.app-topbar-actions .sync-pill,
-.app-topbar-actions > .btn,
-.app-topbar-actions .icon-btn-group {
+.app-topbar-status .sync-pill,
+.app-topbar-status > .btn,
+.app-topbar .icon-btn-group {
   height: 36px;
   box-sizing: border-box;
 }
@@ -2197,7 +2222,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   min-width: 0;
   min-height: 0;
 }
-.app-topbar-actions .sync-pill { display: inline-flex; align-items: center; }
+.app-topbar-status .sync-pill { display: inline-flex; align-items: center; }
 /* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
    bare unstyled-until-hover button (matches .app-topbar-hamburger's
    treatment) since it sits among icon-only topbar actions, not a filled
@@ -2290,19 +2315,41 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      hamburger becomes visible here too, and opening it expands the rail into
      the same full overlay drawer instead of staying icon-only. */
   .app-topbar-hamburger { display: inline-flex; }
-  /* `.app-topbar`'s base `align-items: center` (desktop) centers every flex
-     child against the row's own height — harmless there since nothing
-     wraps. Below 1024px, `.app-topbar-actions` (Local only/Create account +
-     the search/bell/theme icon group) has to `flex-wrap` onto a second line
-     once the hamburger + breadcrumb + all those controls no longer fit one
-     row, making that one flex item roughly twice as tall as the hamburger
-     button next to it — `align-items: center` then centers the hamburger
-     against that *combined* two-row height, so it visually floats between
-     the two wrapped rows instead of sitting level with the first one (real,
-     reported: screenshotted at 390px looking "crowded"/misaligned — issue
-     #301 follow-up). `flex-start` keeps every child's top edge level
-     regardless of how tall its neighbor grows once wrapped. */
-  .app-topbar { align-items: flex-start; }
+  /* issue #463 — full redesign of this breakpoint's topbar wrapping, real
+     reported clutter: the hamburger, breadcrumb, review/todo badges,
+     sync-pill, "Create account" button, and icon group used to wrap
+     wherever they happened to run out of row width (plain `flex-wrap` with
+     no explicit `order`), producing up to three uncontrolled rows — the
+     hamburger sitting alone, then a status-badge row, then the icon row —
+     before any real page content appeared. Deliberate two-row layout
+     instead: row 1 is always exactly `hamburger · breadcrumb · icon group`
+     (never more, never fewer); row 2 is `.app-topbar-status` (review-due/
+     daily-todo badges, sync-pill, "Create account") when any of those are
+     present. `dashboard.js` always passes a real `syncPill`, so its row 2
+     always renders; `progress.js`/`settings.js` pass `syncPill: null` and no
+     `reviewDueBadge` at all (`createTopbar()`'s `dailyTodoNavBadge`/
+     `reviewDueBadge`/`syncPill` params are optional, `topbar.js`), so for a
+     signed-in (non-guest) user on those two pages `.app-topbar-status` ends
+     up with zero children — the `:empty` rule below collapses it back to
+     nothing rather than leaving a blank, still-margined second row. `order`
+     reassigns the *visual* row-1/row-2 split independently of DOM order
+     (`hamburger, breadcrumbEl, statusGroup, iconGroup` — `.app-topbar`
+     desktop's unchanged left-to-right reading order, `topbar.js`) —
+     `.icon-btn-group` moves from DOM-last to visually-third (still row 1)
+     via `order: 3`, and `.app-topbar-status`'s `order: 4` + `flex-basis:
+     100%` forces it onto a guaranteed-empty new line: a `flex-basis: 100%`
+     item always starts its own row, and since nothing else is ordered after
+     it, it's alone there, not sharing the line with anything that follows.
+     `.app-topbar-breadcrumb`'s existing `flex: 1; min-width: 0` (unchanged)
+     is what actually absorbs the squeeze — it ellipsis-truncates before
+     anything is forced to wrap, so row 1 reliably fits regardless of how
+     long the page title is. */
+  .app-topbar { align-items: flex-start; flex-wrap: wrap; }
+  .app-topbar-hamburger { order: 1; }
+  .app-topbar-breadcrumb { order: 2; }
+  .icon-btn-group { order: 3; flex-shrink: 0; }
+  .app-topbar-status { order: 4; flex-basis: 100%; justify-content: flex-start; margin-top: var(--space-2); }
+  .app-topbar-status:empty { display: none; margin-top: 0; }
   /* `position: fixed` takes the sidebar out of grid flow the moment the
      drawer opens — without the `.app-shell-2` override above locking the
      grid's first column to a fixed 56px, the `auto`-sized column it used to
@@ -3426,7 +3473,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .daily-todo-panel.collapsed .daily-todo-heading-row { margin-bottom: 0; }
 .daily-todo-panel.collapsed .daily-todo-count-badge { display: inline-flex; }
-/* Real, reported mismatch (issue #309, same shape as .app-topbar-actions'
+/* Real, reported mismatch (issue #309, same shape as .app-topbar-status's
    fix above): the "Add a todo" `.field-input.compact` (39px) and its "Add"
    `.btn-sm` (35px) sat 4px apart in the same row. */
 .daily-todo-add-row > .field-input,
@@ -4965,7 +5012,7 @@ html[data-scrolling] .tag-chip {
 .progress-header h1 { margin: 0; font-size: var(--text-xl); }
 .progress-header-subtitle { margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-sm); }
 .progress-header-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
-/* Real, reported mismatch (issue #309, same shape as .app-topbar-actions'
+/* Real, reported mismatch (issue #309, same shape as .app-topbar-status's
    fix above): the "This Week/This Month/All Time" `.filter-chip`s (36px)
    and the "Share progress" `.btn-sm` (34px) sat 2px apart in the same row. */
 .progress-header-actions .filter-chip,
@@ -6106,7 +6153,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      tier: the group must grow to actually fit a real 46px touch target
      (46px child + 2*1px border + 2*3px padding = 54px), not stay pinned to
      36px like the mouse/desktop row. */
-  .app-topbar-actions .icon-btn-group { height: 54px; }
+  .app-topbar .icon-btn-group { height: 54px; }
   .icon-btn-group .app-topbar-command-btn,
   .icon-btn-group .app-topbar-bell,
   .icon-btn-group .theme-toggle.btn-icon {
@@ -6361,8 +6408,8 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   }
   .print-phase-P0 { border-left-color: #0CB656; } /* intentional: fixed print accent, matches --color-p0 (light theme) — issue #435, was still #EC3013 from before v3's green accent */
   .print-phase-P1 { border-left-color: #70DB9F; } /* intentional: fixed print accent, matches --color-p1 (light theme) — issue #435, was still #FF9783 */
-  .print-phase-P2 { border-left-color: #9B9797; } /* intentional: fixed print accent, matches --color-p2 (light theme) */
-  .print-phase-P3 { border-left-color: #D7D3D3; } /* intentional: fixed print accent, matches --color-p3 (light theme) */
+  .print-phase-P2 { border-left-color: #ABEDC8; } /* intentional: fixed print accent, matches --color-p2 (light theme) — issue #462, P2/P3 moved from neutral grey to accent-green shades */
+  .print-phase-P3 { border-left-color: #D4F7E3; } /* intentional: fixed print accent, matches --color-p3 (light theme) — issue #462 */
   .print-phase-title { font-size: 18px; margin: 20px 0 8px; }
   .print-section-title {
     font-size: 12px;
@@ -6385,8 +6432,8 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   }
   .print-priority-badge.print-priority-P0 { background: #ECFEF4; color: #05612D; } /* intentional: fixed print tint+ink, matches --color-p0-bg/-ink (light theme) — issue #435, was still the pre-v3 red/pink pairing */
   .print-priority-badge.print-priority-P1 { background: #ECFEF4; color: #034E24; } /* intentional: fixed print tint+ink, matches --color-p1-bg/-ink (light theme) — issue #435, was still the pre-v3 red/pink pairing */
-  .print-priority-badge.print-priority-P2 { background: #f0efef; color: #444141; } /* intentional: fixed print tint+ink, matches --color-p2-bg/-ink (light theme) */
-  .print-priority-badge.print-priority-P3 { background: #f9f8f8; color: #605D5D; } /* intentional: fixed print tint+ink, matches --color-p3-bg/-ink (light theme) */
+  .print-priority-badge.print-priority-P2 { background: #ECFEF4; color: #034E24; } /* intentional: fixed print tint+ink, matches --color-p2-bg/-ink (light theme) — issue #462 */
+  .print-priority-badge.print-priority-P3 { background: #ECFEF4; color: #067436; } /* intentional: fixed print tint+ink, matches --color-p3-bg/-ink (light theme) — issue #462 */
   .print-item-notes { font-size: 12px; color: #333; margin: 2px 0 2px 24px; white-space: pre-wrap; /* intentional: fixed print text color */ }
   .print-resource { font-size: 12px; color: #333; margin: 2px 0 2px 24px; font-style: italic; /* intentional: fixed print text color */ }
 }

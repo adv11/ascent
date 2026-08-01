@@ -102,18 +102,36 @@ export function createTopbar({ breadcrumb, user, store, syncPill, themeToggleBtn
     themeToggleBtn
   ]);
 
-  const actions = el('div', { className: 'app-topbar-actions' }, [
+  // Issue #463 — real, reported clutter on narrow viewports: with everything
+  // in one `flex-wrap` container, the review/todo badges, sync-pill, "Create
+  // account" button, and icon group wrapped wherever they happened to run
+  // out of row width, producing up to three uncontrolled, visually
+  // unrelated-looking rows (hamburger alone, then a status-badge row, then
+  // the icon row) before any real page content appeared. `.app-topbar-status`
+  // groups the account/sync-status controls (review-due, daily-todo, sync
+  // state, "Create account") into one flex child specifically so a narrow
+  // viewport can wrap *that whole group* onto its own single second row —
+  // see the `≤1023px` rule in app.css — instead of each control wrapping
+  // independently wherever it happens to run out of space. `iconGroup` stays
+  // a sibling, not a member of this group, since it belongs on the primary
+  // row (with the hamburger/breadcrumb) at every width, not the status row.
+  const statusGroup = el('div', { className: 'app-topbar-status' }, [
     reviewDueBadge,
     dailyTodoNavBadge,
     syncPill,
-    user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null,
-    iconGroup
+    user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null
   ].filter(Boolean));
 
+  // `statusGroup`/`iconGroup` are direct `.app-topbar` children (not nested
+  // in a shared wrapper) specifically so the `≤1023px` CSS can re-`order`
+  // `iconGroup` onto the primary row with `hamburger`/`breadcrumbEl` while
+  // `statusGroup` wraps to its own row below — see app.css's own comment on
+  // that rule for why a nested wrapper can't express that split.
   const node = el('header', { className: 'app-topbar' }, [
     hamburger,
     breadcrumbEl,
-    actions
+    statusGroup,
+    iconGroup
   ]);
 
   node._cleanup = bindCommandPaletteShortcut(openPalette);
