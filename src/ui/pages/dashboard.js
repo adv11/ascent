@@ -1585,7 +1585,16 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     if (!confettiAlreadyFired) {
       import('../components/confetti.js').then(({ triggerConfetti }) => triggerConfetti());
     }
-    import('../components/shareModal.js').then(({ openBadgeShareModal }) => openBadgeShareModal(kind, label).catch(() => {}));
+    // issue #474 — a failure here (e.g. generateBadgeCard()'s font-load await
+    // rejecting) used to be swallowed with zero trace. The primary completion
+    // feedback (toast + confetti above) has already fired independently by
+    // this point, so there's nothing more to show the user for an optional
+    // share card that failed to generate — but it must not vanish silently,
+    // matching this app's own "log the raw error to the console" convention
+    // (.claude/rules/content-style.md) that every other catch block follows.
+    import('../components/shareModal.js').then(({ openBadgeShareModal }) => openBadgeShareModal(kind, label).catch(error => {
+      console.error('Failed to generate/open the completion share card', error);
+    }));
     return true;
   }
 
