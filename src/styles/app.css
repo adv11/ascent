@@ -3799,7 +3799,30 @@ html[data-scrolling] .feature-card,
 html[data-scrolling] .step-card,
 html[data-scrolling] .auth-card-lg,
 html[data-scrolling] .command-palette-card,
-html[data-scrolling] .landing-mock-card {
+html[data-scrolling] .landing-mock-card,
+/* issue #470 — `.modal-card` (confirmDialog and every other hand-rolled
+   modal) and `.dropdown-menu` (the sidebar account menu) are the two glass
+   surfaces most likely to be freshly *created* — appended to `document.body`
+   for the first time — right in the middle of, or shortly after, a fast
+   scroll: a real, reported bug showed both intermittently painting as an
+   empty unstyled box for a brief window before resolving to their real
+   content a moment later, with the live report's own screenshots showing
+   fast-scroll blanking followed shortly after by opening the account
+   dropdown / a confirm dialog. Neither was in this selector list before —
+   both compose their own background/backdrop-filter/box-shadow glass
+   treatment independently (`.modal-card`, `.dropdown-menu`, this file), the
+   exact "duplicates `.card`'s treatment instead of composing it" gap this
+   rule's own history above already fixed for `.kpi-tile`/`.progress-card`/
+   etc. If either is inserted while `[data-scrolling]` is already set on
+   `<html>` (a fast scroll settles ~150ms after the last scroll event, per
+   `scrollPerfMode.js` — well within reach of a reflexive click right after
+   scrolling), this rule now applies from its very first paint, skipping the
+   expensive blur/glow compositing during the exact window a backlog of
+   still-settling scroll-driven layout work (see the pruneMountedRowsFromTop/
+   Bottom batching fix, `dashboard.js`) is most likely competing for the same
+   frame budget. */
+html[data-scrolling] .modal-card,
+html[data-scrolling] .dropdown-menu {
   background: hsl(var(--v3-surface));
   -webkit-backdrop-filter: none;
   backdrop-filter: none;

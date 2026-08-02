@@ -411,3 +411,48 @@ describe('syncSectionRowsWindow — non-overlapping window jump (issue #465 foll
     expect(spacerTotal + totalRealRowHeight).toBe(30 * 67); // no double-counted row anywhere
   });
 });
+
+// issue #470 — pruneMountedRowsFromTop()/pruneMountedRowsFromBottom() (not
+// exported; syncSectionRowsWindow()'s own internal helpers) used to read a
+// row's real height (getBoundingClientRect(), which forces the browser to
+// flush layout) and remove that same row in the same loop iteration, one row
+// at a time — a fast scroll that prunes many rows in a single virtualize
+// pass turned into that many forced synchronous layout recalculations
+// back-to-back on the main thread (classic layout thrashing), which can both
+// re-lengthen the fast-scroll blank-paint window and delay an unrelated
+// freshly-opened modal/dropdown's first paint if one opens while that
+// backlog is still draining. Driven through syncSectionRowsWindow() (the
+// only way to reach these helpers) with real getBoundingClientRect()/remove()
+// calls spied on (not mocked away — jsdom's real zero-height rect and real
+// DOM removal both still run) purely to capture call *order*. Fails against
+// the pre-fix interleaved version (verified by reverting the batching in
+// src/ui/pages/dashboard.js locally and re-running — every 'read'/'write'
+// pair alternates instead of all reads preceding all writes) and passes
+// against the fix.
+describe('pruneMountedRowsFromTop/Bottom batch layout reads before DOM writes (issue #470)', () => {
+  it('reads every pruned row\'s height before removing any of them, not interleaved', async () => {
+    const { buildSectionRows, syncSectionRowsWindow } = await import('../../src/ui/pages/dashboard.js');
+    const items = Array.from({ length: 20 }, (_, i) => ({ id: `item-${i}` }));
+    const wrapper = buildSectionRows(items, () => document.createElement('div'));
+    syncSectionRowsWindow(wrapper, 0, 20); // mount every row first
+
+    const callOrder = [];
+    const originalRect = Element.prototype.getBoundingClientRect;
+    const originalRemove = Element.prototype.remove;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function mockedRect(...args) {
+      callOrder.push('read');
+      return originalRect.apply(this, args);
+    });
+    vi.spyOn(Element.prototype, 'remove').mockImplementation(function mockedRemove(...args) {
+      callOrder.push('write');
+      return originalRemove.apply(this, args);
+    });
+
+    // Only the window's start moves (0 -> 5); the end is unchanged, so this
+    // exercises pruneMountedRowsFromTop() in isolation (5 rows pruned) with
+    // no bottom-pruning noise mixed into the same call-order trace.
+    syncSectionRowsWindow(wrapper, 5, 20);
+
+    expect(callOrder).toEqual(['read', 'read', 'read', 'read', 'read', 'write', 'write', 'write', 'write', 'write']);
+  });
+});
