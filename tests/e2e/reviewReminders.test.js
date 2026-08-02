@@ -69,9 +69,11 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
 
     // Marking the item reviewed drops it out of the REVIEW filter's own
     // criteria (isReviewDue()), so it disappears from this filtered list on
-    // re-render — switch back to the "All" chip to find it and confirm it's
+    // re-render — switch back to "All" (issue #477 — the priority chips
+    // collapsed into a createSelect() dropdown) to find it and confirm it's
     // still marked done there.
-    await page.locator('.filter-chip[data-p="ALL"]').click();
+    await page.locator('.priority-filter-select .custom-select-trigger').click();
+    await page.locator('.custom-select-option', { hasText: /^All/ }).click();
     await expect(page.locator('.check-item').first()).toHaveClass(/done/);
   });
 });

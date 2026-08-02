@@ -28,7 +28,11 @@ beforeEach(() => {
 // independently testable — see the extraction comments in
 // src/ui/pages/dashboard.js. showDeleteModal was extracted the same way, but
 // has since moved out to its own component — see deleteAccountModal.test.js.
-describe('renderFilterChips (issue #53)', () => {
+// Issue #477 — the five priority pills (All/P0-P3) this describe block used
+// to cover moved to renderPriorityFilterSelect() (its own describe block
+// below); renderFilterChips() itself now only builds the "Resources"/
+// "Review due" toggles.
+describe('renderFilterChips (issue #53, narrowed by issue #477)', () => {
   async function build(items, activeFilter, onFilterChange) {
     const { renderFilterChips } = await import('../../src/ui/pages/dashboard.js');
     return renderFilterChips(items, activeFilter, onFilterChange);
@@ -40,13 +44,9 @@ describe('renderFilterChips (issue #53)', () => {
     { priority: 'P1', done: false },
   ];
 
-  it('renders one chip per priority plus "All", "Resources", and "Review due", with correct done/total counts', async () => {
+  it('renders "Resources" and "Review due" only', async () => {
     const chips = await build(items, 'ALL', () => {});
-    expect(chips).toHaveLength(7);
-    const p0 = chips.find(c => c.dataset.p === 'P0');
-    expect(p0.querySelector('.chip-count').textContent).toBe('1/2');
-    const all = chips.find(c => c.dataset.p === 'ALL');
-    expect(all.querySelector('.chip-count').textContent).toBe('1/3');
+    expect(chips).toHaveLength(2);
     const resources = chips.find(c => c.dataset.p === 'RESOURCES');
     expect(resources).toBeTruthy();
     expect(resources.textContent).toContain('Resources');
@@ -56,43 +56,93 @@ describe('renderFilterChips (issue #53)', () => {
   });
 
   it('marks the active filter chip', async () => {
-    const chips = await build(items, 'P0', () => {});
-    const p0 = chips.find(c => c.dataset.p === 'P0');
-    expect(p0.classList.contains('active')).toBe(true);
-    expect(p0.getAttribute('aria-pressed')).toBe('true');
+    const chips = await build(items, 'RESOURCES', () => {});
+    const resources = chips.find(c => c.dataset.p === 'RESOURCES');
+    expect(resources.classList.contains('active')).toBe(true);
+    expect(resources.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('calls onFilterChange with the clicked priority', async () => {
+  it('calls onFilterChange with the clicked filter id', async () => {
     const onFilterChange = vi.fn();
     const chips = await build(items, 'ALL', onFilterChange);
-    chips.find(c => c.dataset.p === 'P1').click();
-    expect(onFilterChange).toHaveBeenCalledWith('P1');
+    chips.find(c => c.dataset.p === 'REVIEW').click();
+    expect(onFilterChange).toHaveBeenCalledWith('REVIEW');
   });
 
-  // Issue #6 Phase 4.3 — inline clear ✕ on the active non-ALL chip.
-  it('shows a clear ✕ only on the active non-ALL chip', async () => {
-    const chips = await build(items, 'P0', () => {});
-    const p0 = chips.find(c => c.dataset.p === 'P0');
-    const all = chips.find(c => c.dataset.p === 'ALL');
-    const p1 = chips.find(c => c.dataset.p === 'P1');
-    expect(p0.querySelector('.filter-chip-clear')).not.toBeNull();
-    expect(all.querySelector('.filter-chip-clear')).toBeNull();
-    expect(p1.querySelector('.filter-chip-clear')).toBeNull();
+  // Issue #6 Phase 4.3 — inline clear ✕ on the active chip.
+  it('shows a clear ✕ only on the active chip', async () => {
+    const chips = await build(items, 'RESOURCES', () => {});
+    const resources = chips.find(c => c.dataset.p === 'RESOURCES');
+    const review = chips.find(c => c.dataset.p === 'REVIEW');
+    expect(resources.querySelector('.filter-chip-clear')).not.toBeNull();
+    expect(review.querySelector('.filter-chip-clear')).toBeNull();
   });
 
   it('clicking the clear ✕ calls onFilterChange with ALL', async () => {
     const onFilterChange = vi.fn();
-    const chips = await build(items, 'P0', onFilterChange);
-    const p0 = chips.find(c => c.dataset.p === 'P0');
-    p0.querySelector('.filter-chip-clear').click();
+    const chips = await build(items, 'RESOURCES', onFilterChange);
+    const resources = chips.find(c => c.dataset.p === 'RESOURCES');
+    resources.querySelector('.filter-chip-clear').click();
     expect(onFilterChange).toHaveBeenCalledWith('ALL');
   });
 });
 
-// Issue #100 follow-up — a fifth filter chip, "Resources", matching topics
-// that carry at least one resource link (real feedback: no way to see every
-// resource in the roadmap "in one go" without opening each topic's edit
-// panel individually).
+// Issue #477 — the priority-level filter (All/P0-P3) collapsed from five
+// `.filter-chip` pills into one createSelect() dropdown, to declutter the
+// filters row. Counts are baked into each option's label (createSelect's
+// listbox only ever renders plain text) rather than a separate `.chip-count`
+// badge.
+describe('renderPriorityFilterSelect (issue #477)', () => {
+  async function build(items, activeFilter, onFilterChange) {
+    const { renderPriorityFilterSelect } = await import('../../src/ui/pages/dashboard.js');
+    return renderPriorityFilterSelect(items, activeFilter, onFilterChange);
+  }
+
+  const items = [
+    { priority: 'P0', done: true },
+    { priority: 'P0', done: false },
+    { priority: 'P1', done: false },
+  ];
+
+  // select.js portals its listbox to document.body only while open (see that
+  // file's own transformed-ancestor comment) — mount the select itself to
+  // document.body too, matching select.test.js's own established convention,
+  // so the trigger's real click/positioning logic runs against a connected
+  // node rather than a detached one.
+  async function mount(items, activeFilter, onFilterChange) {
+    const select = await build(items, activeFilter, onFilterChange);
+    document.body.append(select);
+    return select;
+  }
+
+  it('defaults to the active filter and reflects it in the trigger label', async () => {
+    const select = await mount(items, 'P0', () => {});
+    expect(select.value).toBe('P0');
+    expect(select.querySelector('.custom-select-value').textContent).toBe('P0 · 1/2');
+  });
+
+  it('bakes done/total counts into every option label', async () => {
+    const select = await mount(items, 'ALL', () => {});
+    select.querySelector('.custom-select-trigger').click();
+    const optionText = [...document.querySelectorAll('.custom-select-option')].map(o => o.textContent);
+    expect(optionText).toEqual(['All · 1/3', 'P0 · 1/2', 'P1 · 0/1', 'P2 · 0/0', 'P3 · 0/0']);
+  });
+
+  it('calls onFilterChange when a different option is chosen', async () => {
+    const onFilterChange = vi.fn();
+    const select = await mount(items, 'ALL', onFilterChange);
+    select.querySelector('.custom-select-trigger').click();
+    const p1Option = [...document.querySelectorAll('.custom-select-option')].find(o => o.textContent.startsWith('P1'));
+    p1Option.click();
+    expect(onFilterChange).toHaveBeenCalledWith('P1');
+  });
+});
+
+// Issue #100 follow-up — a "Resources" toggle, matching topics that carry at
+// least one resource link (real feedback: no way to see every resource in
+// the roadmap "in one go" without opening each topic's edit panel
+// individually). Issue #477 moved this chip's priority-level siblings to
+// renderPriorityFilterSelect() above; the Resources chip itself is unchanged.
 describe('renderFilterChips — "Resources" filter (issue #100 follow-up)', () => {
   async function build(items, activeFilter, onFilterChange) {
     const { renderFilterChips } = await import('../../src/ui/pages/dashboard.js');
