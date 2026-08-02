@@ -706,28 +706,58 @@ export function sumRowHeights(heights, start, end, fallback) {
 // the original single-function version of this logic measured complexity 13
 // against a max of 10; root CLAUDE.md's convention for a newly-written
 // function is to extract named helpers rather than just shorten lines).
+// issue #470 — both prune functions used to read a row's real height
+// (getBoundingClientRect(), which forces the browser to flush layout) and
+// remove that same row in the same loop iteration, one row at a time. Every
+// removal invalidates the layout the *next* iteration's read depends on, so
+// a prune of N rows forced N synchronous layout recalculations back-to-back
+// on the main thread — classic layout thrashing. A single fast-scroll jump
+// can prune dozens of rows in one virtualize pass (this is exactly what a
+// fast fling triggers), so this showed up as real main-thread jank capable
+// of both re-lengthening the fast-scroll blank-paint window #468 had just
+// shortened, and delaying the first paint of an unrelated freshly-opened
+// modal/dropdown if one was opened while this backlog was still draining.
+// Splitting each function into a read phase (walk the sibling chain — cheap,
+// doesn't force layout — and call getBoundingClientRect() on every row still
+// to be pruned, back-to-back with no writes between them, so only the first
+// call in the batch forces a real recalculation) and a write phase (record
+// the already-captured heights and remove every row) costs one forced layout
+// per prune call regardless of how many rows it prunes, instead of one per
+// row. Output is unchanged — same rows removed, same heights recorded, same
+// final _mountStart/_mountEnd — see tests/unit/dashboard.test.js's existing
+// virtualization suites, none of which needed updating for this change.
 function pruneMountedRowsFromTop(wrapper, start) {
-  while (wrapper._mountStart < start) {
-    const idx = wrapper._mountStart;
-    const rowEl = wrapper._topSpacer.nextElementSibling;
-    if (rowEl && rowEl !== wrapper._bottomSpacer) {
-      recordMeasuredHeight(wrapper, idx, rowEl.getBoundingClientRect().height);
-      rowEl.remove();
-    }
-    wrapper._mountStart++;
+  if (wrapper._mountStart >= start) return;
+  const rows = [];
+  let rowEl = wrapper._topSpacer.nextElementSibling;
+  for (let idx = wrapper._mountStart; idx < start; idx++) {
+    if (!rowEl || rowEl === wrapper._bottomSpacer) continue;
+    rows.push({ idx, rowEl });
+    rowEl = rowEl.nextElementSibling;
   }
+  const heights = rows.map(row => row.rowEl.getBoundingClientRect().height);
+  rows.forEach((row, i) => {
+    recordMeasuredHeight(wrapper, row.idx, heights[i]);
+    row.rowEl.remove();
+  });
+  wrapper._mountStart = start;
 }
 
 function pruneMountedRowsFromBottom(wrapper, end) {
-  while (wrapper._mountEnd > end) {
-    const idx = wrapper._mountEnd - 1;
-    const rowEl = wrapper._bottomSpacer.previousElementSibling;
-    if (rowEl && rowEl !== wrapper._topSpacer) {
-      recordMeasuredHeight(wrapper, idx, rowEl.getBoundingClientRect().height);
-      rowEl.remove();
-    }
-    wrapper._mountEnd--;
+  if (wrapper._mountEnd <= end) return;
+  const rows = [];
+  let rowEl = wrapper._bottomSpacer.previousElementSibling;
+  for (let idx = wrapper._mountEnd - 1; idx >= end; idx--) {
+    if (!rowEl || rowEl === wrapper._topSpacer) continue;
+    rows.push({ idx, rowEl });
+    rowEl = rowEl.previousElementSibling;
   }
+  const heights = rows.map(row => row.rowEl.getBoundingClientRect().height);
+  rows.forEach((row, i) => {
+    recordMeasuredHeight(wrapper, row.idx, heights[i]);
+    row.rowEl.remove();
+  });
+  wrapper._mountEnd = end;
 }
 
 function mountRowsAtTop(wrapper, start) {
