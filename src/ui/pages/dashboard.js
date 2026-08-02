@@ -701,33 +701,33 @@ export function sumRowHeights(heights, start, end, fallback) {
 // (`.style.height`), not the CSP-blocked inline `style` attribute (same safe
 // pattern `animatePhaseBody()`/`tooltip.js`/`dropdown.js` already use, see
 // their own comments). No-op if the window hasn't actually changed.
-// Four independent single-direction reconciliation steps, each simple enough
-// to unit-test/reason about on its own (issue #53's ESLint complexity gate —
-// the original single-function version of this logic measured complexity 13
-// against a max of 10; root CLAUDE.md's convention for a newly-written
-// function is to extract named helpers rather than just shorten lines).
-// issue #470 — both prune functions used to read a row's real height
-// (getBoundingClientRect(), which forces the browser to flush layout) and
-// remove that same row in the same loop iteration, one row at a time. Every
-// removal invalidates the layout the *next* iteration's read depends on, so
-// a prune of N rows forced N synchronous layout recalculations back-to-back
-// on the main thread — classic layout thrashing. A single fast-scroll jump
-// can prune dozens of rows in one virtualize pass (this is exactly what a
-// fast fling triggers), so this showed up as real main-thread jank capable
-// of both re-lengthening the fast-scroll blank-paint window #468 had just
-// shortened, and delaying the first paint of an unrelated freshly-opened
-// modal/dropdown if one was opened while this backlog was still draining.
-// Splitting each function into a read phase (walk the sibling chain — cheap,
-// doesn't force layout — and call getBoundingClientRect() on every row still
-// to be pruned, back-to-back with no writes between them, so only the first
-// call in the batch forces a real recalculation) and a write phase (record
-// the already-captured heights and remove every row) costs one forced layout
-// per prune call regardless of how many rows it prunes, instead of one per
-// row. Output is unchanged — same rows removed, same heights recorded, same
-// final _mountStart/_mountEnd — see tests/unit/dashboard.test.js's existing
-// virtualization suites, none of which needed updating for this change.
-function pruneMountedRowsFromTop(wrapper, start) {
-  if (wrapper._mountStart >= start) return;
+//
+// issue #470, and its own follow-up — split into a resolve phase (every
+// layout-forcing `getBoundingClientRect()` read, zero DOM writes) and an
+// apply phase (every DOM write, zero geometry reads), rather than one
+// function that interleaves both. The first #470 fix batched reads *within*
+// one section's own prune calls (one forced layout per section instead of
+// one per pruned row), which fixed the common case — but a roadmap with
+// several/many sections open at once still paid one forced layout *per open
+// section*, since each section's writes dirty the layout the next section's
+// own reads depend on. Java Backend (19 phases) is the one built-in template
+// big enough for that per-section cost to still read as a brief flicker
+// under a very fast real scroll, even after the first fix — every other
+// template's smaller phase count kept it below the threshold of visibility.
+// `virtualizeOpenSections()` below now resolves every currently-open
+// section's plan first (all reads, in one pass, no writes anywhere) and only
+// then applies every plan (all writes) — collapsing the whole batch down to
+// one forced layout for however many sections happen to be open, not one
+// per section. Output is byte-identical to the pre-split code — same rows
+// removed, same heights recorded, same final `_mountStart`/`_mountEnd` in
+// every case (verified against `tests/unit/dashboard.test.js`'s existing
+// virtualization suites, none of which needed updating for this change).
+
+// Pure DOM traversal via `.nextElementSibling`/`.previousElementSibling` —
+// neither forces a layout recalculation (only a geometry-reading call like
+// `getBoundingClientRect()` does), so these collect *which* rows would need
+// pruning without costing anything layout-wise on their own.
+function collectPrunableRowsFromTop(wrapper, start) {
   const rows = [];
   let rowEl = wrapper._topSpacer.nextElementSibling;
   for (let idx = wrapper._mountStart; idx < start; idx++) {
@@ -735,16 +735,10 @@ function pruneMountedRowsFromTop(wrapper, start) {
     rows.push({ idx, rowEl });
     rowEl = rowEl.nextElementSibling;
   }
-  const heights = rows.map(row => row.rowEl.getBoundingClientRect().height);
-  rows.forEach((row, i) => {
-    recordMeasuredHeight(wrapper, row.idx, heights[i]);
-    row.rowEl.remove();
-  });
-  wrapper._mountStart = start;
+  return rows;
 }
 
-function pruneMountedRowsFromBottom(wrapper, end) {
-  if (wrapper._mountEnd <= end) return;
+function collectPrunableRowsFromBottom(wrapper, end) {
   const rows = [];
   let rowEl = wrapper._bottomSpacer.previousElementSibling;
   for (let idx = wrapper._mountEnd - 1; idx >= end; idx--) {
@@ -752,12 +746,97 @@ function pruneMountedRowsFromBottom(wrapper, end) {
     rows.push({ idx, rowEl });
     rowEl = rowEl.previousElementSibling;
   }
-  const heights = rows.map(row => row.rowEl.getBoundingClientRect().height);
+  return rows;
+}
+
+function collectAllMountedRows(wrapper) {
+  const rows = [];
+  let rowEl = wrapper._topSpacer.nextElementSibling;
+  let idx = wrapper._mountStart;
+  while (rowEl && rowEl !== wrapper._bottomSpacer) {
+    rows.push({ idx, rowEl });
+    rowEl = rowEl.nextElementSibling;
+    idx++;
+  }
+  return rows;
+}
+
+// Removes every row in `rows`, recording each one's already-measured real
+// height first — a pure write, no `getBoundingClientRect()` call of its own;
+// every height was already read up front by `resolveSectionPlan()`.
+function removeMeasuredRows(wrapper, rows, heights) {
   rows.forEach((row, i) => {
     recordMeasuredHeight(wrapper, row.idx, heights[i]);
     row.rowEl.remove();
   });
-  wrapper._mountEnd = end;
+}
+
+// Resolves everything one section's mounted-window reconciliation needs,
+// doing every layout-forcing read up front and *no DOM write at all* — see
+// this block's own comment above for why the split matters. Returns null
+// when there's nothing to do for this section this frame.
+export function resolveSectionPlan(wrapper, desiredStart, desiredEnd) {
+  const items = wrapper._items;
+  const start = Math.max(0, Math.min(desiredStart, items.length));
+  const end = Math.max(start, Math.min(desiredEnd, items.length));
+  if (start === wrapper._mountStart && end === wrapper._mountEnd) return null;
+
+  // Real, reported bug (issue #465 follow-up): a fast scroll can jump
+  // [start, end) past the currently mounted range with zero overlap — the
+  // buffer zone gets skipped entirely between two virtualize passes. Pruning
+  // from just one side would leave the other side's pointer stale (see the
+  // historical account in this repo's git history for the exact corruption
+  // that caused). Collapsing the whole old window first — reading every
+  // currently-mounted row's height up front, same as every other branch here
+  // — keeps that fix intact under this plan shape: nothing survives a
+  // non-overlapping jump, so the entire new [start, end) window is mounted
+  // fresh in the apply phase.
+  const nonOverlapping = start >= wrapper._mountEnd || end <= wrapper._mountStart;
+  // Mirrors pruneMountedRowsFromTop/Bottom's original early-return guards
+  // exactly (`wrapper._mountStart >= start` / `wrapper._mountEnd <= end`) —
+  // whether a side is pruned at all, not just how many rows, has to be
+  // decided from the *original* mountStart/mountEnd, before anything in this
+  // plan gets applied.
+  const pruneTop = !nonOverlapping && wrapper._mountStart < start;
+  const pruneBottom = !nonOverlapping && wrapper._mountEnd > end;
+  const topRows = pruneTop ? collectPrunableRowsFromTop(wrapper, start) : [];
+  const bottomRows = pruneBottom ? collectPrunableRowsFromBottom(wrapper, end) : [];
+  const collapseRows = nonOverlapping ? collectAllMountedRows(wrapper) : [];
+
+  const rowsToMeasure = [...topRows, ...bottomRows, ...collapseRows];
+  const heights = rowsToMeasure.map(row => row.rowEl.getBoundingClientRect().height);
+  const topHeights = heights.slice(0, topRows.length);
+  const bottomHeights = heights.slice(topRows.length, topRows.length + bottomRows.length);
+  const collapseHeights = heights.slice(topRows.length + bottomRows.length);
+
+  return { wrapper, start, end, nonOverlapping, pruneTop, pruneBottom, topRows, topHeights, bottomRows, bottomHeights, collapseRows, collapseHeights };
+}
+
+// Applies a plan resolved by resolveSectionPlan() — every operation here is
+// a DOM write (row removal, row insertion, a spacer's `.style.height`) or
+// plain JS bookkeeping; nothing here calls `getBoundingClientRect()` or any
+// other layout-forcing read, so applying N plans back-to-back costs exactly
+// the writes themselves, with no forced layout recalculation interleaved.
+export function applySectionPlan(plan) {
+  const { wrapper, start, end, nonOverlapping, pruneTop, pruneBottom, topRows, topHeights, bottomRows, bottomHeights, collapseRows, collapseHeights } = plan;
+
+  if (nonOverlapping) {
+    removeMeasuredRows(wrapper, collapseRows, collapseHeights);
+    wrapper._mountStart = start;
+    wrapper._mountEnd = start;
+  } else {
+    removeMeasuredRows(wrapper, topRows, topHeights);
+    if (pruneTop) wrapper._mountStart = start;
+    removeMeasuredRows(wrapper, bottomRows, bottomHeights);
+    if (pruneBottom) wrapper._mountEnd = end;
+  }
+
+  mountRowsAtTop(wrapper, start);
+  mountRowsAtBottom(wrapper, end);
+
+  const fallback = estimateRowHeight(wrapper);
+  wrapper._topSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, 0, wrapper._mountStart, fallback)}px`;
+  wrapper._bottomSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, wrapper._mountEnd, wrapper._items.length, fallback)}px`;
 }
 
 function mountRowsAtTop(wrapper, start) {
@@ -774,49 +853,14 @@ function mountRowsAtBottom(wrapper, end) {
   }
 }
 
+// Single-section convenience wrapper over resolve+apply — this is what every
+// existing test, and any future single-section call site, calls directly.
+// `virtualizeOpenSections()` below deliberately does *not* call this: it
+// needs to resolve every open section's plan before applying any of them,
+// which this combined function can't express on its own.
 export function syncSectionRowsWindow(wrapper, desiredStart, desiredEnd) {
-  const items = wrapper._items;
-  const start = Math.max(0, Math.min(desiredStart, items.length));
-  const end = Math.max(start, Math.min(desiredEnd, items.length));
-  if (start === wrapper._mountStart && end === wrapper._mountEnd) return;
-
-  // Real, reported bug (live-reproduced, issue #465 follow-up): a fast scroll
-  // can jump the desired [start, end) window past the currently mounted
-  // range with zero overlap — the buffer zone gets skipped entirely between
-  // two virtualize passes. `pruneMountedRowsFromTop()` only ever removes a
-  // real DOM row and advances `_mountStart`; once it walks past the last
-  // real row (hits `_bottomSpacer`) it silently no-ops the removal but keeps
-  // incrementing `_mountStart` regardless — so `_mountStart` can end up past
-  // the *old*, now-stale `_mountEnd`, which neither prune function ever
-  // resyncs (pruneFromTop never touches `_mountEnd`; pruneFromBottom only
-  // ever *decreases* it). `mountRowsAtBottom()` then mounts starting from
-  // that stale, too-low `_mountEnd` — re-inserting real rows that fall
-  // *before* the new `_mountStart` and are already accounted for in the top
-  // spacer's height sum, double-counting their height and corrupting the
-  // whole section's layout (live-reproduced as large blank/black gaps with
-  // isolated floating rows — the DOM position math was correct, but two
-  // representations of the same rows, a spacer and real nodes, were both
-  // consuming space at once). Detect the non-overlapping case up front and
-  // fully collapse the old window to empty *before* repositioning both
-  // pointers to the new `start` — this reuses `pruneMountedRowsFromBottom()`
-  // (which already records each removed row's real measured height) rather
-  // than inventing a second removal path, and guarantees `_mountStart`/
-  // `_mountEnd` start the normal four-step reconciliation below from a
-  // consistent, fully-empty baseline instead of a stale overlapping one.
-  if (start >= wrapper._mountEnd || end <= wrapper._mountStart) {
-    pruneMountedRowsFromBottom(wrapper, wrapper._mountStart);
-    wrapper._mountStart = start;
-    wrapper._mountEnd = start;
-  }
-
-  pruneMountedRowsFromTop(wrapper, start);
-  pruneMountedRowsFromBottom(wrapper, end);
-  mountRowsAtTop(wrapper, start);
-  mountRowsAtBottom(wrapper, end);
-
-  const fallback = estimateRowHeight(wrapper);
-  wrapper._topSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, 0, wrapper._mountStart, fallback)}px`;
-  wrapper._bottomSpacer.style.height = `${sumRowHeights(wrapper._rowHeights, wrapper._mountEnd, items.length, fallback)}px`;
+  const plan = resolveSectionPlan(wrapper, desiredStart, desiredEnd);
+  if (plan) applySectionPlan(plan);
 }
 
 // Module-scope (issue #53) — was previously a ~50-line anonymous forEach body
@@ -1547,15 +1591,34 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
 
   // issue #433 — recomputes, for every currently-open phase-card's section,
   // which rows should be mounted vs. pruned given the current scroll
-  // position, and reconciles the DOM to match (syncSectionRowsWindow()).
-  // Skips a section whose phase-body is mid-open/close FLIP animation
-  // (`.phase-body-animating`, animatePhaseBody()) so a `scroll` event that
-  // happens to land during that animation never prunes rows out from under
-  // `animatePhaseBody()`'s own `scrollHeight` measurement.
+  // position, and reconciles the DOM to match. Skips a section whose
+  // phase-body is mid-open/close FLIP animation (`.phase-body-animating`,
+  // animatePhaseBody()) so a `scroll` event that happens to land during that
+  // animation never prunes rows out from under `animatePhaseBody()`'s own
+  // `scrollHeight` measurement.
+  //
+  // issue #470 follow-up — resolves every currently-open section's plan
+  // first (a read-only pass: each wrapper's own `getBoundingClientRect()`
+  // plus `resolveSectionPlan()`'s own row-height reads, with zero DOM writes
+  // anywhere in this loop) and only *then* applies every plan in a second
+  // pass. Calling `syncSectionRowsWindow()` per wrapper inline here — read,
+  // then immediately write, one wrapper at a time — was already fixed once
+  // for the within-a-section case (issue #470's first fix), but still cost
+  // one forced layout recalculation per *open section*: wrapper i's own
+  // `getBoundingClientRect()` read needs a fresh layout the moment wrapper
+  // i-1's writes (row removal/insertion, spacer resize) have run. On the
+  // Java Backend template specifically — 19 phases, the one built-in roadmap
+  // with enough sections open at once for that per-section cost to still
+  // read as a brief flicker under a very fast real scroll — this two-phase
+  // split collapses however many sections are open into one forced layout
+  // total instead of one per section. See resolveSectionPlan()'s own comment
+  // (above syncSectionRowsWindow()) for the full reasoning and the
+  // read/write split it and applySectionPlan() are each held to.
   function virtualizeOpenSections() {
     const buffer = window.innerHeight * VIRTUALIZE_BUFFER_VIEWPORTS;
     const desiredTop = -buffer;
     const desiredBottom = window.innerHeight + buffer;
+    const plans = [];
     content.querySelectorAll('.phase-card.open .section-rows').forEach(wrapper => {
       if (!wrapper._items || !wrapper._items.length) return;
       if (wrapper.closest('.phase-body-animating')) return;
@@ -1564,8 +1627,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       const rect = wrapper.getBoundingClientRect();
       const start = Math.floor((desiredTop - rect.top) / rowHeight);
       const end = Math.ceil((desiredBottom - rect.top) / rowHeight);
-      syncSectionRowsWindow(wrapper, start, end);
+      const plan = resolveSectionPlan(wrapper, start, end);
+      if (plan) plans.push(plan);
     });
+    plans.forEach(applySectionPlan);
   }
 
   // rAF-throttled, matching this file's existing scroll-driven update

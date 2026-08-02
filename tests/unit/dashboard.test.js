@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../../src/services/firebase.js', () => ({
   authApi: {
@@ -430,6 +430,14 @@ describe('syncSectionRowsWindow — non-overlapping window jump (issue #465 foll
 // pair alternates instead of all reads preceding all writes) and passes
 // against the fix.
 describe('pruneMountedRowsFromTop/Bottom batch layout reads before DOM writes (issue #470)', () => {
+  // vi.spyOn() on an already-spied prototype method reuses the same spy
+  // instance rather than installing a fresh one — without restoring between
+  // tests, a later test's own `const original = Element.prototype.foo`
+  // captures the *previous* test's still-installed spy as "original" and
+  // recurses into itself the moment it's called. Every describe block below
+  // that spies on a shared prototype method must restore afterward.
+  afterEach(() => { vi.restoreAllMocks(); });
+
   it('reads every pruned row\'s height before removing any of them, not interleaved', async () => {
     const { buildSectionRows, syncSectionRowsWindow } = await import('../../src/ui/pages/dashboard.js');
     const items = Array.from({ length: 20 }, (_, i) => ({ id: `item-${i}` }));
@@ -454,5 +462,61 @@ describe('pruneMountedRowsFromTop/Bottom batch layout reads before DOM writes (i
     syncSectionRowsWindow(wrapper, 5, 20);
 
     expect(callOrder).toEqual(['read', 'read', 'read', 'read', 'read', 'write', 'write', 'write', 'write', 'write']);
+  });
+});
+
+// issue #470 follow-up — a real, reported recurrence: the previous fix above
+// batched reads *within* one section's own prune calls, which was enough to
+// stop the common case, but a roadmap with several/many phase-cards open at
+// once (Java Backend's 19 phases specifically — the one built-in template
+// with enough simultaneously-open sections for this to still show as a
+// brief flicker under a very fast real scroll) still paid one forced layout
+// per *open section*, since virtualizeOpenSections() called
+// syncSectionRowsWindow() — read this section's position, immediately write
+// its DOM changes — one section at a time, and each section's writes dirty
+// the layout the next section's own position read depends on.
+// resolveSectionPlan()/applySectionPlan() split that combined function so a
+// caller can resolve every open section's plan first (all reads) and apply
+// every plan only after (all writes) — this spec drives that split directly
+// across two independent wrapper elements, simulating what
+// virtualizeOpenSections() now does, and asserts every read across *both*
+// wrappers precedes every write across *both* of them. Fails if
+// applySectionPlan() is called immediately after each resolveSectionPlan()
+// instead of after every wrapper has been resolved (verified by reverting to
+// that interleaved shape locally and re-running).
+describe('resolveSectionPlan/applySectionPlan batch reads across multiple open sections (issue #470 follow-up)', () => {
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('reads every open section\'s pruned-row heights before writing any section\'s DOM changes', async () => {
+    const { buildSectionRows, syncSectionRowsWindow, resolveSectionPlan, applySectionPlan } = await import('../../src/ui/pages/dashboard.js');
+    const items = Array.from({ length: 20 }, (_, i) => ({ id: `item-${i}` }));
+    const wrapperA = buildSectionRows(items, () => document.createElement('div'));
+    const wrapperB = buildSectionRows(items, () => document.createElement('div'));
+    syncSectionRowsWindow(wrapperA, 0, 20);
+    syncSectionRowsWindow(wrapperB, 0, 20);
+
+    const callOrder = [];
+    const originalRect = Element.prototype.getBoundingClientRect;
+    const originalRemove = Element.prototype.remove;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function mockedRect(...args) {
+      callOrder.push('read');
+      return originalRect.apply(this, args);
+    });
+    vi.spyOn(Element.prototype, 'remove').mockImplementation(function mockedRemove(...args) {
+      callOrder.push('write');
+      return originalRemove.apply(this, args);
+    });
+
+    // Resolve both sections' plans (5 rows pruned from the top of each)
+    // before applying either — the shape virtualizeOpenSections() now uses.
+    const planA = resolveSectionPlan(wrapperA, 5, 20);
+    const planB = resolveSectionPlan(wrapperB, 5, 20);
+    applySectionPlan(planA);
+    applySectionPlan(planB);
+
+    const firstWriteIndex = callOrder.indexOf('write');
+    expect(firstWriteIndex).toBe(10); // 5 reads for wrapperA + 5 for wrapperB, then writes
+    expect(callOrder.slice(0, 10)).toEqual(Array(10).fill('read'));
+    expect(callOrder.slice(10)).toEqual(Array(10).fill('write'));
   });
 });
