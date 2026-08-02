@@ -2937,8 +2937,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    competing border/background is exactly the "box inside a box inside a
    box" clutter that card was built to remove. `.roadmap-summary-stats .stat-tile
    + .stat-tile`'s left border is the only separator between them. */
+/* issue #477 — real, reported bug: the "Items done" tile's 40px round icon
+   and the "Complete" tile's 64px progress ring left each row's text starting
+   at a different x-offset once the two tiles stack on a narrow viewport (the
+   ≤480px rule below), reading as "unequally positioned" even though both
+   rows individually looked fine. A shared, fixed-width first grid column
+   (sized to the larger of the two — the ring) fixes this: `justify-self:
+   center` on both `.stat-tile-icon` and `.stat-tile-ring-wrap` (below) centers
+   each one inside that same-width column regardless of its own intrinsic
+   size, so "Items done" and "Complete" always start their text at the exact
+   same x position, stacked or side-by-side alike. */
 .stat-tile {
-  display: flex;
+  display: grid;
+  grid-template-columns: 64px 1fr;
   align-items: center;
   gap: 14px;
   padding: 0 22px;
@@ -2951,6 +2962,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  justify-self: center;
   width: 40px;
   height: 40px;
   border-radius: 999px;
@@ -2987,8 +2999,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .stat-tile-total { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-tile-label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; white-space: nowrap; }
 
-.stat-tile-ring { justify-content: flex-start; }
-.stat-tile-ring-wrap { position: relative; display: grid; place-items: center; flex-shrink: 0; }
+.stat-tile-ring-wrap { position: relative; display: grid; place-items: center; justify-self: center; flex-shrink: 0; }
 /* issue #6 Phase 4.1 fix — was `display: grid` with no columns, which
    auto-places each child (the number, the "%" span) into its own implicit
    row instead of sitting inline, stacking "0" above "%" instead of reading
@@ -3179,6 +3190,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .toolbar-label { font-size: var(--text-xs); font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* issue #477 — the priority row used to be five `.filter-chip` pills (All/
+   P0-P3) sitting inline before "Resources"/"Review due"; the five collapsed
+   into one createSelect() dropdown (prioritySelectContainer, dashboard.js)
+   sitting beside the two remaining toggle chips (filterContainer) in this
+   shared row. */
+.priority-filter-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.priority-select-wrap { flex-shrink: 0; }
+.priority-filter-select { width: 180px; }
+@media (max-width: 480px) {
+  .priority-filter-select { width: 100%; }
+}
 
 /* Issue #182 — pattern/concept tag filter chips + the review-due tag-grouping
    summary line; reuses .filter-chip/.filter-row as-is (see above), just two

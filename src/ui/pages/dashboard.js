@@ -29,6 +29,7 @@ import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/c
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
 import { mountPrintSnapshot, attachPrintCleanup } from '../utils/printRoadmap.js';
 import { openModal } from '../components/modal.js';
+import { createSelect } from '../components/select.js';
 // openAddToDailyTodoModal, openDeleteAccountModal, triggerConfetti,
 // openBadgeShareModal, and startTour are all dynamically imported below,
 // right where each is used — every one of them only ever runs behind a rare,
@@ -208,20 +209,49 @@ export function formatLastSynced(ms) {
   return `Last synced ${new Date(Date.now() - ms).toLocaleDateString()}`;
 }
 
+// Issue #477 — the priority levels (All/P0-P3) used to be five of the seven
+// pills renderFilterChips() built, crowding the row before a user even
+// reaches Resources/Review due/Search/Expand all. Collapsed into one
+// createSelect() dropdown (the app's existing native-`<select>` replacement,
+// src/ui/components/select.js) — 'Resources' and 'Review due' deliberately
+// stay as standalone .filter-chip toggles below, not folded into the same
+// dropdown: they're independent boolean filters a user toggles frequently
+// mid-browsing, not part of the mutually-exclusive priority set, so hiding
+// them behind an extra click would hurt discoverability more than it helps
+// decluttering. Counts are baked into each option's label ("P0 · 0/234")
+// since createSelect's listbox only ever renders plain text, mirroring how
+// the old chips' `.chip-count` badge showed the same numbers.
+export function renderPriorityFilterSelect(items, activeFilter, onFilterChange) {
+  const options = ['ALL', 'P0', 'P1', 'P2', 'P3'].map(p => {
+    const { total, done } = priorityCounts(items, p);
+    const label = p === 'ALL' ? 'All' : p;
+    return { value: p, label: `${label} · ${done}/${total}` };
+  });
+  const select = createSelect(options, {
+    value: activeFilter,
+    ariaLabel: 'Filter by priority',
+    className: 'priority-filter-select'
+  });
+  select.addEventListener('change', () => onFilterChange(select.value));
+  return select;
+}
+
 // Module-scope (issue #53) — was previously inlined inside render(). Returns
-// the priority filter-chip buttons; onFilterChange receives the clicked
-// priority id and the caller owns re-rendering/persisting the new filter.
-// Issue #6 Phase 4.3 — the active non-ALL chip gets an inline ✕ to clear
+// the "Resources"/"Review due" filter-chip buttons; onFilterChange receives
+// the clicked filter id and the caller owns re-rendering/persisting the new
+// filter. Issue #6 Phase 4.3 — the active chip gets an inline ✕ to clear
 // just that filter, a lower-friction alternative to re-clicking the chip.
-// Issue #100 follow-up — a fifth chip, 'RESOURCES', filters to topics that
-// carry at least one resource link (real feedback: with resources now a
-// first-class part of AI-generated roadmaps, there was no way to see them
-// all "in one go" without opening each topic's edit panel individually).
-// When it's active, renderItemRow() also expands each matched row's
-// resources inline instead of just showing the collapsed count badge — see
-// the "Render resource links inline" comment there.
+// Issue #100 follow-up — 'RESOURCES' filters to topics that carry at least
+// one resource link (real feedback: with resources now a first-class part of
+// AI-generated roadmaps, there was no way to see them all "in one go"
+// without opening each topic's edit panel individually). When it's active,
+// renderItemRow() also expands each matched row's resources inline instead
+// of just showing the collapsed count badge — see the "Render resource links
+// inline" comment there. Issue #477 — the five priority levels (All/P0-P3)
+// that used to render here moved to renderPriorityFilterSelect() above; this
+// function now only builds the two non-priority toggles.
 export function renderFilterChips(items, activeFilter, onFilterChange) {
-  return ['ALL', 'P0', 'P1', 'P2', 'P3', 'RESOURCES', 'REVIEW'].map(p => {
+  return ['RESOURCES', 'REVIEW'].map(p => {
     const { total, done } = priorityCounts(items, p);
     const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Resources' : p === 'REVIEW' ? 'Review due' : p;
     const isActive = activeFilter === p;
@@ -996,6 +1026,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   const percentStat = el('span', { className: 'stat-tile-number', text: '0' });
   const percentRing = createProgressRing(0, { size: 64, strokeWidth: 6 });
   const roadmapMetaRow = el('p', { className: 'roadmap-meta-row', text: '' });
+  // Issue #477 — rebuilt (via replaceChildren, with the outgoing select's
+  // own _cleanup() called first) on every render()/patchDoneStates() pass,
+  // same lifecycle every other filter-row element here already has; see
+  // renderPriorityFilterSelect()'s own comment for why counts are baked
+  // into option labels rather than patched in place.
+  const prioritySelectContainer = el('div', { className: 'priority-select-wrap' });
   const filterContainer = el('div', { className: 'filter-row' });
   const tagFilterContainer = el('div', { className: 'filter-row tag-filter-row' });
   const reviewTagGroupBanner = el('div', { className: 'review-tag-group-banner' });
@@ -1086,6 +1122,21 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       search: searchQuery,
       openPhases: [...openPhases]
     });
+  }
+
+  // Issue #477 — rebuilds prioritySelectContainer's createSelect() instance
+  // from the current items/activeFilter, cleaning up the outgoing instance
+  // first (it owns a document click listener + a portaled listbox — see
+  // select.js's own _cleanup() contract). Called from both render() (every
+  // structural change) and patchDoneStates() (every plain done-toggle, which
+  // still needs to refresh each option's "done/total" count).
+  function refreshPrioritySelect(allItems) {
+    prioritySelectContainer.firstElementChild?._cleanup?.();
+    prioritySelectContainer.replaceChildren(renderPriorityFilterSelect(allItems, activeFilter, p => {
+      activeFilter = p;
+      persistUi();
+      render(store.getSnapshot());
+    }));
   }
 
   // One-shot cross-page signal (issue #8) — progress.js's phase-breakdown
@@ -1676,6 +1727,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
 
     clearFiltersBtn.hidden = activeFilter === 'ALL' && !searchQuery && !tagFilter;
 
+    refreshPrioritySelect(allItems);
     filterContainer.replaceChildren(...renderFilterChips(allItems, activeFilter, p => {
       activeFilter = activeFilter === p && p !== 'ALL' ? 'ALL' : p;
       persistUi();
@@ -1820,6 +1872,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       const countEl = chip.querySelector('.chip-count');
       if (countEl) countEl.textContent = `${done}/${total}`;
     });
+    refreshPrioritySelect(allItems);
 
     allItems.forEach(item => {
       const row = content.querySelector(`.check-item[data-id="${CSS.escape(item.id)}"]`);
@@ -2095,7 +2148,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
             el('div', { className: 'toolbar' }, [
               el('div', { className: 'toolbar-block' }, [
                 el('span', { className: 'toolbar-label', text: 'Priority' }),
-                filterContainer
+                el('div', { className: 'priority-filter-row' }, [
+                  prioritySelectContainer,
+                  filterContainer
+                ])
               ]),
               el('div', { className: 'toolbar-block toolbar-right' }, [
                 clearFiltersBtn,
@@ -2325,6 +2381,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   return () => {
     activeTourCleanup?.();
     themeToggleBtn._cleanup?.();
+    prioritySelectContainer.firstElementChild?._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();
     unsubStore();
