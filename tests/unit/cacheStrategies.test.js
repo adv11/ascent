@@ -50,7 +50,23 @@ describe('cacheFirst', () => {
     const fetcher = vi.fn().mockResolvedValue(response);
     const result = await cacheFirst('request', cache, fetcher);
     expect(result).toBe(response);
+    expect(fetcher).toHaveBeenCalledWith('request');
     expect(cache.put).toHaveBeenCalledWith('request', 'cloned');
+  });
+
+  it('bypasses the browser HTTP cache on a miss when given a real Request instance (issue #479)', async () => {
+    const cache = makeMockCache(undefined);
+    const response = { ok: true, clone: () => 'cloned' };
+    const fetcher = vi.fn().mockResolvedValue(response);
+    const request = new Request('https://ascent.app/src/main.js');
+    const result = await cacheFirst(request, cache, fetcher);
+    expect(result).toBe(response);
+    const [calledWith] = fetcher.mock.calls[0];
+    expect(calledWith).toBeInstanceOf(Request);
+    expect(calledWith.cache).toBe('reload');
+    expect(calledWith.url).toBe(request.url);
+    // the original request (not the reload-forcing clone) is used as the cache key
+    expect(cache.put).toHaveBeenCalledWith(request, 'cloned');
   });
 });
 

@@ -35,10 +35,22 @@ export function isRealtimeDbStreamingRequest(url) {
 // Cache-first: static, first-party assets (JS/CSS/fonts/icons) rarely change
 // mid-session, and a cache hit avoids a network round-trip entirely. Falls
 // back to network + caches the response for next time.
+//
+// issue #479 — a cache miss here means CACHE_VERSION just rotated and this
+// SW cache is genuinely empty, so the fallback fetch must reach the real
+// network. A plain `fetch(request)` can instead be silently satisfied by the
+// *browser's* HTTP disk cache (firebase.json sets `max-age=86400` on
+// `/src/**`/`*.css`), seeding the brand-new SW cache with bytes that were
+// already stale before this deploy. `{ cache: 'reload' }` forces the request
+// past that HTTP cache. Only applied when given a real `Request` instance —
+// unit tests pass plain strings, which have no cache-mode concept.
 export async function cacheFirst(request, cache, fetcher = fetch) {
   const cached = await cache.match(request);
   if (cached) return cached;
-  const response = await fetcher(request);
+  const networkRequest = typeof Request !== 'undefined' && request instanceof Request
+    ? new Request(request, { cache: 'reload' })
+    : request;
+  const response = await fetcher(networkRequest);
   if (response.ok) cache.put(request, response.clone());
   return response;
 }
