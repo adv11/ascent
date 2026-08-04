@@ -701,14 +701,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
   white-space: nowrap;
-  background: hsl(var(--v3-surface) / 0.7);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   color: var(--color-text-muted);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .tag-chip { background: var(--color-surface-raised); }
 }
 .tag-chip-accent { background: hsl(var(--v3-accent) / 0.12); border-color: hsl(var(--v3-accent) / 0.4); color: var(--v3-accent-ink, var(--color-accent-700)); }
 
@@ -725,15 +720,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .card {
   position: relative;
   border-radius: var(--v3-radius-lg);
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25), inset 0 1px 0 hsl(var(--v3-text) / 0.04);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .card { background: var(--color-surface-raised); }
 }
 /* Hairline gradient border (mask-composite technique, portfolio's
    `.card::before` verbatim) — a 1px gradient ring drawn as a pseudo-element
@@ -754,7 +743,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   mask-composite: exclude;
   pointer-events: none;
 }
-.card:hover { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); }
+.card:hover { transform: translateY(-4px); border-color: hsl(var(--v3-accent) / 0.4); }
 
 /* Small rounded-square icon container for card headers (the icon-topped
    case-study-card pattern) — wraps a createIcon()/createDecorativeIcon()
@@ -896,15 +885,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 /* Secondary — glass surface, per design-system.md §5. */
 .btn-secondary {
-  background: hsl(var(--v3-surface) / 0.7);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: var(--color-surface-raised);
   color: var(--color-text);
-  border-color: hsl(var(--v3-divider) / 0.6);
+  border-color: var(--color-divider);
   border-radius: var(--v3-radius-lg);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .btn-secondary { background: var(--color-surface-raised); }
 }
 .btn-secondary:hover:not(:disabled) { border-color: hsl(var(--v3-accent) / 0.4); color: var(--v3-accent-ink, var(--color-accent)); transform: translateY(-2px); }
 
@@ -971,17 +955,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   width: 100%;
   padding: var(--space-3);
   border-radius: var(--v3-radius-md);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
-  background: hsl(var(--v3-surface) / 0.7);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface-raised);
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-base);
   transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .field-input { background: var(--color-surface-raised); }
 }
 /* §6 — accent-glow ring on focus, in addition to (not instead of) the
    :focus-visible outline every other focusable element already has. */
@@ -1347,16 +1326,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    pseudo-element assumes isn't clipped. */
 .auth-card-lg {
   position: relative;
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25), inset 0 1px 0 hsl(var(--v3-text) / 0.04);
   overflow: hidden;
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .auth-card-lg { background: var(--color-surface-raised); }
 }
 
 .auth-card-head { padding: 28px 28px 0; }
@@ -1422,12 +1395,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    visually separate objects now, not cells in one ruled grid"). */
 .template-card {
   height: 100%;
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25), inset 0 1px 0 hsl(var(--v3-text) / 0.04);
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
@@ -1440,10 +1410,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   width: 100%;
   position: relative;
 }
-@supports not (backdrop-filter: blur(1px)) {
-  .template-card { background: var(--color-surface-raised); }
-}
-.template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-4px); box-shadow: var(--v3-shadow-glow-lg); border-color: hsl(var(--v3-accent) / 0.4); }
+.template-card:hover, .template-card:has(.template-card-pick:focus-visible) { transform: translateY(-4px); border-color: hsl(var(--v3-accent) / 0.4); }
 .template-card.is-disabled { cursor: not-allowed; opacity: 0.6; transform: none; pointer-events: none; }
 .template-card.picking { opacity: 0.85; }
 /* `store.switchRoadmap()` (onClick, buildCard()/buildCustomCard(),
@@ -1778,19 +1745,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-6) var(--space-4);
-  background: hsl(var(--v3-surface) / 0.6);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid hsl(var(--v3-divider) / 0.6);
-  transition: width var(--duration-base) var(--ease-out);
-}
-@supports not (backdrop-filter: blur(1px)) {
   /* issue #440 — nav chrome (sidebar/topbar) reads --color-bg, not the
-     "elevated" --color-surface-raised every card-shaped surface's own
-     fallback uses: real, repeated user report that the sidebar/topbar
-     visibly lighter than the page (even just slightly) reads as
-     inconsistent, not as an intentional "this is chrome" cue. */
-  .app-sidebar { background: var(--color-bg); }
+     "elevated" --color-surface-raised every card-shaped surface uses: real,
+     repeated user report that the sidebar/topbar visibly lighter than the
+     page (even just slightly) reads as inconsistent, not as an intentional
+     "this is chrome" cue. */
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-divider);
+  transition: width var(--duration-base) var(--ease-out);
 }
 
 /* issue #298 — design-system.md §4's 2px major-section rule, under the brand block. */
@@ -2146,10 +2108,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-6);
-  background: hsl(var(--v3-surface) / 0.7);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
+  /* issue #440 — see .app-sidebar's matching note above for why nav chrome
+     reads --color-bg here, not --color-surface-raised. */
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -2158,11 +2120,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      section header never sits half-hidden under the topbar. Keep these two
      in lockstep rather than hardcoding the same pixel value twice. */
   min-height: var(--topbar-h);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  /* issue #440 — see .app-sidebar's matching fallback above for why nav
-     chrome reads --color-bg here, not --color-surface-raised. */
-  .app-topbar { background: var(--color-bg); }
 }
 .app-topbar-breadcrumb {
   font-weight: 700;
@@ -3106,15 +3063,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-direction: column;
   gap: 10px;
   padding: var(--space-6);
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .kpi-tile { background: var(--color-surface-raised); }
 }
 .kpi-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 /* issue #300 — spec's "uppercase kickers" for the progress stat row. */
@@ -3725,48 +3676,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    that's exactly when it can grow to thousands of pixels tall. A flat,
    fully opaque fill costs the same to paint regardless of height; the
    collapsed (default, most common) state keeps the full glass treatment. */
+/* issue #483 — content surfaces are flat and solid; the backdrop-filter/glow
+   glass treatment (and the whole #430/#432/#433/#450/#455 paint-cost history
+   documented above) no longer applies to this card at all, collapsed/open or
+   scrolling, since there's no blur left to drop for the scroll window. */
 .phase-card {
   position: relative;
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   border-left-width: 3px;
   border-radius: var(--v3-radius-lg);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   overflow: hidden;
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .phase-card { background: var(--color-surface-raised); }
-}
-.phase-card.open {
-  /* issue #455 — further revises #435/#440's own history here, it doesn't
-     just revert a plain regression. #435 (before #440) had a real reason to
-     avoid --v3-surface: at that time it was a cooler blue-gray hue than
-     this app's warm-neutral --color-* palette, so switching to the flat,
-     opaque --color-surface-raised (matching `.phase-card`'s own
-     @supports-not-backdrop-filter fallback) fixed a jarring "gets lighter"
-     flash. #440 then retuned --v3-bg/--v3-surface/--v3-surface-elevated to
-     the *exact* HSL-component equivalent of the real --color-bg/
-     --color-surface hex values (see that token's own comment in
-     :root[data-theme='dark']) — fixing the hue mismatch #435 was working
-     around — but *deliberately* left card-shaped surfaces on
-     --color-surface-raised anyway, on the stated theory that "these are
-     meant to read as distinct cards regardless of scroll state" (see the
-     history in the [data-scrolling] rule below). Real, live user feedback
-     in #455 (screenshots) says that theory doesn't hold once a long,
-     expanded roadmap has several/a dozen-plus open phase-cards covering
-     most of the viewport at once — the lighter fill reads as the whole
-     page flashing grey, not as individually-elevated cards. Same revision
-     #440 already made for the topbar/sidebar for the identical reason.
-     hsl(var(--v3-surface)) is opaque here (alpha omitted, unlike the
-     translucent 0.85 resting state two rules up) since backdrop-filter is
-     dropped — it's the same hue/lightness the blurred glass state already
-     reads against this app's near-black background, so dropping the blur
-     is now visually seamless instead of a color jump. */
-  background: hsl(var(--v3-surface));
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 
 /* Scroll-perf mode (issue #432) — generalizes the `.phase-card.open` fix
@@ -3794,71 +3714,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    surface (a new `.card`-based component, a new sticky/pinned element) needs
    adding to this selector list too, or it'll keep paying this cost on every
    scroll frame indefinitely. */
-/* issue #440 — nav chrome (topbar/sidebar) reads --color-bg during the
-   scroll window, not --color-surface-raised: real, repeated user report
-   that the sidebar/topbar turning visibly lighter than the page for the
-   duration of every scroll (this rule's whole purpose) reads as a bug, not
-   as an intentional "this is chrome" elevation cue. */
-html[data-scrolling] .app-topbar,
-html[data-scrolling] .app-sidebar {
-  background: var(--color-bg);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-/* issue #455 — card-shaped surfaces (.card/.phase-card/.template-card/
-   .tag-chip) used to keep --color-surface-raised here on #440's stated
-   theory that "these are meant to read as distinct cards regardless of
-   scroll state" (see .phase-card.open's own comment above for the full
-   #435→#440 history). Real, live user feedback (screenshots) says that
-   theory doesn't hold in practice: with several/a dozen-plus of these
-   simultaneously visible during a scroll through a long expanded roadmap,
-   --color-surface-raised (meaningfully lighter than both the page
-   background and these surfaces' own resting hsl(var(--v3-surface)) glass
-   fill) reads as the entire visible page flashing grey, not as
-   individually-elevated cards. Matching .phase-card.open's revision:
-   opaque hsl(var(--v3-surface)), the same hue the translucent resting
-   state already reads against this app's near-black background, so
-   dropping backdrop-filter for the scroll window is seamless instead of a
-   visible color jump. */
-/* Real, reported bug (live screenshots, Retina Mac/Brave — genuine Chromium
-   checkerboarding: correct layout, unrasterized tiles painting as flat grey
-   during/after a fast scroll). Two compounding gaps in this rule, neither
-   caught by the non-Retina scripted repro this file's own history describes
-   (Retina's 4x pixel density multiplies every raster cost below):
-   (1) this rule dropped `backdrop-filter` but never the identical
-   `box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25)` glow every one
-   of these surfaces also carries — a blurred box-shadow costs the GPU just as
-   much to raster/composite as `backdrop-filter` does, so it stayed fully
-   active through every scroll frame regardless of `[data-scrolling]`.
-   (2) every selector in this app that independently duplicates `.card`'s
-   exact background/backdrop-filter/box-shadow glass treatment — instead of
-   composing the `.card` class itself — never got *any* scroll-perf
-   mitigation at all, not even the original backdrop-filter drop:
-   `.kpi-tile` (Progress page stat tiles), `.progress-card`,
-   `.daily-todo-panel`, `.settings-section`/`.settings-guest-card`,
-   `.feature-card`/`.step-card` (landing page), `.auth-card-lg` (sign-in/
-   sign-up), `.command-palette-card` (Cmd/Ctrl+K, whose own results list can
-   scroll while the palette stays open), and `.landing-mock-card`. Found by
-   grepping every `hsl(var(--v3-surface) / 0.85)` occurrence in this file,
-   not assumed from the four selectors this rule already listed. Both gaps
-   are fixed the same way: every selector below gets the identical
-   opaque-background/no-blur/no-shadow override for the scroll window,
-   restored automatically the instant scrolling settles, same as every other
-   property this rule already toggles. Any future component that copies this
-   glass treatment (rather than composing `.card`) needs adding here too, or
-   it'll silently carry the identical uncovered cost. */
-html[data-scrolling] .card,
-html[data-scrolling] .phase-card,
-html[data-scrolling] .template-card,
-html[data-scrolling] .tag-chip,
-html[data-scrolling] .kpi-tile,
-html[data-scrolling] .progress-card,
+/* issue #483 — `.app-topbar`/`.app-sidebar` and every card-shaped surface
+   this rule used to list here (`.card`/`.phase-card`/`.template-card`/
+   `.tag-chip`/`.kpi-tile`/`.progress-card`/`.auth-card-lg`) are now flat,
+   solid content surfaces with no backdrop-filter/glow at any time — see each
+   selector's own rule above — so there is no glass treatment left for this
+   scroll-perf mitigation to drop for them. Only the surfaces this issue
+   deliberately left glass (genuine overlays, plus the handful of
+   `.card`-duplicating components not in this issue's scope) still need it. */
 html[data-scrolling] .daily-todo-panel,
 html[data-scrolling] .settings-section,
 html[data-scrolling] .settings-guest-card,
 html[data-scrolling] .feature-card,
 html[data-scrolling] .step-card,
-html[data-scrolling] .auth-card-lg,
 html[data-scrolling] .command-palette-card,
 html[data-scrolling] .landing-mock-card,
 /* issue #470 — `.modal-card` (confirmDialog and every other hand-rolled
@@ -5169,12 +5037,9 @@ html[data-scrolling] .dropdown-menu {
    ::before. */
 .progress-card {
   position: relative;
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-6);
   /* .progress-content has no explicit grid-template-columns, so its single
      implicit column defaults to `auto` sizing — a grid item's own default
@@ -5184,9 +5049,6 @@ html[data-scrolling] .dropdown-menu {
      heatmap's own .heatmap-scroll (and the chart/table wrap containers)
      scroll internally. Same fix as .app-shell-main's own min-width: 0. */
   min-width: 0;
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .progress-card { background: var(--color-surface-raised); }
 }
 .progress-card-title { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
 
