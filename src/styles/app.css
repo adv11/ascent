@@ -701,7 +701,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
   white-space: nowrap;
-  background: var(--color-surface-raised);
+  /* issue #455 — flat content surfaces must stay close to --color-bg's own
+     brightness, not --color-surface-raised (meaningfully lighter in dark
+     theme); see .phase-card's own comment for the full history. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   color: var(--color-text-muted);
 }
@@ -720,7 +723,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .card {
   position: relative;
   border-radius: var(--v3-radius-lg);
-  background: var(--color-surface-raised);
+  /* issue #455 — flat content surfaces must stay close to --color-bg's own
+     brightness, not --color-surface-raised; see .phase-card's own comment. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   transition: transform var(--duration-slow, 300ms) var(--ease-out), box-shadow var(--duration-slow, 300ms) var(--ease-out);
 }
@@ -885,7 +890,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 /* Secondary — glass surface, per design-system.md §5. */
 .btn-secondary {
-  background: var(--color-surface-raised);
+  /* issue #455 — stay close to --color-bg brightness; see .phase-card. */
+  background: hsl(var(--v3-surface));
   color: var(--color-text);
   border-color: var(--color-divider);
   border-radius: var(--v3-radius-lg);
@@ -956,7 +962,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: var(--space-3);
   border-radius: var(--v3-radius-md);
   border: 1px solid var(--color-divider);
-  background: var(--color-surface-raised);
+  /* issue #455 — stay close to --color-bg brightness; see .phase-card. */
+  background: hsl(var(--v3-surface));
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-base);
@@ -1326,7 +1333,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    pseudo-element assumes isn't clipped. */
 .auth-card-lg {
   position: relative;
-  background: var(--color-surface-raised);
+  /* issue #455 — stay close to --color-bg brightness; see .phase-card. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
   overflow: hidden;
@@ -1395,7 +1403,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    visually separate objects now, not cells in one ruled grid"). */
 .template-card {
   height: 100%;
-  background: var(--color-surface-raised);
+  /* issue #455 — stay close to --color-bg brightness; see .phase-card. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
   padding: var(--space-6);
@@ -3063,7 +3072,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-direction: column;
   gap: 10px;
   padding: var(--space-6);
-  background: var(--color-surface-raised);
+  /* issue #455 — stay close to --color-bg brightness; see .phase-card. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
 }
@@ -3682,7 +3692,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    scrolling, since there's no blur left to drop for the scroll window. */
 .phase-card {
   position: relative;
-  background: var(--color-surface-raised);
+  /* issue #455 (real, reported regression via #483's flat-surfaces refactor
+     accidentally re-pointing this at --color-surface-raised) — flat content
+     surfaces must stay close to --color-bg's own brightness, not
+     --color-surface-raised, which is meaningfully lighter in dark theme and
+     reads as the whole page flashing grey while scrolling a long, mostly-
+     open roadmap. See tests/e2e/scrollBackgroundFlash.test.js. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   border-left-width: 3px;
   border-radius: var(--v3-radius-lg);
@@ -5037,7 +5053,8 @@ html[data-scrolling] .dropdown-menu {
    ::before. */
 .progress-card {
   position: relative;
-  background: var(--color-surface-raised);
+  /* issue #455 — stay close to --color-bg brightness; see .phase-card. */
+  background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
   padding: var(--space-6);

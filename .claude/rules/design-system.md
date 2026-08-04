@@ -126,9 +126,17 @@ Rules:
   reserved for things that genuinely float above the page.** `.card`, `.template-card`,
   `.phase-card`, `.kpi-tile`, `.auth-card-lg`, `.roadmap-summary-card`,
   `.roadmap-filters-card`, `.progress-card`, `.app-topbar`, `.app-sidebar`, `.tag-chip`,
-  `.btn-secondary`, and `.field-input` are `background: var(--color-surface-raised)`
-  (nav chrome — `.app-topbar`/`.app-sidebar` — keeps `--color-bg` per issue #440's
-  "chrome shouldn't read lighter than the page" rule) plus a plain 1px
+  `.btn-secondary`, and `.field-input` are `background: hsl(var(--v3-surface))` — **not**
+  `var(--color-surface-raised)`, which this rule originally shipped with and which
+  immediately regressed issue #455 (that token is meaningfully lighter than
+  `--color-bg` in dark theme, and reading it on every content surface at once
+  reads as the whole page flashing grey while scrolling a long, mostly-open
+  roadmap — see `tests/e2e/scrollBackgroundFlash.test.js`, which now guards this).
+  `hsl(var(--v3-surface))` is the same opaque fill #455's own fix already used for
+  `.phase-card.open`/`[data-scrolling]` and stays close to `--color-bg` brightness
+  while still being fully flat/solid (no `backdrop-filter`, no alpha). Nav chrome
+  (`.app-topbar`/`.app-sidebar`) keeps `--color-bg` per issue #440's "chrome
+  shouldn't read lighter than the page" rule, plus a plain 1px
   `var(--color-divider)` border — no `backdrop-filter`, no glow `box-shadow`, and no
   `@supports not (backdrop-filter)` fallback (nothing left to fall back from). `.card`'s
   hairline gradient `::before` border is unchanged. **`.modal-card`, `.dropdown-menu`,
