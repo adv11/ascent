@@ -103,28 +103,30 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       }, { timeout: 10_000 });
     }
 
-    test.describe('tablet-width automatic icon rail (640-1023px)', () => {
+    // Issue #484 — below the sidebar's 900px breakpoint there's no sidebar
+    // (icon rail or drawer) at all anymore; bottomNav.js's fixed tab bar is
+    // the nav instead. Was "tablet-width automatic icon rail (640-1023px)".
+    test.describe('below 900px — bottom tab bar, no sidebar', () => {
       test.use({ viewport: { width: 800, height: 900 } });
 
-      test('avatar identity and sign-out button do not overlap', async ({ page }) => {
+      test('sidebar is hidden and the bottom nav is visible with every destination reachable', async ({ page }) => {
         test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-        await signInAndReachApp(page);
-        await waitForRailFooterLayout(page);
+        await page.goto('/#/signin');
+        await page.click('text=Continue as guest');
+        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+        await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+        await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
-        const identityBox = await page.locator('.app-sidebar-identity').boundingBox();
-        const signoutBox = await page.locator('.app-sidebar-signout').boundingBox();
-        expect(boxesOverlap(identityBox, signoutBox)).toBe(false);
-      });
+        await expect(page.locator('.app-sidebar')).toBeHidden();
+        await expect(page.locator('.bottom-nav')).toBeVisible();
+        await expect(page.locator('.bottom-nav-item[href="#/app"]')).toHaveAttribute('aria-current', 'page');
 
-      test('hamburger opens a full drawer with nav labels and the sign-out control reachable', async ({ page }) => {
-        test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-        await signInAndReachApp(page);
-
-        await expect(page.locator('.app-topbar-hamburger')).toBeVisible();
-        await page.locator('.app-topbar-hamburger').click();
-        await expect(page.locator('.app-sidebar')).toHaveClass(/mobile-open/);
-        await expect(page.locator('.nav-item-label').first()).toBeVisible();
-        await expect(page.locator('.app-sidebar-signout')).toBeVisible();
+        await page.locator('.bottom-nav-item[href="#/progress"]').click();
+        await expect(page).toHaveURL(/#\/progress/);
+        await page.locator('.bottom-nav-item[href="#/settings"]').click();
+        await expect(page).toHaveURL(/#\/settings/);
+        await page.locator('.bottom-nav-item[href="#/onboarding"]').click();
+        await expect(page).toHaveURL(/#\/onboarding/);
       });
     });
 

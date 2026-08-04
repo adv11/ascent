@@ -6,6 +6,7 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createChangelogBell } from '../components/notificationBell.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
+import { createBottomNav } from '../components/bottomNav.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
 import { exportBackupJson } from '../utils/backupActions.js';
 import { scorePassword, makePasswordToggle } from '../utils/password.js';
@@ -428,9 +429,9 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
     syncPill: null,
     themeToggleBtn,
     dailyTodoNavBadge: null,
-    notificationBell: createChangelogBell(),
-    onToggleMobileSidebar: () => sidebar._toggleMobile()
+    notificationBell: createChangelogBell()
   });
+  const bottomNav = createBottomNav({ activeRoute: '/settings' });
 
   let cleanupSections = [];
   const content = user.isAnonymous
@@ -446,7 +447,6 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
 
   const shell = el('div', { className: 'app-shell-2 settings-page fade-in' }, [
     sidebar,
-    sidebar._backdrop,
     el('div', { className: 'app-shell-main' }, [
       topbar,
       el('div', { className: 'app-content settings-content' }, [
@@ -455,7 +455,8 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
         ]),
         content
       ])
-    ])
+    ]),
+    bottomNav
   ]);
 
   app.replaceChildren(shell);
@@ -464,6 +465,7 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
     themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();
+    bottomNav._cleanup?.();
     cleanupSections.forEach(section => section._cleanup?.());
   };
 }

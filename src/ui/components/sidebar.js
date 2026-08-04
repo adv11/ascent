@@ -83,10 +83,12 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
   return { identity, importInput };
 }
 
-// Returns the sidebar node with a `_toggleMobile()` method the topbar's
-// hamburger button calls to open/close the mobile drawer. `onDeleteAccount`
-// is optional — omitted (or a no-op) for anonymous users, since there's
-// nothing to delete but the guest session itself (handled by sign-out).
+// Returns the sidebar node. Renders only at >=900px (app.css) — below that,
+// bottomNav.js is the app's mobile/tablet navigation instead (issue #484,
+// retiring this component's former hamburger-drawer mobile mode).
+// `onDeleteAccount` is optional — omitted (or a no-op) for anonymous users,
+// since there's nothing to delete but the guest session itself (handled by
+// sign-out).
 // `dailyTodoStore` is optional too (issue #143) — passed straight through to
 // confirmAndSignOut() so a dirty Daily Todos list gets the same
 // flush-before-sign-out protection the roadmap store already has.
@@ -144,8 +146,6 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     }, [createIcon('signOut', { size: 'sm' })])
   ]);
 
-  const backdrop = el('div', { className: 'app-sidebar-backdrop' });
-
   const node = el('aside', { className: 'app-sidebar', 'aria-label': 'Sidebar' }, [
     el('a', { className: 'brand app-sidebar-brand', href: '#/onboarding', 'aria-label': 'Ascent — all roadmaps' }, createBrandMark()),
     navEl,
@@ -163,37 +163,6 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     localStorage.setItem(KEYS.SIDEBAR_COLLAPSED, next ? '1' : '0');
   });
 
-  function closeMobile() {
-    node.classList.remove('mobile-open');
-    backdrop.classList.remove('show');
-    document.body.classList.remove('scroll-locked');
-  }
-
-  function toggleMobile() {
-    const opening = !node.classList.contains('mobile-open');
-    node.classList.toggle('mobile-open', opening);
-    backdrop.classList.toggle('show', opening);
-    document.body.classList.toggle('scroll-locked', opening);
-  }
-
-  // Idempotent-safe open, unlike toggleMobile() — for callers (the feature
-  // tour, issue #349) that need the drawer open regardless of its current
-  // state rather than flipping it.
-  function openMobile() {
-    node.classList.add('mobile-open');
-    backdrop.classList.add('show');
-    document.body.classList.add('scroll-locked');
-  }
-
-  backdrop.addEventListener('click', closeMobile);
-  navEl.addEventListener('click', e => {
-    if (e.target.closest('a')) closeMobile();
-  });
-
-  node._toggleMobile = toggleMobile;
-  node._openMobile = openMobile;
-  node._closeMobile = closeMobile;
-  node._backdrop = backdrop;
   node._cleanup = () => identity._cleanup?.();
   return node;
 }

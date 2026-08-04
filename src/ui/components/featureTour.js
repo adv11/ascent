@@ -96,20 +96,20 @@ function buildPopover(step, index, total) {
 // there's no injection surface here — the no-innerHTML rule still applies to
 // every node, and every node below goes through el()'s text: key.
 //
-// A step may set `requiresMobileSidebar: true` when its target lives inside
-// the app's off-canvas mobile sidebar drawer (issue #349) — this component
-// stays sidebar-agnostic and just calls the caller-supplied
-// `onOpenSidebar`/`onCloseSidebar` hooks around such a step, only at
-// viewport widths where the sidebar actually renders as an off-canvas
-// drawer (matches the `(max-width: 639px)` boundary in app.css).
-const MOBILE_SIDEBAR_QUERY = '(max-width: 639px)';
+// Issue #484 retired the off-canvas mobile sidebar drawer this component
+// used to open/close around a flagged step (`requiresMobileSidebar`,
+// issue #349) — there's no drawer left to open below the sidebar's own
+// >=900px breakpoint, only bottomNav.js. A step whose `target()` resolves to
+// null (its element genuinely isn't rendered at the current viewport, e.g. a
+// sidebar-only step below 900px) is skipped forward automatically instead of
+// ending the whole tour early — see showStep()/reflow() below.
 
 // Returns a cleanup function — call it if the host page unmounts mid-tour
 // (e.g. navigating away), per the "Component subscription cleanup" rule in
 // root CLAUDE.md. `onEnd` fires exactly once, whether the tour was skipped,
 // closed via Escape, or completed by reaching "Done" on the last step — all
 // three count as "the tour is over" from the caller's point of view.
-export function startTour(steps, { onEnd, onOpenSidebar, onCloseSidebar } = {}) {
+export function startTour(steps, { onEnd } = {}) {
   let ended = false;
   let stepIndex = -1;
   let rafId = null;
@@ -117,25 +117,7 @@ export function startTour(steps, { onEnd, onOpenSidebar, onCloseSidebar } = {}) 
   let detachTrap = null;
   let popoverNode = null;
   let welcomeNode = null;
-  let mobileSidebarOpen = false;
   const previouslyFocused = document.activeElement;
-
-  // Returns true if this call just opened the drawer — callers use that to
-  // wait out its CSS transform transition before measuring the now-visible
-  // target's rect, or the ring would be positioned mid-slide-in.
-  function syncMobileSidebar(step) {
-    const needsIt = !!step?.requiresMobileSidebar && window.matchMedia(MOBILE_SIDEBAR_QUERY).matches;
-    if (needsIt && !mobileSidebarOpen) {
-      onOpenSidebar?.();
-      mobileSidebarOpen = true;
-      return true;
-    }
-    if (!needsIt && mobileSidebarOpen) {
-      onCloseSidebar?.();
-      mobileSidebarOpen = false;
-    }
-    return false;
-  }
 
   const scrim = el('div', { className: 'tour-scrim' });
   const ring = el('div', { className: 'tour-ring' });
@@ -145,7 +127,9 @@ export function startTour(steps, { onEnd, onOpenSidebar, onCloseSidebar } = {}) 
     if (!stepsStarted || stepIndex < 0 || stepIndex >= steps.length || ended) return;
     const target = steps[stepIndex].target();
     if (!target) {
-      end();
+      const index = stepIndex;
+      if (index + 1 < steps.length) showStep(index + 1);
+      else end();
       return;
     }
     const rect = target.getBoundingClientRect();
@@ -183,26 +167,22 @@ export function startTour(steps, { onEnd, onOpenSidebar, onCloseSidebar } = {}) 
     welcomeNode = null;
     ring.remove();
     scrim.remove();
-    if (mobileSidebarOpen) {
-      onCloseSidebar?.();
-      mobileSidebarOpen = false;
-    }
     previouslyFocused?.focus?.();
     onEnd?.();
   }
 
-  // --duration-base in app.css — the sidebar's off-canvas transform
-  // transition this waits out before measuring its now-visible target.
-  const MOBILE_SIDEBAR_TRANSITION_MS = 200;
-
+  // A step whose target isn't rendered at the current viewport (e.g. a
+  // sidebar-only step below the sidebar's >=900px breakpoint, issue #484) is
+  // skipped forward rather than ending the tour — only ends if it was
+  // already the last step with nothing left to advance to.
   function showStep(index) {
     cleanupStepDom();
     stepIndex = index;
     const step = steps[index];
-    const justOpenedSidebar = syncMobileSidebar(step);
     const target = step.target();
     if (!target) {
-      end();
+      if (index + 1 < steps.length) showStep(index + 1);
+      else end();
       return;
     }
     target.scrollIntoView({ block: 'center' });
@@ -216,14 +196,10 @@ export function startTour(steps, { onEnd, onOpenSidebar, onCloseSidebar } = {}) 
       else if (action === 'back') showStep(index - 1);
       else if (action === 'next') showStep(index + 1);
     });
-    const finishShow = () => {
-      if (ended || stepIndex !== index) return;
-      reflow();
-      popoverNode.style.visibility = '';
-      popoverNode.querySelector('[data-action]')?.focus();
-    };
-    if (justOpenedSidebar) setTimeout(finishShow, MOBILE_SIDEBAR_TRANSITION_MS);
-    else finishShow();
+    if (ended || stepIndex !== index) return;
+    reflow();
+    popoverNode.style.visibility = '';
+    popoverNode.querySelector('[data-action]')?.focus();
   }
 
   function beginSteps() {

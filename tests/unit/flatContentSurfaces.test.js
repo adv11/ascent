@@ -9,7 +9,7 @@ const css = readFileSync(cssPath, 'utf8');
 // genuinely float above the page (issue #483). Every selector below is an
 // overlay this rule deliberately still allows to carry backdrop-filter.
 const OVERLAY_SELECTOR_PATTERN =
-  /(^|[\s,.])(modal-card|dropdown-menu|dropdown-scrim|custom-select-scrim|floating-scrim|command-palette-card|item-panel|tooltip-bubble|toast|daily-todo-panel|tour-popover|settings-section|settings-guest-card|landing-mock-card|feature-card|step-card|feedback-type-card|template-card-picking-overlay|app-sidebar-backdrop|panel-overlay|landing-nav)([\s,.:{[]|$)/;
+  /(^|[\s,.])(modal-card|dropdown-menu|dropdown-scrim|custom-select-scrim|floating-scrim|command-palette-card|item-panel|tooltip-bubble|toast|daily-todo-panel|tour-popover|settings-section|settings-guest-card|landing-mock-card|feature-card|step-card|feedback-type-card|template-card-picking-overlay|panel-overlay|landing-nav)([\s,.:{[]|$)/;
 
 function stripComments(input) {
   return input.replace(/\/\*[\s\S]*?\*\//g, '');

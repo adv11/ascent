@@ -55,17 +55,9 @@ function buildTopicResultItem(match, store) {
 
 // Issue #6 Phase 2.2. Kept deliberately thin — identity/sign-out/delete-account
 // already live in the sidebar footer (createSidebar), so this doesn't duplicate
-// an avatar or dropdown. The hamburger button is CSS-hidden above the mobile
-// breakpoint (app.css); `onToggleMobileSidebar` wires it to the sidebar's own
-// `_toggleMobile()`.
-export function createTopbar({ breadcrumb, user, store, syncPill, themeToggleBtn, dailyTodoNavBadge, reviewDueBadge, notificationBell, onToggleMobileSidebar }) {
-  const hamburger = el('button', {
-    type: 'button',
-    className: 'app-topbar-hamburger',
-    'aria-label': 'Open navigation',
-    onClick: onToggleMobileSidebar
-  }, [createIcon('menu', { size: 'sm' })]);
-
+// an avatar or dropdown. Issue #484 removed the hamburger/mobile-drawer toggle —
+// bottomNav.js is the app's mobile/tablet navigation now.
+export function createTopbar({ breadcrumb, user, store, syncPill, themeToggleBtn, dailyTodoNavBadge, reviewDueBadge, notificationBell }) {
   const breadcrumbEl = el('div', { className: 'app-topbar-breadcrumb', text: breadcrumb });
 
   // Issue #283 — global topic search, layered on top of the existing nav-item
@@ -124,11 +116,10 @@ export function createTopbar({ breadcrumb, user, store, syncPill, themeToggleBtn
 
   // `statusGroup`/`iconGroup` are direct `.app-topbar` children (not nested
   // in a shared wrapper) specifically so the `≤1023px` CSS can re-`order`
-  // `iconGroup` onto the primary row with `hamburger`/`breadcrumbEl` while
-  // `statusGroup` wraps to its own row below — see app.css's own comment on
-  // that rule for why a nested wrapper can't express that split.
+  // `iconGroup` onto the primary row with `breadcrumbEl` while `statusGroup`
+  // wraps to its own row below — see app.css's own comment on that rule for
+  // why a nested wrapper can't express that split.
   const node = el('header', { className: 'app-topbar' }, [
-    hamburger,
     breadcrumbEl,
     statusGroup,
     iconGroup
