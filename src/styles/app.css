@@ -163,15 +163,25 @@
      Google Fonts request. */
   --font-mono:    ui-monospace, "SF Mono", Consolas, monospace;
 
-  /* Type scale (rem) — unrelated to this pass's token scope, unchanged. */
+  /* Type scale (rem) — unrelated to this pass's token scope, unchanged, except
+     --text-2xl/-3xl/-4xl below (issue #482 A1): those three are page-heading
+     sizes and are now fluid clamp() pairs so 360px→1920px needs no breakpoint
+     jump, instead of a single fixed size. Token names are unchanged — only the
+     values became clamp() — so every existing call site keeps working as-is. */
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;
   --text-base: 1rem;
   --text-lg:   1.25rem;
   --text-xl:   1.5625rem;
-  --text-2xl:  1.953rem;
-  --text-3xl:  2.441rem;
-  --text-4xl:  3.052rem;
+  --text-2xl:  clamp(1.5rem, 1.3rem + 1vw, 1.953rem);
+  --text-3xl:  clamp(1.75rem, 1.4rem + 1.75vw, 2.441rem);
+  --text-4xl:  clamp(2rem, 1.5rem + 2.5vw, 3.052rem);
+
+  /* Responsive layout primitives (issue #482 A1) — the one shared place that
+     decides content width and minimum tap-target size, so every page/component
+     folds the same way instead of each setting its own ad hoc breakpoint. */
+  --content-max: 1080px;
+  --tap-min: 48px;
 
   --font-weight-regular:  400;
   --font-weight-medium:   500;
@@ -529,7 +539,7 @@ body {
   padding: 10px 18px;
   border-radius: var(--radius-md);
   font-weight: 700;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   text-decoration: none;
   transition: top var(--duration-fast) var(--ease-out);
 }
@@ -686,7 +696,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   /* v3 (issue #416 Phase 1 — #420): design-system.md §5 "chips: --radius-md,
      glass fill, 1px divider border" — was --radius-full/flat surface. */
   border-radius: var(--v3-radius-md);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
@@ -938,7 +948,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-shrink: 0;
 }
 .btn-block { width: 100%; }
-.btn-sm { min-height: 34px; padding: 6px 12px; font-size: var(--text-sm); }
+.btn-sm { min-height: 34px; padding: 6px 12px; font-size: var(--text-base); }
 .btn-lg { min-height: 48px; padding: 12px 24px; font-size: var(--text-base); }
 /* Re-centers explicitly (issue #309) — `.btn`'s own base rule no longer
    centers, but a square icon-only button has no text "label" for the
@@ -953,7 +963,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 /* Form fields */
 .field { display: grid; gap: 6px; }
-.field-label { font-size: var(--text-sm); font-weight: 700; color: var(--color-text); opacity: 0.85; }
+.field-label { font-size: var(--text-base); font-weight: 700; color: var(--color-text); opacity: 0.85; }
 /* v3 (issue #416 Phase 1 — #420): design-system.md §5 ".input — glass fill,
    1px divider border, --radius-md, accent caret, accent-glow ring on
    focus." */
@@ -976,7 +986,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* §6 — accent-glow ring on focus, in addition to (not instead of) the
    :focus-visible outline every other focusable element already has. */
 .field-input:focus { outline: none; border-color: hsl(var(--v3-accent)); box-shadow: 0 0 0 3px hsl(var(--v3-accent) / 0.15); }
-.field-input.compact { padding: var(--space-2) 10px; font-size: var(--text-sm); }
+.field-input.compact { padding: var(--space-2) 10px; font-size: var(--text-base); }
 /* issue #297 — design-system.md §5's "flat surface fill, 1px divider border,
    accent caret, accent border on focus" input spec. .field-input (above) is
    this app's one input base class (no separate .input exists app-wide) and
@@ -996,7 +1006,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border: none;
   font: inherit;
   font-weight: var(--font-weight-bold);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
@@ -1007,7 +1017,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .seg-item[aria-selected='true'], .seg-item.active { background: var(--color-accent-600); color: var(--color-ink-on-accent); }
 .seg-item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
-.form-message { min-height: 20px; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-muted); }
+.form-message { min-height: 20px; font-size: var(--text-base); font-weight: 600; color: var(--color-text-muted); }
 .form-message.error { color: var(--color-danger); }
 .form-message.success { color: var(--color-success); }
 /* Issue #444 — inside a `.modal-card`'s translucent/blurred glass background
@@ -1023,9 +1033,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* Issue #121 item 1 — deliberately not .form-message.error: a Playwright
    locator scoped to that class needs to match exactly one element
    (summaryMsg's "N things need fixing" line), never this callout too. */
-.import-corruption-hint { font-size: var(--text-sm); font-weight: 600; color: var(--color-danger); margin: 0; }
-.form-error { color: var(--color-danger); font-size: var(--text-sm); font-weight: 600; min-height: 18px; }
-.field-error { color: var(--color-danger); font-size: var(--text-sm); font-weight: 600; min-height: 16px; }
+.import-corruption-hint { font-size: var(--text-base); font-weight: 600; color: var(--color-danger); margin: 0; }
+.form-error { color: var(--color-danger); font-size: var(--text-base); font-weight: 600; min-height: 18px; }
+.field-error { color: var(--color-danger); font-size: var(--text-base); font-weight: 600; min-height: 16px; }
 
 /* Password field with show/hide toggle */
 .field-input-wrap { position: relative; display: grid; }
@@ -1040,7 +1050,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: 4px 6px;
   cursor: pointer;
   color: var(--color-text-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1294,7 +1304,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 /* intentional: fixed white/white-alpha, same always-dark panel as above (issue #116) */
 .auth-marketing-value-title { display: block; color: #fff; font-weight: 800; font-size: var(--text-base); margin-bottom: 2px; }
-.auth-marketing-value-text { display: block; color: rgba(255, 255, 255, 0.72); font-size: var(--text-sm); line-height: var(--leading-normal); }
+.auth-marketing-value-text { display: block; color: rgba(255, 255, 255, 0.72); font-size: var(--text-base); line-height: var(--leading-normal); }
 
 /* intentional: fixed white-alpha divider/text, same always-dark panel as above (issue #116) */
 .auth-marketing-stat {
@@ -1304,7 +1314,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.72);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
 }
 
@@ -1360,7 +1370,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #155 v2 Phase D3 (full completion pass) — native checkbox accent-color, no
    text-contrast implication. */
 :root[data-theme='dark'] .remember-checkbox { accent-color: var(--color-accent); }
-.remember-label { font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; user-select: none; }
+.remember-label { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; user-select: none; }
 .auth-divider {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -1453,7 +1463,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--surface-glass);
   backdrop-filter: blur(2px);
   border-radius: var(--radius-lg);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-accent-700);
 }
@@ -1498,7 +1508,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .template-card-icon { display: inline-flex; font-size: var(--icon-size-lg); line-height: 1; }
 .template-card-name { font-size: var(--text-lg); font-weight: 800; }
-.template-card-desc { font-size: var(--text-sm); color: var(--color-text-muted); line-height: 1.5; }
+.template-card-desc { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.5; }
 .template-card-footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; }
 .template-card-count {
   font-size: 12px;
@@ -1797,7 +1807,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text-muted);
   text-decoration: none;
   font-weight: 700;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 .nav-item:hover { background: hsl(var(--v3-accent) / 0.08); color: var(--color-text); }
@@ -1834,7 +1844,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text-muted);
   cursor: pointer;
   padding: var(--space-1) var(--space-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   border-radius: var(--radius-md);
 }
 .app-sidebar-collapse-btn:hover { background: var(--color-surface-raised); color: var(--color-text); }
@@ -1866,7 +1876,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .app-sidebar-identity:hover { background: var(--color-surface-raised); }
 .app-sidebar-user-email {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1953,8 +1963,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-shrink: 0;
   border-radius: var(--v3-radius-lg);
 }
-.avatar-sm { width: 28px; height: 28px; font-size: var(--text-xs); }
-.avatar-md { width: 36px; height: 36px; font-size: var(--text-sm); }
+.avatar-sm { width: 28px; height: 28px; font-size: var(--text-base); }
+.avatar-md { width: 36px; height: 36px; font-size: var(--text-base); }
 .avatar-lg { width: 56px; height: 56px; font-size: var(--text-lg); }
 
 /* Issue #102 follow-up — `.dropdown-menu` used to be `position: absolute`
@@ -2046,7 +2056,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: none;
   border-radius: var(--v3-radius-md);
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: var(--color-text);
   cursor: pointer;
 }
@@ -2109,7 +2119,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .custom-select-option {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: var(--color-text);
   cursor: pointer;
 }
@@ -2121,7 +2131,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    option isn't a text-zoom-triggering field; matches .field-input's own
    compact variant instead so density stays consistent with the rest of a
    dense form. */
-.custom-select.compact .custom-select-trigger { padding: 8px 10px; font-size: var(--text-sm); }
+.custom-select.compact .custom-select-trigger { padding: 8px 10px; font-size: var(--text-base); }
 
 /* issue #298 — design-system.md §1/§4: flat surfaces, 2px rules for major
    section boundaries (was a translucent/blurred "glass" surface + 1px rule,
@@ -2156,7 +2166,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .app-topbar-breadcrumb {
   font-weight: 700;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: var(--color-text-muted);
   flex: 1;
   min-width: 0;
@@ -2282,7 +2292,35 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    sidebar stays in flow (desktop, or the closed tablet rail) — it only
    matters once something upstream can go out of flow. */
 .app-shell-main { display: flex; flex-direction: column; min-width: 0; grid-column: 2; }
-.app-content { flex: 1; }
+.app-content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: clamp(14px, 3vw, 32px);
+}
+
+/* Tap-target floor (issue #482 A1) — every interactive control listed below
+   gets at least a 48px hit area regardless of viewport/pointer type. This is
+   the *base*, unconditional floor; the existing `(pointer: coarse)` 46px
+   overrides elsewhere in this file (issue #36/#233) predate this token and
+   stay as-is — both apply, and 48px is the larger of the two, so this rule is
+   never weakened by them.
+   `.btn-icon` is deliberately excluded from this unconditional floor (via
+   `.btn:not(.btn-icon)`, since e.g. `.theme-toggle` carries both `.btn` and
+   `.btn-icon` together) — issue #36/#233 established (and
+   `tests/e2e/responsive.test.js` asserts) that an icon-only button stays a
+   compact 36x36px on a non-touch desktop viewport and only grows for a real
+   touch/coarse pointer; see the `@media (pointer: coarse)` block below,
+   where it's raised to `var(--tap-min)` instead of the old fixed 46px. */
+.btn:not(.btn-icon),
+.filter-chip,
+.nav-item,
+.check-box,
+.seg-opt {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
 
 /* Tablet (640–1023px, issue #6 Phase 2.1) — automatic icon-only rail,
    independent of the manual desktop collapse toggle above. */
@@ -2421,7 +2459,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-warning);
   color: var(--color-warning);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
   text-align: center;
 }
@@ -2437,7 +2475,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-border-strong);
   color: var(--color-accent-700);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
 }
 /* issue #155 v2 Phase D3 (full completion pass) — text-on-light-fill pattern, app-wide
@@ -2459,7 +2497,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-border-strong);
   color: var(--color-accent-700);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
 }
 /* issue #155 v2 Phase D3 (full completion pass) — same pattern as .verification-banner
@@ -2485,7 +2523,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-warning-bg);
   border-bottom: 1px solid var(--color-border-strong);
   color: var(--color-accent-700);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
 }
 :root[data-theme='dark'] .progress-digest-banner {
@@ -2580,7 +2618,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .share-modal-card { max-width: 600px; display: grid; gap: 14px; position: relative; max-height: 90vh; overflow-y: auto; }
 .share-modal-card .modal-close { position: absolute; top: 8px; right: 8px; }
 .share-card-preview { width: 100%; height: auto; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
-.share-caption-label { display: grid; gap: 6px; font-size: var(--text-sm); font-weight: 600; color: var(--color-text); }
+.share-caption-label { display: grid; gap: 6px; font-size: var(--text-base); font-weight: 600; color: var(--color-text); }
 .share-caption-input {
   font: inherit;
   font-size: var(--text-base);
@@ -2598,8 +2636,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .share-roadmap-modal-card { max-height: 90vh; overflow-y: auto; }
 .share-roadmap-modal { display: grid; gap: 14px; max-width: 520px; position: relative; }
 .share-roadmap-modal .modal-close { position: absolute; top: 0; right: 0; }
-.share-roadmap-modal-copy { color: var(--color-text-muted); font-size: var(--text-sm); }
-.share-roadmap-modal-status { font-size: var(--text-sm); color: var(--color-text); word-break: break-all; }
+.share-roadmap-modal-copy { color: var(--color-text-muted); font-size: var(--text-base); }
+.share-roadmap-modal-status { font-size: var(--text-base); color: var(--color-text); word-break: break-all; }
 .share-link-list { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0; max-height: 240px; overflow-y: auto; }
 .share-link-row {
   display: flex;
@@ -2642,10 +2680,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .shared-item-title { flex: 1; min-width: 0; }
 .shared-item-done .shared-item-title { color: var(--color-text-muted); text-decoration: line-through; }
 .shared-item-resources { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
-.shared-resource-link { color: var(--color-accent-700); font-size: var(--text-sm); }
+.shared-resource-link { color: var(--color-accent-700); font-size: var(--text-base); }
 :root[data-theme='dark'] .shared-resource-link { color: var(--color-accent-700); }
 .shared-view-footer { margin-top: 32px; text-align: center; }
-.shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: var(--text-sm); }
+.shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: var(--text-base); }
 
 @media (max-width: 480px) {
   .share-modal-actions { flex-direction: column; }
@@ -2671,7 +2709,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    independently, the copy step never does. */
 .import-column-build { display: flex; flex-direction: column; min-width: 0; }
 .import-column-scroll { display: grid; gap: 14px; align-content: start; }
-.import-step-heading { display: flex; align-items: center; gap: 10px; font-size: var(--text-sm); font-weight: 800; color: var(--color-text); margin: 6px 0 0; }
+.import-step-heading { display: flex; align-items: center; gap: 10px; font-size: var(--text-base); font-weight: 800; color: var(--color-text); margin: 6px 0 0; }
 .import-step-heading:first-child { margin-top: 0; }
 /* v3 (issue #416 Phase 5 — #430) — light theme now reads --color-accent-600
    (not the base accent) for the same text-hosting-fill reason as
@@ -2712,7 +2750,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    tall, scrolling its own overflow, rather than being derived from content. */
 .import-prompt-block {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
@@ -2913,7 +2951,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .roadmap-meta-row {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -2997,7 +3035,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .stat-tile-number { font-size: var(--text-3xl); font-weight: 900; color: var(--color-accent-700); font-variant-numeric: tabular-nums; }
 :root[data-theme='dark'] .stat-tile-number { color: var(--color-accent-700); }
 .stat-tile-total { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat-tile-label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; white-space: nowrap; }
+.stat-tile-label { display: block; font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; white-space: nowrap; }
 
 .stat-tile-ring-wrap { position: relative; display: grid; place-items: center; justify-self: center; flex-shrink: 0; }
 /* issue #6 Phase 4.1 fix — was `display: grid` with no columns, which
@@ -3027,7 +3065,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    sized for the big "Items done" tile) — scope it down inside the 64px ring
    so it doesn't overflow/wrap. */
 .stat-tile-ring-value .stat-tile-number { font-size: var(--text-lg); }
-.stat-tile-ring-value span:not(.stat-tile-number) { font-size: var(--text-xs); margin-left: 1px; }
+.stat-tile-ring-value span:not(.stat-tile-number) { font-size: var(--text-base); margin-left: 1px; }
 
 /* Real, reported bug (live screenshot): `.stat-strip`'s base grid declaration
    was missing entirely — the only rule anywhere in this file mentioning
@@ -3080,13 +3118,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .kpi-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 /* issue #300 — spec's "uppercase kickers" for the progress stat row. */
-.kpi-tile-label { font-size: var(--text-xs); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); }
+.kpi-tile-label { font-size: var(--text-base); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); }
 .kpi-tile-number { display: flex; align-items: baseline; gap: 4px; font-size: var(--text-3xl); font-weight: 900; color: var(--color-text); font-variant-numeric: tabular-nums; }
 /* issue #206 §6 — de-emphasized "still at zero" state: smaller, muted, less bold than
    a real earned number, so a fresh roadmap's stat strip doesn't read as a wall of loud
    "0"s. Paired with an action-oriented .kpi-tile-delta caption at each call site. */
 .kpi-tile-number-zero { font-size: var(--text-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-muted); }
-.kpi-tile-delta { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 600; }
+.kpi-tile-delta { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; }
 /* issue #155 v2 Phase D1 — progress.js's stat strip: a smaller inline caption after
    the number (e.g. "/ 200", "days"), reusing .kpi-tile-number's flex row via a
    trailing span rather than adding a second wrapper element. .kpi-tile-bar positions
@@ -3187,7 +3225,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   margin: 0 auto 18px;
   padding: 18px 24px;
 }
-.toolbar-label { font-size: var(--text-xs); font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.toolbar-label { font-size: var(--text-base); font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -3213,7 +3251,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    header instead of spanning the full (wider) .dashboard-header padding box. */
 .review-tag-group-banner { display: grid; gap: 4px; max-width: 1160px; margin: 8px auto 0; }
 .review-tag-group-line {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
@@ -3230,7 +3268,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 800;
   cursor: pointer;
   overflow: hidden;
@@ -3258,7 +3296,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    tags elsewhere in each row, which aren't toggle buttons and don't need
    this "one active-state language" consistency requirement. */
 .filter-chip.active { background: color-mix(in srgb, var(--color-accent) 15%, transparent); border-color: var(--color-accent); color: var(--color-accent-800); }
-.chip-count { opacity: 0.75; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+.chip-count { opacity: 0.75; font-size: var(--text-base); font-variant-numeric: tabular-nums; }
 
 /* Issue #6 Phase 4.3 — subtle hover highlight, flattened from a swept
    linear-gradient shimmer to a solid fixed-white overlay per design-system.md
@@ -3305,7 +3343,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
   background: var(--color-surface-raised);
   color: var(--color-text-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -3480,7 +3518,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .daily-todo-count-badge {
   display: none;
   flex-shrink: 0;
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
@@ -3542,7 +3580,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   margin: 0;
   padding: 14px 0;
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 
 .daily-todo-item {
@@ -3628,7 +3666,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: transparent;
   color: var(--color-text-muted);
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 700;
   cursor: pointer;
 }
@@ -4033,7 +4071,7 @@ html[data-scrolling] .dropdown-menu {
   font: 600 13px/1 var(--font-mono);
   color: var(--color-text);
 }
-.shortcuts-modal-desc { color: var(--color-text-muted); font-size: var(--text-sm); }
+.shortcuts-modal-desc { color: var(--color-text-muted); font-size: var(--text-base); }
 
 /* Issue #6 Phase 4.2 — stagger-in entrance for a newly-added topic row (see
    dashboard.js's knownItemIds id-diff). A capped set of discrete
@@ -4260,7 +4298,7 @@ html[data-scrolling] .dropdown-menu {
   border-radius: var(--radius-full);
   font: inherit;
   border: 1px solid var(--color-border);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
@@ -4431,8 +4469,8 @@ html[data-scrolling] .dropdown-menu {
 .changelog-item-list { display: grid; gap: 14px; }
 .changelog-item { display: flex; gap: 10px; align-items: flex-start; }
 .changelog-item-body { min-width: 0; }
-.changelog-item-title { font-weight: 700; font-size: var(--text-sm); }
-.changelog-item-desc { color: var(--color-text-muted); font-size: var(--text-sm); margin-top: 2px; }
+.changelog-item-title { font-weight: 700; font-size: var(--text-base); }
+.changelog-item-desc { color: var(--color-text-muted); font-size: var(--text-base); margin-top: 2px; }
 .changelog-type-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 999px; margin-top: 6px; }
 .changelog-type-dot.changelog-type-feat { background: var(--color-accent); }
 :root[data-theme='dark'] .changelog-type-dot.changelog-type-feat { background: var(--color-accent); }
@@ -4471,9 +4509,9 @@ html[data-scrolling] .dropdown-menu {
   font-family: inherit;
   line-height: 1.5;
 }
-.notes-counter { font-size: var(--text-xs); }
+.notes-counter { font-size: var(--text-base); }
 .notes-status {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-accent-700);
   opacity: 0;
@@ -4488,7 +4526,7 @@ html[data-scrolling] .dropdown-menu {
 .timer-row { display: flex; align-items: center; gap: 8px; }
 .timer-toggle-btn.active { color: var(--color-accent-700); }
 :root[data-theme='dark'] .timer-toggle-btn.active { color: var(--color-accent-700); }
-.timer-display { font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+.timer-display { font-size: var(--text-base); font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
 .daily-todo-timer-btn {
   border: none;
   background: none;
@@ -4503,7 +4541,7 @@ html[data-scrolling] .dropdown-menu {
 :root[data-theme='dark'] .daily-todo-timer-btn:hover,
 :root[data-theme='dark'] .daily-todo-timer-btn.active { color: var(--color-accent-700); }
 .daily-todo-time-spent {
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-muted);
 }
@@ -4512,7 +4550,7 @@ html[data-scrolling] .dropdown-menu {
 /* issue #206 §6 — small solid gold dot instead of a plain muted-gray message.
    Was a gradient dot; reverted to solid per the app-wide "no gradients"
    decision. */
-.resource-list-empty { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
+.resource-list-empty { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-base); color: var(--color-text-muted); }
 .resource-list-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--color-accent); }
 .resource-card {
   display: grid;
@@ -4548,7 +4586,7 @@ html[data-scrolling] .dropdown-menu {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 700;
   padding: 3px 9px;
   border-radius: var(--v3-radius-md);
@@ -4644,7 +4682,7 @@ html[data-scrolling] .dropdown-menu {
   color: #fff;
   padding: 4px 8px;
   border-radius: var(--v3-radius-sm);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   white-space: nowrap;
   pointer-events: none;
   z-index: 60;
@@ -4722,7 +4760,7 @@ html[data-scrolling] .dropdown-menu {
   white-space: nowrap;
 }
 .tour-popover-title { font-size: var(--text-base); margin: 0 0 6px; color: var(--color-text); }
-.tour-popover-body { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 16px; }
+.tour-popover-body { font-size: var(--text-base); color: var(--color-text-muted); margin: 0 0 16px; }
 .tour-popover-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .tour-popover-actions-right { display: flex; gap: 8px; }
 
@@ -4758,7 +4796,7 @@ html[data-scrolling] .dropdown-menu {
 .tabs { display: flex; border-bottom: 1px solid var(--color-border); gap: 0; }
 .tab {
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-text-muted);
   background: none;
@@ -4868,8 +4906,8 @@ html[data-scrolling] .dropdown-menu {
    solid-fill + inset-bar treatment. */
 .command-palette-item.active { background: hsl(var(--v3-accent) / 0.1); box-shadow: none; }
 .command-palette-item.active .command-palette-item-title { color: var(--v3-accent-ink, hsl(var(--v3-accent))); }
-.command-palette-item-title { font-size: var(--text-sm); font-weight: 700; color: var(--color-text); }
-.command-palette-item-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); }
+.command-palette-item-title { font-size: var(--text-base); font-weight: 700; color: var(--color-text); }
+.command-palette-item-subtitle { font-size: var(--text-base); color: var(--color-text-muted); }
 /* issue #283 — "Navigation"/"Topics" group headers, only rendered once the palette
    has more than one result group (cross-roadmap topic search wired in). Kicker
    styling per design-system.md §3 (uppercase, letter-spaced, accent color). */
@@ -4884,7 +4922,7 @@ html[data-scrolling] .dropdown-menu {
 .command-palette-footer {
   padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--color-border);
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   color: var(--color-text-muted);
 }
 
@@ -4912,7 +4950,7 @@ html[data-scrolling] .dropdown-menu {
   border: 1px solid var(--color-border);
   padding: 10px 14px;
   border-radius: var(--v3-radius-md);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 700;
   box-shadow: var(--shadow-md);
   opacity: 0;
@@ -4935,7 +4973,7 @@ html[data-scrolling] .dropdown-menu {
   border-color: currentColor;
   min-height: 0;
   padding: 3px 10px;
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
 }
 /* intentional: neutral gray hover wash reads correctly against either theme's --color-danger-bg fill, same reasoning as .btn-spinner's own neutral track just below (issue #116) */
 .save-badge-retry:hover:not(:disabled) { background: rgba(127, 127, 127, 0.15); }
@@ -4993,7 +5031,7 @@ html[data-scrolling] .dropdown-menu {
   border-left: 3px solid var(--color-accent);
   padding: 12px 18px;
   border-radius: var(--radius-md);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 700;
   box-shadow: var(--shadow-lg);
   opacity: 0;
@@ -5046,7 +5084,7 @@ html[data-scrolling] .dropdown-menu {
 .settings-row-main { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
 .settings-row-label { font-weight: 700; color: var(--color-text); }
 .settings-row-label-group { display: inline-flex; align-items: center; gap: var(--space-2); }
-.settings-row-value { color: var(--color-text-muted); font-size: var(--text-sm); margin-right: auto; }
+.settings-row-value { color: var(--color-text-muted); font-size: var(--text-base); margin-right: auto; }
 .settings-row-hint { color: var(--color-text-muted); font-size: 12px; margin: 0; }
 /* v3 (issue #416 Phase 4 — #428): design-system.md §2's paragraph-size
    accent-text rule — --v3-accent-ink in light mode (--v3-accent itself
@@ -5112,7 +5150,7 @@ html[data-scrolling] .dropdown-menu {
 
 .progress-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
 .progress-header h1 { margin: 0; font-size: var(--text-xl); }
-.progress-header-subtitle { margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+.progress-header-subtitle { margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-base); }
 .progress-header-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 /* Real, reported mismatch (issue #309, same shape as .app-topbar-status's
    fix above): the "This Week/This Month/All Time" `.filter-chip`s (36px)
@@ -5166,9 +5204,9 @@ html[data-scrolling] .dropdown-menu {
    scrolling within its own box, found live on a phone-width screenshot. */
 .heatmap-scroll { overflow-x: auto; padding-bottom: 2px; padding-right: 28px; min-width: 0; }
 .heatmap-months { display: grid; grid-auto-flow: column; grid-auto-columns: 12px; gap: 3px; margin-bottom: 4px; }
-.heatmap-month-label { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+.heatmap-month-label { font-size: var(--text-base); color: var(--color-text-muted); white-space: nowrap; }
 .heatmap-day-labels { display: grid; grid-template-rows: repeat(7, 12px); gap: 3px; width: 26px; flex-shrink: 0; margin-top: 18px; }
-.heatmap-day-label { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 12px; }
+.heatmap-day-label { font-size: var(--text-base); color: var(--color-text-muted); line-height: 12px; }
 .heatmap-grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); grid-auto-columns: 12px; gap: 3px; }
 /* v3 (issue #416 Phase 4 — #428): design-system.md §5's green heat ramp,
    replacing v2's hard-edged-square red ramp above — --v3-radius-sm swaps
@@ -5180,7 +5218,7 @@ html[data-scrolling] .dropdown-menu {
 .heatmap-cell[data-level="3"] { background: hsl(var(--v3-heat-3)); }
 .heatmap-cell[data-level="4"] { background: hsl(var(--v3-heat-4)); }
 .heatmap-cell[data-today="true"] { outline: 1.5px solid var(--color-text); outline-offset: -1.5px; }
-.heatmap-legend { display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); }
+.heatmap-legend { display: flex; align-items: center; gap: 6px; font-size: var(--text-base); color: var(--color-text-muted); }
 .heatmap-legend-swatch { width: 10px; height: 10px; border-radius: var(--v3-radius-sm); background: hsl(var(--v3-heat-0)); }
 .heatmap-legend-swatch[data-level="1"] { background: hsl(var(--v3-heat-1)); }
 .heatmap-legend-swatch[data-level="2"] { background: hsl(var(--v3-heat-2)); }
@@ -5214,7 +5252,7 @@ html[data-scrolling] .dropdown-menu {
      reference's tooltip exactly rather than following site theme (issue #155 v2). */
   background: #ffffff;
   color: #0f172a;
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 700;
   box-shadow: var(--shadow-md);
   opacity: 0;
@@ -5242,7 +5280,7 @@ html[data-scrolling] .dropdown-menu {
 }
 
 .chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; }
-.chart-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 600; }
+.chart-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; }
 .chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 /* Per-bucket dot colors as discrete classes, not an inline `style` (index.html's CSP
    has no `unsafe-inline` for style-src — see the "Never set an inline style" rule
@@ -5265,7 +5303,7 @@ html[data-scrolling] .dropdown-menu {
 /* issue #206 §6 — flat-zero chart empty-state note (progress.js's velocityEmptySlot).
    A small solid gold dot, not a full illustration. Was a gradient dot;
    reverted to solid per the app-wide "no gradients" decision. */
-.chart-empty-note { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
+.chart-empty-note { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--text-base); color: var(--color-text-muted); }
 /* v3 (issue #416 Phase 4 — #428): repointed to the v3 accent token. */
 .chart-empty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: hsl(var(--v3-accent)); }
 /* Issue #125 — a skeleton placeholder for the first Chart.js CDN load only
@@ -5303,8 +5341,8 @@ html[data-scrolling] .dropdown-menu {
 .phase-breakdown-dot[data-priority="P2"] { background: var(--color-p2); }
 .phase-breakdown-dot[data-priority="P3"] { background: var(--color-p3); }
 .phase-breakdown-main { display: grid; gap: 4px; min-width: 0; }
-.phase-breakdown-name { font-weight: 600; font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.phase-breakdown-count { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.phase-breakdown-name { font-weight: 600; font-size: var(--text-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phase-breakdown-count { font-size: var(--text-base); color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Generic linear progress bar (issue #8) — reused by the phase-breakdown
    rows above and the "Items complete" stat tile below. An inline SVG rect
@@ -5330,7 +5368,7 @@ html[data-scrolling] .dropdown-menu {
 
 /* Priority x phase table (B7) */
 .priority-table-wrap { overflow-x: auto; }
-.priority-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.priority-table { width: 100%; border-collapse: collapse; font-size: var(--text-base); }
 .priority-table th, .priority-table td { padding: 8px 10px; text-align: center; white-space: nowrap; }
 .priority-table th:first-child, .priority-table td:first-child { text-align: left; }
 .priority-table thead th { color: var(--color-text-muted); font-weight: 600; border-bottom: 1px solid var(--color-border); }
@@ -5343,10 +5381,10 @@ html[data-scrolling] .dropdown-menu {
 
 /* Projected completion (B8) */
 .projection-card-body { display: grid; gap: 4px; justify-items: center; text-align: center; }
-.projection-pace { color: var(--color-text-muted); font-size: var(--text-sm); }
+.projection-pace { color: var(--color-text-muted); font-size: var(--text-base); }
 .projection-headline { font-size: var(--text-2xl); font-weight: 800; color: var(--color-accent-700); }
 :root[data-theme='dark'] .projection-headline { color: var(--color-accent-700); }
-.projection-boost { color: var(--color-text-muted); font-size: var(--text-sm); }
+.projection-boost { color: var(--color-text-muted); font-size: var(--text-base); }
 .projection-empty { color: var(--color-text-muted); text-align: center; }
 
 /* Roadmap comparison modal (issue #285) — reuses .modal-overlay/.modal-card and
@@ -5355,7 +5393,7 @@ html[data-scrolling] .dropdown-menu {
    comparison-specific result list below is new. Flush-left throughout, radius
    0, 2px/1px rules per design-system.md. */
 .comparison-modal-card { width: min(640px, 92vw); max-height: 85vh; display: flex; flex-direction: column; gap: var(--space-4); }
-.comparison-modal-subtitle { color: var(--color-text-muted); font-size: var(--text-sm); }
+.comparison-modal-subtitle { color: var(--color-text-muted); font-size: var(--text-base); }
 .comparison-mode-toggle { display: flex; gap: 8px; }
 .comparison-other-select { display: flex; flex-direction: column; gap: 6px; }
 .comparison-result-slot { overflow-y: auto; border-top: 2px solid var(--color-divider); padding-top: var(--space-4); }
@@ -5364,13 +5402,13 @@ html[data-scrolling] .dropdown-menu {
 .comparison-summary-item { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-left: 1px solid var(--color-divider); text-align: left; }
 .comparison-summary-item:first-child { border-left: none; }
 .comparison-summary-value { font-size: var(--text-xl); font-weight: 800; color: var(--color-text); font-variant-numeric: tabular-nums; }
-.comparison-summary-label { font-size: var(--text-xs); color: var(--color-text-muted); }
+.comparison-summary-label { font-size: var(--text-base); color: var(--color-text-muted); }
 .comparison-phase-groups { display: flex; flex-direction: column; gap: var(--space-4); }
-.comparison-phase-title { margin: 0 0 6px; font-size: var(--text-sm); font-weight: 700; text-align: left; }
+.comparison-phase-title { margin: 0 0 6px; font-size: var(--text-base); font-weight: 700; text-align: left; }
 .comparison-row-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-divider); }
 .comparison-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-divider); text-align: left; }
-.comparison-row-title { color: var(--color-text); font-size: var(--text-sm); }
-.comparison-row-status { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+.comparison-row-title { color: var(--color-text); font-size: var(--text-base); }
+.comparison-row-status { font-size: var(--text-base); color: var(--color-text-muted); white-space: nowrap; }
 .comparison-row-status-both-done { color: var(--color-success); }
 .comparison-row-added .comparison-row-status { color: var(--color-accent-700); }
 .comparison-row-removed .comparison-row-status { color: var(--color-text-muted); }
@@ -5383,7 +5421,7 @@ html[data-scrolling] .dropdown-menu {
 
 @media (max-width: 480px) {
   .progress-card { padding: var(--space-4); }
-  .priority-table { font-size: var(--text-xs); }
+  .priority-table { font-size: var(--text-base); }
 }
 
 /* ==========================================================================
@@ -5549,7 +5587,7 @@ html[data-scrolling] .dropdown-menu {
   max-width: 46ch;
 }
 .landing-hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-6); }
-.landing-hero-stat { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
+.landing-hero-stat { font-size: var(--text-base); color: var(--color-text-muted); margin: 0; }
 
 .landing-hero-mock { display: flex; justify-content: center; position: relative; z-index: 1; }
 .landing-mock-card {
@@ -5700,7 +5738,7 @@ html[data-scrolling] .dropdown-menu {
   margin-bottom: var(--space-4);
 }
 .step-card-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-base); margin: 0 0 var(--space-2); color: var(--color-text); }
-.step-card-text { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
+.step-card-text { font-size: var(--text-base); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
 .landing-proof { text-align: center; padding: 0 var(--space-6) var(--space-12); }
 /* v3 (issue #416 Phase 3) — recolored from the v2 red/orange
@@ -5761,10 +5799,10 @@ html[data-scrolling] .dropdown-menu {
   padding: var(--space-8) var(--space-6);
   border-top: 1px solid var(--color-border);
 }
-.landing-footer-copy { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
+.landing-footer-copy { font-size: var(--text-base); color: var(--color-text-muted); margin: 0; }
 /* issue #414 — "About the developer" footer link, the signed-out
    discoverability surface for the new /creator page. */
-.landing-footer-link { font-size: var(--text-sm); color: var(--color-text-muted); text-decoration: none; }
+.landing-footer-link { font-size: var(--text-base); color: var(--color-text-muted); text-decoration: none; }
 .landing-footer-link:hover { color: var(--color-text); text-decoration: underline; }
 .landing-footer-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
@@ -6071,7 +6109,7 @@ html[data-scrolling] .dropdown-menu {
   background: var(--color-accent-600);
   color: var(--color-ink-on-accent);
   font-weight: 700;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   box-shadow: var(--v3-shadow-glow);
   cursor: pointer;
   opacity: 0;
@@ -6088,7 +6126,7 @@ html[data-scrolling] .dropdown-menu {
 .feedback-modal-close { position: absolute; top: 16px; right: 16px; }
 .feedback-modal-body { display: flex; flex-direction: column; gap: 16px; }
 .feedback-type-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-right: 36px; }
-.feedback-privacy-note { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; }
+.feedback-privacy-note { font-size: var(--text-base); color: var(--color-text-muted); margin: 0; }
 
 .feedback-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
 /* v3 (issue #416 Phase 5 — #430) — moved onto the glass-card recipe (was a
@@ -6115,7 +6153,7 @@ html[data-scrolling] .dropdown-menu {
   color: var(--color-text);
   font: inherit;
   font-weight: 700;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   cursor: pointer;
   transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
@@ -6130,7 +6168,7 @@ html[data-scrolling] .dropdown-menu {
 .feedback-field { display: flex; flex-direction: column; gap: 6px; }
 .feedback-field-input { min-height: 42px; }
 textarea.feedback-field-input { min-height: 88px; resize: vertical; }
-.feedback-char-counter { align-self: flex-end; font-size: var(--text-xs); color: var(--color-text-muted); }
+.feedback-char-counter { align-self: flex-end; font-size: var(--text-base); color: var(--color-text-muted); }
 .feedback-field-input.field-input-invalid { border-color: var(--color-danger); }
 
 /* issue #206 §5 follow-up — real feedback (screenshots): the Severity/
@@ -6144,7 +6182,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .feedback-field.feedback-radio-fieldset { border: none; padding: 0; margin: 0; min-width: 0; }
 .feedback-field.feedback-radio-fieldset > legend { padding: 0; }
 .feedback-radio-group { display: flex; flex-direction: column; gap: 10px; }
-.feedback-radio-option { display: flex; align-items: center; gap: 10px; font-size: var(--text-sm); color: var(--color-text); cursor: pointer; }
+.feedback-radio-option { display: flex; align-items: center; gap: 10px; font-size: var(--text-base); color: var(--color-text); cursor: pointer; }
 /* Custom-styled radio circle matching `.check-box`'s visual language
    (border → filled dot on check, same corner-radius/border-width idiom,
    just circular) instead of the unstyled OS-native control the screenshots
@@ -6175,14 +6213,14 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 }
 .feedback-radio-option input[type='radio']:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-.feedback-system-info-checkbox { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-sm); color: var(--color-text); cursor: pointer; }
+.feedback-system-info-checkbox { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-base); color: var(--color-text); cursor: pointer; }
 /* issue #206 §5 follow-up — was an unstyled native checkbox (OS-default blue
    check in the screenshots); `accent-color` recolors the native control to
    match the theme with no custom widget needed, same convention
    `.remember-checkbox`/`.daily-todo-checkbox input[type='checkbox']`
    already established elsewhere in this file. */
 .feedback-system-info-checkbox input[type='checkbox'] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--color-accent); flex-shrink: 0; cursor: pointer; }
-.feedback-system-info-summary { color: var(--color-text-muted); font-size: var(--text-xs); }
+.feedback-system-info-summary { color: var(--color-text-muted); font-size: var(--text-base); }
 
 .feedback-form-actions { display: flex; gap: 12px; justify-content: flex-end; }
 .feedback-cooldown-message { text-align: right; }
@@ -6198,10 +6236,10 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .my-report-summary { width: 100%; text-align: left; padding: 12px 14px; background: var(--color-surface-raised); color: var(--color-text); font: inherit; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
 .my-report-title-row { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .my-report-title { flex: 1; }
-.my-report-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
-.my-report-severity { font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: var(--v3-radius-sm); background: var(--color-danger-bg); color: var(--color-danger); }
+.my-report-meta { font-size: var(--text-base); color: var(--color-text-muted); }
+.my-report-severity { font-size: var(--text-base); font-weight: 800; padding: 2px 8px; border-radius: var(--v3-radius-sm); background: var(--color-danger-bg); color: var(--color-danger); }
 .my-report-severity-low, .my-report-severity-medium { background: var(--color-warning-bg); color: var(--color-warning); }
-.my-report-details { padding: 0 14px 14px; font-size: var(--text-sm); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
+.my-report-details { padding: 0 14px 14px; font-size: var(--text-base); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
 
 /* Collapse the feedback trigger to icon-only below 480px (issue #9 §2.1) —
    the full "Feedback" pill is wide enough to crowd a phone-width corner
@@ -6244,7 +6282,12 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
    Playwright retry. 2px of headroom absorbs that rounding without changing
    the visual intent of "~44px minimum". */
 @media (pointer: coarse) {
-  .btn-icon { width: 46px; height: 46px; }
+  /* Raised to the tap-min token (48px, issue #482 A1) — was a fixed 46px
+     before this. Still coarse-pointer-only, matching every other rule in
+     this block; see the code comment above the base `.btn`/`.filter-chip`/
+     `.nav-item`/`.check-box`/`.seg-opt` rule for why `.btn-icon` isn't in
+     that unconditional list. */
+  .btn-icon { width: var(--tap-min); height: var(--tap-min); }
   .btn-sm { min-height: 46px; }
   .filter-chip { min-height: 46px; }
   .check-item { min-height: 46px; }
@@ -6252,15 +6295,16 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .feedback-widget-trigger { min-height: 46px; }
   .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
   /* issue #435 — same border-clip bug as the base rule above, at the touch
-     tier: the group must grow to actually fit a real 46px touch target
-     (46px child + 2*1px border + 2*3px padding = 54px), not stay pinned to
-     36px like the mouse/desktop row. */
-  .app-topbar .icon-btn-group { height: 54px; }
+     tier: the group must grow to actually fit a real touch target (var(--tap-min)
+     child + 2*1px border + 2*3px padding = 56px, issue #482 A1 — was a fixed
+     46px/54px pair before this), not stay pinned to 36px like the
+     mouse/desktop row. */
+  .app-topbar .icon-btn-group { height: 56px; }
   .icon-btn-group .app-topbar-command-btn,
   .icon-btn-group .app-topbar-bell,
   .icon-btn-group .theme-toggle.btn-icon {
-    width: 46px;
-    height: 46px;
+    width: var(--tap-min);
+    height: var(--tap-min);
   }
 }
 

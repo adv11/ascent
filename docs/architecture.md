@@ -5333,3 +5333,19 @@ became conditional. An intermediate phase PR gets `deploy:hold` applied at
 PR-author time (see `open-pr` skill's new "Phased multi-PR work" section);
 the final phase's PR omits it, so merging it deploys everything held back
 in one shot.
+
+### 2026-08-04 — PR #TBD — Responsive layout primitives (issue #482, A1)
+
+Added the shared layout floor every other issue in the responsive-redesign batch
+(#483–#507) depends on, all in `src/styles/app.css`. `--content-max`/`--tap-min`
+tokens, one `.app-content` centering rule, `--text-2xl`/`-3xl`/`-4xl` converted to
+`clamp()` in place (same token names — no call-site changes needed), and a base
+`min-height`/`min-width: var(--tap-min)` rule on `.btn`/`.filter-chip`/`.nav-item`/
+`.check-box`/`.seg-opt`/`.btn-icon`. Also raised every paragraph/body-copy rule
+that read `var(--text-xs)`/`var(--text-sm)` for its `font-size` to `var(--text-base)`,
+leaving only `.eyebrow`, `kbd`, and `th` below 16px — including `.btn-sm` and
+`.priority-table`, both of which previously undercut the new 16px/48px floors.
+New `tests/unit/typeScaleFloor.test.js` enforces the floor going forward by
+regex-scanning `app.css` for any non-exempt rule still using the small tokens.
+No per-page layout change and no token color change — that's Phase B/C/D's job in
+the later issues this one unblocks.
