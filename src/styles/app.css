@@ -213,6 +213,11 @@
   /* App shell topbar height — unrelated to this pass's token scope, unchanged. */
   --topbar-h: 56px;
 
+  /* Bottom tab bar height (issue #484) — plus env(safe-area-inset-bottom),
+     applied directly on .bottom-nav/.app-content rather than folded into
+     this token, since the safe-area inset is device-dependent. */
+  --bottom-nav-h: 56px;
+
   /* Icon size scale — unrelated to this pass's token scope, unchanged. */
   --icon-size-xs: 16px;
   --icon-size-sm: 20px;
@@ -1890,32 +1895,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .app-sidebar.collapsed .app-sidebar-identity { justify-content: center; padding: var(--space-1) 0; }
 .app-sidebar.collapsed .app-sidebar-signout { width: 32px; height: 32px; font-size: var(--text-base); }
 
-/* A near-black, higher-opacity, theme-agnostic overlay — not the lighter
-   `rgba(15, 23, 42, 0.5)` `.modal-overlay` uses. That value reads fine over
-   `.modal-overlay`'s content because a bright, opaque `.modal-card` sits
-   centered on top of it, drawing the eye; the mobile sidebar drawer has no
-   such focal card — the backdrop *is* most of the visible screen once the
-   drawer is open — so in dark theme, where the page's own background is
-   already close to this same navy, the old value barely dimmed anything and
-   the dashboard behind it stayed fully readable, reading as a broken
-   half-transparent mess rather than a real modal overlay (reported live,
-   issue #18 follow-up). `0.78` opacity + `blur(2px)` fixed that — confirmed
-   live in both themes. (A later pass briefly pushed this to `0.94`/`blur(10px)`
-   to make dashboard text fully unreadable behind the drawer, but that read as
-   too heavy/flat — reverted back to this value, which was already good; the
-   real remaining problem turned out to be the layout-shift bug fixed below,
-   not this backdrop.) */
-/* intentional: theme-agnostic dark scrim, see comment above (issue #116) */
-.app-sidebar-backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(2, 6, 16, 0.78);
-  backdrop-filter: blur(2px);
-  z-index: 199;
-}
-.app-sidebar-backdrop.show { display: block; }
-
 /* issue #299 — design-system.md §8: "Avatars: square, ink fill, ground-colored
    initial." Was a circular, accent-filled, fixed-white-text avatar left over
    from the pre-#297 direction (both fill and shape). */
@@ -2235,21 +2214,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
 }
 .app-topbar-command-btn:hover { background: var(--color-surface-raised); }
-.app-topbar-hamburger {
-  display: none;
-  border: none;
-  background: none;
-  font-size: var(--text-lg);
-  color: var(--color-text);
-  cursor: pointer;
-  padding: var(--space-1) var(--space-2);
-}
 
 /* `grid-column: 2` is required, not decorative — without an explicit
    placement, CSS Grid's auto-placement algorithm places the next in-flow
-   child into the first *available* cell. `.app-sidebar` going
-   `position: fixed` when the mobile/tablet drawer opens (below) removes it
-   from grid flow entirely, and without this rule `.app-shell-main` (the
+   child into the first *available* cell. `.app-sidebar` going `display:
+   none` below the 900px breakpoint (below) removes it from grid flow
+   entirely, and without this rule `.app-shell-main` (the
    next in-flow child) would auto-place into column 1 instead of column 2 —
    shrinking to the sidebar's own column width and jumping to the left edge
    the instant the drawer opened, a real layout-shift bug distinct from (and
@@ -2288,136 +2258,75 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   min-width: var(--tap-min);
 }
 
-/* Tablet (640–1023px, issue #6 Phase 2.1) — automatic icon-only rail,
-   independent of the manual desktop collapse toggle above. */
-@media (max-width: 1023px) {
-  /* Locks the grid's first column to the closed rail's own width (56px),
-     independent of `.app-sidebar`'s own `width` — see the fix below for why
-     that decoupling matters. */
-  .app-shell-2 { grid-template-columns: 56px minmax(0, 1fr); }
-  .app-sidebar { width: 56px; padding: var(--space-3) var(--space-2); }
-  .app-sidebar .nav-item-label,
-  .app-sidebar .app-sidebar-user-email,
-  .app-sidebar .app-sidebar-guest-risk,
-  .app-sidebar .brand-name,
-  .app-sidebar .brand-tagline { display: none; }
-  .app-sidebar .nav-item { justify-content: center; }
-  .app-sidebar-collapse-btn { display: none; }
-
-  /* Issue #102 — same icon-rail footer overlap this width hits as the
-     desktop `.collapsed` state above: stack the avatar and sign-out button
-     instead of letting them collide in the narrow rail. */
-  .app-sidebar-footer { flex-direction: column; align-items: center; gap: var(--space-1); }
-  .app-sidebar-identity { justify-content: center; padding: var(--space-1) 0; }
-  .app-sidebar-signout { width: 32px; height: 32px; font-size: var(--text-base); }
-
-  /* Issue #102 — the manual desktop collapse toggle is hidden at this width
-     (the rail here is automatic, not user-togglable) and the hamburger below
-     used to be scoped to <640px only, leaving 640-1023px with no way to see
-     nav labels or the account email. Reuse the same `_toggleMobile()` drawer
-     mechanism (`sidebar.js`) the phone breakpoint already has — the
-     hamburger becomes visible here too, and opening it expands the rail into
-     the same full overlay drawer instead of staying icon-only. */
-  .app-topbar-hamburger { display: inline-flex; }
-  /* issue #463 — full redesign of this breakpoint's topbar wrapping, real
-     reported clutter: the hamburger, breadcrumb, review/todo badges,
-     sync-pill, "Create account" button, and icon group used to wrap
-     wherever they happened to run out of row width (plain `flex-wrap` with
-     no explicit `order`), producing up to three uncontrolled rows — the
-     hamburger sitting alone, then a status-badge row, then the icon row —
-     before any real page content appeared. Deliberate two-row layout
-     instead: row 1 is always exactly `hamburger · breadcrumb · icon group`
-     (never more, never fewer); row 2 is `.app-topbar-status` (review-due/
-     daily-todo badges, sync-pill, "Create account") when any of those are
-     present. `dashboard.js` always passes a real `syncPill`, so its row 2
-     always renders; `progress.js`/`settings.js` pass `syncPill: null` and no
-     `reviewDueBadge` at all (`createTopbar()`'s `dailyTodoNavBadge`/
-     `reviewDueBadge`/`syncPill` params are optional, `topbar.js`), so for a
-     signed-in (non-guest) user on those two pages `.app-topbar-status` ends
-     up with zero children — the `:empty` rule below collapses it back to
-     nothing rather than leaving a blank, still-margined second row. `order`
-     reassigns the *visual* row-1/row-2 split independently of DOM order
-     (`hamburger, breadcrumbEl, statusGroup, iconGroup` — `.app-topbar`
-     desktop's unchanged left-to-right reading order, `topbar.js`) —
-     `.icon-btn-group` moves from DOM-last to visually-third (still row 1)
-     via `order: 3`, and `.app-topbar-status`'s `order: 4` + `flex-basis:
-     100%` forces it onto a guaranteed-empty new line: a `flex-basis: 100%`
-     item always starts its own row, and since nothing else is ordered after
-     it, it's alone there, not sharing the line with anything that follows.
-     `.app-topbar-breadcrumb`'s existing `flex: 1; min-width: 0` (unchanged)
-     is what actually absorbs the squeeze — it ellipsis-truncates before
-     anything is forced to wrap, so row 1 reliably fits regardless of how
-     long the page title is. */
+/* Below 900px (issue #484) — the sidebar is retired entirely in favor of
+   bottomNav.js's fixed bottom tab bar; no icon-only rail, no off-canvas
+   drawer. `.app-shell-main` is pinned back to the grid's only explicit
+   column, matching the same "grid-column must match however many explicit
+   columns actually exist at this breakpoint" reasoning previous versions of
+   this rule already established for the old <640px tier. */
+@media (max-width: 899px) {
+  .app-shell-main { grid-column: 1; }
+  .app-shell-2 { grid-template-columns: minmax(0, 1fr); }
+  .app-sidebar { display: none; }
+  /* issue #463's status-group wrap-order rework (row 1: breadcrumb + icon
+     group; row 2: `.app-topbar-status`) is unaffected by the hamburger's
+     removal — `.app-topbar-breadcrumb`'s own `order: 2` and the rest still
+     apply unconditionally below, this block only needed to drop the
+     hamburger's own `order: 1` rule. */
   .app-topbar { align-items: flex-start; flex-wrap: wrap; }
-  .app-topbar-hamburger { order: 1; }
   .app-topbar-breadcrumb { order: 2; }
   .icon-btn-group { order: 3; flex-shrink: 0; }
   .app-topbar-status { order: 4; flex-basis: 100%; justify-content: flex-start; margin-top: var(--space-2); }
   .app-topbar-status:empty { display: none; margin-top: 0; }
-  /* `position: fixed` takes the sidebar out of grid flow the moment the
-     drawer opens — without the `.app-shell-2` override above locking the
-     grid's first column to a fixed 56px, the `auto`-sized column it used to
-     occupy collapses (nothing in-flow left to size it against), and
-     `.app-shell-main` reflows to fill the freed space: the whole dashboard
-     visibly shifted/resized every time the drawer opened and closed, not
-     just an overlay appearing on top of a static page (reported live,
-     issue #18 follow-up). Locking the column width is the fix — never make
-     it `auto` again at this breakpoint while `.mobile-open` can go fixed. */
-  .app-sidebar.mobile-open {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 240px;
-    padding: var(--space-6) var(--space-4);
-    z-index: 200;
-  }
-  .app-sidebar.mobile-open .nav-item-label,
-  .app-sidebar.mobile-open .app-sidebar-user-email,
-  .app-sidebar.mobile-open .brand-name,
-  .app-sidebar.mobile-open .brand-tagline { display: block; }
-  .app-sidebar.mobile-open .nav-item { justify-content: flex-start; }
-  .app-sidebar.mobile-open .app-sidebar-footer { flex-direction: row; align-items: center; gap: var(--space-2); }
-  .app-sidebar.mobile-open .app-sidebar-identity { justify-content: flex-start; padding: var(--space-1); }
-  .app-sidebar.mobile-open .app-sidebar-signout { width: 36px; height: 36px; font-size: 22px; }
-}
-
-/* Mobile (<640px) — sidebar hidden by default, opens as a drawer on hamburger tap. */
-@media (max-width: 639px) {
-  /* `.app-shell-main { grid-column: 2; }` (unconditional, above) is only
-     correct while the explicit grid actually has 2 columns. At this
-     breakpoint `.app-sidebar` is `position: fixed` (out of flow) and the
-     grid collapses to a single explicit column — but `.app-shell-main`
-     staying pinned to "column 2" forces the browser to synthesize an
-     implicit second column to satisfy that placement, splitting the
-     viewport width between a phantom empty column and the real content
-     instead of giving it the full 1fr. This happened to resolve to 0px on
-     `dashboard.js`'s specific content shape (invisible) but produced a real,
-     visible blank gutter on `settings.js` (reported live, issue #16 follow-
-     up, screenshotted at multiple narrow desktop-browser widths). Pin it
-     back to column 1 — the only explicit column that exists here. */
-  .app-shell-main { grid-column: 1; }
-  .app-shell-2 { grid-template-columns: minmax(0, 1fr); }
-  .app-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 240px;
-    z-index: 200;
-    transform: translateX(-100%);
-    transition: transform var(--duration-base) var(--ease-out);
-  }
-  .app-sidebar.mobile-open { transform: translateX(0); }
-  .app-sidebar .nav-item-label,
-  .app-sidebar .app-sidebar-user-email,
-  .app-sidebar .brand-name,
-  .app-sidebar .brand-tagline { display: block; }
-  .app-sidebar .nav-item { justify-content: flex-start; }
-  .app-topbar-hamburger { display: inline-flex; }
+  /* Room for the fixed bottom nav (below) so page content never renders
+     underneath it. */
+  .app-content { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4)); }
 }
 
 .scroll-locked { overflow: hidden; }
+
+/* Bottom tab bar (issue #484) — replaces the hamburger drawer as the app's
+   mobile/tablet navigation below the sidebar's 900px breakpoint. Fixed,
+   full-width, always-visible labels — reachable one-handed, no discovery
+   needed, matching the platform pattern every phone user already knows.
+   Hidden entirely at/above 900px, where the sidebar (above) is the nav. */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  height: var(--bottom-nav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-divider);
+}
+@media (max-width: 899px) {
+  .bottom-nav { display: flex; }
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.bottom-nav-item.active {
+  background: var(--color-accent-100);
+  /* --color-accent-700 is this app's WCAG-safe "accent as paragraph-size
+     text" token (see its own :root definition) — used here as the spec's
+     --color-accent-ink, which isn't a real token in this codebase. */
+  color: var(--color-accent-700);
+}
+.bottom-nav-item-icon { display: inline-flex; }
+.bottom-nav-item-label { line-height: 1; }
 
 .offline-banner {
   display: none;
@@ -6300,8 +6209,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      Hide the app chrome and reset every height/overflow constraint so
      whatever page is on screen flows and paginates normally instead. */
   body:not(.print-mode) .app-sidebar,
-  body:not(.print-mode) .app-sidebar-backdrop,
-  body:not(.print-mode) .app-topbar-hamburger,
+  body:not(.print-mode) .bottom-nav,
   body:not(.print-mode) .command-palette,
   body:not(.print-mode) .feedback-widget-trigger,
   body:not(.print-mode) .save-badge,

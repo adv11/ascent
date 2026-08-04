@@ -134,56 +134,25 @@ describe('featureTour', () => {
     expect(targetClick).toHaveBeenCalledTimes(1);
   });
 
-  describe('requiresMobileSidebar (issue #349)', () => {
-    it('opens the sidebar drawer before showing a step flagged requiresMobileSidebar, at mobile viewport widths', () => {
-      mockMatchMedia(true);
-      const onOpenSidebar = vi.fn();
-      const onCloseSidebar = vi.fn();
-      const steps = buildSteps(1);
-      steps[0].requiresMobileSidebar = true;
-      startTour(steps, { onEnd: vi.fn(), onOpenSidebar, onCloseSidebar });
-      document.querySelector('.tour-welcome-card [data-action="start"]').click();
-
-      expect(onOpenSidebar).toHaveBeenCalledTimes(1);
-      expect(onCloseSidebar).not.toHaveBeenCalled();
-    });
-
-    it('does not open the sidebar drawer for a flagged step at non-mobile viewport widths', () => {
-      mockMatchMedia(false);
-      const onOpenSidebar = vi.fn();
-      const steps = buildSteps(1);
-      steps[0].requiresMobileSidebar = true;
-      startTour(steps, { onEnd: vi.fn(), onOpenSidebar });
-      document.querySelector('.tour-welcome-card [data-action="start"]').click();
-
-      expect(onOpenSidebar).not.toHaveBeenCalled();
-    });
-
-    it('closes the sidebar drawer when moving from a flagged step to one that is not flagged', () => {
-      mockMatchMedia(true);
-      const onOpenSidebar = vi.fn();
-      const onCloseSidebar = vi.fn();
+  describe('skipping a step whose target is not rendered (issue #484)', () => {
+    it('advances past a step with no target instead of ending the tour', () => {
       const steps = buildSteps(2);
-      steps[0].requiresMobileSidebar = true;
-      startTour(steps, { onEnd: vi.fn(), onOpenSidebar, onCloseSidebar });
+      steps[0].target = () => null;
+      startTour(steps, { onEnd: vi.fn() });
       document.querySelector('.tour-welcome-card [data-action="start"]').click();
-      expect(onOpenSidebar).toHaveBeenCalledTimes(1);
 
-      document.querySelector('.tour-popover [data-action="next"]').click();
-      expect(onCloseSidebar).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('.tour-popover').textContent).toContain('Step 2');
     });
 
-    it('closes the sidebar drawer on tour end if it was left open mid-sidebar-step', () => {
-      mockMatchMedia(true);
-      const onOpenSidebar = vi.fn();
-      const onCloseSidebar = vi.fn();
+    it('ends the tour if the last step has no target', () => {
+      const onEnd = vi.fn();
       const steps = buildSteps(1);
-      steps[0].requiresMobileSidebar = true;
-      startTour(steps, { onEnd: vi.fn(), onOpenSidebar, onCloseSidebar });
+      steps[0].target = () => null;
+      startTour(steps, { onEnd });
       document.querySelector('.tour-welcome-card [data-action="start"]').click();
 
-      document.querySelector('.tour-popover [data-action="skip"]').click();
-      expect(onCloseSidebar).toHaveBeenCalledTimes(1);
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('.tour-popover')).toBeNull();
     });
   });
 });

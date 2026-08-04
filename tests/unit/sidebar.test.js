@@ -82,32 +82,6 @@ describe('createSidebar — manual collapse', () => {
   });
 });
 
-describe('createSidebar — mobile drawer', () => {
-  it('_toggleMobile opens and closes the drawer, locking/unlocking body scroll', async () => {
-    const node = await freshSidebar({ activeRoute: '/app', user: { isAnonymous: true }, store: fakeStore() });
-    document.body.append(node);
-
-    node._toggleMobile();
-    expect(node.classList.contains('mobile-open')).toBe(true);
-    expect(node._backdrop.classList.contains('show')).toBe(true);
-    expect(document.body.classList.contains('scroll-locked')).toBe(true);
-
-    node._toggleMobile();
-    expect(node.classList.contains('mobile-open')).toBe(false);
-    expect(document.body.classList.contains('scroll-locked')).toBe(false);
-  });
-
-  it('clicking a nav link closes an open mobile drawer', async () => {
-    const node = await freshSidebar({ activeRoute: '/app', user: { isAnonymous: true }, store: fakeStore() });
-    document.body.append(node);
-
-    node._toggleMobile();
-    node.querySelector('.app-sidebar-nav a[href="#/onboarding"]').click();
-
-    expect(node.classList.contains('mobile-open')).toBe(false);
-  });
-});
-
 describe('createSidebar — account identity', () => {
   // Issue #18 — an anonymous/guest session's local-only progress is exactly
   // the data most at risk of being lost, so backup export/import is offered

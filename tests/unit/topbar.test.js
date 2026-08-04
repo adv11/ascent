@@ -9,7 +9,6 @@ function baseProps(overrides = {}) {
     themeToggleBtn: document.createElement('button'),
     dailyTodoNavBadge: null,
     notificationBell: null,
-    onToggleMobileSidebar: () => {},
     ...overrides
   };
 }

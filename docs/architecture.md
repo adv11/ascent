@@ -5349,3 +5349,25 @@ New `tests/unit/typeScaleFloor.test.js` enforces the floor going forward by
 regex-scanning `app.css` for any non-exempt rule still using the small tokens.
 No per-page layout change and no token color change — that's Phase B/C/D's job in
 the later issues this one unblocks.
+
+### 2026-08-04 — PR #TBD — Bottom tab bar replaces the hamburger drawer (issue #484, A3)
+
+New `src/ui/components/bottomNav.js` — a fixed, always-visible-label bottom tab
+bar (four tabs: Dashboard/Progress/My Roadmaps/Settings) that is the app's
+entire mobile/tablet navigation below the sidebar's own 900px breakpoint,
+replacing the old three-tier story (a 640–1023px automatic icon-only rail plus
+a <640px off-canvas drawer, both opened via `topbar.js`'s hamburger button and
+`sidebar.js`'s `_toggleMobile`/`_openMobile`/`_closeMobile`/`_backdrop`). The
+sidebar now renders in full at >=900px and is `display: none` below it — no
+rail, no drawer, nothing in between. Mounted in `dashboard.js`/`progress.js`/
+`settings.js`'s shells as a sibling of the existing `sidebar`/`topbar` (not
+`onboarding.js`, which has no app-shell sidebar to begin with), with its own
+`_cleanup` wired into each route's cleanup return per this app's component
+subscription/cleanup convention. `featureTour.js` lost the
+`requiresMobileSidebar`/`onOpenSidebar`/`onCloseSidebar` mechanism it used to
+force-open the drawer around a flagged step (issue #349) — a step whose
+`target()` resolves to `null` at the current viewport is now skipped forward
+automatically instead of ending the tour early, and `dashboard.js`'s
+sidebar-nav-item tour steps fall back to their `.bottom-nav-item` equivalents
+when the sidebar isn't rendered. See `.claude/rules/ui-styling.md`'s "The
+sidebar/bottom-nav split" entry for the full breakpoint/component contract.

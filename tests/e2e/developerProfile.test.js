@@ -41,7 +41,12 @@ test('signed-in guest can reach /creator with no redirect, and from the sidebar 
   await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 10_000 });
   await expect(page).toHaveURL(/#\/creator/);
 
-  // Reached from the sidebar account menu on a real app page.
+  // Reached from the sidebar account menu on a real app page — navigate back
+  // to the onboarding picker first, since /#/creator has no .template-card of
+  // its own (this step used to click straight through from the /creator page
+  // with no navigation in between, which never found the picker's card).
+  await page.goto('/#/onboarding');
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
   await page.locator('.app-sidebar-identity').click();

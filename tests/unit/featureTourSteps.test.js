@@ -53,8 +53,7 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
       syncPill: null,
       themeToggleBtn: createThemeToggle(),
       dailyTodoNavBadge: null,
-      notificationBell: createChangelogBell(),
-      onToggleMobileSidebar: () => {}
+      notificationBell: createChangelogBell()
     });
     const feedbackWidget = createFeedbackWidget({ user });
 

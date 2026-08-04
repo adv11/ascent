@@ -4,6 +4,7 @@ import { createThemeToggle } from '../components/themeToggle.js';
 import { createChangelogBell } from '../components/notificationBell.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
+import { createBottomNav } from '../components/bottomNav.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
 import { createHeatmap } from '../components/heatmap.js';
 import { createLineChart, createBarChart } from '../components/chartWrapper.js';
@@ -341,9 +342,9 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     syncPill: null,
     themeToggleBtn,
     dailyTodoNavBadge: null,
-    notificationBell: createChangelogBell(),
-    onToggleMobileSidebar: () => sidebar._toggleMobile()
+    notificationBell: createChangelogBell()
   });
+  const bottomNav = createBottomNav({ activeRoute: '/progress' });
 
   const statStripSlot = el('div', {});
   const heatmapSlot = el('div', {});
@@ -407,8 +408,8 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
 
   const shell = el('div', { className: 'app-shell-2 progress-page fade-in' }, [
     sidebar,
-    sidebar._backdrop,
-    el('div', { className: 'app-shell-main' }, [topbar, content])
+    el('div', { className: 'app-shell-main' }, [topbar, content]),
+    bottomNav
   ]);
 
   app.replaceChildren(shell);
@@ -517,6 +518,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();
+    bottomNav._cleanup?.();
     unsubStore();
     unsubActivityLog();
     lineChart?.destroy();

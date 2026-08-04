@@ -12,6 +12,7 @@ import { confirmDialog } from '../components/confirmDialog.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
+import { createBottomNav } from '../components/bottomNav.js';
 import { getTemplate } from '../../data/templates/index.js';
 import { MAX_TITLE_LENGTH } from '../../core/roadmap/limits.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
@@ -358,32 +359,31 @@ export function buildTourSteps() {
       body: 'Click a topic to mark it done. Click the resources badge to view or add links without toggling it.'
     },
     {
-      target: () => document.querySelector('.app-sidebar-nav a[href="#/progress"]'),
+      // Issue #484 — below the sidebar's >=900px breakpoint there's no
+      // sidebar at all (no off-canvas drawer to open, unlike the retired
+      // hamburger drawer this replaced) — bottomNav.js's own "Progress" tab
+      // is the equivalent target there instead.
+      target: () => document.querySelector('.app-sidebar-nav a[href="#/progress"]') || document.querySelector('.bottom-nav-item[href="#/progress"]'),
       title: 'See your progress',
-      body: 'Streaks, charts, and your full history live on the Progress page.',
-      // Issue #349 — this and the next three steps' targets live inside the
-      // sidebar, which is an off-canvas drawer at ≤639px; featureTour.js
-      // opens/closes it around these steps via onOpenSidebar/onCloseSidebar
-      // rather than hardcoding sidebar DOM knowledge itself.
-      requiresMobileSidebar: true
+      body: 'Streaks, charts, and your full history live on the Progress page.'
     },
     {
-      target: () => document.querySelector('.app-sidebar-nav a[href="#/onboarding"]'),
+      target: () => document.querySelector('.app-sidebar-nav a[href="#/onboarding"]') || document.querySelector('.bottom-nav-item[href="#/onboarding"]'),
       title: 'Manage your roadmaps',
-      body: 'Switch between all your roadmaps anytime — your progress stays intact. This is also where you\'ll find Daily Todos, favorite roadmaps, and the option to build your own roadmap with AI.',
-      requiresMobileSidebar: true
+      body: 'Switch between all your roadmaps anytime — your progress stays intact. This is also where you\'ll find Daily Todos, favorite roadmaps, and the option to build your own roadmap with AI.'
     },
     {
-      target: () => document.querySelector('.app-sidebar-nav a[href="#/settings"]'),
+      target: () => document.querySelector('.app-sidebar-nav a[href="#/settings"]') || document.querySelector('.bottom-nav-item[href="#/settings"]'),
       title: 'Update your settings',
-      body: 'Manage your profile, password, and account preferences from Settings.',
-      requiresMobileSidebar: true
+      body: 'Manage your profile, password, and account preferences from Settings.'
     },
     {
+      // No bottom-nav equivalent for the account menu (identity trigger only
+      // exists in the >=900px sidebar) — featureTour.js skips a step whose
+      // target() resolves to null instead of ending the tour early.
       target: () => document.querySelector('.app-sidebar-identity'),
       title: 'Share, back up, and review reports',
-      body: 'Open your account menu to share a read-only roadmap link, download a backup, or see your past feedback reports.',
-      requiresMobileSidebar: true
+      body: 'Open your account menu to share a read-only roadmap link, download a backup, or see your past feedback reports.'
     },
     {
       target: () => document.querySelector('.feedback-widget-trigger'),
@@ -2034,14 +2034,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     activeTourCleanup = startTour(buildTourSteps(), {
       onEnd: () => {
         activeTourCleanup = null;
-        sidebar._closeMobile();
         store.completeTour();
-      },
-      // Issue #349 — only steps flagged `requiresMobileSidebar` trigger
-      // these; featureTour.js decides when to call them, this is just the
-      // sidebar-specific behavior it invokes.
-      onOpenSidebar: () => sidebar._openMobile(),
-      onCloseSidebar: () => sidebar._closeMobile()
+      }
     });
   }
 
@@ -2062,17 +2056,6 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     // (progress.js/settings.js/onboarding.js's sidebars don't pass it) since
     // every spotlight target above only exists on this page.
     onStartTour: () => {
-      // Issue #17 mobile follow-up — "Take a tour" is reached through the
-      // sidebar's own account menu, which on a phone-width viewport only
-      // opens by first opening the fixed-position mobile drawer (see
-      // `.claude/rules/ui-styling.md`'s six-tier breakpoint scale, <640px
-      // tier). The tour's own scrim/ring/popover render at a higher
-      // z-index than the drawer's backdrop, so leaving the drawer open
-      // stranded it pinned on screen with no way to tap through to close
-      // it — closing it here before the tour starts is what the drawer's
-      // own backdrop-click handler would have done had the tour not been
-      // sitting on top of it.
-      sidebar._closeMobile?.();
       store.resetTour();
       runFeatureTour();
     }
@@ -2085,13 +2068,12 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     themeToggleBtn,
     dailyTodoNavBadge,
     reviewDueBadge,
-    notificationBell: createChangelogBell(),
-    onToggleMobileSidebar: () => sidebar._toggleMobile()
+    notificationBell: createChangelogBell()
   });
+  const bottomNav = createBottomNav({ activeRoute: '/app' });
 
   const shell = el('div', { className: 'app-shell-2 dashboard fade-in' }, [
     sidebar,
-    sidebar._backdrop,
     el('div', { className: 'app-shell-main' }, [
       topbar,
       el('div', { className: 'app-content' }, [
@@ -2171,7 +2153,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
         content,
         saveBadge
       ])
-    ])
+    ]),
+    bottomNav
   ]);
 
   app.replaceChildren(shell);
@@ -2384,6 +2367,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     prioritySelectContainer.firstElementChild?._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();
+    bottomNav._cleanup?.();
     unsubStore();
     unsubDailyTodo?.();
     if (dailyTodoTickTimer) clearInterval(dailyTodoTickTimer);
