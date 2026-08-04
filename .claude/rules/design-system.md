@@ -116,24 +116,45 @@ Rules:
   - `--radius-sm: 0.5rem` (8px) — small controls, checkboxes.
   - `--radius-md: 0.75rem` (12px) — chips, inputs, mobile menu button.
   - `--radius-lg: 1rem` (16px) — cards, buttons, the nav pill, modals.
-- **Glass surfaces.** `.card` and any elevated panel: `background: hsl(var(--color-surface) / 0.85)`,
-  `backdrop-filter: blur(12px)` (`blur-md`), 1px border at `hsl(var(--color-divider) / 0.6)`,
-  plus a **hairline gradient border** using the mask-composite technique (`::before` with
-  `padding: 1px`, gradient background, `mask-composite: exclude`) — carried forward
-  verbatim from the portfolio's `.card::before`. Nav pill and header-on-scroll use a
-  stronger `backdrop-filter: blur(20px)` (`blur-xl`).
-  - **`backdrop-filter` fallback is mandatory, not optional** (see issue #416's Risks):
-    `@supports not (backdrop-filter: blur(1px))` must set an opaque
-    `background: hsl(var(--color-surface))` (no translucency) so older browsers get a
-    solid card instead of unreadable text over whatever's behind it. Every phase that
-    ships a new glass surface checks this against a browser without `backdrop-filter`
-    support (or the DevTools feature-flag override) before merging.
-- **Glow shadows**, accent-colored, replace v2's flat/no-glow rule:
-  - `--shadow-glow: 0 20px 50px -30px hsl(var(--color-accent) / 0.6)`
-  - `--shadow-glow-lg: 0 30px 80px -40px hsl(var(--color-accent) / 0.55)`
-  - `.card`'s resting shadow: `0 16px 36px -26px hsl(var(--color-accent) / 0.25), inset 0 1px 0 hsl(var(--color-text) / 0.04)`.
-  - Hover lift: `-translate-y-0.5` (buttons) / `-translate-y-1` (cards), paired with the
-    `-lg` glow variant, `transition: all 300ms` easing (see §7).
+- **Flat content, elevated overlays (issue #483, superseding this section's original
+  "glass everywhere" rule from #430/#440/#455).** A dashboard with twenty-plus
+  identically blurred, identically glowing glass panels reads as noise, not depth, and
+  `backdrop-filter` is the single most expensive thing this app was painting on a
+  mid-range Android — real, repeated paint bugs traceable to it (issues #432, #433,
+  #444, #465, the `[data-scrolling]` mitigation) are the direct cost of applying it to
+  every card-shaped surface. **Content surfaces are flat and solid; blur and glow are
+  reserved for things that genuinely float above the page.** `.card`, `.template-card`,
+  `.phase-card`, `.kpi-tile`, `.auth-card-lg`, `.roadmap-summary-card`,
+  `.roadmap-filters-card`, `.progress-card`, `.app-topbar`, `.app-sidebar`, `.tag-chip`,
+  `.btn-secondary`, and `.field-input` are `background: hsl(var(--v3-surface))` — **not**
+  `var(--color-surface-raised)`, which this rule originally shipped with and which
+  immediately regressed issue #455 (that token is meaningfully lighter than
+  `--color-bg` in dark theme, and reading it on every content surface at once
+  reads as the whole page flashing grey while scrolling a long, mostly-open
+  roadmap — see `tests/e2e/scrollBackgroundFlash.test.js`, which now guards this).
+  `hsl(var(--v3-surface))` is the same opaque fill #455's own fix already used for
+  `.phase-card.open`/`[data-scrolling]` and stays close to `--color-bg` brightness
+  while still being fully flat/solid (no `backdrop-filter`, no alpha). Nav chrome
+  (`.app-topbar`/`.app-sidebar`) keeps `--color-bg` per issue #440's "chrome
+  shouldn't read lighter than the page" rule, plus a plain 1px
+  `var(--color-divider)` border — no `backdrop-filter`, no glow `box-shadow`, and no
+  `@supports not (backdrop-filter)` fallback (nothing left to fall back from). `.card`'s
+  hairline gradient `::before` border is unchanged. **`.modal-card`, `.dropdown-menu`,
+  `.command-palette-card`, `.item-panel`, `.tooltip-bubble`, and toasts keep the full
+  glass treatment** — `background: hsl(var(--color-surface) / 0.85)`,
+  `backdrop-filter: blur(12px)` (`blur-md`, `blur(16-20px)`/`blur-xl` for the nav pill/
+  header-on-scroll equivalents these overlays use), 1px border at
+  `hsl(var(--color-divider) / 0.6)` — these are genuine overlays, floating above page
+  content rather than being page content, which is exactly the distinction this rule
+  now draws. Any *new* overlay-shaped component (a new modal, a new floating menu)
+  follows the glass recipe above; any *new* content-surface component (a new card, a
+  new form field) follows the flat recipe.
+- **Glow shadows**, accent-colored: `--shadow-glow: 0 20px 50px -30px hsl(var(--color-accent) / 0.6)` /
+  `--shadow-glow-lg: 0 30px 80px -40px hsl(var(--color-accent) / 0.55)` remain defined as
+  tokens and still apply to the overlay surfaces above — never to a flat content surface.
+  Content-surface hover lift (`.card`, `.template-card`) is `-translate-y-0.5`
+  (buttons) / `-translate-y-1` (cards) paired with a `border-color` tint, not a glow
+  shadow; `transition: all 300ms` easing is unchanged (see §7).
 - **Ambient background wash**, new in v3: the page background (`body`) carries three
   soft `radial-gradient` accent washes (10%/-10%, 90%/-10%, 50%/120% positions, 0.08–0.12
   alpha) over the base `--color-bg`, per the portfolio's own `body` rule. This replaces
@@ -151,8 +172,10 @@ Rules:
   container. Button labels remain centered (unchanged from v2 §4's exception, issue
   #338). Per-surface layout calls happen in each phase's own issue, not blanket-decided
   here.
-- Elevation is no longer overlay-only — glass/glow depth applies to any card-like
-  surface, not just dialogs/dropdowns/toasts.
+- Elevation is overlay-only again (revised by issue #483, reversing this section's own
+  original v3 rule) — glass/glow depth applies only to genuine overlays
+  (dialogs/dropdowns/toasts/the command palette/the item panel/tooltips), not to any
+  card-like content surface. See "Flat content, elevated overlays" above.
 
 ## 5. Components
 
@@ -318,9 +341,8 @@ transition) — same convention as v2, just with more surfaces now animating.
 
 - [ ] No new hex values outside the token sheet (HSL-components-plus-alpha only)
 - [ ] Radius uses one of `--radius-sm/md/lg` — never `0` and never an arbitrary value
-- [ ] Gradients/glows/blur limited to the surfaces listed in §2/§4 — not applied
-      speculatively to unrelated elements
-- [ ] `backdrop-filter` surfaces have a `@supports not (...)` solid-surface fallback
+- [ ] Gradients/glows/blur limited to genuine overlays per §4's "Flat content, elevated
+      overlays" rule — never applied to a card-like content surface
 - [ ] Paragraph-size accent text in light mode uses `--color-accent-ink`, verified
       ≥4.5:1 with a real contrast tool (not eyeballed)
 - [ ] Fonts limited to Sora/Outfit/JetBrains Mono per §3's weight list
