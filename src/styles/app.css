@@ -2305,13 +2305,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    the *base*, unconditional floor; the existing `(pointer: coarse)` 46px
    overrides elsewhere in this file (issue #36/#233) predate this token and
    stay as-is — both apply, and 48px is the larger of the two, so this rule is
-   never weakened by them. */
-.btn,
+   never weakened by them.
+   `.btn-icon` is deliberately excluded from this unconditional floor (via
+   `.btn:not(.btn-icon)`, since e.g. `.theme-toggle` carries both `.btn` and
+   `.btn-icon` together) — issue #36/#233 established (and
+   `tests/e2e/responsive.test.js` asserts) that an icon-only button stays a
+   compact 36x36px on a non-touch desktop viewport and only grows for a real
+   touch/coarse pointer; see the `@media (pointer: coarse)` block below,
+   where it's raised to `var(--tap-min)` instead of the old fixed 46px. */
+.btn:not(.btn-icon),
 .filter-chip,
 .nav-item,
 .check-box,
-.seg-opt,
-.btn-icon {
+.seg-opt {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
 }
@@ -6276,7 +6282,12 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
    Playwright retry. 2px of headroom absorbs that rounding without changing
    the visual intent of "~44px minimum". */
 @media (pointer: coarse) {
-  .btn-icon { width: 46px; height: 46px; }
+  /* Raised to the tap-min token (48px, issue #482 A1) — was a fixed 46px
+     before this. Still coarse-pointer-only, matching every other rule in
+     this block; see the code comment above the base `.btn`/`.filter-chip`/
+     `.nav-item`/`.check-box`/`.seg-opt` rule for why `.btn-icon` isn't in
+     that unconditional list. */
+  .btn-icon { width: var(--tap-min); height: var(--tap-min); }
   .btn-sm { min-height: 46px; }
   .filter-chip { min-height: 46px; }
   .check-item { min-height: 46px; }
@@ -6284,15 +6295,16 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .feedback-widget-trigger { min-height: 46px; }
   .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
   /* issue #435 — same border-clip bug as the base rule above, at the touch
-     tier: the group must grow to actually fit a real 46px touch target
-     (46px child + 2*1px border + 2*3px padding = 54px), not stay pinned to
-     36px like the mouse/desktop row. */
-  .app-topbar .icon-btn-group { height: 54px; }
+     tier: the group must grow to actually fit a real touch target (var(--tap-min)
+     child + 2*1px border + 2*3px padding = 56px, issue #482 A1 — was a fixed
+     46px/54px pair before this), not stay pinned to 36px like the
+     mouse/desktop row. */
+  .app-topbar .icon-btn-group { height: 56px; }
   .icon-btn-group .app-topbar-command-btn,
   .icon-btn-group .app-topbar-bell,
   .icon-btn-group .theme-toggle.btn-icon {
-    width: 46px;
-    height: 46px;
+    width: var(--tap-min);
+    height: var(--tap-min);
   }
 }
 
