@@ -5,7 +5,8 @@ import { test, expect } from './fixtures.js';
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 async function openFirstItemPanel(page) {
-  await page.locator('[data-action="edit"]').nth(0).click();
+  await page.locator('.check-item-overflow-btn').nth(0).click();
+  await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
   await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
 }
 

@@ -98,7 +98,8 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
-  await page.locator('[data-action="edit"]').nth(0).click();
+  await page.locator('.check-item-overflow-btn').nth(0).click();
+  await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
   await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
   const initialCount = await page.locator('.item-panel .resource-card').count();
   await page.fill('input[placeholder*="Link label"]', 'Test resource');
