@@ -177,7 +177,7 @@ export function renderSignUp(app, { user }) {
       'Already have an account? ',
       el('a', { href: '#/signin', className: 'link', text: 'Sign in' })
     ]),
-    footnote: 'Roadmaps · Resources · Progress tracking · Multi-device sync'
+    footnote: 'Roadmaps · Links · Progress tracking · Multi-device sync'
   });
   app.replaceChildren(node);
   return cleanup;

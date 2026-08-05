@@ -20,6 +20,7 @@ import { computeAnalytics, buildEffectiveActivityLog } from '../../core/analytic
 import { dateKey, previousDateKey, parseDateKey, MONTH_ABBR } from '../../core/analytics/dateKey.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { formatTimeSpent } from '../../core/time/timeTracking.js';
+import { priorityLabel } from '../utils/priorityLabels.js';
 
 const RANGE_OPTIONS = [
   { value: 'week', label: 'This Week', days: 7 },
@@ -203,8 +204,8 @@ function renderStatCards(analytics, animate, timeSpentSeconds) {
       caption: streaks.current === 0
         ? 'Complete a topic today to start your streak.'
         : streakFreezesAvailable > 0
-          ? `${streakFreezesAvailable} streak freeze${streakFreezesAvailable === 1 ? '' : 's'} available.`
-          : 'No streak freezes available.'
+          ? `${streakFreezesAvailable} missed-day cover${streakFreezesAvailable === 1 ? '' : 's'} available.`
+          : 'No missed-day cover available.'
     }),
     renderStatTile({
       icon: 'sparkle',
@@ -217,9 +218,9 @@ function renderStatCards(analytics, animate, timeSpentSeconds) {
       icon: 'trendingUp',
       value: velocityValue,
       total: el('span', { className: 'kpi-tile-total', text: '/ day' }),
-      label: '7-day velocity',
+      label: 'Per day',
       zero: velocity === 0,
-      caption: velocity === 0 ? 'Complete topics daily to build velocity.' : undefined
+      caption: velocity === 0 ? 'Complete topics daily to build up your average.' : undefined
     }),
     renderStatTile({
       icon: 'timer',
@@ -255,7 +256,7 @@ function renderPhaseBreakdownList(phaseBreakdown, priorityBreakdown) {
         ]),
         el('span', { className: 'phase-breakdown-count', text: `${row.pct}% · ${row.done}/${row.total}` })
       ]);
-      attachTooltip(button, `${row.done}/${row.total} completed · ${priority}`);
+      attachTooltip(button, `${row.done}/${row.total} completed · ${priorityLabel(priority)}`);
       return button;
     }));
 }
@@ -267,7 +268,7 @@ function renderPriorityTable(priorityBreakdown) {
   return el('div', { className: 'priority-table-wrap' }, [
     el('table', { className: 'priority-table' }, [
       el('thead', {}, [
-        el('tr', {}, [el('th', { text: 'Phase' }), ...PRIORITIES.map(p => el('th', { text: p }))])
+        el('tr', {}, [el('th', { text: 'Phase' }), ...PRIORITIES.map(p => el('th', { text: priorityLabel(p) }))])
       ]),
       el('tbody', {},
         priorityBreakdown.map(row => el('tr', {}, [
@@ -397,13 +398,13 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
       el('div', { className: 'chart-container' }, [lineSkeleton, lineCanvas])
     ]),
     el('div', { className: 'progress-card' }, [
-      el('h2', { className: 'progress-card-title', text: 'Daily velocity' }),
+      el('h2', { className: 'progress-card-title', text: 'Per day' }),
       velocityEmptySlot,
       el('div', { className: 'chart-container' }, [barSkeleton, barCanvas])
     ]),
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Phase breakdown' }), phaseBreakdownSlot]),
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Priority × phase' }), priorityTableSlot]),
-    el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Projected completion' }), projectionSlot])
+    el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Finishing date' }), projectionSlot])
   ]);
 
   const shell = el('div', { className: 'app-shell-2 progress-page fade-in' }, [
@@ -511,7 +512,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   // a later render or reload.
   const justAppliedFreezeDate = activityLogStore.consumeJustAppliedFreeze?.();
   if (justAppliedFreezeDate) {
-    showToast('A streak freeze kept your streak alive after a missed day.', 'success');
+    showToast('Missed-day cover kept your streak alive after a missed day.', 'success');
   }
 
   return () => {

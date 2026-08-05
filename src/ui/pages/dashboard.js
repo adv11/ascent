@@ -25,6 +25,7 @@ import { createIcon } from '../components/icons.js';
 import { createEmptyState } from '../components/emptyState.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { KEYS } from '../../services/localStorageKeys.js';
+import { priorityLabel } from '../utils/priorityLabels.js';
 import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag } from '../../core/roadmap/reviewSchedule.js';
 import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/completionCelebration.js';
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
@@ -90,11 +91,11 @@ function buildResourceCountBadge(item, onOpen) {
     type: 'button',
     className: 'resource-count',
     'data-action': 'resources',
-    'aria-label': `View resources for ${item.title}`,
+    'aria-label': `View links for ${item.title}`,
     onClick: e => { e.stopPropagation(); onOpen(); }
   }, [
     el('span', { className: 'link-badge-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(primaryIcon, { size: 'xs' })]),
-    el('span', { text: `${item.resources.length} resource${item.resources.length > 1 ? 's' : ''}` })
+    el('span', { text: `${item.resources.length} link${item.resources.length > 1 ? 's' : ''}` })
   ]);
   attachTooltip(badge, breakdown);
   return badge;
@@ -225,7 +226,7 @@ export function formatLastSynced(ms) {
 export function renderPriorityFilterSelect(items, activeFilter, onFilterChange) {
   const options = ['ALL', 'P0', 'P1', 'P2', 'P3'].map(p => {
     const { total, done } = priorityCounts(items, p);
-    const label = p === 'ALL' ? 'All' : p;
+    const label = p === 'ALL' ? 'All' : priorityLabel(p);
     return { value: p, label: `${label} · ${done}/${total}` };
   });
   const select = createSelect(options, {
@@ -254,7 +255,7 @@ export function renderPriorityFilterSelect(items, activeFilter, onFilterChange) 
 export function renderFilterChips(items, activeFilter, onFilterChange) {
   return ['RESOURCES', 'REVIEW'].map(p => {
     const { total, done } = priorityCounts(items, p);
-    const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Resources' : p === 'REVIEW' ? 'Review due' : p;
+    const label = p === 'ALL' ? 'All' : p === 'RESOURCES' ? 'Links' : p === 'REVIEW' ? 'Review due' : p;
     const isActive = activeFilter === p;
     const chip = el('button', {
       type: 'button',
@@ -356,7 +357,7 @@ export function buildTourSteps() {
     {
       target: () => document.querySelector('.check-item'),
       title: 'Track a topic',
-      body: 'Click a topic to mark it done. Click the resources badge to view or add links without toggling it.'
+      body: 'Click a topic to mark it done. Click the links badge to view or add links without toggling it.'
     },
     {
       // Issue #484 — below the sidebar's >=900px breakpoint there's no
@@ -1242,7 +1243,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       saveBadge.replaceChildren(el('span', { className: 'spin' }), ' Saving…');
       saveBadge.classList.add('show');
     } else if (state === 'saved' || state === 'synced') {
-      saveBadge.textContent = user.isAnonymous ? 'Saved locally' : 'Saved to cloud';
+      saveBadge.textContent = user.isAnonymous ? 'Saved locally' : 'Saved';
       saveBadge.classList.add('show');
       saveBadgeTimer = setTimeout(() => saveBadge.classList.remove('show'), 1800);
       lastSyncedAt = Date.now();
@@ -1257,7 +1258,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       saveBadge.classList.remove('show');
     }
 
-    syncPill.textContent = user.isAnonymous ? 'Local only' : (state === 'synced' ? 'Synced' : state === 'saving' ? 'Saving…' : state === 'error' ? 'Save failed' : 'Ready');
+    syncPill.textContent = user.isAnonymous ? 'Saved on this device' : (state === 'synced' ? 'Saved' : state === 'saving' ? 'Saving…' : state === 'error' ? 'Save failed' : 'Ready');
     syncPill.className = `sync-pill ${userPillClass}${state === 'error' ? ' error' : ''}`;
   }
 
@@ -2130,6 +2131,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
             el('div', { className: 'toolbar' }, [
               el('div', { className: 'toolbar-block' }, [
                 el('span', { className: 'toolbar-label', text: 'Priority' }),
+                el('span', { className: 'priority-legend', text: 'Must do > Should do > Later' }),
                 el('div', { className: 'priority-filter-row' }, [
                   prioritySelectContainer,
                   filterContainer

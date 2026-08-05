@@ -51,7 +51,7 @@ describe('createSidebar — nav', () => {
     expect(settingsLink.getAttribute('aria-current')).toBe('page');
   });
 
-  // Issue #8 — Progress nav item, between Dashboard and My Roadmaps.
+  // Issue #8 — Progress nav item, between Dashboard and Your roadmaps.
   it('includes a Progress link and marks it active on /progress', async () => {
     const node = await freshSidebar({ activeRoute: '/progress', user: { isAnonymous: true }, store: fakeStore() });
     const progressLink = node.querySelector('.app-sidebar-nav a[href="#/progress"]');
@@ -60,7 +60,7 @@ describe('createSidebar — nav', () => {
     expect(progressLink.getAttribute('aria-current')).toBe('page');
 
     const labels = Array.from(node.querySelectorAll('.app-sidebar-nav .nav-item-label')).map(el => el.textContent);
-    expect(labels).toEqual(['Dashboard', 'Progress', 'My Roadmaps', 'Settings']);
+    expect(labels).toEqual(['Dashboard', 'Progress', 'Your roadmaps', 'Settings']);
   });
 });
 

@@ -9,7 +9,7 @@ import { KEYS } from '../../services/localStorageKeys.js';
 function navigationItems() {
   return [
     { id: 'nav-app', title: 'Dashboard', subtitle: 'Your active roadmap', onSelect: () => navigate('/app') },
-    { id: 'nav-onboarding', title: 'All roadmaps', subtitle: 'Switch or start a roadmap', onSelect: () => navigate('/onboarding') },
+    { id: 'nav-onboarding', title: 'Your roadmaps', subtitle: 'Switch or start a roadmap', onSelect: () => navigate('/onboarding') },
     { id: 'nav-progress', title: 'Progress', subtitle: 'Streaks, heatmap, and stats', onSelect: () => navigate('/progress') },
     { id: 'nav-settings', title: 'Settings', subtitle: 'Account and preferences', onSelect: () => navigate('/settings') }
   ];
