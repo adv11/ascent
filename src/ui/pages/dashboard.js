@@ -31,7 +31,7 @@ import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag } from '../../
 import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/completionCelebration.js';
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
 import { mountPrintSnapshot, attachPrintCleanup } from '../utils/printRoadmap.js';
-import { openModal } from '../components/modal.js';
+import { openModal, attachFocusTrap } from '../components/modal.js';
 import { createSelect } from '../components/select.js';
 // openAddToDailyTodoModal, openDeleteAccountModal, triggerConfetti,
 // openBadgeShareModal, and startTour are all dynamically imported below,
@@ -1690,7 +1690,18 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       hasAnimatedStats = true;
     }
 
-    clearFiltersBtn.hidden = activeFilter === 'ALL' && !searchQuery && !tagFilter;
+    const hasActiveFilters = activeFilter !== 'ALL' || !!tagFilter;
+    clearFiltersBtn.hidden = !hasActiveFilters && !searchQuery;
+    filterPanelFooter.hidden = !hasActiveFilters && !searchQuery;
+    const activeFilterCount = (activeFilter !== 'ALL' ? 1 : 0) + (tagFilter ? 1 : 0);
+    filterBtnBadge.hidden = activeFilterCount === 0;
+    filterBtnBadge.textContent = String(activeFilterCount);
+    const summaryParts = [];
+    if (activeFilter !== 'ALL') {
+      summaryParts.push(activeFilter === 'RESOURCES' ? 'Links' : activeFilter === 'REVIEW' ? 'Review due' : priorityLabel(activeFilter));
+    }
+    if (tagFilter) summaryParts.push(`tag "${tagFilter}"`);
+    filterPanelSummary.textContent = summaryParts.length ? `Filtering by ${summaryParts.join(' and ')}.` : '';
 
     refreshPrioritySelect(allItems);
     filterContainer.replaceChildren(...renderFilterChips(allItems, activeFilter, p => {
@@ -1921,6 +1932,91 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     render(store.getSnapshot());
   }, 160));
 
+  // Issue #487 — the priority select + Resources/Review chips + tag row (all
+  // built above) used to render inline as two stacked `.toolbar` rows; they
+  // now live inside a single filter panel opened from one "Filter" button,
+  // reusing itemPanel.js's own `.panel-overlay`/`.item-panel`/`.panel-*`
+  // classes rather than inventing a parallel overlay component — that gets
+  // the existing side-slide-on-desktop/bottom-sheet-on-phone behavior (the
+  // `.item-panel` ≤480px override, `.claude/rules/ui-styling.md`) for free,
+  // plus `handleGlobalKeydown`'s existing `.item-panel` check that already
+  // suppresses the j/k row-navigation shortcuts while any such panel is open.
+  const filterPanelSummary = el('p', { className: 'filter-panel-summary' });
+  const filterPanelFooter = el('div', { className: 'panel-footer filter-panel-footer' }, [
+    filterPanelSummary,
+    clearFiltersBtn
+  ]);
+  const filterPanelOverlay = el('div', {
+    className: 'panel-overlay',
+    onClick: e => { if (e.target === filterPanelOverlay) closeFilterPanel(); }
+  });
+  const filterPanelCard = el('aside', {
+    className: 'item-panel filter-panel',
+    role: 'dialog',
+    'aria-modal': 'true',
+    'aria-label': 'Filter topics'
+  }, [
+    el('div', { className: 'panel-header' }, [
+      el('div', {}, [
+        el('span', { className: 'panel-kicker', text: 'Filter' }),
+        el('h2', { className: 'panel-title', text: 'Filter topics' })
+      ]),
+      el('button', {
+        type: 'button',
+        className: 'btn btn-ghost btn-icon',
+        'aria-label': 'Close filter panel',
+        onClick: () => closeFilterPanel()
+      }, [createIcon('close', { size: 'sm' })])
+    ]),
+    el('div', { className: 'panel-body' }, [
+      el('div', { className: 'filter-panel-section' }, [
+        el('span', { className: 'toolbar-label', text: 'Priority' }),
+        el('span', { className: 'priority-legend', text: 'Must do > Should do > Later' }),
+        el('div', { className: 'priority-filter-row' }, [prioritySelectContainer, filterContainer])
+      ]),
+      el('div', { className: 'filter-panel-section' }, [
+        el('span', { className: 'toolbar-label', text: 'Tags' }),
+        tagFilterContainer
+      ])
+    ]),
+    filterPanelFooter
+  ]);
+  filterPanelOverlay.append(filterPanelCard);
+
+  let filterPanelOpen = false;
+  let detachFilterPanelTrap = null;
+
+  function openFilterPanel() {
+    if (filterPanelOpen) return;
+    filterPanelOpen = true;
+    document.body.append(filterPanelOverlay);
+    detachFilterPanelTrap = attachFocusTrap(filterPanelCard, { onEscape: closeFilterPanel });
+    requestAnimationFrame(() => {
+      filterPanelOverlay.classList.add('show');
+      filterPanelCard.classList.add('show');
+      filterPanelCard.querySelector('button, [href], input, select, textarea, [tabindex]')?.focus();
+    });
+  }
+
+  function closeFilterPanel() {
+    if (!filterPanelOpen) return;
+    filterPanelOpen = false;
+    detachFilterPanelTrap?.();
+    detachFilterPanelTrap = null;
+    filterPanelOverlay.classList.remove('show');
+    filterPanelCard.classList.remove('show');
+    setTimeout(() => filterPanelOverlay.remove(), 240);
+    filterBtn.focus();
+  }
+
+  const filterBtnBadge = el('span', { className: 'filter-btn-badge', hidden: true });
+  const filterBtn = el('button', {
+    type: 'button',
+    className: 'btn btn-secondary filter-toggle-btn',
+    'aria-haspopup': 'dialog',
+    onClick: () => openFilterPanel()
+  }, ['Filter', filterBtnBadge]);
+
   const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
   const backupReminderBanner = createBackupReminderBanner({ user, store });
@@ -1955,6 +2051,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       activeFilter = 'REVIEW';
       persistUi();
       render(store.getSnapshot());
+      // Issue #487 — the REVIEW chip now lives inside the filter panel, not
+      // inline, so "jump straight to the REVIEW filter" has to open the
+      // panel too, or the badge would silently change state the user can't
+      // see without a second click.
+      openFilterPanel();
     }
   }, [
     el('span', { className: 'review-due-nav-icon' }, [createIcon('bell', { size: 'xs' })]),
@@ -2082,36 +2183,17 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
               ])
             ])
           ]),
-          // Issue #460 — the Priority and Tags filter rows used to be two
-          // separate free-floating `.toolbar` rows with a full section gap
-          // between them; wrapped in one glass `.card` (`.roadmap-filters-card`)
-          // so the whole filtering area reads as a single panel. Each row
-          // keeps its own `.toolbar` class (and therefore its existing
-          // responsive grid-column behavior) — only the outer `max-width`/
-          // centered-margin now lives on the wrapping card instead of being
-          // duplicated on every row (see the removed comment below this one
-          // in git blame for why that duplication existed in the first place).
+          // Issue #487 — the old two-row `.roadmap-filters-card` (a priority
+          // select + Resources/Review chips row, plus a separate tag row —
+          // up to nine controls before reaching a single topic) collapses to
+          // one row of three: search (flex), Filter (opens the panel built
+          // above, holding the real priority/chip/tag filter model
+          // unchanged), and Expand all.
           el('div', { className: 'card roadmap-filters-card' }, [
-            el('div', { className: 'toolbar' }, [
-              el('div', { className: 'toolbar-block' }, [
-                el('span', { className: 'toolbar-label', text: 'Priority' }),
-                el('span', { className: 'priority-legend', text: 'Must do > Should do > Later' }),
-                el('div', { className: 'priority-filter-row' }, [
-                  prioritySelectContainer,
-                  filterContainer
-                ])
-              ]),
-              el('div', { className: 'toolbar-block toolbar-right' }, [
-                clearFiltersBtn,
-                searchInput,
-                toggleAllBtn
-              ])
-            ]),
-            el('div', { className: 'toolbar' }, [
-              el('div', { className: 'toolbar-block' }, [
-                el('span', { className: 'toolbar-label', text: 'Tags' }),
-                tagFilterContainer
-              ])
+            el('div', { className: 'filter-toolbar' }, [
+              searchInput,
+              filterBtn,
+              toggleAllBtn
             ])
           ]),
           reviewTagGroupBanner
@@ -2349,5 +2431,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     window.removeEventListener('resize', scheduleVirtualizeRows);
     if (virtualizeRaf != null) cancelAnimationFrame(virtualizeRaf);
     closeShortcutsOverlay();
+    detachFilterPanelTrap?.();
+    filterPanelOverlay.remove();
   };
 }

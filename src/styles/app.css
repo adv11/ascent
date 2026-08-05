@@ -3068,33 +3068,47 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: #000;
 }
 
-/* issue #460 — both `.toolbar` rows (Priority, Tags) now live inside one
-   `.roadmap-filters-card` wrapper, which owns the shared `max-width`/
-   centered-margin itself; `.toolbar` no longer needs its own copy of either
-   (previously duplicated on every row specifically so each row aligned with
-   its sibling — see the removed comment in git blame — the shared wrapper
-   makes that duplication unnecessary). */
-.toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: end;
-}
-.toolbar + .toolbar { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border); }
-
-.toolbar-block { display: grid; gap: 8px; min-width: 0; }
-.toolbar-block.toolbar-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-
-/* issue #460 — wraps both `.toolbar` rows in one glass `.card`, same
-   reasoning as `.roadmap-summary-card` above: two separately-floating rows
-   with a full section gap between them read as clutter, not a cohesive
-   filters panel. `.toolbar + .toolbar`'s divider (above) does the "these
-   are still two distinct rows" job the previous full section gap used to. */
+/* issue #460 — wraps the filter toolbar in one glass `.card`, same reasoning
+   as `.roadmap-summary-card` above. */
 .roadmap-filters-card {
   max-width: 1160px;
   margin: 0 auto 18px;
   padding: 18px 24px;
 }
+
+/* Issue #487 — the whole priority-select/chip/tag toolbar collapsed to one
+   row of three controls: search (flex), Filter (opens the .item-panel-based
+   panel below), Expand all. */
+.filter-toolbar { display: flex; align-items: center; gap: 10px; }
+.filter-toolbar .search-input { flex: 1; min-width: 0; }
+.filter-toggle-btn { position: relative; flex-shrink: 0; }
+.filter-btn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+.filter-btn-badge[hidden] { display: none; }
+
+/* The panel itself reuses itemPanel.js's own `.panel-overlay`/`.item-panel`/
+   `.panel-*` classes (side-slide on desktop, bottom sheet at ≤480px per that
+   component's own media query — `.claude/rules/ui-styling.md`) rather than a
+   parallel overlay implementation. `.filter-panel-section` groups a labeled
+   group of controls with the same vertical rhythm `.panel-body`'s own `gap`
+   already provides between top-level children. */
+.filter-panel-section { display: grid; gap: 8px; }
+.filter-panel-summary { font-size: var(--text-base); color: var(--color-text-muted); flex: 1; min-width: 0; }
+.filter-panel-footer[hidden] { display: none; }
+
 .toolbar-label { font-size: var(--text-base); font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .priority-legend { font-size: var(--text-base); color: var(--color-text-muted); }
 
@@ -3242,9 +3256,11 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: var(--text-base);
   transition: width var(--duration-base) var(--ease-out), border-color var(--duration-fast) ease;
 }
-/* Issue #6 Phase 4.3 — grows toward (not literally to) full toolbar width on
-   focus: .toolbar-right also holds the Expand/Collapse-all button, so an
-   unbounded 100% growth would shove that button out of the row. */
+/* Issue #6 Phase 4.3 — grows toward (not literally to) a wider width on
+   focus; issue #487's `.filter-toolbar` gives it `flex: 1` (flex-basis 0%),
+   which overrides `width` for sizing purposes anyway, so this has no visible
+   effect there but still matters for any other context this class is used
+   in outside that flex row. */
 .search-input:focus { outline: none; border-color: var(--color-accent); width: min(520px, 100%); }
 .search-input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 /* issue #155 v2 Phase D3 (full completion pass) — dashboard.js's search field. */
@@ -5703,8 +5719,6 @@ html[data-scrolling] .dropdown-menu {
 }
 
 @media (max-width: 1024px) {
-  .toolbar { grid-template-columns: 1fr; }
-  .toolbar-block.toolbar-right { justify-content: flex-start; }
   /* issue #6 Phase 5.1 — marketing panel hidden, .auth-page-right becomes
      the sole (full-width) column: today's original centered-card layout. */
   .auth-page { grid-template-columns: 1fr; }
