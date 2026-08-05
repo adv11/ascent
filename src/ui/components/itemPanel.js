@@ -7,6 +7,7 @@ import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH, M
 import { detectLinkType, LINK_TYPE_META } from '../utils/linkDetector.js';
 import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
 import { createFeatureBadge } from './featureBadge.js';
+import { priorityLabel } from '../utils/priorityLabels.js';
 
 // Issue #15 — plain-string notes field, capped at 5000 chars (enforced both
 // here via the textarea's native maxlength and in roadmapStore/schema docs).
@@ -54,7 +55,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
 
   const titleInput = el('input', { className: 'field-input', value: item.title, placeholder: 'Topic title' });
   const prioritySelect = createSelect(
-    ['P0', 'P1', 'P2', 'P3'].map(p => ({ value: p, label: p })),
+    ['P0', 'P1', 'P2', 'P3'].map(p => ({ value: p, label: priorityLabel(p) })),
     { value: item.priority, ariaLabel: 'Priority' }
   );
 
@@ -74,7 +75,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
     { value: item.prerequisiteItemId || '', ariaLabel: 'Blocked by' }
   );
   const resourceList = el('div', { className: 'resource-list' });
-  const labelInput = el('input', { className: 'field-input', placeholder: 'Resource label (e.g. YouTube tutorial)' });
+  const labelInput = el('input', { className: 'field-input', placeholder: 'Link label (e.g. YouTube tutorial)' });
   const urlInput = el('input', { className: 'field-input', placeholder: 'https://...', type: 'url' });
   const formError = el('p', { className: 'form-error', text: '' });
 
@@ -229,7 +230,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
     if (!resources.length) {
       resourceList.append(el('p', { className: 'resource-list-empty' }, [
         el('span', { className: 'resource-list-empty-dot', 'aria-hidden': 'true' }),
-        el('span', { text: 'No resources yet. Add links below.' })
+        el('span', { text: 'No links yet. Add one below.' })
       ]));
       return;
     }
@@ -238,7 +239,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
       const meta = LINK_TYPE_META[linkType];
       const urlWarning = el('p', { className: 'field-error resource-url-warning', text: '' });
 
-      const resourceLabel = resource.label?.trim() || `Resource ${index + 1}`;
+      const resourceLabel = resource.label?.trim() || `Link ${index + 1}`;
 
       const urlInput = el('input', {
         className: 'field-input compact',
@@ -275,7 +276,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
           el('input', {
             className: 'field-input compact resource-label-input',
             value: resource.label,
-            'aria-label': `Resource ${index + 1} label`,
+            'aria-label': `Link ${index + 1} label`,
             onInput: e => { resources[index] = { ...resources[index], label: e.target.value }; }
           }),
           urlInput,
@@ -409,12 +410,12 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
         notesTextarea
       ]),
       el('div', { className: 'field' }, [
-        el('span', { className: 'field-label', text: 'Resources' }),
+        el('span', { className: 'field-label', text: 'Links' }),
         resourceList,
         el('div', { className: 'resource-add' }, [
           labelInput,
           urlInput,
-          el('button', { type: 'button', className: 'btn btn-secondary btn-sm', text: 'Add resource', onClick: addResource })
+          el('button', { type: 'button', className: 'btn btn-secondary btn-sm', text: 'Add link', onClick: addResource })
         ]),
         formError
       ])
@@ -427,7 +428,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
         onClick: async () => {
           if (await confirmDialog({
             title: `Delete "${item.title}"?`,
-            message: 'This removes the topic and its resources from your roadmap — this cannot be undone.',
+            message: 'This removes the topic and its links from your roadmap — this cannot be undone.',
             confirmText: 'Delete',
             danger: true
           })) {
@@ -457,12 +458,12 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
               .filter(r => r.label && r.url);
             const badUrl = cleanResources.find(r => !isValidUrl(r.url));
             if (badUrl) {
-              formError.textContent = 'One or more resource URLs must be a valid http or https URL.';
+              formError.textContent = 'One or more links must be a valid http or https URL.';
               return;
             }
             const badLength = cleanResources.find(r => r.label.length > MAX_RESOURCE_LABEL_LENGTH || r.url.length > MAX_RESOURCE_URL_LENGTH);
             if (badLength) {
-              formError.textContent = `Resource labels must be ${MAX_RESOURCE_LABEL_LENGTH} characters or fewer and URLs ${MAX_RESOURCE_URL_LENGTH} or fewer.`;
+              formError.textContent = `Link labels must be ${MAX_RESOURCE_LABEL_LENGTH} characters or fewer and URLs ${MAX_RESOURCE_URL_LENGTH} or fewer.`;
               return;
             }
             const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);

@@ -95,7 +95,7 @@ test.describe('feature tour (issue #17)', () => {
 test.describe('onboarding-page tour (issue #293)', () => {
   test.use({ skipTourAutoDismiss: true });
 
-  test('dashboard tour seen → return to My Roadmaps → onboarding tour auto-runs → reload → does not reappear', async ({ page }) => {
+  test('dashboard tour seen → return to Your roadmaps → onboarding tour auto-runs → reload → does not reappear', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');

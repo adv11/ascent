@@ -71,6 +71,27 @@ toast) — never "item," "entity," or "task" in copy the user reads, even though
 itself calls them `item` throughout (`roadmapStore.js`, etc.). Code identifiers and
 user-facing words are allowed to differ; user-facing words must not.
 
+**Canonical plain-language mapping (issue #485).** The app's internal shorthand for a
+handful of concepts reads as jargon to the ~10-to-100-year-old audience this product
+targets — every one of these is a **display-layer rename only**: the stored `priority`
+field, `KEYS` values, and every CSS/dataset name are unchanged, only the text a user
+reads. `src/ui/utils/priorityLabels.js`'s `priorityLabel()` is the single place the
+first row below is implemented — never hardcode `P0`/`P1`/`P2`/`P3` as rendered text
+anywhere else.
+
+| Internal shorthand | User-facing label |
+|---|---|
+| `P0` | Must do |
+| `P1` | Should do |
+| `P2`, `P3` | Later |
+| Resources | Links |
+| Synced to cloud | Saved |
+| Local only | Saved on this device |
+| Onboarding / Switch your starter roadmap | Your roadmaps |
+| Velocity / 7-day velocity | Per day |
+| Projected completion | Finishing date |
+| Streak freeze | Missed-day cover |
+
 ## Worked before/after (from the #106 audit)
 
 Real fixes made by this issue, illustrating the punctuation and phrasing rules above —

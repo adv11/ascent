@@ -684,7 +684,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       ]),
       backBtn,
       el('header', { className: 'onboarding-head' }, [
-        el('h1', { className: 'auth-title', text: isSwitchingTemplate ? 'Switch your starter roadmap' : 'Pick a starting roadmap' }),
+        el('h1', { className: 'auth-title', text: isSwitchingTemplate ? 'Your roadmaps' : 'Pick a starting roadmap' }),
         el('p', {
           className: 'auth-subtitle',
           text: isSwitchingTemplate

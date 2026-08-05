@@ -41,7 +41,7 @@ test.describe('roadmap comparison view (issue #285)', () => {
     await page.locator('.check-item').first().locator('.check-box').click();
     await expect(page.locator('.save-badge')).toBeVisible();
 
-    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
+    await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });

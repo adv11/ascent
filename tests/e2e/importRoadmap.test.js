@@ -181,7 +181,7 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
-    const resourcesChip = page.locator('.filter-chip', { hasText: 'Resources' });
+    const resourcesChip = page.locator('.filter-chip', { hasText: 'Links' });
     await expect(resourcesChip).toBeVisible();
     await resourcesChip.click();
     await expect(resourcesChip).toHaveClass(/active/);
@@ -242,7 +242,7 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
-    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
+    await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     const card = page.locator('.template-card', { hasText: 'Imported Roadmap' });

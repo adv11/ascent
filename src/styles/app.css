@@ -3096,6 +3096,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: 18px 24px;
 }
 .toolbar-label { font-size: var(--text-base); font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.priority-legend { font-size: var(--text-base); color: var(--color-text-muted); }
 
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
 

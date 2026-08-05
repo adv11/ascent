@@ -195,8 +195,8 @@ describe('itemPanel — unique resource aria-labels (issue #124)', () => {
     expect(urlInputs[1].getAttribute('aria-label')).toBe('Tutorial URL');
     expect(urlInputs[0].getAttribute('aria-label')).not.toBe(urlInputs[1].getAttribute('aria-label'));
 
-    expect(labelInputs[0].getAttribute('aria-label')).toBe('Resource 1 label');
-    expect(labelInputs[1].getAttribute('aria-label')).toBe('Resource 2 label');
+    expect(labelInputs[0].getAttribute('aria-label')).toBe('Link 1 label');
+    expect(labelInputs[1].getAttribute('aria-label')).toBe('Link 2 label');
   });
 
   it('falls back to a positional aria-label for a resource with no label text yet', () => {
@@ -204,7 +204,7 @@ describe('itemPanel — unique resource aria-labels (issue #124)', () => {
       item: { ...baseItem, resources: [{ label: '', url: 'https://example.com' }] }
     });
     const urlInput = getPanel().querySelector('.resource-card input.compact:not(.resource-label-input)');
-    expect(urlInput.getAttribute('aria-label')).toBe('Resource 1 URL');
+    expect(urlInput.getAttribute('aria-label')).toBe('Link 1 URL');
   });
 });
 

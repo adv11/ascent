@@ -19,13 +19,14 @@ import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js
 import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPrompt } from '../../services/pwaInstall.js';
 import { createFeatureBadge, dismissFeatureBadge } from '../components/featureBadge.js';
 import { createSelect } from '../components/select.js';
+import { priorityLabel } from '../utils/priorityLabels.js';
 
 const FILTER_OPTIONS = [
   { value: 'ALL', label: 'All' },
-  { value: 'P0', label: 'P0' },
-  { value: 'P1', label: 'P1' },
-  { value: 'P2', label: 'P2' },
-  { value: 'P3', label: 'P3' }
+  { value: 'P0', label: priorityLabel('P0') },
+  { value: 'P1', label: priorityLabel('P1') },
+  { value: 'P2', label: priorityLabel('P2') },
+  { value: 'P3', label: priorityLabel('P3') }
 ];
 
 // A collapsible "Change X" row shared by the change-email and change-password

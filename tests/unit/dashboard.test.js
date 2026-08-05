@@ -49,7 +49,7 @@ describe('renderFilterChips (issue #53, narrowed by issue #477)', () => {
     expect(chips).toHaveLength(2);
     const resources = chips.find(c => c.dataset.p === 'RESOURCES');
     expect(resources).toBeTruthy();
-    expect(resources.textContent).toContain('Resources');
+    expect(resources.textContent).toContain('Links');
     const review = chips.find(c => c.dataset.p === 'REVIEW');
     expect(review).toBeTruthy();
     expect(review.textContent).toContain('Review due');
@@ -118,21 +118,21 @@ describe('renderPriorityFilterSelect (issue #477)', () => {
   it('defaults to the active filter and reflects it in the trigger label', async () => {
     const select = await mount(items, 'P0', () => {});
     expect(select.value).toBe('P0');
-    expect(select.querySelector('.custom-select-value').textContent).toBe('P0 · 1/2');
+    expect(select.querySelector('.custom-select-value').textContent).toBe('Must do · 1/2');
   });
 
   it('bakes done/total counts into every option label', async () => {
     const select = await mount(items, 'ALL', () => {});
     select.querySelector('.custom-select-trigger').click();
     const optionText = [...document.querySelectorAll('.custom-select-option')].map(o => o.textContent);
-    expect(optionText).toEqual(['All · 1/3', 'P0 · 1/2', 'P1 · 0/1', 'P2 · 0/0', 'P3 · 0/0']);
+    expect(optionText).toEqual(['All · 1/3', 'Must do · 1/2', 'Should do · 0/1', 'Later · 0/0', 'Later · 0/0']);
   });
 
   it('calls onFilterChange when a different option is chosen', async () => {
     const onFilterChange = vi.fn();
     const select = await mount(items, 'ALL', onFilterChange);
     select.querySelector('.custom-select-trigger').click();
-    const p1Option = [...document.querySelectorAll('.custom-select-option')].find(o => o.textContent.startsWith('P1'));
+    const p1Option = [...document.querySelectorAll('.custom-select-option')].find(o => o.textContent.startsWith('Should do'));
     p1Option.click();
     expect(onFilterChange).toHaveBeenCalledWith('P1');
   });

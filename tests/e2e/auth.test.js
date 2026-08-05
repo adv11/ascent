@@ -101,9 +101,9 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
   await page.locator('[data-action="edit"]').nth(0).click();
   await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
   const initialCount = await page.locator('.item-panel .resource-card').count();
-  await page.fill('input[placeholder*="Resource label"]', 'Test resource');
+  await page.fill('input[placeholder*="Link label"]', 'Test resource');
   await page.fill('input[type="url"]', 'https://spring.io');
-  await page.click('text=Add resource');
+  await page.click('text=Add link');
   await expect(page.locator('.item-panel .resource-card')).toHaveCount(initialCount + 1);
 
   expect(errors.filter(e => e.includes('ReferenceError'))).toHaveLength(0);

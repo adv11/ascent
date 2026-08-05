@@ -151,7 +151,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await createCustomRoadmapViaImport(page, 'Deletable Roadmap');
 
-    await page.locator('.nav-item', { hasText: 'My Roadmaps' }).click();
+    await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
 
     const card = page.locator('.template-card', { hasText: 'Deletable Roadmap' });
