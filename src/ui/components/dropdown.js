@@ -58,17 +58,34 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   const scrim = el('div', { className: 'floating-scrim dropdown-scrim' });
   let open = false;
 
+  // `position: fixed` never moves on scroll — a `top`/`bottom` computed while
+  // the trigger sits right at (or past) a viewport edge can permanently place
+  // the menu off-screen with no scroll able to recover it, exactly the "stuck
+  // below the fold" failure a trigger near the bottom edge hits when
+  // `align: 'end'` opens the menu downward. Flip to the opposite side whenever
+  // the menu's own measured height wouldn't fit in the space `positionMenu()`
+  // originally picked — same "try the natural side, fall back if it doesn't
+  // fit" idea `featureTour.js`'s `computePlacement()` uses for its popover,
+  // just for the one axis this component actually needs (vertical, since
+  // `align` already fixes which horizontal edge this menu hugs).
   function positionMenu() {
     const rect = trigger.getBoundingClientRect();
+    const menuHeight = menu.offsetHeight;
+    const fitsBelow = rect.bottom + 6 + menuHeight <= window.innerHeight;
+    const fitsAbove = rect.top - 6 - menuHeight >= 0;
+    const openUpward = !fitsBelow && (fitsAbove || rect.top > window.innerHeight - rect.bottom);
     if (align === 'start') {
       menu.style.left = `${rect.left}px`;
-      menu.style.bottom = `${window.innerHeight - rect.top + 6}px`;
-      menu.style.top = '';
       menu.style.right = '';
     } else {
       menu.style.right = `${window.innerWidth - rect.right}px`;
-      menu.style.top = `${rect.bottom + 6}px`;
       menu.style.left = '';
+    }
+    if (openUpward) {
+      menu.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+      menu.style.top = '';
+    } else {
+      menu.style.top = `${rect.bottom + 6}px`;
       menu.style.bottom = '';
     }
   }
@@ -90,12 +107,38 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
   const TRIGGER_MOVE_THRESHOLD_PX = 4;
   let openTriggerRect = null;
 
+  // Issue #486 follow-up — a real, reproduced bug, not just a test artifact:
+  // clicking the trigger itself can be what *starts* the scroll (the browser
+  // bringing an off-screen/partially-visible trigger into view before the
+  // click lands — the exact case a long checklist row's overflow trigger
+  // hits whenever it isn't already fully in the viewport), and because that
+  // scroll is smooth (see the block comment above), it's still animating,
+  // multiple frames past `openTriggerRect`'s snapshot, at the moment `open()`
+  // runs. `onWindowScrollOrResize` then reads its own just-opened baseline
+  // against a trigger that's still mid-flight from the very click that opened
+  // it, sees well past `TRIGGER_MOVE_THRESHOLD_PX` of "movement" a few frames
+  // later, and closes the menu it just opened — every single time the trigger
+  // wasn't already fully in view before the click. `OPEN_SETTLE_MS` gives the
+  // in-flight scroll-into-view a short window to finish: any movement inside
+  // it re-baselines `openTriggerRect` to the trigger's current position
+  // instead of closing, so once the settle window ends, "moved" once again
+  // means a real, deliberate scroll by the user — never a false close from
+  // the open action's own scroll still catching up.
+  const OPEN_SETTLE_MS = 500;
+  let openedAt = 0;
+
   function onWindowScrollOrResize() {
     if (!openTriggerRect) return;
     const rect = trigger.getBoundingClientRect();
     const moved = Math.abs(rect.top - openTriggerRect.top) > TRIGGER_MOVE_THRESHOLD_PX
       || Math.abs(rect.left - openTriggerRect.left) > TRIGGER_MOVE_THRESHOLD_PX;
-    if (moved) close();
+    if (!moved) return;
+    if (Date.now() - openedAt < OPEN_SETTLE_MS) {
+      openTriggerRect = rect;
+      positionMenu();
+      return;
+    }
+    close();
   }
 
   function setOpen(next) {
@@ -108,6 +151,7 @@ export function createDropdown(trigger, items, { align = 'end' } = {}) {
       document.body.appendChild(menu);
       positionMenu();
       openTriggerRect = trigger.getBoundingClientRect();
+      openedAt = Date.now();
       // `{ preventScroll: true }` — without it, focusing an item the browser
       // considers off-screen kicks off its own smooth-scroll, on top of
       // whatever else is already happening on the page. Doesn't fully solve
