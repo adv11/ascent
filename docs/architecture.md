@@ -5451,3 +5451,27 @@ and updated but deliberately left unattached to any rendered DOM — issue #489
 (a single summary card with a linear progress bar) is expected to give them a
 new home. `.app-topbar-status` and the `≤1023px`/`≤899px` CSS wrap-order rules
 it needed are deleted outright. `CACHE_VERSION` bumped 99 → 100.
+
+### 2026-08-06 — PR #TBD — Daily Todos moved to the dashboard (issue #490, B5)
+
+`dailyTodoPanel.js` now mounts on `dashboard.js` — titled "Today," rendered
+under the header, above the checklist — instead of `onboarding.js`'s "Your
+roadmaps" picker. The store stays user-global, never per-roadmap; only where
+it renders changed (see `.claude/rules/roadmap-store.md`'s "Placement" note
+for the full history of why it moved twice). `onboarding.js`'s own
+`buildOnboardingTourSteps()` dropped its "Track daily todos" step — a tour
+step can only spotlight an element on the page it runs on — and
+`dashboard.js`'s `buildTourSteps()` gained the equivalent step in its place.
+
+Each `.daily-todo-item` row was recomposed onto issue #486 B1's two-line row
+rule at the same time: checkbox · title + one grey meta line (countdown ·
+time tracked · an optional "via `<roadmap>`" badge) · a timer button · a new
+⋮ overflow menu holding Delete, replacing what used to be six flex siblings
+(checkbox, title, linked badge, countdown, time-spent, timer button, a bare
+delete button) that wrapped onto three-plus lines at narrow widths. The
+overflow menu reuses `createDropdown()` — the same portaled-menu pattern
+`onboarding.js`'s own card-overflow menus use (issue #206 §4.1) — and
+`dailyTodoPanel.js` tracks every open row menu in a `rowDropdownEls` array so
+`render()` can tear each one down before the next rebuild (the store
+re-renders on every add/toggle/delete, plus a 30s countdown tick). `CACHE_VERSION`
+bumped 101 → 102.

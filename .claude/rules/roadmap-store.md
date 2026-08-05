@@ -127,20 +127,34 @@ Without this, the Missed section and the done-but-still-visible rows in the acti
 would both grow forever with no way to clean them up. `dailyTodoPanel.js` also gets a
 corner ℹ button (`openDailyTodoGuide()`, `src/ui/components/dailyTodoGuide.js`, same
 pattern as `buildYourOwnGuide.js`) explaining the rolling-deadline/preset-duration/
-Missed/delete model in place, since this feature has no other onboarding. **Placement:
-the Daily Todos card lives on `onboarding.js` — the "Pick a starting roadmap"/"Switch
-your starter roadmap" screen — not on `dashboard.js` at all.** It was tried on the
-dashboard first (rendered inside the header, above the roadmap hero) but that still read
-as belonging to whichever roadmap happened to be active, since the dashboard *is*
-per-roadmap. Since Daily Todos data is genuinely global to the user (never touched by
-which roadmap is active, or by starting/switching/hiding one), it now renders on the one
-screen that is itself roadmap-agnostic — right after the page heading, above the
-template grid. `main.js`'s `guardApp` already threads `dailyTodoStore` through to every
-route's ctx (originally added for the dashboard instance), so `onboarding.js` picking it
-up needed no wiring change there — just `createDailyTodoPanel(dailyTodoStore)` mounted
-in `renderOnboarding`'s own returned node, with `dailyTodoPanel?._cleanup?.()` added to
-its existing cleanup return alongside `themeToggleBtn._cleanup?.()`. If you ever consider
-moving it again, dashboard.js is specifically the wrong place — it's the roadmap view.
+Missed/delete model in place, since this feature has no other onboarding. **Placement
+(issue #490 — supersedes the original placement below): the Daily Todos panel, titled
+"Today," lives on `dashboard.js`, under the header, above the checklist — not on
+`onboarding.js` at all.** The store itself is still user-global, never per-roadmap, the
+same as always — only *where it renders* changed. The original reasoning for putting it
+on `onboarding.js` instead (tried on the dashboard first, rendered inside the header
+above the roadmap hero, and read as belonging to whichever roadmap happened to be
+active) no longer held once real usage showed the opposite problem: Daily Todos was the
+*first* thing a user saw when they only wanted to switch roadmaps, on a page most users
+visit rarely. `main.js`'s `guardApp` already threads `dailyTodoStore` through to every
+route's ctx (including the dashboard instance, which needed it already for its own
+countdown/review-due header badges), so `dashboard.js` picking it up for the panel
+itself needed no new wiring — `createDailyTodoPanel(dailyTodoStore, store)` mounted in
+`renderDashboard`'s own returned shell, with `dailyTodoPanel?._cleanup?.()` added to its
+existing cleanup return. `onboarding.js`'s own second tour (`buildOnboardingTourSteps()`,
+below) lost its "Track daily todos" step as part of the same move — a tour step can only
+spotlight an element on the page it runs on — and `dashboard.js`'s `buildTourSteps()`
+gained the equivalent step in its place. The row itself was also recomposed onto #486
+B1's two-line rule as part of this move: checkbox · title + one meta line (`"Due in 40m
+· 25m tracked · via Java Backend"`, the countdown keeping its `remainingBand()` colour
+class, an urgent — due-within-an-hour, not-done — row getting a `.urgent` 3px accent
+left edge) · timer button · a ⋮ overflow menu holding Delete
+(`createDropdown()`, the same pattern `onboarding.js`'s own card-overflow menus use,
+issue #206 §4.1) instead of a bare always-visible delete button. `renderRow()`'s
+`rowDropdownEls` array — mirroring `onboarding.js`'s `dropdownEls` — tracks every open
+overflow menu so `render()` can tear each one down before the next rebuild; skipping
+this leaks one `document` click listener per re-render, since the store fires one on
+every add/toggle/delete plus the 30s countdown tick.
 
 **`onCompletionToggle` and save-retry (`dailyTodoStore.js`, issue #394) — the same two
 contracts `roadmapStore.js` already has, ported over because a standalone Daily Todo had

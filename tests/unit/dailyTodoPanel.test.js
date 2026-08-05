@@ -55,10 +55,24 @@ beforeEach(() => {
   // blanket document.body.innerHTML reset would detach that cached root
   // from the document without toast.js ever knowing to recreate it.
   document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+  // Issue #490 — createDropdown() portals its menu to document.body, so a
+  // stray open overflow menu from a previous test's row must be cleared the
+  // same way stray modal overlays already are above.
+  document.querySelectorAll('.dropdown-menu, .dropdown-scrim').forEach(el => el.remove());
   // The collapse toggle (issue #83) persists to localStorage — clear it so
   // one test's collapse/expand doesn't leak into the next.
   localStorage.removeItem(KEYS.DAILY_TODOS_COLLAPSED);
 });
+
+// Issue #490 — Delete now lives behind a row's ⋮ overflow menu
+// (createDropdown(), portaled to document.body) rather than being a bare
+// always-visible button, matching onboarding.js's card-overflow-menu
+// convention. Opens the menu for the given `.daily-todo-item` and clicks its
+// "Delete" item.
+function clickRowDelete(itemEl) {
+  itemEl.querySelector('.daily-todo-overflow-btn').click();
+  document.querySelector('.dropdown-menu .dropdown-item-danger').click();
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -151,7 +165,7 @@ describe('createDailyTodoPanel', () => {
     store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
     const node = createDailyTodoPanel(store);
 
-    node.querySelector('.daily-todo-item .daily-todo-delete').click();
+    clickRowDelete(node.querySelector('.daily-todo-item'));
     document.querySelector('.modal-overlay [data-action="confirm"]').click();
     await Promise.resolve();
     await Promise.resolve();
@@ -167,7 +181,7 @@ describe('createDailyTodoPanel', () => {
     store.setDone(id, true);
     const node = createDailyTodoPanel(store);
 
-    node.querySelector('.daily-todo-item .daily-todo-delete').click();
+    clickRowDelete(node.querySelector('.daily-todo-item'));
     const confirmBtn = document.querySelector('.modal-overlay [data-action="confirm"]');
     expect(confirmBtn).toBeTruthy();
     confirmBtn.click();
@@ -185,7 +199,7 @@ describe('createDailyTodoPanel', () => {
     store.setDone(id, true);
     const node = createDailyTodoPanel(store);
 
-    node.querySelector('.daily-todo-item .daily-todo-delete').click();
+    clickRowDelete(node.querySelector('.daily-todo-item'));
     document.querySelector('.modal-overlay [data-action="cancel"]').click();
 
     expect(node.querySelector('.daily-todo-item')).toBeTruthy();
@@ -200,7 +214,7 @@ describe('createDailyTodoPanel', () => {
     const node = createDailyTodoPanel(store);
     node.querySelector('.daily-todo-missed-toggle').click();
 
-    expect(node.querySelector('.daily-todo-missed-list .daily-todo-delete')).toBeTruthy();
+    expect(node.querySelector('.daily-todo-missed-list .daily-todo-overflow-btn')).toBeTruthy();
     node._cleanup();
   });
 
@@ -361,7 +375,7 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
     const roadmapStore = createFakeRoadmapStore();
     const node = createDailyTodoPanel(store, roadmapStore);
 
-    node.querySelector('.daily-todo-item .daily-todo-delete').click();
+    clickRowDelete(node.querySelector('.daily-todo-item'));
     const dialog = document.querySelector('.modal-overlay[aria-label*="Delete"]');
     expect(dialog.textContent).toContain('untouched');
     dialog.querySelector('[data-action="confirm"]').click();
@@ -376,7 +390,7 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
     const roadmapStore = createFakeRoadmapStore();
     const node = createDailyTodoPanel(store, roadmapStore);
 
-    node.querySelector('.daily-todo-item .daily-todo-delete').click();
+    clickRowDelete(node.querySelector('.daily-todo-item'));
     const dialog = document.querySelector('.modal-overlay[aria-label*="Delete"]');
     expect(dialog.textContent).not.toContain('untouched');
     dialog.querySelector('[data-action="cancel"]').click();

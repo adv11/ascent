@@ -3218,13 +3218,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 @supports not (backdrop-filter: blur(1px)) {
   .daily-todo-panel { background: var(--color-surface-raised); }
 }
-/* On the onboarding "all roadmaps" page, .onboarding-inner already caps
-   width at 880px and every sibling (header, template-grid) sits flush
-   against it with no extra inset of its own. */
-.onboarding-inner > .daily-todo-panel {
-  max-width: none;
-  margin: 0;
-}
 .daily-todo-heading-row {
   display: flex;
   align-items: center;
@@ -3388,28 +3381,45 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: var(--text-base);
 }
 
+/* Issue #490 — recomposed onto #486 B1's two-line row rule: checkbox ·
+   title + one meta line · timer button · overflow. An urgent (danger-band,
+   not-done) todo gets a 3px accent left edge — `box-shadow: inset` rather
+   than a real `border-left`, same "avoid the layout shift a real border
+   would cause" reasoning as `.nav-item.active`'s own inset accent bar
+   (`.claude/rules/design-system.md`). */
 .daily-todo-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  padding: 10px 0;
+  padding: 10px 8px;
   border-top: 1px solid var(--color-border);
 }
+.daily-todo-item.urgent { box-shadow: inset 3px 0 0 var(--color-danger); }
 .daily-todo-item.done .daily-todo-title { text-decoration: line-through; color: var(--color-text-muted); }
 
-/* flex: 1 so the title column absorbs all the row's slack width — without
-   it, .daily-todo-remaining (below) had no fixed anchor and its horizontal
-   position drifted per-row depending on how long the title text was. */
 .daily-todo-checkbox {
   display: flex;
   align-items: center;
-  gap: 10px;
+  padding-top: 2px;
   cursor: pointer;
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
 }
 .daily-todo-checkbox input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--color-warning); flex-shrink: 0; }
+
+.daily-todo-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .daily-todo-title { font-size: var(--text-base); font-weight: 600; overflow-wrap: anywhere; }
+/* Deliberately NOT display: flex — a flex item is block-level, which trims
+   the leading/trailing space inside each child span (each segment's own
+   " · "/" tracked" text), collapsing "0s tracked" down to "0stracked" with
+   no space at all. Plain inline flow (the default) doesn't have this
+   problem and still wraps normally at the container's width. */
+.daily-todo-meta {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
+.daily-todo-meta-sep { color: var(--color-text-muted); }
+.daily-todo-meta-label { color: var(--color-text-muted); }
+
 .daily-todo-linked-badge {
   flex-shrink: 0;
   font-size: 10px;
@@ -3424,16 +3434,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    pattern. */
 :root[data-theme='dark'] .daily-todo-linked-badge { color: var(--color-accent-700); background: var(--color-warning-bg); }
 
-/* Fixed width + right-aligned, always rendered (see renderRow in
-   dailyTodoPanel.js) — every row's status text now lines up flush against
-   the same edge regardless of title length or done state, instead of
-   floating at whatever position `justify-content: space-between` happened
-   to leave it. */
 .daily-todo-remaining {
-  flex-shrink: 0;
-  min-width: 84px;
-  text-align: right;
-  font-size: 12px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -3444,22 +3445,30 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .daily-todo-remaining.danger { color: var(--color-p0); }
 .daily-todo-remaining.done { color: var(--color-text-muted); font-weight: 700; }
 
-.daily-todo-delete {
+/* The ⋮ overflow menu (Delete) reuses onboarding.js's
+   `.template-card-overflow-btn` treatment exactly — same circular
+   24x24 icon-button box, same "Two same-row circular icon-buttons must
+   share the same box size" rule (`.claude/rules/ui-styling.md`) applied
+   against the adjacent `.daily-todo-timer-btn`. `createDropdown()`'s own
+   `.dropdown` wrapper is a normal inline-flex row child here (unlike the
+   template card's `position: absolute` corner slot), since this button
+   already sits in its own flex row position, not a corner overlay. */
+.daily-todo-overflow-btn {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 24px;
   height: 24px;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border-glass);
+  background: var(--color-surface);
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 0;
 }
-.daily-todo-delete:hover { color: var(--color-danger); background: var(--color-danger-bg); }
-.daily-todo-delete:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.daily-todo-overflow-btn:hover,
+.daily-todo-overflow-btn[aria-expanded='true'] { color: var(--color-accent-700); border-color: var(--color-border-strong); }
+:root[data-theme='dark'] .daily-todo-overflow-btn:hover,
+:root[data-theme='dark'] .daily-todo-overflow-btn[aria-expanded='true'] { color: var(--color-accent-700); border-color: var(--color-border-strong); }
 
 .daily-todo-missed-toggle {
   display: block;
@@ -5940,7 +5949,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .btn-sm { min-height: 46px; }
   .filter-chip { min-height: 46px; }
   .check-item { min-height: 46px; }
-  .daily-todo-delete, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
+  .daily-todo-overflow-btn, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
   .feedback-widget-trigger { min-height: 46px; }
   .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
   /* issue #435 — same border-clip bug as the base rule above, at the touch

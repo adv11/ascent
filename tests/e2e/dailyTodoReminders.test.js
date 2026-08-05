@@ -23,6 +23,10 @@ test.describe('Daily Todo reminders — opt-in toggle', () => {
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    // Issue #490 — the Daily Todos panel moved from onboarding.js to
+    // dashboard.js, so this test needs a started roadmap to reach it now.
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
     await page.locator('.daily-todo-reminder-btn').click();
     await expect.poll(() => page.evaluate(() => window.__requestPermissionCalls)).toBe(1);

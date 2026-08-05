@@ -13,6 +13,7 @@ import { createSidebar } from '../components/sidebar.js';
 import { createDropdown } from '../components/dropdown.js';
 import { createTopbar } from '../components/topbar.js';
 import { createBottomNav } from '../components/bottomNav.js';
+import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { getTemplate } from '../../data/templates/index.js';
 import { MAX_TITLE_LENGTH } from '../../core/roadmap/limits.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
@@ -295,16 +296,14 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
 // tour early (`showStep()`'s `if (!target) { end(); return; }`) for a
 // fresh account with neither yet — deliberately still left out of this list
 // for that reason, same as the original re-audit's own reasoning above.
-// Daily Todos, favorite roadmaps, and AI-import/"Create your own roadmap"
-// have no dashboard-page target at all — per this file's own established
-// constraint (`.claude/rules/roadmap-store.md`'s "Gating and manual replay"
-// note: "every one of the tour's spotlight querySelector targets is
-// dashboard-only"), they live on `onboarding.js` instead, so they're folded
-// into the "Manage your roadmaps" step's body copy as a pointer rather than
-// given their own spotlight step. A second, onboarding-page-specific
-// contextual tour is the more complete fix for those three — flagged as an
-// open design question in issue #293 itself rather than silently built or
-// silently dropped.
+// Favorite roadmaps and AI-import/"Create your own roadmap" have no
+// dashboard-page target at all — they live on `onboarding.js` instead, so
+// they're folded into the "Manage your roadmaps" step's body copy as a
+// pointer rather than given their own spotlight step; that page's own
+// second, contextual tour (`buildOnboardingTourSteps()`) is what actually
+// spotlights them. Issue #490 moved the Daily Todos panel itself onto this
+// page, so — unlike those two — it now gets a real "Track daily todos"
+// spotlight step below instead of a body-copy pointer.
 // Exported (issue #293) for the same reason `renderFilterChips`/
 // `renderPhaseCard` are module-scope rather than closures inside
 // `renderDashboard` (issue #53's extraction precedent, see the comment above
@@ -329,6 +328,17 @@ export function buildTourSteps() {
       body: 'Click a topic to mark it done. Click the links badge to view or add links without toggling it.'
     },
     {
+      // Issue #490 — moved here from onboarding.js's own tour once the Daily
+      // Todos panel itself moved to this page (`.claude/rules/roadmap-store.md`'s
+      // "Placement" note). Not gated on the panel existing the way
+      // `.daily-todo-nav-badge`/`.review-due-nav-badge` are just below — the
+      // panel itself is always rendered (never conditionally hidden) whenever
+      // dailyTodoStore is present, same as it always was on onboarding.js.
+      target: () => document.querySelector('.daily-todo-panel'),
+      title: 'Track daily todos',
+      body: 'Add anything you want to get done today — a rolling list, separate from your roadmap topics.'
+    },
+    {
       // Issue #484 — below the sidebar's >=900px breakpoint there's no
       // sidebar at all (no off-canvas drawer to open, unlike the retired
       // hamburger drawer this replaced) — bottomNav.js's own "Progress" tab
@@ -340,7 +350,7 @@ export function buildTourSteps() {
     {
       target: () => document.querySelector('.app-sidebar-nav a[href="#/onboarding"]') || document.querySelector('.bottom-nav-item[href="#/onboarding"]'),
       title: 'Manage your roadmaps',
-      body: 'Switch between all your roadmaps anytime — your progress stays intact. This is also where you\'ll find Daily Todos, favorite roadmaps, and the option to build your own roadmap with AI.'
+      body: 'Switch between all your roadmaps anytime — your progress stays intact. This is also where you\'ll find favorite roadmaps and the option to build your own roadmap with AI.'
     },
     {
       target: () => document.querySelector('.app-sidebar-nav a[href="#/settings"]') || document.querySelector('.bottom-nav-item[href="#/settings"]'),
@@ -2044,6 +2054,15 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   const backupReminderBanner = createBackupReminderBanner({ user, store });
   const progressDigestBanner = activityLogStore ? createProgressDigestBanner({ user, store, activityLogStore }) : null;
 
+  // Issue #490 (B5) — moved here from onboarding.js's "all roadmaps" picker
+  // (`.claude/rules/roadmap-store.md`'s "Placement" note, now updated). The
+  // store itself is still user-global, not per-roadmap — only where it's
+  // rendered changed. `store` (the active roadmap) is threaded through the
+  // same way it was on onboarding.js, so a todo linked to a roadmap topic
+  // can resolve the linked roadmap's display name and mark that topic
+  // done/not-done on completion.
+  const dailyTodoPanel = dailyTodoStore ? createDailyTodoPanel(dailyTodoStore, store) : null;
+
   // Small header notification badge (not a per-roadmap feature — Daily Todos
   // are intentionally global, see onboarding.js) surfacing the soonest active
   // todo's countdown no matter which roadmap is currently open. Links to
@@ -2222,6 +2241,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
           ]),
           reviewTagGroupBanner
         ]),
+        dailyTodoPanel,
         content,
         saveBadge
       ])
@@ -2442,6 +2462,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     unsubStore();
     unsubDailyTodo?.();
     if (dailyTodoTickTimer) clearInterval(dailyTodoTickTimer);
+    dailyTodoPanel?._cleanup?.();
     window.removeEventListener('online', setOnlineState);
     window.removeEventListener('offline', setOnlineState);
     window.removeEventListener('beforeprint', handleBeforePrint);

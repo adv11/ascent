@@ -57,8 +57,12 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
     phaseCard.className = 'phase-card';
     const checkItem = document.createElement('div');
     checkItem.className = 'check-item';
+    // Issue #490 — the Daily Todos panel moved from onboarding.js to this
+    // page's own tour target list.
+    const dailyTodoPanel = document.createElement('div');
+    dailyTodoPanel.className = 'daily-todo-panel';
 
-    document.body.append(sidebar, topbar, feedbackWidget, phaseCard, checkItem);
+    document.body.append(sidebar, topbar, feedbackWidget, phaseCard, checkItem, dailyTodoPanel);
     return { sidebar, topbar, feedbackWidget };
   }
 
