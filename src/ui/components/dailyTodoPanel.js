@@ -4,6 +4,7 @@ import { showToast } from './toast.js';
 import { confirmDialog } from './confirmDialog.js';
 import { openDailyTodoGuide } from './dailyTodoGuide.js';
 import { createSelect } from './select.js';
+import { createDropdown } from './dropdown.js';
 import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
 import { MAX_TODO_TITLE_LENGTH, MAX_ACTIVE_TODOS, DURATION_PRESETS, MIN_DURATION_MS, MAX_DURATION_MS } from '../../core/dailyTodo/limits.js';
 import { getTemplate } from '../../data/templates/index.js';
@@ -18,6 +19,35 @@ const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms
 const TICK_MS = 30000;
 // 1s resolution for a running per-todo timer's live display (issue #180).
 const TIMER_TICK_MS = 1000;
+
+// Issue #490 — module-scope, pure DOM-building helper extracted out of
+// renderRow() to keep its own complexity under the ESLint gate (root
+// CLAUDE.md's "prefer a named, module-scope function" convention). Builds
+// the row's one meta line: countdown (or "Done") · time tracked · optional
+// "via <roadmap>" badge, in that order.
+function buildRowMeta(todo, ms, band, roadmapName) {
+  const children = [
+    todo.done
+      ? el('span', { className: 'daily-todo-remaining done', text: 'Done' })
+      // Reuses formatRemaining()'s own "Xh Ym"/"<1m" text, stripping its
+      // " left" suffix — "Due in " already carries that meaning.
+      : el('span', { className: `daily-todo-remaining ${band}`, text: `Due in ${formatRemaining(ms).replace(/ left$/, '')}` }),
+    el('span', { className: 'daily-todo-meta-sep', text: ' · ' }),
+    // Time tracking (issue #180) — Start/pause only makes sense for a
+    // still-active, not-yet-done todo; a done or missed row shows its
+    // accumulated total read-only, matching itemPanel.js's "total always
+    // visible" treatment.
+    el('span', { className: 'daily-todo-time-spent', 'data-timer-display': todo.id, text: formatTimeSpent(todo.timeSpentSeconds || 0) }),
+    el('span', { className: 'daily-todo-meta-label', text: ' tracked' })
+  ];
+  if (roadmapName) {
+    children.push(
+      el('span', { className: 'daily-todo-meta-sep', text: ' · ' }),
+      el('span', { className: 'daily-todo-linked-badge', title: `Linked to a topic in ${roadmapName}`, text: `via ${roadmapName}` })
+    );
+  }
+  return children;
+}
 
 // Resolves a templateId to a display name for the confirm dialog/toast/row
 // label — built-in templates come from the registry, a custom roadmap's
@@ -245,56 +275,78 @@ export function createDailyTodoPanel(store, roadmapStore) {
     render();
   }
 
+  // Issue #490 — every dropdown created by renderRow() below must be torn
+  // down before its row is discarded on the next render(), or a re-render
+  // (the store fires one on every add/toggle/delete, plus the 30s countdown
+  // tick) leaks one `document` click listener per rebuild — same
+  // `dropdownEls` cleanup-array precedent onboarding.js's card-overflow menus
+  // established for the identical shape of bug (issue #206 §4.1).
+  let rowDropdownEls = [];
+
+  // Start/pause only makes sense for a still-active, not-yet-done todo — a
+  // done or missed row shows its accumulated total read-only (buildRowMeta
+  // above), with no timer button at all.
+  function buildTimerButton(todo) {
+    if (todo.done) return null;
+    const isRunning = runningTimers[todo.id] != null;
+    return el('button', {
+      type: 'button',
+      className: `daily-todo-timer-btn ${isRunning ? 'active' : ''}`,
+      'data-action': 'timer',
+      'aria-label': isRunning ? `Pause timer for "${todo.title}"` : `Start timer for "${todo.title}"`,
+      title: isRunning ? 'Pause timer' : 'Start timer',
+      onClick: () => handleToggleTimer(todo)
+    }, [createIcon(isRunning ? 'pause' : 'play', { size: 'xs' })]);
+  }
+
+  // The ⋮ overflow menu holding Delete (issue #490 — was a bare always-visible
+  // button; collapsed into a menu the same way onboarding.js's card overflow
+  // did, issue #206 §4.1). Every menu built here is pushed onto
+  // rowDropdownEls so render() can tear it down before the next rebuild.
+  function buildOverflowMenu(todo) {
+    const overflowTrigger = el('button', {
+      type: 'button',
+      className: 'daily-todo-overflow-btn',
+      'aria-label': `More actions for "${todo.title}"`,
+      title: 'More actions'
+    }, [createIcon('overflow', { size: 'xs' })]);
+    const overflowMenu = createDropdown(overflowTrigger, [
+      { text: 'Delete', danger: true, onClick: () => handleDelete(todo) }
+    ]);
+    rowDropdownEls.push(overflowMenu);
+    return overflowMenu;
+  }
+
+  // Issue #490 (B5 — moved from onboarding.js to the dashboard) — recomposed
+  // onto #486 B1's two-line row rule: checkbox · title + one meta line
+  // (countdown/tracked-time/linked-roadmap, in that order) · timer button ·
+  // ⋮ overflow holding Delete. The countdown keeps its remainingBand()
+  // colour class inside the meta line; an urgent (danger-band, not-done)
+  // todo gets `.urgent` for the 3px accent left edge (app.css).
   function renderRow(todo, now) {
     const ms = remainingMs(todo, now);
     const band = todo.done ? null : remainingBand(ms);
     const isLinked = !!(todo.linkedTemplateId && todo.linkedItemId);
     const roadmapName = isLinked ? resolveRoadmapName(roadmapStore, todo.linkedTemplateId) : null;
+    const isUrgent = !todo.done && band === 'danger';
     const checkboxInput = el('input', {
       type: 'checkbox',
       checked: todo.done ? 'checked' : null,
       'aria-label': `Mark "${todo.title}" ${todo.done ? 'not done' : 'done'}`
     });
     checkboxInput.addEventListener('change', () => handleToggleDone(todo, checkboxInput));
+
     return el('div', {
-      className: `daily-todo-item ${todo.done ? 'done' : ''}`,
+      className: `daily-todo-item ${todo.done ? 'done' : ''}${isUrgent ? ' urgent' : ''}`,
       dataset: { id: todo.id }
     }, [
-      el('label', { className: 'daily-todo-checkbox' }, [
-        checkboxInput,
+      el('label', { className: 'daily-todo-checkbox' }, [checkboxInput]),
+      el('div', { className: 'daily-todo-content' }, [
         el('span', { className: 'daily-todo-title', text: todo.title }),
-        roadmapName ? el('span', { className: 'daily-todo-linked-badge', title: `Linked to a topic in ${roadmapName}`, text: `via ${roadmapName}` }) : null
-      ].filter(Boolean)),
-      // Always rendered (never conditional on todo.done) and given a fixed
-      // width in CSS — this used to be a `!todo.done ? ... : null` node,
-      // which meant a done row had two flex children instead of three and
-      // `justify-content: space-between` floated the countdown at a
-      // different horizontal position on every row depending on how long
-      // the title text was. A fixed-width, right-aligned column keeps every
-      // row's status text flush against the same edge regardless of title
-      // length or done state.
-      el('span', { className: `daily-todo-remaining ${todo.done ? 'done' : band}`, text: todo.done ? 'Done' : formatRemaining(ms) }),
-      // Time tracking (issue #180) — Start/pause only makes sense for a
-      // still-active, not-yet-done todo; a done or missed row shows its
-      // accumulated total read-only, matching itemPanel.js's "total always
-      // visible" treatment.
-      el('span', { className: 'daily-todo-time-spent', 'data-timer-display': todo.id, text: formatTimeSpent(todo.timeSpentSeconds || 0) }),
-      !todo.done ? el('button', {
-        type: 'button',
-        className: `daily-todo-timer-btn ${runningTimers[todo.id] != null ? 'active' : ''}`,
-        'data-action': 'timer',
-        'aria-label': runningTimers[todo.id] != null ? `Pause timer for "${todo.title}"` : `Start timer for "${todo.title}"`,
-        title: runningTimers[todo.id] != null ? 'Pause timer' : 'Start timer',
-        onClick: () => handleToggleTimer(todo)
-      }, [createIcon(runningTimers[todo.id] != null ? 'pause' : 'play', { size: 'xs' })]) : null,
-      el('button', {
-        type: 'button',
-        className: 'daily-todo-delete',
-        'data-action': 'delete',
-        'aria-label': `Delete "${todo.title}"`,
-        title: 'Delete',
-        onClick: () => handleDelete(todo)
-      }, [createIcon('close', { size: 'xs' })])
+        el('div', { className: 'daily-todo-meta' }, buildRowMeta(todo, ms, band, roadmapName))
+      ]),
+      buildTimerButton(todo),
+      buildOverflowMenu(todo)
     ].filter(Boolean));
   }
 
@@ -355,6 +407,11 @@ export function createDailyTodoPanel(store, roadmapStore) {
   }
 
   function render() {
+    // Issue #490 — every row rebuilt below mints a fresh overflow dropdown;
+    // tear down the previous batch first or each render leaks a listener.
+    rowDropdownEls.forEach(d => d._cleanup?.());
+    rowDropdownEls = [];
+
     const now = Date.now();
     const todos = store.getSnapshot().todos;
     // Issue #394 — must match dailyTodoStore.addTodo()'s own MAX_ACTIVE_TODOS
@@ -395,7 +452,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
   const node = el('section', { className: 'daily-todo-panel' }, [
     el('div', { className: 'daily-todo-heading-row' }, [
       el('span', { className: 'daily-todo-icon' }, [createIcon('timer', { size: 'sm' })]),
-      el('h2', { className: 'daily-todo-heading', text: "Today's Todos" }),
+      el('h2', { className: 'daily-todo-heading', text: 'Today' }),
       countBadge,
       createFeatureBadge('daily-todo-reminders'),
       reminderBtn,
@@ -428,6 +485,8 @@ export function createDailyTodoPanel(store, roadmapStore) {
     clearInterval(tickTimer);
     clearInterval(timerTickTimer);
     durationSelect._cleanup?.();
+    rowDropdownEls.forEach(d => d._cleanup?.());
+    rowDropdownEls = [];
   };
 
   return node;

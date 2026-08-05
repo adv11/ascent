@@ -19,7 +19,8 @@ test.describe('feature tour (issue #17)', () => {
     await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
     await page.click('.tour-welcome-card [data-action="start"]');
 
-    for (let i = 0; i < 10; i += 1) {
+    // Issue #490 added an 11th step ("Track daily todos") to buildTourSteps().
+    for (let i = 0; i < 11; i += 1) {
       await expect(page.locator('.tour-popover')).toBeVisible();
       await page.click('.tour-popover [data-action="next"], .tour-popover [data-action="finish"]');
     }
@@ -84,8 +85,9 @@ test.describe('feature tour (issue #17)', () => {
   });
 });
 
-// Issue #293 — the second, onboarding-page-specific tour (Daily Todos,
-// favoriting a roadmap, "Create your own roadmap") flagged as an open
+// Issue #293 — the second, onboarding-page-specific tour (favoriting a
+// roadmap, "Create your own roadmap" — issue #490 moved its original third
+// step, Daily Todos, onto the dashboard tour above) flagged as an open
 // follow-up when the dashboard tour above was expanded. Auto-starts on a
 // *return* visit to /onboarding, only after the dashboard tour has already
 // been seen (skipped or finished — both set tourDone, see featureTour.js's
@@ -113,7 +115,10 @@ test.describe('onboarding-page tour (issue #293)', () => {
     await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
     await page.click('.tour-welcome-card [data-action="start"]');
 
-    for (let i = 0; i < 3; i += 1) {
+    // Issue #490 dropped this tour's original "Track daily todos" step (the
+    // panel it spotlighted moved to dashboard.js's own tour instead), leaving
+    // 2 steps (favorite roadmaps, "Create your own roadmap").
+    for (let i = 0; i < 2; i += 1) {
       await expect(page.locator('.tour-popover')).toBeVisible();
       await page.click('.tour-popover [data-action="next"], .tour-popover [data-action="finish"]');
     }

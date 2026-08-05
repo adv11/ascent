@@ -55,10 +55,11 @@ beforeEach(() => {
 });
 
 // Issue #293 — buildOnboardingTourSteps()'s targets must resolve against the
-// real DOM renderOnboarding() actually produces (Daily Todos panel, a
-// built-in template card's overflow menu, "Create your own roadmap"), not a
-// hand-rolled stand-in — same discipline tests/unit/featureTourSteps.test.js
-// established for the dashboard tour.
+// real DOM renderOnboarding() actually produces (a built-in template card's
+// overflow menu, "Create your own roadmap"), not a hand-rolled stand-in —
+// same discipline tests/unit/featureTourSteps.test.js established for the
+// dashboard tour. Issue #490 dropped this tour's original leading step
+// (Daily Todos), which moved to dashboard.js's own tour instead.
 describe('buildOnboardingTourSteps() (issue #293)', () => {
   it('resolves every step target to a real, mounted element', async () => {
     const { renderOnboarding, buildOnboardingTourSteps } = await import('../../src/ui/pages/onboarding.js');
@@ -72,7 +73,7 @@ describe('buildOnboardingTourSteps() (issue #293)', () => {
     expect(visibleGrid).not.toBeNull();
     const steps = buildOnboardingTourSteps({ visibleGrid, getCreateCardEl: () => app.querySelector('.template-card-create') });
 
-    expect(steps).toHaveLength(3);
+    expect(steps).toHaveLength(2);
     for (const step of steps) {
       const target = step.target();
       expect(target, `"${step.title}" target should resolve`).not.toBeNull();

@@ -9,7 +9,6 @@ import { openMyReports } from '../components/myReports.js';
 import { openShareRoadmapModal } from '../components/shareRoadmapModal.js';
 import { openBuildYourOwnGuide } from '../components/buildYourOwnGuide.js';
 import { openCreateRoadmapModal } from '../components/importRoadmapModal.js';
-import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { exportBackupJson, exportBackupCsv, exportBackupMarkdown, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
@@ -59,20 +58,20 @@ function buildPickingOverlay(label = 'Opening…') {
 
 // Issue #293 — the second, onboarding-page-specific tour flagged as an open
 // follow-up by the dashboard tour's own expansion (buildTourSteps() in
-// dashboard.js): Daily Todos, favoriting a roadmap, and "Create your own
-// roadmap" have no dashboard-page target to spotlight, since all three live
-// only on this page. Same `{ target, title, body }` shape and live-
-// querySelector-per-step convention as buildTourSteps() (`.claude/rules/
-// ui-styling.md`'s featureTour.js entry) — exported for the same reason
-// buildTourSteps() is (issue #53's module-scope-extraction precedent), so
-// each step is independently testable against real rendered DOM.
+// dashboard.js): favoriting a roadmap and "Create your own roadmap" have no
+// dashboard-page target to spotlight, since both live only on this page.
+// Same `{ target, title, body }` shape and live-querySelector-per-step
+// convention as buildTourSteps() (`.claude/rules/ui-styling.md`'s
+// featureTour.js entry) — exported for the same reason buildTourSteps() is
+// (issue #53's module-scope-extraction precedent), so each step is
+// independently testable against real rendered DOM.
+// Issue #490 — the "Track daily todos" step that used to lead this list was
+// removed, not repointed, once the Daily Todos panel itself moved to
+// dashboard.js — a tour step can only spotlight an element on the page it
+// runs on. dashboard.js's own buildTourSteps() gained the equivalent step
+// instead (see that file).
 export function buildOnboardingTourSteps({ visibleGrid, getCreateCardEl }) {
   return [
-    {
-      target: () => document.querySelector('.daily-todo-panel'),
-      title: 'Track daily todos',
-      body: 'Add anything you want to get done today — a rolling list, separate from your roadmap topics.'
-    },
     {
       target: () => visibleGrid.querySelector('.template-card-overflow-btn'),
       title: 'Favorite your go-to roadmaps',
@@ -614,8 +613,8 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // signed in, as who, or reach Settings/backup/delete-account without first
   // navigating to the dashboard). `dashboard.js`/`settings.js`/`progress.js`
   // all get this "for free" via `sidebar.js`'s `buildAccountMenu()`, but this
-  // page deliberately has no app-shell sidebar at all (see the "Daily Todos
-  // store" placement note in `.claude/rules/roadmap-store.md` for why) — so
+  // page deliberately has no app-shell sidebar at all (see `.claude/rules/
+  // ui-styling.md`'s "onboarding.js has no app-shell sidebar" note) — so
   // the same item list is rebuilt here as a standalone top-right avatar +
   // dropdown instead, `align: 'end'` (not the sidebar's `'start'`, since this
   // trigger sits in the top-right corner, not a bottom-left footer). Every
@@ -658,14 +657,6 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     accountDropdownItems.push({ text: 'Delete account', danger: true, onClick: () => openDeleteAccountModal() });
   }
   const accountDropdown = createDropdown(accountTrigger, accountDropdownItems, { align: 'end' });
-  // Rendered on this page (not the roadmap dashboard) precisely because it's
-  // independent of any single roadmap — this is the "all roadmaps" screen,
-  // so Daily Todos lives here instead of looking like it belongs to whichever
-  // roadmap happens to be active (issue #56 follow-up). `store` (roadmap) is
-  // also passed through so a todo linked to a roadmap topic (added via a
-  // button on that topic's row in dashboard.js) can resolve the linked
-  // roadmap's display name and mark that topic done/not-done on completion.
-  const dailyTodoPanel = dailyTodoStore ? createDailyTodoPanel(dailyTodoStore, store) : null;
   const backBtn = isSwitchingTemplate
     ? el('button', {
       type: 'button',
@@ -692,7 +683,6 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
             : 'Choose a template to get started. You can add, edit, or remove topics anytime, and start more templates later without losing progress.'
         })
       ]),
-      dailyTodoPanel,
       visibleGrid,
       hiddenSection
     ].filter(Boolean))
@@ -744,7 +734,6 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   return () => {
     themeToggleBtn._cleanup?.();
-    dailyTodoPanel?._cleanup?.();
     accountDropdown._cleanup?.();
     dropdownEls.forEach(dropdown => dropdown._cleanup?.());
     activeTourCleanup?.();

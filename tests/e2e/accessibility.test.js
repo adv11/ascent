@@ -329,12 +329,12 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
-  // Issue #280 — the Daily Todos panel (onboarding.js) and its "Add to
-  // Today's Todos" modal (dashboard.js's per-row ⏱ button) had zero axe
-  // coverage despite being one of the most-interacted-with surfaces in the
-  // app (reminders, duration pickers, collapse state, per-todo actions).
-  // The panel itself lives on /onboarding, not /app — see roadmap-store.md's
-  // "Placement" note — and renders expanded by default (no
+  // Issue #280 — the Daily Todos panel (dashboard.js, moved from
+  // onboarding.js in issue #490 — see roadmap-store.md's "Placement" note)
+  // and its "Add to Today's Todos" modal (dashboard.js's per-row ⏱ button)
+  // had zero axe coverage despite being one of the most-interacted-with
+  // surfaces in the app (reminders, duration pickers, collapse state,
+  // per-todo actions). Renders expanded by default (no
   // KEYS.DAILY_TODOS_COLLAPSED set), so no extra interaction is needed to
   // reach its open state before scanning.
   test('the Daily Todos panel has zero critical/serious axe violations', async ({ page }) => {
@@ -342,6 +342,8 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 10_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.daily-todo-panel' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -487,6 +489,8 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
     await page.locator('.daily-todo-info-btn').click();
     const modal = page.locator('.modal-overlay[aria-label="About Today\'s Todos"]');
     await expect(modal).toBeVisible();
@@ -581,6 +585,8 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.daily-todo-panel' });
