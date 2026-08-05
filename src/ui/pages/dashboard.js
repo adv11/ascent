@@ -167,6 +167,19 @@ export function formatLastSynced(ms) {
   return `Last synced ${new Date(Date.now() - ms).toLocaleDateString()}`;
 }
 
+// Issue #489 — the single summary card's meta line uses "Saved", not "Last
+// synced", matching content-style.md's canonical plain-language mapping
+// ("Synced to cloud" -> "Saved"). Same freshness math as formatLastSynced()
+// above (kept separate, not reworded in place, since that function's exact
+// strings are already asserted by its own unit tests).
+export function formatSavedAgo(ms) {
+  if (ms == null) return 'Not saved yet';
+  if (ms < 60_000) return 'Saved a moment ago';
+  if (ms < 3_600_000) return `Saved ${Math.floor(ms / 60_000)}m ago`;
+  if (ms < 86_400_000) return `Saved ${Math.floor(ms / 3_600_000)}h ago`;
+  return `Saved ${new Date(Date.now() - ms).toLocaleDateString()}`;
+}
+
 // Issue #477 — the priority levels (All/P0-P3) used to be five of the seven
 // pills renderFilterChips() built, crowding the row before a user even
 // reaches Resources/Review due/Search/Expand all. Collapsed into one
@@ -979,10 +992,17 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     ' Offline — changes stay on this device until you reconnect.'
   ]);
 
-  const doneStat = el('span', { className: 'stat-tile-number', text: '0' });
-  const doneStatTotal = el('span', { className: 'stat-tile-total', text: '/ 0' });
-  const percentStat = el('span', { className: 'stat-tile-number', text: '0' });
-  const percentRing = createProgressRing(0, { size: 64, strokeWidth: 6 });
+  const doneStat = el('span', { className: 'roadmap-summary-count-number', text: '0' });
+  const doneStatTotal = el('span', { className: 'roadmap-summary-count-total', text: '/ 0' });
+  const percentStat = el('span', { className: 'roadmap-summary-count-number', text: '0' });
+  // Issue #489 — the two `.stat-tile`/`.stat-tile-ring` boxes (issue #6 Phase
+  // 4.1) are replaced by one block: name + save state, a large "N / M topics
+  // done" figure, a right-aligned percentage, and a 12px linear bar.
+  // `progressRing.js` (imported below) stays in use at phase-head call sites
+  // (a ring is harder to read at a glance than a bar for the older end of
+  // this app's audience, at this larger summary scale — issue #489) — only
+  // this one 64px ring instance is removed.
+  const roadmapSummaryBarFill = el('div', { className: 'roadmap-summary-bar-fill' });
   const roadmapMetaRow = el('p', { className: 'roadmap-meta-row', text: '' });
   // Issue #477 — rebuilt (via replaceChildren, with the outgoing select's
   // own _cleanup() called first) on every render()/patchDoneStates() pass,
@@ -1679,17 +1699,16 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     const filtered = filterItems(allItems, { priority: activeFilter, query: searchQuery, tag: tagFilter });
     const stats = countStats(allItems);
     doneStatTotal.textContent = `/ ${stats.total}`;
-    roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
+    roadmapMetaRow.textContent = formatSavedAgo(lastSyncedAt == null ? null : Date.now() - lastSyncedAt);
     updateSaveBadge(snapshot);
     updateReviewDueBadge(allItems);
+    roadmapSummaryBarFill.style.width = `${stats.pct}%`;
     if (hasAnimatedStats) {
       doneStat.textContent = String(stats.done);
       percentStat.textContent = String(stats.pct);
-      percentRing._setPct(stats.pct);
     } else {
       animateCountUp(doneStat, stats.done);
       animateCountUp(percentStat, stats.pct);
-      percentRing._setPct(stats.pct);
       hasAnimatedStats = true;
     }
 
@@ -1841,10 +1860,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     const stats = countStats(allItems);
     doneStat.textContent = String(stats.done);
     percentStat.textContent = String(stats.pct);
-    percentRing._setPct(stats.pct);
+    roadmapSummaryBarFill.style.width = `${stats.pct}%`;
     updateSaveBadge(snapshot);
     updateReviewDueBadge(allItems);
-    roadmapMetaRow.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'} · ${stats.pct}% complete · ${formatLastSynced(lastSyncedAt == null ? null : Date.now() - lastSyncedAt)}`;
+    roadmapMetaRow.textContent = formatSavedAgo(lastSyncedAt == null ? null : Date.now() - lastSyncedAt);
 
     filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
       const { total, done } = priorityCounts(allItems, chip.dataset.p);
@@ -2162,39 +2181,30 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
         progressDigestBanner,
         offlineBanner,
         el('header', { className: 'dashboard-header' }, [
-          // Issue #460 — the identity badge/meta row and the two stat tiles
-          // used to be three separately-bordered blocks stacked with their
-          // own independent margins (real feedback: read as "cluttered,
-          // scattered," not a cohesive header). Consolidated into one glass
-          // `.card` (`.roadmap-summary-card`) — identity on the left, stats
-          // on the right, wrapping to a stacked layout on narrow viewports.
-          // `.current-roadmap-badge`/`.stat-tile-number`/etc. keep their
-          // existing class names (several E2E specs assert on
-          // `.current-roadmap-badge`'s text directly), only the surrounding
-          // wrapper structure changed.
+          // Issue #489 — replaces #460's two-stat-tile layout (an icon+count
+          // tile plus a 64px `.stat-tile-ring`) with one block: identity
+          // name + save state on top, a large "N / M topics done" figure
+          // with a right-aligned percentage below it, then a 12px full-width
+          // bar. `.current-roadmap-badge` keeps its existing class name —
+          // several E2E specs assert on its text directly.
           el('div', { className: 'card roadmap-summary-card' }, [
-            el('div', { className: 'roadmap-summary-identity' }, [
+            el('div', { className: 'roadmap-summary-top' }, [
               el('div', { className: 'current-roadmap-badge' }, [
                 roadmapBadgeIconSlot,
                 roadmapBadgeNameEl
               ]),
               roadmapMetaRow
             ]),
-            el('div', { className: 'roadmap-summary-stats' }, [
-              el('div', { className: 'stat-tile' }, [
-                el('span', { className: 'stat-tile-icon' }, [createIcon('check', { size: 'sm' })]),
-                el('div', { className: 'stat-tile-body' }, [
-                  el('div', { className: 'stat-tile-value' }, [doneStat, doneStatTotal]),
-                  el('span', { className: 'stat-tile-label', text: 'Items done' })
-                ])
-              ]),
-              el('div', { className: 'stat-tile stat-tile-ring' }, [
-                el('div', { className: 'stat-tile-ring-wrap' }, [
-                  percentRing,
-                  el('div', { className: 'stat-tile-ring-value' }, [percentStat, el('span', { text: '%' })])
+            el('div', { className: 'roadmap-summary-progress' }, [
+              el('div', { className: 'roadmap-summary-progress-row' }, [
+                el('div', { className: 'roadmap-summary-count' }, [
+                  doneStat,
+                  doneStatTotal,
+                  el('span', { className: 'roadmap-summary-count-label', text: ' topics done' })
                 ]),
-                el('span', { className: 'stat-tile-label', text: 'Complete' })
-              ])
+                el('span', { className: 'roadmap-summary-percent' }, [percentStat, el('span', { text: '%' })])
+              ]),
+              el('div', { className: 'roadmap-summary-bar-track' }, [roadmapSummaryBarFill])
             ])
           ]),
           // Issue #487 — the old two-row `.roadmap-filters-card` (a priority
