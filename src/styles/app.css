@@ -2986,6 +2986,46 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: #000;
 }
 
+/* issue #491 — "Next up" card, directly under the summary card. Flat content
+   surface (`.card`, §4's "flat content" rule), not a glass overlay — same
+   family as `.roadmap-summary-card`/`.roadmap-filters-card` above. Rows reuse
+   `.check-box`/`.check-mark`/`.check-body`/`.check-title`/`.check-meta`
+   verbatim (dashboard.js's checklist rows) so a "Next up" row is visually
+   identical to its real row in the phase list below, just without the ⋮
+   overflow menu or priority left-edge stripe. */
+.next-up-card {
+  max-width: 1160px;
+  margin: 0 auto 16px;
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.next-up-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.next-up-rows { display: flex; flex-direction: column; }
+.next-up-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+.next-up-row:last-child { border-bottom: none; }
+.next-up-row .check-meta { text-transform: none; }
+.next-up-complete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+}
+
 /* issue #460 — wraps the filter toolbar in one glass `.card`, same reasoning
    as `.roadmap-summary-card` above. */
 .roadmap-filters-card {

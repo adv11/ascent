@@ -5475,3 +5475,21 @@ overflow menu reuses `createDropdown()` — the same portaled-menu pattern
 `render()` can tear each one down before the next rebuild (the store
 re-renders on every add/toggle/delete, plus a 30s countdown tick). `CACHE_VERSION`
 bumped 101 → 102.
+
+### 2026-08-06 — PR #TBD — "Next up" card on the dashboard (issue #491, B6)
+
+New `src/core/roadmap/nextUp.js` — a pure module (no DOM/store access,
+matching `reviewSchedule.js`/`completionCelebration.js`/`roadmapComparison.js`'s
+precedent) exporting `selectNextUpTopics(items, phases, { limit, excludeIds })`.
+Picks up to three unfinished topics for a new card directly under the
+dashboard's summary card: unfinished topics in the phase containing the most
+recently completed topic, falling back to the first unfinished phase in
+template order once that phase is done; within a phase, Must do before Should
+do before Later, source order otherwise. See
+`.claude/rules/roadmap-store.md`'s own entry for the full selection-order and
+`excludeIds`/"Not today" contract. `dashboard.js`'s `updateNextUpCard()` wires
+this into the existing `render()`/`patchDoneStates()` pair — no new store
+subscription, no new full-render path — and reuses `renderItemRow()`'s own
+`.check-box`/`.check-mark`/`.check-body`/`.check-title`/`.check-meta` classes
+so a "Next up" row matches its real checklist row below. `CACHE_VERSION`
+bumped 102 → 103.
