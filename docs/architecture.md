@@ -5436,8 +5436,10 @@ the sidebar's 900px breakpoint, where the sidebar footer isn't rendered at
 all. The bell folds into the avatar: an `.avatar-unread-dot` (reusing
 `.notification-badge`/`.notification-badge-dot`'s styling) sits over the
 avatar, and "What's New" is a dropdown item opening `changelogDrawer.js` —
-`notificationBell.js` itself is unchanged and still independently tested,
-just no longer wired into any page. Theme moved to the sidebar footer (a
+`notificationBell.js` (and its test) is deleted outright — once the bell
+folded into the avatar it had no remaining importer, and leaving its
+`.app-topbar-bell` markup around with no matching CSS rule would have failed
+`scripts/lint-theme.mjs`'s missing-`color` check. Theme moved to the sidebar footer (a
 `createThemeToggle()` button next to Sign out) and stays in Settings' own
 theme select. New `src/ui/components/guestBanner.js`'s `createGuestBanner(user)`
 replaces the old topbar "Local only"/"Create account" pair with one

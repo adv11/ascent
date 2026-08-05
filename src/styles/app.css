@@ -2162,6 +2162,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   height: 36px;
   border: none;
   background: none;
+  color: var(--color-text);
   cursor: pointer;
   border-radius: var(--radius-full);
 }
