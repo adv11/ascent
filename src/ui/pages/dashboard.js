@@ -2,9 +2,8 @@ import { el, debounce, isValidUrl } from '../dom.js';
 import { navigate } from '../router.js';
 import { openItemPanel } from '../components/itemPanel.js';
 import { showToast } from '../components/toast.js';
-import { createThemeToggle } from '../components/themeToggle.js';
-import { createChangelogBell } from '../components/notificationBell.js';
 import { createVerificationBanner } from '../components/verificationBanner.js';
+import { createGuestBanner } from '../components/guestBanner.js';
 import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
 import { createProgressDigestBanner } from '../components/progressDigestBanner.js';
 import { maybeShowGuestDataRiskNudge } from '../components/guestDataRiskNudge.js';
@@ -349,14 +348,14 @@ export function buildTourSteps() {
       body: 'Spotted a bug or have an idea? Use this button to send feedback straight to us.'
     },
     {
-      target: () => document.querySelector('.app-topbar-bell'),
+      target: () => document.querySelector('.app-topbar-avatar-btn'),
       title: 'See what\'s new',
-      body: 'Click the bell anytime to see recent updates and new features as they ship.'
+      body: 'Open your account menu and choose "What\'s New" to see recent updates and new features as they ship.'
     },
     {
-      target: () => document.querySelector('.app-topbar .theme-toggle'),
+      target: () => document.querySelector('.app-sidebar-footer .theme-toggle'),
       title: 'Switch themes',
-      body: 'Switch between light and dark anytime in the top bar — it\'s remembered across visits.'
+      body: 'Switch between light and dark anytime from the sidebar — it\'s remembered across visits.'
     },
     {
       target: () => document.querySelector('.app-topbar-command-btn'),
@@ -1015,6 +1014,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // change; 'polite' since a save-state change is never urgent enough to
   // interrupt whatever the user is doing.
   const saveBadge = el('div', { className: 'save-badge', id: 'saveBadge', 'aria-live': 'polite', role: 'status' });
+  // Issue #488 — no longer rendered in the topbar; kept computed/updated,
+  // unattached, same "awaiting #489's new home" note as the daily-todo/
+  // review-due badges above. `saveBadge` (the fixed-corner toast-like
+  // indicator) already carries this same save-state to the user regardless.
   const syncPill = el('span', { className: 'sync-pill', text: 'Syncing' });
 
   const userPillClass = user.isAnonymous ? 'guest' : 'online';
@@ -2017,8 +2020,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     onClick: () => openFilterPanel()
   }, ['Filter', filterBtnBadge]);
 
-  const themeToggleBtn = createThemeToggle();
   const verificationBanner = createVerificationBanner(user);
+  const guestBanner = createGuestBanner(user);
   const backupReminderBanner = createBackupReminderBanner({ user, store });
   const progressDigestBanner = activityLogStore ? createProgressDigestBanner({ user, store, activityLogStore }) : null;
 
@@ -2026,6 +2029,10 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // are intentionally global, see onboarding.js) surfacing the soonest active
   // todo's countdown no matter which roadmap is currently open. Links to
   // /onboarding, the only page the actual todo list/editor lives on.
+  // Issue #488 — no longer rendered in the topbar (crowding it out was the
+  // whole point of that issue); kept computed/updated here, unattached,
+  // since issue #489 (the single summary-card/progress-bar redesign) is
+  // expected to give this a new home rather than dropping it outright.
   const dailyTodoNavText = el('span', { className: 'daily-todo-nav-text' });
   const dailyTodoNavBadge = dailyTodoStore ? el('a', {
     href: '#/onboarding',
@@ -2041,6 +2048,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // due for a spaced-repetition-style review, next to the Daily Todo
   // countdown badge (same header-badge precedent). Clicking it jumps
   // straight to the REVIEW filter chip rather than a separate page.
+  // Issue #488 — same "unattached, awaiting #489" note as dailyTodoNavBadge
+  // above applies here too.
   const reviewDueText = el('span', { className: 'review-due-nav-text' });
   const reviewDueBadge = el('button', {
     type: 'button',
@@ -2112,29 +2121,33 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // `.dashboard` stays on the outer element (alongside the new
   // `.app-shell-2` layout class) since e2e/unit tests already assert on it
   // as the dashboard-is-rendered marker.
+  const onDeleteAccount = user.isAnonymous ? null : () => import('../components/deleteAccountModal.js').then(({ openDeleteAccountModal }) => openDeleteAccountModal());
+  // Issue #17 — only the dashboard's own sidebar/topbar instances offer this
+  // (progress.js/settings.js/onboarding.js don't pass it) since every
+  // spotlight target above only exists on this page.
+  const onStartTour = () => {
+    store.resetTour();
+    runFeatureTour();
+  };
   const sidebar = createSidebar({
     activeRoute: '/app',
     user,
     store,
     dailyTodoStore,
-    onDeleteAccount: user.isAnonymous ? null : () => import('../components/deleteAccountModal.js').then(({ openDeleteAccountModal }) => openDeleteAccountModal()),
-    // Issue #17 — only the dashboard's own sidebar instance offers this
-    // (progress.js/settings.js/onboarding.js's sidebars don't pass it) since
-    // every spotlight target above only exists on this page.
-    onStartTour: () => {
-      store.resetTour();
-      runFeatureTour();
-    }
+    onDeleteAccount,
+    onStartTour
   });
+  // Issue #488 — rebuilt clean: page title, search, one avatar button (the
+  // bell/theme/create-account/review-due/daily-todo/sync-pill controls that
+  // used to crowd this row are gone, see the comments on those elements
+  // above and guestBanner.js/sidebar.js for their new homes).
   const topbar = createTopbar({
     breadcrumb: `Roadmaps / ${currentTemplate.name}`,
     user,
     store,
-    syncPill,
-    themeToggleBtn,
-    dailyTodoNavBadge,
-    reviewDueBadge,
-    notificationBell: createChangelogBell()
+    dailyTodoStore,
+    onDeleteAccount,
+    onStartTour
   });
   const bottomNav = createBottomNav({ activeRoute: '/app' });
 
@@ -2144,6 +2157,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       topbar,
       el('div', { className: 'app-content' }, [
         verificationBanner,
+        guestBanner,
         backupReminderBanner,
         progressDigestBanner,
         offlineBanner,
@@ -2411,7 +2425,6 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
 
   return () => {
     activeTourCleanup?.();
-    themeToggleBtn._cleanup?.();
     prioritySelectContainer.firstElementChild?._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();

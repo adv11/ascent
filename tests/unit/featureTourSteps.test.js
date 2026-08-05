@@ -28,16 +28,15 @@ beforeEach(() => {
 // DOM each real component renders, not a hand-rolled stand-in with a
 // matching className (which would pass even if the real component's markup
 // drifted out of sync with the tour's own selectors). Assembles the same
-// pieces renderDashboard() itself mounts — sidebar, topbar (with a real
-// changelog bell and theme toggle), and the app-lifetime feedback widget —
-// plus minimal phase-card/check-item stand-ins for the two rows the
-// original issue #17 steps already cover.
+// pieces renderDashboard() itself mounts — sidebar (whose footer now also
+// carries the theme toggle, issue #488), topbar (whose avatar dropdown now
+// folds in the old changelog bell, same issue), and the app-lifetime
+// feedback widget — plus minimal phase-card/check-item stand-ins for the
+// two rows the original issue #17 steps already cover.
 describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
   async function mountFreshDashboardChrome() {
     const { createSidebar } = await import('../../src/ui/components/sidebar.js');
     const { createTopbar } = await import('../../src/ui/components/topbar.js');
-    const { createThemeToggle } = await import('../../src/ui/components/themeToggle.js');
-    const { createChangelogBell } = await import('../../src/ui/components/notificationBell.js');
     const { createFeedbackWidget } = await import('../../src/ui/components/feedbackWidget.js');
 
     const user = { isAnonymous: true, uid: 'guest-1' };
@@ -50,10 +49,7 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
     const topbar = createTopbar({
       breadcrumb: 'Dashboard',
       user,
-      syncPill: null,
-      themeToggleBtn: createThemeToggle(),
-      dailyTodoNavBadge: null,
-      notificationBell: createChangelogBell()
+      store: fakeStore()
     });
     const feedbackWidget = createFeedbackWidget({ user });
 
@@ -105,6 +101,6 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
 
     const bellStep = steps.find(s => s.title === 'See what\'s new');
     expect(bellStep.target()).not.toBeNull();
-    expect(bellStep.target().classList.contains('app-topbar-bell')).toBe(true);
+    expect(bellStep.target().classList.contains('app-topbar-avatar-btn')).toBe(true);
   });
 });

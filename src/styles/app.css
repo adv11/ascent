@@ -799,10 +799,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
 }
-/* Every real call site (topbar's search/notification/theme-toggle buttons)
-   already resets its own border/background for its unstyled-until-hover
-   look (.app-topbar-bell, .app-topbar-command-btn, .btn-ghost); this is a
-   defensive reset for any future child that doesn't. */
+/* Every real call site (topbar's search/avatar-menu buttons) already resets
+   its own border/background for its unstyled-until-hover look
+   (.app-topbar-command-btn, .app-topbar-avatar-btn); this is a defensive
+   reset for any future child that doesn't. */
 .icon-btn-group > * { border: none; background: transparent; }
 
 /* issue #297 — design-system.md §2 explicitly bans this class by name
@@ -1893,7 +1893,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   gap: var(--space-1);
 }
 .app-sidebar.collapsed .app-sidebar-identity { justify-content: center; padding: var(--space-1) 0; }
-.app-sidebar.collapsed .app-sidebar-signout { width: 32px; height: 32px; font-size: var(--text-base); }
+.app-sidebar.collapsed .app-sidebar-signout,
+.app-sidebar.collapsed .app-sidebar-footer .theme-toggle.btn-icon { width: 32px; height: 32px; font-size: var(--text-base); }
 
 /* issue #299 — design-system.md §8: "Avatars: square, ink fill, ground-colored
    initial." Was a circular, accent-filled, fixed-white-text avatar left over
@@ -2119,88 +2120,21 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* issue #463 — `.app-topbar-status` replaces the old `.app-topbar-actions`
-   wrapper, scoped to just the account/sync-status controls (review-due,
-   daily-todo, sync-state pill, "Create account") now that `.icon-btn-group`
-   is a direct `.app-topbar` sibling instead of nested alongside it — see
-   that rule's own comment further down for why the split exists. */
-.app-topbar-status { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-/* Real, reported bug (issue #309): the guest/sync pill (32px, padding-driven),
-   the "Create account" `.btn-sm` (34px), and `.icon-btn-group` (~44-48px,
-   padding+border around its 36px icon buttons) had three different heights
-   with no shared convention, reading as visibly out-of-sync in this one row.
-   Scoped to this row specifically (not a global `.sync-pill`/`.btn-sm`
-   change) since both classes are used elsewhere with their own, independently
-   fine sizing — 36px matches the icon buttons' own natural size, the
-   "anchor" control already appearing three times over in this same row. */
-.app-topbar-status .sync-pill,
-.app-topbar-status > .btn,
-.app-topbar .icon-btn-group {
-  height: 36px;
-  box-sizing: border-box;
-}
-/* Real, reported bug (issue #435): forcing `.icon-btn-group`'s own box to
-   36px (above) without shrinking its children left the group's 3px padding +
-   1px border with only 28px of usable content height, while its icon-only
-   children (`.app-topbar-command-btn`/`.app-topbar-bell`/`.theme-toggle`, all
-   independently sized to 36px) kept rendering at their full standalone size —
-   overflowing the padding box, so each icon's `:hover` fill painted directly
-   over the group's own rounded border on that side instead of staying inside
-   it. Shrinking the children to the group's real content-box size (not
-   growing the group back to 44px, which would re-break the #309 row-height
-   alignment with `.sync-pill`/`.btn-sm` next to it) is the fix — mirrored
-   under `pointer: coarse` below with the group grown to fit a real 46px WCAG
-   touch target instead, since that breakpoint already bumps sibling row
-   controls (`.btn-sm`, `.filter-chip`) past 36px too. */
+/* Issue #488 — `.app-topbar-status` (review-due/daily-todo badges, sync
+   pill, "Create account") is retired along with the `.icon-btn-group`
+   height-matching hack it needed (issue #309/#435/#450) — the topbar is now
+   just breadcrumb + `.icon-btn-group` (search + avatar), two same-size
+   36px icon-only controls with no third differently-sized row to stay in
+   sync with. */
+.icon-btn-group { height: 36px; box-sizing: border-box; }
 .icon-btn-group .app-topbar-command-btn,
-.icon-btn-group .app-topbar-bell,
-.icon-btn-group .theme-toggle.btn-icon {
+.icon-btn-group .app-topbar-avatar-btn {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
 }
-/* Real, reported bug (issue #450 follow-up): the #435 fix above still left
-   `.theme-toggle` visibly overlapping the pill's border in both themes,
-   unlike its two siblings. Root cause: unlike `.app-topbar-command-btn`/
-   `.app-topbar-bell` (bare buttons with no shared base class), `.theme-toggle`
-   is also `.btn` (`themeToggle.js`'s className is `'btn btn-ghost btn-icon
-   theme-toggle'`) — and the base `.btn` rule sets `min-height: 40px`. A
-   `min-height` floors the box's *used* height even when a more specific rule
-   sets a smaller explicit `height`, so this selector's own `height: 28px`
-   above was silently overridden back up to 40px, taller than the group's
-   36px padding box, reproducing the exact overflow #435 already fixed for
-   the other two buttons. `min-height`/`min-width: 0` here removes that
-   floor so the explicit 28px (46px under pointer:coarse, below) actually
-   wins — .app-topbar-command-btn/.app-topbar-bell never needed this since
-   neither carries `.btn` in the first place. */
-.icon-btn-group .theme-toggle.btn-icon {
-  min-width: 0;
-  min-height: 0;
-}
-.app-topbar-status .sync-pill { display: inline-flex; align-items: center; }
-/* Notification bell (issue #20) — same 36px hit target as .btn-icon, but a
-   bare unstyled-until-hover button (matches .app-topbar-hamburger's
-   treatment) since it sits among icon-only topbar actions, not a filled
-   .btn. The unread dot is absolutely positioned over the bell glyph's
-   top-right corner. */
-.app-topbar-bell {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: none;
-  color: var(--color-text);
-  cursor: pointer;
-  border-radius: var(--radius-full);
-}
-.app-topbar-bell:hover { background: var(--color-surface-raised); }
-.app-topbar-bell .notification-badge-dot { position: absolute; top: 6px; right: 6px; }
-/* Command palette trigger (issue #125) — same unstyled-until-hover 36px
-   treatment as .app-topbar-bell, since it sits among the same icon-only
-   topbar actions. */
+/* Command palette trigger (issue #125) — a bare, unstyled-until-hover 36px
+   button since it sits among icon-only topbar actions, not a filled .btn. */
 .app-topbar-command-btn {
   display: inline-flex;
   align-items: center;
@@ -2214,6 +2148,25 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
 }
 .app-topbar-command-btn:hover { background: var(--color-surface-raised); }
+/* Avatar/account-menu trigger (issue #488) — same unstyled-until-hover 36px
+   treatment as `.app-topbar-command-btn`, wrapping the shared `.avatar`
+   component. The unread-changelog dot (the old separate bell's own badge,
+   now folded into the avatar per #E3) is absolutely positioned over the
+   avatar's top-right corner. */
+.app-topbar-avatar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+.app-topbar-avatar-btn:hover { background: var(--color-surface-raised); }
+.app-topbar-avatar-btn .avatar-unread-dot { position: absolute; top: 2px; right: 2px; }
 
 /* `grid-column: 2` is required, not decorative — without an explicit
    placement, CSS Grid's auto-placement algorithm places the next in-flow
@@ -2268,16 +2221,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   .app-shell-main { grid-column: 1; }
   .app-shell-2 { grid-template-columns: minmax(0, 1fr); }
   .app-sidebar { display: none; }
-  /* issue #463's status-group wrap-order rework (row 1: breadcrumb + icon
-     group; row 2: `.app-topbar-status`) is unaffected by the hamburger's
-     removal — `.app-topbar-breadcrumb`'s own `order: 2` and the rest still
-     apply unconditionally below, this block only needed to drop the
-     hamburger's own `order: 1` rule. */
-  .app-topbar { align-items: flex-start; flex-wrap: wrap; }
-  .app-topbar-breadcrumb { order: 2; }
-  .icon-btn-group { order: 3; flex-shrink: 0; }
-  .app-topbar-status { order: 4; flex-basis: 100%; justify-content: flex-start; margin-top: var(--space-2); }
-  .app-topbar-status:empty { display: none; margin-top: 0; }
+  /* Issue #488 retired the #463 status-group wrap-order rework entirely —
+     with `.app-topbar-status` gone, `.app-topbar` is just breadcrumb +
+     `.icon-btn-group` and never needs to wrap onto a second row at any
+     width, so no `order`/`flex-wrap` override is needed here at all. */
   /* Room for the fixed bottom nav (below) so page content never renders
      underneath it. */
   .app-content { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4)); }
@@ -2362,6 +2309,25 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .verification-msg { flex: 1; min-width: 0; }
 .verification-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
+
+/* Issue #488 — replaces the old topbar-status "Local only" sync pill +
+   "Create account" button pair, same dismissible-banner shape as
+   .verification-banner above but living in .app-content, not topbar chrome. */
+.guest-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  margin-bottom: var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+}
+.guest-banner-msg { flex: 1; min-width: 0; color: var(--color-text-muted); }
+.guest-banner-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
 
 .backup-reminder-banner {
   display: flex;
@@ -6043,8 +6009,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      mouse/desktop row. */
   .app-topbar .icon-btn-group { height: 56px; }
   .icon-btn-group .app-topbar-command-btn,
-  .icon-btn-group .app-topbar-bell,
-  .icon-btn-group .theme-toggle.btn-icon {
+  .icon-btn-group .app-topbar-avatar-btn {
     width: var(--tap-min);
     height: var(--tap-min);
   }

@@ -1,9 +1,8 @@
 import { el } from '../dom.js';
 import { navigate } from '../router.js';
-import { createThemeToggle } from '../components/themeToggle.js';
-import { createChangelogBell } from '../components/notificationBell.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
+import { createGuestBanner } from '../components/guestBanner.js';
 import { createBottomNav } from '../components/bottomNav.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
 import { createHeatmap } from '../components/heatmap.js';
@@ -328,23 +327,22 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   // queued call starts.
   let chartQueue = Promise.resolve();
 
-  const themeToggleBtn = createThemeToggle();
+  const onDeleteAccount = user.isAnonymous ? null : () => openDeleteAccountModal();
   const sidebar = createSidebar({
     activeRoute: '/progress',
     user,
     store,
     dailyTodoStore,
-    onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
+    onDeleteAccount
   });
   const topbar = createTopbar({
     breadcrumb: 'Progress',
     user,
     store,
-    syncPill: null,
-    themeToggleBtn,
-    dailyTodoNavBadge: null,
-    notificationBell: createChangelogBell()
+    dailyTodoStore,
+    onDeleteAccount
   });
+  const guestBanner = createGuestBanner(user);
   const bottomNav = createBottomNav({ activeRoute: '/progress' });
 
   const statStripSlot = el('div', {});
@@ -384,6 +382,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   }, [createIcon('roadmaps', { size: 'xs' }), ' Compare roadmaps']);
 
   const content = el('div', { className: 'app-content progress-content', id: 'main-content', tabindex: '-1' }, [
+    guestBanner,
     el('header', { className: 'progress-header' }, [
       el('div', {}, [
         el('h1', { text: 'Progress' }),
@@ -516,7 +515,6 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   }
 
   return () => {
-    themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();
     bottomNav._cleanup?.();

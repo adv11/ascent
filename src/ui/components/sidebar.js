@@ -4,6 +4,7 @@ import { createBrandMark } from './brand.js';
 import { createAvatar } from './avatar.js';
 import { createDropdown } from './dropdown.js';
 import { createIcon } from './icons.js';
+import { createThemeToggle } from './themeToggle.js';
 import { attachTooltip } from './tooltip.js';
 import { confirmAndSignOut } from '../utils/signOut.js';
 import { KEYS } from '../../services/localStorageKeys.js';
@@ -38,7 +39,12 @@ function readCollapsed() {
 // identity, including an anonymous guest session — local-only progress is
 // exactly the data most at risk of being lost, so it isn't gated behind
 // `!user.isAnonymous` the way "Delete account" is.
-function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour }) {
+// Exported (issue #488) — topbar.js's own avatar dropdown reuses this
+// exact item list, adding a "What's New" entry via `onOpenChangelog`
+// (the bell folding into the avatar, see that file's own comment) since
+// the sidebar isn't rendered below 900px and the topbar avatar is the only
+// remaining account-menu entry point at that width.
+export function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour, onOpenChangelog, align = 'start' }) {
   const importInput = el('input', {
     type: 'file',
     accept: '.json,application/json',
@@ -53,6 +59,7 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
   const dropdownItems = [
     { text: 'Settings', onClick: () => navigate('/settings') }
   ];
+  if (onOpenChangelog) dropdownItems.push({ text: "What's New", onClick: onOpenChangelog });
   // Issue #17 — only offered where the tour's spotlight targets actually
   // exist (dashboard.js is the only caller that passes this), never on
   // Progress/Settings/onboarding's own sidebar instance, where every
@@ -79,7 +86,7 @@ function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDele
     dropdownItems.push({ text: 'Delete account', danger: true, onClick: onDeleteAccount });
   }
 
-  const identity = createDropdown(identityTrigger, dropdownItems, { align: 'start' });
+  const identity = createDropdown(identityTrigger, dropdownItems, { align });
   return { identity, importInput };
 }
 
@@ -135,9 +142,14 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
 
   const { identity, importInput } = buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour });
 
+  // Issue #488 — theme now moves here (and to Settings' own theme select)
+  // rather than living as a topbar icon button.
+  const themeToggleBtn = createThemeToggle();
+
   const footer = el('div', { className: 'app-sidebar-footer' }, [
     identity,
     importInput,
+    themeToggleBtn,
     el('button', {
       type: 'button',
       className: 'btn btn-ghost btn-icon app-sidebar-signout',
@@ -163,6 +175,9 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     localStorage.setItem(KEYS.SIDEBAR_COLLAPSED, next ? '1' : '0');
   });
 
-  node._cleanup = () => identity._cleanup?.();
+  node._cleanup = () => {
+    identity._cleanup?.();
+    themeToggleBtn._cleanup?.();
+  };
   return node;
 }

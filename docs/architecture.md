@@ -5418,3 +5418,34 @@ in the panel's footer states which filter(s) are active. Dead `.toolbar`/
 `.toolbar-block`/`.toolbar-right` CSS rules (confirmed unused anywhere else in
 the app) were removed alongside the new `.filter-toolbar`/`.filter-toggle-btn`/
 `.filter-btn-badge`/`.filter-panel-section`/`.filter-panel-summary` rules.
+
+### 2026-08-05 — PR #TBD — Topbar consolidated into title/search/avatar (issue #488, B3)
+
+`topbar.js` used to carry the review-due badge, daily-todo badge, sync pill,
+"Create account" button, search, a separate bell, and a separate theme toggle
+— the `.app-topbar-status` wrap-order workaround from issue #463 existed only
+to manage that crowding. With issue #484 (A3) already gone, `createTopbar()`
+is rebuilt down to `{ breadcrumb, user, store, dailyTodoStore, onDeleteAccount,
+onStartTour }`: breadcrumb + `.icon-btn-group` (search + one avatar button),
+nothing else. `sidebar.js`'s `buildAccountMenu()` is now exported (with new
+`onOpenChangelog`/`align` params) so the avatar's dropdown reuses the exact
+same Settings/tour/My reports/Share/backup/print/delete-account list the
+sidebar footer already builds, rather than a second implementation — this
+also means the topbar avatar is the only account-menu entry point left below
+the sidebar's 900px breakpoint, where the sidebar footer isn't rendered at
+all. The bell folds into the avatar: an `.avatar-unread-dot` (reusing
+`.notification-badge`/`.notification-badge-dot`'s styling) sits over the
+avatar, and "What's New" is a dropdown item opening `changelogDrawer.js` —
+`notificationBell.js` itself is unchanged and still independently tested,
+just no longer wired into any page. Theme moved to the sidebar footer (a
+`createThemeToggle()` button next to Sign out) and stays in Settings' own
+theme select. New `src/ui/components/guestBanner.js`'s `createGuestBanner(user)`
+replaces the old topbar "Local only"/"Create account" pair with one
+dismissible banner in `.app-content` — same shape as `verificationBanner.js`
+but `sessionStorage`-keyed (`KEYS.GUEST_BANNER_DISMISSED`) so it reappears
+once per browser session rather than being gone forever after one dismissal.
+`dashboard.js`'s review-due/daily-todo/sync-pill elements are still computed
+and updated but deliberately left unattached to any rendered DOM — issue #489
+(a single summary card with a linear progress bar) is expected to give them a
+new home. `.app-topbar-status` and the `≤1023px`/`≤899px` CSS wrap-order rules
+it needed are deleted outright. `CACHE_VERSION` bumped 99 → 100.
