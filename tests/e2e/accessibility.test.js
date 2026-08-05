@@ -311,7 +311,8 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('[data-action="edit"]').nth(0).click();
+    await page.locator('.check-item-overflow-btn').nth(0).click();
+    await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
     await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.item-panel' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -348,14 +349,14 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
   });
 
   // The "Add to Today's Todos" modal is reached from a roadmap checklist
-  // row's ⏱ button (dashboard.js's renderItemRow, data-action="add-todo"),
-  // so this scenario needs a started roadmap first, same setup as the item
-  // edit panel test above. Scoped to the modal's own DOM subtree via
-  // `include`, same "avoid axe still sampling the covered page behind the
-  // overlay" reasoning as every other modal test in this file — this also
-  // covers the duration/reminder picker control (`.todo-duration-select`,
-  // a createSelect() instance) inside the modal, since it's part of the
-  // included subtree.
+  // row's ⋮ overflow menu's "Add to today" action (dashboard.js's
+  // renderItemRow/buildRowOverflowMenu, issue #486), so this scenario needs
+  // a started roadmap first, same setup as the item edit panel test above.
+  // Scoped to the modal's own DOM subtree via `include`, same "avoid axe
+  // still sampling the covered page behind the overlay" reasoning as every
+  // other modal test in this file — this also covers the duration/reminder
+  // picker control (`.todo-duration-select`, a createSelect() instance)
+  // inside the modal, since it's part of the included subtree.
   test('the "Add to Today\'s Todos" modal has zero critical/serious axe violations', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
@@ -363,7 +364,8 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('[data-action="add-todo"]').nth(0).click();
+    await page.locator('.check-item-overflow-btn').nth(0).click();
+    await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Add to today' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
     await expect(modal).toBeVisible();
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Add to Today\'s Todos"]' });
@@ -590,7 +592,8 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('[data-action="add-todo"]').nth(0).click();
+    await page.locator('.check-item-overflow-btn').nth(0).click();
+    await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Add to today' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
     await expect(modal).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');

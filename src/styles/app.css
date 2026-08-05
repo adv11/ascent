@@ -3822,12 +3822,20 @@ html[data-scrolling] .dropdown-menu {
 .section-rows { display: block; }
 .row-spacer { display: block; height: 0; }
 
-/* Checklist items */
+/* Checklist items — issue #486 (B1): fixed two-line row (checkbox, title,
+   one grey meta line) at a 66px minimum height, replacing the old
+   up-to-nine-control/up-to-four-line row. Priority is a 3px coloured inset
+   left edge (box-shadow, not border-left — an inset shadow can't shift the
+   row's own box model/padding the way a real border-left would) instead of
+   a separate `.priority-tag` pill; every secondary control (Open, Add to
+   today, Mark reviewed, Add a link, Delete) lives in the `.check-item-overflow-btn`
+   ⋮ menu at the row's trailing edge instead. */
 .check-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  min-height: 66px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard);
@@ -3835,6 +3843,11 @@ html[data-scrolling] .dropdown-menu {
 .check-item:last-of-type { border-bottom: none; }
 .check-item:hover { background: var(--color-surface-raised); }
 .check-item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.check-item-p-P0 { box-shadow: inset 3px 0 0 var(--color-p0); }
+.check-item-p-P1 { box-shadow: inset 3px 0 0 var(--color-p1); }
+.check-item-p-P2 { box-shadow: inset 3px 0 0 var(--color-p2); }
+.check-item-p-P3 { box-shadow: inset 3px 0 0 var(--color-p3); }
 
 /* Issue #379 — `.check-item-focused` is the j/k keyboard-navigation focus
    ring: a purely visual state (dashboard.js tracks it via a plain id, not
@@ -4040,7 +4053,12 @@ html[data-scrolling] .dropdown-menu {
   .check-box.check-pop { animation: none; }
 }
 
-.check-body { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+/* issue #486 (B1) — a fixed two-line body: title, then one grey meta line
+   ("Must do · 2 links · 25 min tracked", dashboard.js's buildRowMetaText()).
+   `flex-direction: column` replaces the old wrapping single-line-of-chips
+   row — the meta line is always exactly one line, never a wrapped badge
+   cluster. */
+.check-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
 /* issue #6 Phase 7 — strike-through animates in via `::after` width 0% -> 100%
    instead of an instant `text-decoration: line-through`, per the animation
    inventory. `position: relative` + `display: inline-block` so the pseudo-element
@@ -4058,98 +4076,25 @@ html[data-scrolling] .dropdown-menu {
 }
 .check-item.done .check-title::after { width: 100%; }
 
-/* issue #136 Phase 3 — shares --chip-height with every boxed badge/pill in
-   the same row (.resource-count, .badge) so they align vertically as one
-   consistent row of "metadata chip" heights, even though .priority-tag
-   deliberately stays bare colored text (no background/padding/radius) —
-   adding a tinted background here would need its own WCAG contrast pass
-   against every --color-p0–--color-p3 pair in both themes, which is out of scope for a
-   pure box-model unification. */
-.priority-tag {
-  display: inline-flex;
-  align-items: center;
-  height: var(--chip-height);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 800;
-  opacity: 0.65;
-}
-.priority-tag.P0 { color: var(--color-p0-ink); opacity: 1; }
-.priority-tag.P1 { color: var(--color-p1-ink); opacity: 1; }
-.priority-tag.P2 { color: var(--color-p2-ink); opacity: 1; }
-.priority-tag.P3 { color: var(--color-p3-ink); opacity: 1; }
-
-/* issue #136 Phase 1 — recolored from --color-warning-bg/--color-brand-gold to a
-   neutral pill: a resource count is metadata, not a status, and doesn't need
-   its own hue — it was previously drawing from the exact same teal family as
-   "this is selected"/"this is the brand," with nothing to tell them apart. */
-.resource-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: var(--chip-height);
-  padding: 0 var(--chip-padding-x);
-  border-radius: var(--radius-full);
-  font: inherit;
-  border: 1px solid var(--color-border);
-  font-size: var(--text-base);
-  font-weight: 700;
-  color: var(--color-text-muted);
-  background: var(--color-surface-raised);
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
-}
-.resource-count:hover { transform: translateY(-1px); }
-.resource-count:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* The row's single grey meta line — priority label plus optional link-count/
+   time-tracked segments, joined with " · " in dashboard.js. Replaces the old
+   .priority-tag/.resource-count/.notes-indicator/.completed-via-todo-indicator
+   chip cluster entirely; those signals either fold into this line (priority,
+   link count, time tracked) or moved into the ⋮ overflow menu (notes,
+   completed-via-todo — reachable via "Open"). */
+.check-meta { font-size: var(--text-base); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Issue #100 follow-up — expanded, always-visible resource links shown on a
    checklist row when the "Resources" filter chip is active (dashboard.js's
-   renderInlineResources()), alongside the existing collapsed count badge.
-   `flex-basis: 100%` on the wrapper drops it onto its own line within
-   .check-body's existing `flex-wrap: wrap` row — no structural change to
-   .check-body needed, the same wrap behavior that already lets .priority-tag
-   /.resource-count reflow on narrow widths handles this for free. */
-.check-resources-inline { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; margin-top: 2px; }
+   renderInlineResources()). */
+.check-resources-inline { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .resource-inline-link { text-decoration: none; cursor: pointer; transition: transform 140ms ease, border-color 140ms ease; }
 .resource-inline-link:hover { transform: translateY(-1px); }
 .resource-inline-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-/* issue #206 §3.3 — ghost-style chip, matching .resource-count's treatment
-   (transparent bg, muted text, 1px border) instead of the old borderless
-   icon-only button, so both metadata badges in a row read as one family. */
-.notes-indicator {
-  display: inline-flex;
-  align-items: center;
-  height: var(--chip-height);
-  padding: 0 var(--chip-padding-x);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font: inherit;
-  background: transparent;
-  cursor: pointer;
-  transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
-}
-.notes-indicator:hover { transform: translateY(-1px); border-color: var(--color-border-strong); }
-.notes-indicator:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-
-/* Set when a topic was last marked done via a linked Today's Todo (issue
-   #56 follow-up) — cleared the moment the topic (or the linked todo) is
-   unchecked again, so this never shows a stale completion date. Not
-   interactive (no onClick) — the title/aria-label attribute alone carries
-   the date, same as a native tooltip. */
-.completed-via-todo-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  color: var(--color-warning);
-  cursor: default;
-}
-
 /* issue #381 — a topic blocked on an unmet prerequisite: dimmed row, disabled
    checkbox (see dashboard.js's toggleDone()/isBlocked() guard), and a chip
-   naming the prerequisite. Matches .notes-indicator's ghost-chip treatment
-   rather than inventing a new pill style. */
+   naming the prerequisite. */
 .check-item.locked { opacity: 0.55; }
 .check-item.locked .check-box { cursor: not-allowed; }
 .prerequisite-lock-chip {
@@ -4158,20 +4103,37 @@ html[data-scrolling] .dropdown-menu {
   gap: 4px;
   height: var(--chip-height);
   padding: 0 var(--chip-padding-x);
+  align-self: flex-start;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
   cursor: default;
 }
 
-.check-actions { opacity: 0; transition: opacity 140ms ease; }
-.check-item:hover .check-actions, .check-item:focus-within .check-actions { opacity: 1; }
-/* A touch/coarse-pointer device (or one with no hover at all) has no reliable
-   :hover — width was previously used as a stand-in for this and broke on
-   touchscreen laptops/Surfaces/iPads at desktop-sized viewports (issue #36). */
-@media (hover: none), (pointer: coarse) {
-  .check-actions { opacity: 1; }
+/* issue #486 (B1) — the single ⋮ overflow trigger replacing the old
+   always-hover-visible .check-actions button cluster (Edit, Add to today,
+   Mark reviewed). Same 24px/`.template-card-overflow-btn`-matching treatment
+   as onboarding.js's card overflow menu, so both "collapse secondary actions
+   behind ⋮" spots in the app read as one visual family. Always visible (not
+   hover-revealed) — a menu trigger, unlike the old inline buttons, has
+   nothing to gain from hiding at rest, and staying visible means a touch/
+   coarse-pointer device needs no separate always-on override the way
+   `.check-actions` used to. */
+.check-item-overflow-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
 }
+.check-item-overflow-btn:hover,
+.check-item-overflow-btn[aria-expanded='true'] { color: var(--color-text); border-color: var(--color-border); background: var(--color-surface-raised); }
+.check-item-overflow-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 .add-row {
   display: flex;
@@ -5837,29 +5799,6 @@ html[data-scrolling] .dropdown-menu {
   .filter-row::-webkit-scrollbar { display: none; }
   .filter-chip { flex-shrink: 0; }
 
-  /* Issue #444 — live-reported, screenshotted: on a phone width, a checklist
-     row's title/priority-tag/resource-badge (`.check-body`, `flex-wrap:
-     wrap`) could grow to 2-3 lines while `.check-box`/`.check-actions` (a
-     single-line-tall checkbox and Edit button) stayed vertically centered
-     against that *combined* row height (`.check-item`'s base `align-items:
-     center`) — the same "child centers against a taller wrapped sibling"
-     shape this file's breakpoint-scale comment already documents for
-     `.app-topbar`'s hamburger. `flex-start` keeps the checkbox level with
-     the title's first line regardless of how many lines the body wraps to.
-     `.check-actions` (Edit, and on `(hover: none)`/`(pointer: coarse)`
-     always visible, not hover-revealed — see the touch-target rule above)
-     is pushed onto its own full-width row below the title/badges instead of
-     competing with them for the same horizontal space, which is what was
-     forcing the title down to a cramped, wrapped 2-3-word measure. */
-  .check-item { align-items: flex-start; flex-wrap: wrap; }
-  .check-actions {
-    display: flex;
-    align-items: center;
-    flex-basis: 100%;
-    justify-content: flex-end;
-    margin-left: 32px;
-    margin-top: 4px;
-  }
 }
 
 /* In-app feedback widget (issue #9) — floating trigger + modal + form

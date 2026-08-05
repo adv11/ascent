@@ -60,7 +60,8 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     await expect(reviewChip).toHaveClass(/active/);
 
     const dueRow = page.locator('.check-item').first();
-    const markReviewedBtn = dueRow.locator('[data-action="mark-reviewed"]');
+    await dueRow.locator('.check-item-overflow-btn').click();
+    const markReviewedBtn = page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Mark reviewed' });
     await expect(markReviewedBtn).toBeVisible();
     await markReviewedBtn.click();
 

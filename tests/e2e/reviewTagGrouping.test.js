@@ -39,7 +39,8 @@ test.describe('review-due tag grouping (issue #182)', () => {
     await secondRow.locator('.check-box').click();
 
     for (const row of [firstRow, secondRow]) {
-      await row.locator('[data-action="edit"]').click();
+      await row.locator('.check-item-overflow-btn').click();
+      await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
       await page.fill('.item-panel input[placeholder*="two-pointer"]', 'two-pointer');
       await page.click('.item-panel >> text=Save changes');
       await expect(page.locator('.item-panel')).toBeHidden();

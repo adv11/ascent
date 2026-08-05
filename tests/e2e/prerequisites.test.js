@@ -5,7 +5,8 @@ import { test, expect } from './fixtures.js';
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 async function openItemPanelForRow(row) {
-  await row.locator('[data-action="edit"]').click();
+  await row.locator('.check-item-overflow-btn').click();
+  await row.page().locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
 }
 
 test.describe('optional topic prerequisites (issue #381)', () => {

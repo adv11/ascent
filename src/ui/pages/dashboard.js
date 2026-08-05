@@ -11,6 +11,7 @@ import { maybeShowGuestDataRiskNudge } from '../components/guestDataRiskNudge.js
 import { confirmDialog } from '../components/confirmDialog.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { createSidebar } from '../components/sidebar.js';
+import { createDropdown } from '../components/dropdown.js';
 import { createTopbar } from '../components/topbar.js';
 import { createBottomNav } from '../components/bottomNav.js';
 import { getTemplate } from '../../data/templates/index.js';
@@ -48,15 +49,6 @@ import { createSelect } from '../components/select.js';
 // print-capture timing (see this file's `handleBeforePrint` comment and
 // `.claude/rules/ui-styling.md`'s already-documented print-timing bugs).
 
-// Issue #12B Phase 3 — resource-count badge type breakdown. Ordered so the
-// "most valuable" type (a video worth watching over a plain article, etc.)
-// wins the inline icon when a topic has resources of more than one type.
-const RESOURCE_TYPE_PRIORITY = ['youtube', 'github', 'notion', 'google-doc', 'google-drive', 'medium', 'stackoverflow', 'article'];
-const RESOURCE_TYPE_NOUN = {
-  youtube: 'video', github: 'repo', notion: 'page', 'google-doc': 'doc',
-  'google-drive': 'file', medium: 'article', stackoverflow: 'answer', article: 'link'
-};
-
 // Issue #100 follow-up — real feedback: with AI-generated roadmaps now
 // commonly carrying resource links, there was no way to see them "in one
 // go" without opening each topic's edit panel individually. When the
@@ -83,41 +75,6 @@ function renderInlineResources(item) {
       r.label
     ]);
   }));
-}
-
-function buildResourceCountBadge(item, onOpen) {
-  const { primaryIcon, breakdown } = summarizeResourceTypes(item.resources);
-  const badge = el('button', {
-    type: 'button',
-    className: 'resource-count',
-    'data-action': 'resources',
-    'aria-label': `View links for ${item.title}`,
-    onClick: e => { e.stopPropagation(); onOpen(); }
-  }, [
-    el('span', { className: 'link-badge-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(primaryIcon, { size: 'xs' })]),
-    el('span', { text: `${item.resources.length} link${item.resources.length > 1 ? 's' : ''}` })
-  ]);
-  attachTooltip(badge, breakdown);
-  return badge;
-}
-
-// `breakdown` feeds attachTooltip(), which only ever renders plain text
-// (tooltip.js's `text:` prop) — never a DOM node — so it deliberately stays
-// glyph-free (issue #136 Phase 2: LINK_TYPE_META.icon is now a
-// decorativeIcon.js name, not an emoji glyph, and can't be inlined into a
-// text string the way the old emoji could).
-function summarizeResourceTypes(resources) {
-  const counts = {};
-  resources.forEach(r => {
-    const type = detectLinkType(r.url);
-    counts[type] = (counts[type] || 0) + 1;
-  });
-  const orderedTypes = RESOURCE_TYPE_PRIORITY.filter(type => counts[type]);
-  const primaryIcon = LINK_TYPE_META[orderedTypes[0]].icon;
-  const breakdown = orderedTypes
-    .map(type => `${counts[type]} ${RESOURCE_TYPE_NOUN[type]}${counts[type] > 1 ? 's' : ''}`)
-    .join(' · ');
-  return { primaryIcon, breakdown };
 }
 
 // `templatePhases` is the current user's chosen template's phase/section skeleton
@@ -303,7 +260,7 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
 // Issue #17 — the feature tour's step list. Every target is a live
 // querySelector call against the real, current DOM (re-mapped from the
 // issue's original, now-stale spec — see the issue's own re-audit comment):
-// `.phase-card`/`.check-item`/`.resource-count` are unchanged, but "Switch
+// `.phase-card`/`.check-item` are unchanged, but "Switch
 // template" moved to the sidebar's "My Roadmaps" nav item, the old
 // `.progress-card` header widget became a full `/progress` page reached via
 // the sidebar's "Progress" nav item, and the theme toggle now lives in the
@@ -589,12 +546,13 @@ export function animatePhaseBody(phaseCardEl, opening) {
 // click it. Measured fix result (same repro script, same steps): worst-frame
 // blank-content fraction dropped to 0% under both the jump-scroll and the
 // realistic mouse-wheel scroll tests — see the PR for the exact numbers.
-const ROW_HEIGHT_ESTIMATE = 67; // px — measured via getBoundingClientRect() on every
-                                 // .check-item in the fully-expanded Java Backend
-                                 // template (single-line rows, no wrapped inline
-                                 // resources); see this block's own comment above. Used
-                                 // only as the cold-start fallback before any row in a
-                                 // given section has actually been measured — see
+const ROW_HEIGHT_ESTIMATE = 66; // px — issue #486 (B1): the two-line row (checkbox,
+                                 // title, one grey meta line) has a fixed 66px
+                                 // `min-height` in app.css, replacing the old up-to-
+                                 // four-line row this constant used to be measured
+                                 // against (was 67px). Used only as the cold-start
+                                 // fallback before any row in a given section has
+                                 // actually been measured — see
                                  // `estimateRowHeight()` below for why a single global
                                  // constant is no longer used on its own.
 // issue #465 follow-up — raised 2.5 -> 4.5, live-measured, not a guess. A real fast-scroll
@@ -1345,11 +1303,86 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     showToast(`Added "${result.title}" to Today's Todos.`, 'success');
   }
 
+  function formatTrackedMinutes(seconds) {
+    const mins = Math.round(seconds / 60);
+    if (mins < 60) return `${mins} min tracked`;
+    const hrs = Math.floor(mins / 60);
+    const rem = mins % 60;
+    return rem ? `${hrs} hr ${rem} min tracked` : `${hrs} hr tracked`;
+  }
+
+  // "Must do · 2 links · 25 min tracked" — omits any segment that has
+  // nothing to say (no links, no time tracked yet).
+  function buildRowMetaText(item) {
+    const parts = [priorityLabel(item.priority)];
+    if (item.resources?.length) parts.push(`${item.resources.length} link${item.resources.length === 1 ? '' : 's'}`);
+    if (item.timeSpentSeconds > 0) parts.push(formatTrackedMinutes(item.timeSpentSeconds));
+    return parts.join(' · ');
+  }
+
+  function editItemPanelProps(item) {
+    return {
+      item,
+      allItems: store.getSnapshot().items,
+      onSave: patch => store.updateItem(item.id, patch),
+      onDelete: () => store.removeItem(item.id)
+    };
+  }
+
+  async function handleDeleteItem(item) {
+    if (!await confirmDialog({
+      title: `Delete "${item.title}"?`,
+      message: 'This removes the topic and its resources from your roadmap. This cannot be undone.',
+      confirmText: 'Delete',
+      danger: true
+    })) return;
+    store.removeItem(item.id);
+    showToast(`Deleted "${item.title}".`, 'success');
+  }
+
+  // Issue #486 (B1) — every per-row secondary control (Open/Edit, Add to
+  // today, Mark reviewed, Add a link, Delete) collapses into this single ⋮
+  // overflow menu, replacing the row's old always-hover-visible button
+  // cluster. "Mark reviewed" only appears while the topic is actually
+  // review-due, matching the old button's own gating.
+  function buildRowOverflowMenu(item) {
+    const trigger = el('button', {
+      type: 'button',
+      className: 'check-item-overflow-btn',
+      'data-action': 'overflow',
+      'aria-label': `More actions for ${item.title}`,
+      title: 'More actions',
+      onClick: e => e.stopPropagation()
+    }, [createIcon('overflow', { size: 'xs' })]);
+    const actions = [
+      { text: 'Open', onClick: () => openItemPanel(editItemPanelProps(item)) },
+      dailyTodoStore ? { text: 'Add to today', onClick: () => handleAddToDailyTodo(item) } : null,
+      isReviewDue(item) ? {
+        text: 'Mark reviewed',
+        onClick: () => {
+          store.updateItem(item.id, { lastReviewedAt: Date.now() });
+          showToast(`Marked "${item.title}" as reviewed.`, 'success');
+        }
+      } : null,
+      { text: 'Add a link', onClick: () => openItemPanel({ ...editItemPanelProps(item), focusField: 'resources' }) },
+      { text: 'Delete', danger: true, onClick: () => handleDeleteItem(item) }
+    ].filter(Boolean);
+    const dropdown = createDropdown(trigger, actions, { align: 'end' });
+    dropdown.classList.add('check-item-overflow');
+    return dropdown;
+  }
+
   // Issue #6 Phase 4.2 — `sectionIdx` (this item's position within its own
   // section) feeds the stagger delay for newly-added rows only; existing
   // rows re-rendered on a structural change (e.g. toggling a different
   // phase open) never carry `entering` since their id is already in
   // knownItemIds from a prior render.
+  //
+  // Issue #486 (B1) — rebuilt as a fixed two-line row (checkbox, title, one
+  // grey meta line) plus the single ⋮ overflow menu above. Priority is now a
+  // 3px `check-item-p-{priority}` left edge (CSS), not a pill; notes glyph,
+  // "completed via todo" glyph, timer button, "Mark reviewed" button, and
+  // "Edit" all moved into that menu.
   function renderItemRow(item, sectionIdx = 0) {
     const isNew = !knownItemIds.has(item.id);
     // No inline `style` attribute — index.html's CSP has no 'unsafe-inline'
@@ -1363,17 +1396,16 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     // Issue #6 Phase 9 — role="checkbox" moved off the whole row and onto
     // just .check-box below. axe-core's no-focusable-content rule (WCAG
     // 4.1.2) correctly flags a role="checkbox" element that contains other
-    // focusable descendants — the Edit button, resource-count badge, and
-    // add-todo button inside this row are all real, independently-focusable
-    // controls, which an ARIA checkbox (a leaf widget in the accessibility
-    // tree) isn't allowed to contain. The row itself keeps its onClick
-    // (click-anywhere-to-toggle, guarded by the data-action convention
-    // below) purely as a mouse/touch convenience — it carries no ARIA role
-    // of its own now, so it isn't part of the accessibility tree as an
-    // interactive control; keyboard toggling now happens via .check-box's
-    // own role/tabindex/keydown handling.
+    // focusable descendants — the ⋮ overflow trigger inside this row is a
+    // real, independently-focusable control, which an ARIA checkbox (a leaf
+    // widget in the accessibility tree) isn't allowed to contain. The row
+    // itself keeps its onClick (click-anywhere-to-toggle, guarded by the
+    // data-action convention below) purely as a mouse/touch convenience — it
+    // carries no ARIA role of its own now, so it isn't part of the
+    // accessibility tree as an interactive control; keyboard toggling now
+    // happens via .check-box's own role/tabindex/keydown handling.
     return el('div', {
-      className: `check-item ${item.done ? 'done' : ''} ${locked ? 'locked' : ''} ${enteringClass}`,
+      className: `check-item check-item-p-${item.priority} ${item.done ? 'done' : ''} ${locked ? 'locked' : ''} ${enteringClass}`,
       dataset: { id: item.id },
       onClick: e => {
         if (e.target.closest('[data-action]')) return;
@@ -1400,79 +1432,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       }, [el('span', { className: 'check-mark', 'aria-hidden': 'true' }, [createIcon('check', { size: 'xs' })])]),
       el('div', { className: 'check-body' }, [
         el('span', { className: 'check-title', text: item.title }),
-        el('span', { className: `priority-tag ${item.priority}`, text: item.priority }),
+        el('span', { className: 'check-meta', text: buildRowMetaText(item) }),
         locked ? buildPrerequisiteLockChip(prerequisite) : null,
-        item.resources?.length ? buildResourceCountBadge(item, () => openItemPanel({
-          item,
-          allItems: store.getSnapshot().items,
-          onSave: patch => store.updateItem(item.id, patch),
-          onDelete: () => store.removeItem(item.id)
-        })) : null,
-        item.notes ? el('button', {
-          type: 'button',
-          className: 'notes-indicator',
-          'data-action': 'notes',
-          'aria-label': 'Has notes',
-          title: 'Has notes',
-          onClick: e => {
-            e.stopPropagation();
-            openItemPanel({
-              item,
-              allItems: store.getSnapshot().items,
-              focusField: 'notes',
-              onSave: patch => store.updateItem(item.id, patch),
-              onDelete: () => store.removeItem(item.id)
-            });
-          }
-        }, [createIcon('note', { size: 'xs' })]) : null,
-        item.completedViaTodoAt ? el('span', {
-          className: 'completed-via-todo-indicator',
-          'data-action': 'completed-via-todo',
-          title: `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`,
-          'aria-label': `Completed via Today's Todo on ${new Date(item.completedViaTodoAt).toLocaleDateString()}`
-        }, [createIcon('timer', { size: 'xs' }), createIcon('check', { size: 'xs' })]) : null,
         activeFilter === 'RESOURCES' ? renderInlineResources(item) : null
       ].filter(Boolean)),
-      el('div', { className: 'check-actions' }, [
-        isReviewDue(item) ? el('button', {
-          type: 'button',
-          className: 'btn btn-ghost btn-sm',
-          'data-action': 'mark-reviewed',
-          'aria-label': `Mark "${item.title}" reviewed`,
-          onClick: e => {
-            e.stopPropagation();
-            store.updateItem(item.id, { lastReviewedAt: Date.now() });
-            showToast(`Marked "${item.title}" as reviewed.`, 'success');
-          }
-        }, [createIcon('bell', { size: 'xs' }), 'Mark reviewed']) : null,
-        dailyTodoStore ? el('button', {
-          type: 'button',
-          className: 'btn btn-ghost btn-sm',
-          'data-action': 'add-todo',
-          'aria-label': `Add "${item.title}" to Today's Todos`,
-          title: "Add to Today's Todos",
-          onClick: e => {
-            e.stopPropagation();
-            handleAddToDailyTodo(item);
-          }
-        }, [createIcon('timer', { size: 'xs' })]) : null,
-        el('button', {
-          type: 'button',
-          className: 'btn btn-ghost btn-sm',
-          'data-action': 'edit',
-          'aria-label': `Edit ${item.title}`,
-          text: 'Edit',
-          onClick: e => {
-            e.stopPropagation();
-            openItemPanel({
-              item,
-              allItems: store.getSnapshot().items,
-              onSave: patch => store.updateItem(item.id, patch),
-              onDelete: () => store.removeItem(item.id)
-            });
-          }
-        })
-      ].filter(Boolean))
+      buildRowOverflowMenu(item)
     ]);
   }
 
@@ -1895,7 +1859,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       checkBox?.setAttribute('aria-disabled', String(locked));
       const existingChip = row.querySelector('.prerequisite-lock-chip');
       if (locked && !existingChip) {
-        row.querySelector('.priority-tag')?.after(buildPrerequisiteLockChip(prerequisite));
+        row.querySelector('.check-meta')?.after(buildPrerequisiteLockChip(prerequisite));
       } else if (locked && existingChip) {
         existingChip.title = `Blocked by "${prerequisite.title}" — complete it first to unlock this topic.`;
         existingChip.replaceChildren(createIcon('lock', { size: 'xs' }), ` Blocked by: ${prerequisite.title}`);

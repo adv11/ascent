@@ -170,7 +170,7 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
     const row = page.locator('.check-item', { hasText: 'Learn Docker' });
     await expect(row).toBeVisible();
-    await expect(row.locator('[data-action="resources"]')).toContainText('2');
+    await expect(row.locator('.check-meta')).toContainText('2 links');
   });
 
   test('the "Resources" filter chip shows every resource link inline, in one go (issue #100 follow-up)', async ({ page }) => {
