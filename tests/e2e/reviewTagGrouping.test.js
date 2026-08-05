@@ -68,6 +68,9 @@ test.describe('review-due tag grouping (issue #182)', () => {
     await page.reload();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
+    // Issue #487 — the priority/chip/tag filter row moved behind a "Filter"
+    // toolbar button, opening a panel that holds the exact same controls.
+    await page.locator('.filter-toggle-btn').click();
     await page.locator('.filter-chip[data-p="REVIEW"]').click();
     await expect(page.locator('.review-tag-group-banner')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('.review-tag-group-line')).toContainText('2 items tagged "two-pointer"');

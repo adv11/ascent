@@ -843,6 +843,32 @@ section was unbuilt:
 No PR 3 remains for §5 — the section is complete. If a future audit finds another gap,
 treat it as a normal follow-up fix, not evidence the whole system needs rebuilding.
 
+## A "Filter" panel reuses `itemPanel.js`'s bottom-sheet pattern instead of a new overlay component (`dashboard.js`, issue #487)
+
+When a control needs to open a panel that's a side-slide on desktop/tablet and a
+full-width bottom sheet on a phone (issue #487's Filter button, and any future
+"open a panel of grouped controls" need), reuse `itemPanel.js`'s own
+`.panel-overlay`/`.item-panel`/`.panel-header`/`.panel-kicker`/`.panel-title`/
+`.panel-body`/`.panel-footer` classes rather than building a second overlay
+component — the `.item-panel` `≤480px` media-query override (documented above,
+under the "sidebar-icon rail" bottom-sheet rewrite) already turns the same
+side-slide panel into a bottom sheet with zero extra CSS, and
+`handleGlobalKeydown`'s existing `document.querySelector('.item-panel')` check
+(`dashboard.js`) already suppresses the `j`/`k` checklist-row shortcuts while any
+such panel is open, with no new wiring. Follow `itemPanel.js`'s own open/close
+mechanics exactly: append the overlay to `document.body` on open, add a `.show`
+class on the next frame (so the CSS transform transition actually plays), call
+`attachFocusTrap(panelCardEl, { onEscape: close })` (`modal.js`) and focus the
+first focusable element inside it, then on close remove `.show` and defer the
+actual `overlay.remove()` by the transition's duration (240ms) so the slide-out
+animation isn't cut short. If the panel's content is made of elements the page
+already owns and updates elsewhere (e.g. the dashboard's existing
+`prioritySelectContainer`/`filterContainer`/`tagFilterContainer`), just relocate
+those same element references into the panel's DOM tree — whatever already
+mutates them by reference (a store-driven `render()`, in this case) keeps
+working with no change, since none of that code depends on where in the tree
+the element currently sits.
+
 ## First-time feature tour — spotlight/portal/focus-trap convention (`featureTour.js`, issue #17)
 
 **Reuses two existing conventions instead of inventing new ones — `attachFocusTrap()`

@@ -181,10 +181,15 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
 
+    // Issue #487 — the Resources/Review chips moved behind a "Filter" toolbar
+    // button, opening a panel that holds the same chips; close it again
+    // afterward so the (now-filtered) checklist rows underneath are reachable.
+    await page.locator('.filter-toggle-btn').click();
     const resourcesChip = page.locator('.filter-chip', { hasText: 'Links' });
     await expect(resourcesChip).toBeVisible();
     await resourcesChip.click();
     await expect(resourcesChip).toHaveClass(/active/);
+    await page.keyboard.press('Escape');
 
     const row = page.locator('.check-item', { hasText: 'Learn Docker' });
     const inline = row.locator('.check-resources-inline .resource-inline-link');

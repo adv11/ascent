@@ -5395,3 +5395,26 @@ re-measured 67px → 66px to match the new fixed row height. `.resource-count`/
 `.notes-indicator`/`.completed-via-todo-indicator`/`.check-actions` are removed
 from `app.css`; `.check-item`/`.check-box`/`.check-meta` (new) are the row's
 E2E-stable selectors going forward.
+
+### 2026-08-05 — PR #TBD — Filter toolbar collapsed into one row + a panel (issue #487, B2)
+
+`dashboard.js`'s `.roadmap-filters-card` used to stack two `.toolbar` rows (a
+priority `createSelect()` + the Resources/Review-due chips, then a separate tag
+row) in front of the checklist. It's now a single `.filter-toolbar` row: the
+search field (flex), a "Filter" button, and "Expand all." "Filter" opens a
+panel built on `itemPanel.js`'s existing `.panel-overlay`/`.item-panel`/
+`.panel-*` classes rather than a new overlay component — that gets the
+side-slide-on-desktop/bottom-sheet-on-≤480px behavior that component's own
+media query already implements, plus `handleGlobalKeydown`'s existing
+`.item-panel` check that suppresses the `j`/`k` row-navigation shortcuts while
+it's open, for free. The panel holds the exact same filter elements
+(`prioritySelectContainer`, `filterContainer`, `tagFilterContainer`,
+`clearFiltersBtn`) `render()` already owned and mutates in place — moving them
+into the panel's DOM subtree needed no change to how they're built or updated,
+since `render()` targets them by object reference, not by location in the
+tree. A new `filterBtnBadge` shows the count of active filters (priority ≠
+`ALL`, plus a tag) without opening the panel; a new `filterPanelSummary` line
+in the panel's footer states which filter(s) are active. Dead `.toolbar`/
+`.toolbar-block`/`.toolbar-right` CSS rules (confirmed unused anywhere else in
+the app) were removed alongside the new `.filter-toolbar`/`.filter-toggle-btn`/
+`.filter-btn-badge`/`.filter-panel-section`/`.filter-panel-summary` rules.

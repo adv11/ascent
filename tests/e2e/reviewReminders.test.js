@@ -58,6 +58,9 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     await reviewBadge.click();
     const reviewChip = page.locator('.filter-chip[data-p="REVIEW"]');
     await expect(reviewChip).toHaveClass(/active/);
+    // Issue #487 — the chip now lives inside the filter panel; close it again
+    // so the (now REVIEW-filtered) checklist rows underneath are reachable.
+    await page.keyboard.press('Escape');
 
     const dueRow = page.locator('.check-item').first();
     await openRowOverflowMenu(dueRow, 'Mark reviewed');
@@ -70,6 +73,7 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     // re-render — switch back to "All" (issue #477 — the priority chips
     // collapsed into a createSelect() dropdown) to find it and confirm it's
     // still marked done there.
+    await page.locator('.filter-toggle-btn').click();
     await page.locator('.priority-filter-select .custom-select-trigger').click();
     await page.locator('.custom-select-option', { hasText: /^All/ }).click();
     await expect(page.locator('.check-item').first()).toHaveClass(/done/);
