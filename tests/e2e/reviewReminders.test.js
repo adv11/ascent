@@ -34,7 +34,13 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
-    await expect(page.locator('.review-due-nav-badge')).toBeHidden();
+    // Issue #488 — the header "N due for review" nav badge was retired along
+    // with the rest of the old topbar-status controls (deferred to #489's
+    // summary-card redesign); the "Review due" filter chip inside the filter
+    // panel is the only remaining reachable signal for this feature now.
+    await page.locator('.filter-toggle-btn').click();
+    await expect(page.locator('.filter-chip[data-p="REVIEW"] .chip-count')).toHaveText('0/0');
+    await page.keyboard.press('Escape');
 
     const firstRow = page.locator('.check-item').nth(0);
     await firstRow.locator('.check-box').click();
@@ -51,22 +57,23 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     await page.reload();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
-    const reviewBadge = page.locator('.review-due-nav-badge');
-    await expect(reviewBadge).toBeVisible({ timeout: 10_000 });
-    await expect(reviewBadge).toContainText('1 due for review');
+    await page.locator('.filter-toggle-btn').click();
+    await expect(page.locator('.filter-chip[data-p="REVIEW"] .chip-count')).toHaveText('1/1', { timeout: 10_000 });
 
-    await reviewBadge.click();
     const reviewChip = page.locator('.filter-chip[data-p="REVIEW"]');
+    await reviewChip.click();
     await expect(reviewChip).toHaveClass(/active/);
-    // Issue #487 — the chip now lives inside the filter panel; close it again
-    // so the (now REVIEW-filtered) checklist rows underneath are reachable.
+    // Issue #487 — the chip lives inside the filter panel; close it again so
+    // the (now REVIEW-filtered) checklist rows underneath are reachable.
     await page.keyboard.press('Escape');
 
     const dueRow = page.locator('.check-item').first();
     await openRowOverflowMenu(dueRow, 'Mark reviewed');
 
     await expect(page.locator('.toast')).toContainText('Marked', { timeout: 5_000 });
-    await expect(reviewBadge).toBeHidden({ timeout: 5_000 });
+    await page.locator('.filter-toggle-btn').click();
+    await expect(page.locator('.filter-chip[data-p="REVIEW"] .chip-count')).toHaveText('0/0', { timeout: 5_000 });
+    await page.keyboard.press('Escape');
 
     // Marking the item reviewed drops it out of the REVIEW filter's own
     // criteria (isReviewDue()), so it disappears from this filtered list on

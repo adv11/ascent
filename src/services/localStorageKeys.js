@@ -116,7 +116,12 @@ export const KEYS = {
   // half-finished creation draft isn't account data, same reasoning as
   // FEEDBACK_DRAFT. Deliberately excludes the pasted AI-response textarea —
   // see importRoadmapModal.js's own comment for why.
-  CREATE_ROADMAP_DRAFT: 'ascent-create-roadmap-draft'
+  CREATE_ROADMAP_DRAFT: 'ascent-create-roadmap-draft',
+  // Guest banner (issue #488) — one-shot dismiss for the current tab/session
+  // only (sessionStorage, not localStorage — see guestBanner.js's own
+  // comment for why this reappears on a fresh session rather than being
+  // dismissed forever on this device).
+  GUEST_BANNER_DISMISSED: 'ascent-guest-banner-dismissed'
 };
 
 export function verifyDismissedKey(uid) {

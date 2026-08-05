@@ -456,7 +456,11 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('[aria-label*="Account menu"]').click();
+    // Issue #488 — the topbar's own avatar button now carries an identical
+    // "Account menu — ..." aria-label to the sidebar's identity trigger (both
+    // open the same buildAccountMenu() item list), so this must be scoped to
+    // one of them or the locator matches two elements.
+    await page.locator('.app-sidebar [aria-label*="Account menu"]').click();
     await page.locator('.dropdown-item', { hasText: 'My reports' }).click();
     const modal = page.locator('.modal-overlay[aria-label="My reports"]');
     await expect(modal).toBeVisible();

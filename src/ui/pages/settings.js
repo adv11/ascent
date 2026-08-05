@@ -2,10 +2,9 @@ import { el } from '../dom.js';
 import { navigate } from '../router.js';
 import { authApi, authErrorMessage } from '../../services/firebase.js';
 import { showToast } from '../components/toast.js';
-import { createThemeToggle } from '../components/themeToggle.js';
-import { createChangelogBell } from '../components/notificationBell.js';
 import { createSidebar } from '../components/sidebar.js';
 import { createTopbar } from '../components/topbar.js';
+import { createGuestBanner } from '../components/guestBanner.js';
 import { createBottomNav } from '../components/bottomNav.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
 import { exportBackupJson } from '../utils/backupActions.js';
@@ -415,23 +414,22 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
     return;
   }
 
-  const themeToggleBtn = createThemeToggle();
+  const onDeleteAccount = user.isAnonymous ? null : () => openDeleteAccountModal();
   const sidebar = createSidebar({
     activeRoute: '/settings',
     user,
     store,
     dailyTodoStore,
-    onDeleteAccount: user.isAnonymous ? null : () => openDeleteAccountModal()
+    onDeleteAccount
   });
   const topbar = createTopbar({
     breadcrumb: 'Settings',
     user,
     store,
-    syncPill: null,
-    themeToggleBtn,
-    dailyTodoNavBadge: null,
-    notificationBell: createChangelogBell()
+    dailyTodoStore,
+    onDeleteAccount
   });
+  const guestBanner = createGuestBanner(user);
   const bottomNav = createBottomNav({ activeRoute: '/settings' });
 
   let cleanupSections = [];
@@ -451,6 +449,7 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
     el('div', { className: 'app-shell-main' }, [
       topbar,
       el('div', { className: 'app-content settings-content' }, [
+        guestBanner,
         el('header', { className: 'settings-header' }, [
           el('h1', { text: 'Settings' })
         ]),
@@ -463,7 +462,6 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
   app.replaceChildren(shell);
 
   return () => {
-    themeToggleBtn._cleanup?.();
     sidebar._cleanup?.();
     topbar._cleanup?.();
     bottomNav._cleanup?.();

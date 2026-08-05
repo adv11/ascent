@@ -4,6 +4,12 @@ import { navigate, getRoute } from '../router.js';
 import { openCommandPalette, bindCommandPaletteShortcut } from './commandPalette.js';
 import { searchTopicsAcrossRoadmaps } from '../../core/roadmap/globalTopicSearch.js';
 import { KEYS } from '../../services/localStorageKeys.js';
+import { createAvatar } from './avatar.js';
+import { buildAccountMenu } from './sidebar.js';
+import { openChangelogDrawer } from './changelogDrawer.js';
+import { CHANGELOG, APP_VERSION } from '../../data/changelog.js';
+import { getLastSeenChangelogVersion, setLastSeenChangelogVersion } from '../../services/changelogSeen.js';
+import { isNewerVersion } from '../../core/changelog/version.js';
 
 // Issue #125 — the app-wide navigation items the command palette searches.
 function navigationItems() {
@@ -53,11 +59,17 @@ function buildTopicResultItem(match, store) {
   };
 }
 
-// Issue #6 Phase 2.2. Kept deliberately thin — identity/sign-out/delete-account
-// already live in the sidebar footer (createSidebar), so this doesn't duplicate
-// an avatar or dropdown. Issue #484 removed the hamburger/mobile-drawer toggle —
-// bottomNav.js is the app's mobile/tablet navigation now.
-export function createTopbar({ breadcrumb, user, store, syncPill, themeToggleBtn, dailyTodoNavBadge, reviewDueBadge, notificationBell }) {
+// Issue #6 Phase 2.2, rebuilt clean in issue #488 once #484 removed the
+// hamburger/mobile-drawer toggle: page title, search, one avatar button —
+// no more review-due badge, daily-todo badge, sync pill, "Create account",
+// or a separate bell/theme icon crowding this row (the `.app-topbar-status`
+// wrap-order workaround from #463 is retired along with them). The avatar's
+// own dropdown reuses `buildAccountMenu()` (`sidebar.js`) — below 900px the
+// sidebar footer isn't rendered at all (bottomNav.js is the nav instead), so
+// this is the only remaining account-menu entry point at that width; at
+// >=900px it's a second, redundant-but-harmless way to reach the same menu
+// the sidebar footer already offers.
+export function createTopbar({ breadcrumb, user, store, dailyTodoStore, onDeleteAccount, onStartTour }) {
   const breadcrumbEl = el('div', { className: 'app-topbar-breadcrumb', text: breadcrumb });
 
   // Issue #283 — global topic search, layered on top of the existing nav-item
@@ -84,47 +96,59 @@ export function createTopbar({ breadcrumb, user, store, syncPill, themeToggleBtn
     onClick: openPalette
   }, [createIcon('search', { size: 'sm' })]);
 
-  // issue #155 (ZeBeyond direction) — the three icon-only actions (search,
-  // notifications, theme) grouped in a bordered pill container, matching the
-  // reference's icon-button cluster. Grouping only, not a reimplementation —
-  // each button keeps its own existing markup/behavior.
+  // Issue #488 (per #E3) — the bell folds into the avatar: unread changelog
+  // state is a small dot on the avatar itself, and "What's New" becomes a
+  // menu item inside its dropdown, rather than a separate icon button.
+  const lastSeenVersion = getLastSeenChangelogVersion();
+  const unreadDot = el('span', {
+    className: 'avatar-unread-dot notification-badge notification-badge-dot',
+    hidden: !isNewerVersion(APP_VERSION, lastSeenVersion)
+  });
+  function openChangelog() {
+    openChangelogDrawer({
+      entries: [...CHANGELOG].sort((a, b) => b.version - a.version),
+      onClose: () => {}
+    });
+    setLastSeenChangelogVersion(APP_VERSION);
+    unreadDot.hidden = true;
+  }
+
+  const userLabel = user.isAnonymous ? 'Guest session' : (user.displayName || user.email || 'Signed in');
+  const avatarTrigger = el('button', {
+    type: 'button',
+    className: 'app-topbar-avatar-btn',
+    'aria-label': `Account menu — ${userLabel}`
+  }, [createAvatar(user, 'sm'), unreadDot]);
+
+  const { identity: avatarMenu, importInput } = buildAccountMenu({
+    user,
+    store,
+    dailyTodoStore,
+    identityTrigger: avatarTrigger,
+    onDeleteAccount,
+    onStartTour,
+    onOpenChangelog: openChangelog,
+    align: 'end'
+  });
+
+  // issue #155 (ZeBeyond direction) — search + the avatar trigger grouped in
+  // a bordered pill container, matching the reference's icon-button cluster.
+  // Grouping only, not a reimplementation of either control.
   const iconGroup = el('div', { className: 'icon-btn-group' }, [
     commandPaletteBtn,
-    notificationBell,
-    themeToggleBtn
+    avatarMenu
   ]);
 
-  // Issue #463 — real, reported clutter on narrow viewports: with everything
-  // in one `flex-wrap` container, the review/todo badges, sync-pill, "Create
-  // account" button, and icon group wrapped wherever they happened to run
-  // out of row width, producing up to three uncontrolled, visually
-  // unrelated-looking rows (hamburger alone, then a status-badge row, then
-  // the icon row) before any real page content appeared. `.app-topbar-status`
-  // groups the account/sync-status controls (review-due, daily-todo, sync
-  // state, "Create account") into one flex child specifically so a narrow
-  // viewport can wrap *that whole group* onto its own single second row —
-  // see the `≤1023px` rule in app.css — instead of each control wrapping
-  // independently wherever it happens to run out of space. `iconGroup` stays
-  // a sibling, not a member of this group, since it belongs on the primary
-  // row (with the hamburger/breadcrumb) at every width, not the status row.
-  const statusGroup = el('div', { className: 'app-topbar-status' }, [
-    reviewDueBadge,
-    dailyTodoNavBadge,
-    syncPill,
-    user.isAnonymous ? el('a', { href: '#/signup', className: 'btn btn-secondary btn-sm', text: 'Create account' }) : null
-  ].filter(Boolean));
-
-  // `statusGroup`/`iconGroup` are direct `.app-topbar` children (not nested
-  // in a shared wrapper) specifically so the `≤1023px` CSS can re-`order`
-  // `iconGroup` onto the primary row with `breadcrumbEl` while `statusGroup`
-  // wraps to its own row below — see app.css's own comment on that rule for
-  // why a nested wrapper can't express that split.
   const node = el('header', { className: 'app-topbar' }, [
     breadcrumbEl,
-    statusGroup,
-    iconGroup
+    iconGroup,
+    importInput
   ]);
 
-  node._cleanup = bindCommandPaletteShortcut(openPalette);
+  const unbindShortcut = bindCommandPaletteShortcut(openPalette);
+  node._cleanup = () => {
+    unbindShortcut();
+    avatarMenu._cleanup?.();
+  };
   return node;
 }
