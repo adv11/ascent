@@ -28,6 +28,7 @@ import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { priorityLabel } from '../utils/priorityLabels.js';
 import { isReviewDue, getReviewDueItems, groupReviewDueItemsByTag } from '../../core/roadmap/reviewSchedule.js';
+import { selectNextUpTopics } from '../../core/roadmap/nextUp.js';
 import { isRoadmapComplete, getCompletedPhaseTitles } from '../../core/roadmap/completionCelebration.js';
 import { hasShownRoadmapCelebration, hasShownPhaseCelebration, markRoadmapCelebrationShown, markPhaseCelebrationShown } from '../../services/celebrationShownStore.js';
 import { mountPrintSnapshot, attachPrintCleanup } from '../utils/printRoadmap.js';
@@ -988,6 +989,11 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // addItem() only returns a boolean, so this is a pure before/after
   // comparison entirely in the UI layer.
   let knownItemIds = new Set();
+  // Issue #491 — "Not today" reshuffles the Next up card's selection for the
+  // rest of this session only; never persisted, never marks a topic done.
+  // Cleared implicitly the moment a topic finishes done (it drops out of the
+  // unfinished pool selectNextUpTopics reads regardless of this set).
+  let nextUpExcludedIds = new Set();
   // Issue #379 — keyboard-nav focus state, declared up here (not down by the
   // keydown-handler wiring below) since render() reads focusedRowId to
   // reapply the visual focus ring after a full re-render, and render() is
@@ -1014,6 +1020,13 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // this one 64px ring instance is removed.
   const roadmapSummaryBarFill = el('div', { className: 'roadmap-summary-bar-fill' });
   const roadmapMetaRow = el('p', { className: 'roadmap-meta-row', text: '' });
+  // Issue #491 — "Next up" card, rebuilt in place (replaceChildren) from
+  // updateNextUpCard() below, called from both render() and the cosmetic-
+  // done-toggle fast path (patchDoneStates()) — same "recompute on every
+  // snapshot, not just structural ones" reasoning updateReviewDueBadge()
+  // already uses, since a done toggle is exactly the thing that changes
+  // this card's own selection.
+  const nextUpCard = el('div', { className: 'card next-up-card', hidden: true });
   // Issue #477 — rebuilt (via replaceChildren, with the outgoing select's
   // own _cleanup() called first) on every render()/patchDoneStates() pass,
   // same lifecycle every other filter-row element here already has; see
@@ -1712,6 +1725,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     roadmapMetaRow.textContent = formatSavedAgo(lastSyncedAt == null ? null : Date.now() - lastSyncedAt);
     updateSaveBadge(snapshot);
     updateReviewDueBadge(allItems);
+    updateNextUpCard(snapshot);
     roadmapSummaryBarFill.style.width = `${stats.pct}%`;
     if (hasAnimatedStats) {
       doneStat.textContent = String(stats.done);
@@ -1873,6 +1887,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     roadmapSummaryBarFill.style.width = `${stats.pct}%`;
     updateSaveBadge(snapshot);
     updateReviewDueBadge(allItems);
+    updateNextUpCard(snapshot);
     roadmapMetaRow.textContent = formatSavedAgo(lastSyncedAt == null ? null : Date.now() - lastSyncedAt);
 
     filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
@@ -2117,6 +2132,72 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     reviewDueBadge.setAttribute('aria-label', `${dueCount} topic${dueCount === 1 ? '' : 's'} due for review`);
   }
 
+  // Issue #491 — "Next up": up to three suggested topics, resumed from
+  // wherever the user last worked (selectNextUpTopics(), pure). Rebuilt via
+  // replaceChildren on every render()/patchDoneStates() pass rather than
+  // patched in place — three rows is cheap enough that a full rebuild here
+  // never needed the fine-grained DOM-patching treatment the (up to 484-row)
+  // phase list gets.
+  function updateNextUpCard(snapshot) {
+    const { topics, complete } = selectNextUpTopics(snapshot.items, snapshot.phases, { excludeIds: nextUpExcludedIds });
+    if (complete) {
+      nextUpCard.hidden = false;
+      nextUpCard.replaceChildren(
+        el('div', { className: 'next-up-complete' }, [
+          createIcon('sparkle', { size: 'sm' }),
+          el('span', { text: "You've completed every topic in this roadmap." })
+        ])
+      );
+      return;
+    }
+    if (!topics.length) {
+      nextUpCard.hidden = true;
+      nextUpCard.replaceChildren();
+      return;
+    }
+    nextUpCard.hidden = false;
+    nextUpCard.replaceChildren(
+      el('div', { className: 'next-up-card-head' }, [
+        el('span', { className: 'eyebrow' }, ['Next up']),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-ghost btn-sm',
+          text: 'Not today',
+          onClick: () => {
+            topics.forEach(item => nextUpExcludedIds.add(item.id));
+            updateNextUpCard(store.getSnapshot());
+          }
+        })
+      ]),
+      el('div', { className: 'next-up-rows' }, topics.map(item => el('div', {
+        className: 'next-up-row',
+        onClick: e => toggleDone(item, e.currentTarget.querySelector('.check-box'))
+      }, [
+        el('div', {
+          className: 'check-box',
+          role: 'checkbox',
+          tabindex: '0',
+          'aria-checked': String(item.done),
+          'aria-label': item.title,
+          onClick: e => {
+            e.stopPropagation();
+            toggleDone(item, e.currentTarget);
+          },
+          onKeydown: e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleDone(item, e.currentTarget);
+            }
+          }
+        }, [el('span', { className: 'check-mark', 'aria-hidden': 'true' }, [createIcon('check', { size: 'xs' })])]),
+        el('div', { className: 'check-body' }, [
+          el('span', { className: 'check-title', text: item.title }),
+          el('span', { className: 'check-meta', text: `${priorityLabel(item.priority)} · ${item.phase}` })
+        ])
+      ])))
+    );
+  }
+
   function updateDailyTodoBadge() {
     if (!dailyTodoStore) return;
     const now = Date.now();
@@ -2226,6 +2307,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
               el('div', { className: 'roadmap-summary-bar-track' }, [roadmapSummaryBarFill])
             ])
           ]),
+          nextUpCard,
           // Issue #487 — the old two-row `.roadmap-filters-card` (a priority
           // select + Resources/Review chips row, plus a separate tag row —
           // up to nine controls before reaching a single topic) collapses to
