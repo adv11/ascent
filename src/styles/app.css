@@ -182,6 +182,9 @@
      folds the same way instead of each setting its own ad hoc breakpoint. */
   --content-max: 1080px;
   --tap-min: 48px;
+  /* issue #492 — width reserved down the dashboard phase list's left gutter
+     for the progress spine (track + one dot per phase). */
+  --phase-spine-gutter: clamp(26px, 3vw, 34px);
 
   --font-weight-regular:  400;
   --font-weight-medium:   500;
@@ -3536,10 +3539,93 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   max-width: 1160px;
   margin: 0 auto;
   width: 100%;
-  padding: 22px 20px 80px;
+  /* issue #492 — the extra left inset (--phase-spine-gutter, defined under
+     :root) reserves room for the progress spine so it never overlaps a
+     phase-card's own left edge; this file's other three .dashboard-content
+     padding overrides (below and the two responsive breakpoints) add the
+     same gutter to their own left value. */
+  padding: 22px 20px 80px calc(20px + var(--phase-spine-gutter));
   display: grid;
   gap: 12px;
   align-content: start;
+  /* .phase-spine (issue #492) is position: absolute against this box. */
+  position: relative;
+}
+
+/* Progress spine (issue #492) — a 2px vertical rule with one dot per phase,
+   filled from the top down to the last phase the user has started. Hidden
+   from assistive tech (aria-hidden, dashboard.js) since the same progress is
+   already in each phase-head's own progress ring/count; positioned entirely
+   in pixels from real `.phase-head` rects (updatePhaseSpine(), dashboard.js),
+   never a percentage of container height, which would land mid-card and
+   read arbitrary once phases vary in size. Dot/fill top offsets are set via
+   direct `el.style.top`/`el.style.height` JS property writes, not an inline
+   HTML `style` attribute — see `.claude/rules/ui-styling.md`'s "Never set an
+   inline style attribute" rule for why that distinction matters under this
+   app's CSP. */
+.phase-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--phase-spine-gutter);
+  pointer-events: none;
+}
+
+/* issue #492 follow-up — real feedback: `bottom: 0` stretched this line the
+   full height of `.dashboard-content` regardless of how many phases were
+   actually rendered, leaving a long bare tail below the last phase's dot on
+   any roadmap with trailing whitespace. Height is now set from JS
+   (updatePhaseSpine(), dashboard.js) to the real pixel position of the last
+   rendered phase's dot — the same "measure the real content, don't stretch
+   to the container" fix this file's own .dashboard-content `align-content:
+   start` entry documents for the analogous row-stretch bug. */
+.phase-spine-track {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  transform: translateX(-50%);
+  background: var(--color-border);
+  border-radius: 1px;
+}
+
+.phase-spine-fill {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 0;
+  transform: translateX(-50%);
+  background: var(--color-accent);
+  border-radius: 1px;
+}
+
+.phase-spine-dots {
+  position: absolute;
+  inset: 0;
+}
+
+.phase-spine-dot {
+  position: absolute;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border-strong);
+}
+
+.phase-spine-dot-in-progress {
+  border-color: var(--color-accent);
+  background: var(--color-accent-100);
+}
+
+.phase-spine-dot-complete {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 /* Phase cards. issue #206 §3.2 — .phase-card itself has no click handler
@@ -5701,7 +5787,7 @@ html[data-scrolling] .dropdown-menu {
 
 @media (max-width: 768px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
-  .dashboard-content { padding: 18px 16px 84px; }
+  .dashboard-content { padding: 18px 16px 84px calc(16px + var(--phase-spine-gutter)); }
   .landing-nav-links { display: none; }
   /* issue #460 — the two glass cards' desktop padding (20-24px) reads too
      spacious once the viewport itself is this narrow; match `.dashboard-header`'s
@@ -5713,7 +5799,7 @@ html[data-scrolling] .dropdown-menu {
 
 @media (max-width: 480px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
-  .dashboard-content { padding: 16px 12px 88px; }
+  .dashboard-content { padding: 16px 12px 88px calc(12px + var(--phase-spine-gutter)); }
   /* issue #489 — the identity row (`.roadmap-summary-top`) already wraps
      name/save-state onto their own lines at this width via its own
      `flex-wrap`, and the progress block below it is a single full-width
@@ -5951,7 +6037,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 }
 
 @media (max-width: 375px) {
-  .dashboard-content { padding: 14px 10px 88px; }
+  .dashboard-content { padding: 14px 10px 88px calc(10px + var(--phase-spine-gutter)); }
   .modal-card { padding: 26px 20px 22px; }
 }
 

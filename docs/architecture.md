@@ -5493,3 +5493,28 @@ subscription, no new full-render path — and reuses `renderItemRow()`'s own
 `.check-box`/`.check-mark`/`.check-body`/`.check-title`/`.check-meta` classes
 so a "Next up" row matches its real checklist row below. `CACHE_VERSION`
 bumped 102 → 103.
+
+### 2026-08-06 — PR #TBD — Progress spine down the phase list (issue #492, B7)
+
+`dashboard.js`'s `renderPhaseCard()` now stamps every phase-card with a
+`data-status` (`not-started`/`in-progress`/`complete`, derived from the same
+section-done/section-total counts already computed for the progress ring — no
+duplicated computation elsewhere) and a new `updatePhaseSpine()` builds a
+`clamp(26px, 3vw, 34px)`-wide gutter (`--phase-spine-gutter`, `app.css`
+`:root`, reserved via `.dashboard-content`'s left padding at every responsive
+tier) holding a 2px vertical rule, one dot per rendered phase, and a fill
+drawn to the real pixel centre of the last phase with any progress — never a
+percentage of container height, which would land mid-card on a page with
+uneven phase sizes. Dots position against each phase's `.phase-head` (a
+fixed-height element regardless of open/closed state, unlike the card
+itself), recomputed on `window resize` and after every phase open/close —
+both immediately (the instant class change) and once more
+`PHASE_SPINE_ANIMATION_SETTLE_MS` later, since `animatePhaseBody()`'s FLIP
+height animation shifts every subsequent phase-head's position as it plays.
+Dot/fill pixel offsets are set via direct `el.style.top`/`el.style.height`
+CSSOM writes, not an inline HTML `style` attribute — see
+`.claude/rules/ui-styling.md`'s "Never set an inline style attribute" rule for
+why that distinction matters under this app's CSP. `aria-hidden` throughout
+(the same progress is already in each phase-head's own ring/count) and
+degrades to nothing when the phase list is empty. The same pattern is meant to
+be reused on the Progress page's "By phase" section under the still-open #494.
