@@ -1,14 +1,8 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, openFirstItemPanel } from './fixtures.js';
 
 // Requires the Firebase Auth/Database emulator (issue #37) — every scenario here
 // needs a real (anonymous) sign-in so roadmapStore's Firebase paths actually run.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
-
-async function openFirstItemPanel(page) {
-  await page.locator('.check-item-overflow-btn').nth(0).click();
-  await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
-  await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
-}
 
 // The "Autosaved" indicator itself only depends on the 800ms
 // NOTES_AUTOSAVE_DEBOUNCE_MS timer firing (itemPanel.js) — it's shown

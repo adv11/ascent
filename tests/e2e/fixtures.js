@@ -38,4 +38,32 @@ export const test = base.extend({
   },
 });
 
+// Issue #486 (B1) — every checklist row's secondary actions (Open, Add to
+// today, Mark reviewed, Add a link, Delete) live behind a single ⋮ overflow
+// menu now, rather than a direct always-present button. Opening it is a
+// two-step interaction (click the trigger, then click the menu item) instead
+// of the old single click — under CI's parallel-worker load, a re-render
+// landing between those two Playwright actions (e.g. the dashboard's initial
+// Firebase-listener-attach render, right after a `page.reload()`) can swap
+// the trigger's DOM node out from under an in-flight click, silently
+// no-opping it and leaving the menu never opened. `expect(...).toPass()` (the
+// same retry pattern `customRoadmap.test.js`'s own overflow-menu delete flow
+// already uses) re-attempts the whole open sequence from scratch whenever
+// that happens, rather than a single wrapped `.toPass()` around Playwright's
+// own already-generous per-action timeout, so a re-render mid-sequence just
+// costs one more attempt instead of failing the test outright.
+export async function openRowOverflowMenu(row, actionText) {
+  await expect(async () => {
+    await row.locator('.check-item-overflow-btn').click();
+    await row.page().locator('.dropdown-menu .dropdown-item').filter({ hasText: actionText }).click({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+}
+
+// Convenience wrapper for the common "open the first row's edit panel" case
+// every spec that reaches into a topic's fields needs.
+export async function openFirstItemPanel(page) {
+  await openRowOverflowMenu(page.locator('.check-item').first(), 'Open');
+  await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
+}
+
 export { expect };

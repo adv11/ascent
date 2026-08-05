@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright';
-import { test, expect } from './fixtures.js';
+import { test, expect, openRowOverflowMenu } from './fixtures.js';
 
 // Issue #6 Phase 9 — "Run axe-core against every page in CI; zero critical
 // violations." Only checks 'critical'/'serious' impact violations, not every
@@ -311,8 +311,7 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('.check-item-overflow-btn').nth(0).click();
-    await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Open' }).click();
+    await openRowOverflowMenu(page.locator('.check-item').first(), 'Open');
     await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.item-panel' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -364,8 +363,7 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('.check-item-overflow-btn').nth(0).click();
-    await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Add to today' }).click();
+    await openRowOverflowMenu(page.locator('.check-item').first(), 'Add to today');
     const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
     await expect(modal).toBeVisible();
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Add to Today\'s Todos"]' });
@@ -592,8 +590,7 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await page.locator('.check-item-overflow-btn').nth(0).click();
-    await page.locator('.dropdown-menu .dropdown-item').filter({ hasText: 'Add to today' }).click();
+    await openRowOverflowMenu(page.locator('.check-item').first(), 'Add to today');
     const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
     await expect(modal).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
