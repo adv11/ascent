@@ -2749,22 +2749,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    dashboard should read as one panel at a glance, not several. `flex-wrap`
    lets the stats drop below the identity block on a narrow viewport instead
    of squeezing both halves into too little width. */
+/* issue #489 — was a horizontal flex (identity left, two stat tiles right);
+   now a single vertical column, since the whole card is one stacked block
+   (name/save-state row, then the count+percent+bar progress block). */
 .roadmap-summary-card {
   max-width: 1160px;
   margin: 0 auto 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 20px 24px;
-}
-
-.roadmap-summary-identity {
-  display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+  padding: 20px 24px;
 }
 
 .current-roadmap-badge {
@@ -2798,116 +2791,74 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-variant-numeric: tabular-nums;
 }
 
-/* issue #460 — the two stat tiles sit inside the summary card above now,
-   not their own separately-bordered `.stat-strip` grid (that class/grid is
-   still used as-is by progress.js's own stat strip — see .stat-strip's own
-   rule further down, unchanged and unaffected by this). A hairline divider
-   between the two tiles (not a full border per tile) keeps them visually
-   grouped as one "stats" unit rather than two more little boxes. */
-.roadmap-summary-stats {
-  display: flex;
-  align-items: stretch;
-  flex-shrink: 0;
-}
-
-/* issue #206 §3.2 — no onClick anywhere on .stat-tile (dashboard.js renders
-   it as a plain div), so the old hover-lift was removed. Deliberately no
-   border/background of its own (issue #460) — these tiles live inside
-   `.roadmap-summary-card`'s own glass surface now; giving each one its own
-   competing border/background is exactly the "box inside a box inside a
-   box" clutter that card was built to remove. `.roadmap-summary-stats .stat-tile
-   + .stat-tile`'s left border is the only separator between them. */
-/* issue #477 — real, reported bug: the "Items done" tile's 40px round icon
-   and the "Complete" tile's 64px progress ring left each row's text starting
-   at a different x-offset once the two tiles stack on a narrow viewport (the
-   ≤480px rule below), reading as "unequally positioned" even though both
-   rows individually looked fine. A shared, fixed-width first grid column
-   (sized to the larger of the two — the ring) fixes this: `justify-self:
-   center` on both `.stat-tile-icon` and `.stat-tile-ring-wrap` (below) centers
-   each one inside that same-width column regardless of its own intrinsic
-   size, so "Items done" and "Complete" always start their text at the exact
-   same x position, stacked or side-by-side alike. */
-.stat-tile {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  align-items: center;
-  gap: 14px;
-  padding: 0 22px;
-}
-.roadmap-summary-stats .stat-tile:first-child { padding-left: 0; }
-.roadmap-summary-stats .stat-tile:last-child { padding-right: 0; }
-.roadmap-summary-stats .stat-tile + .stat-tile { border-left: 1px solid var(--color-border); }
-
-.stat-tile-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: var(--color-warning-bg);
-  color: var(--color-accent-700);
-  flex-shrink: 0;
-}
-/* issue #155 v2 Phase D3 (full completion pass) — dashboard.js's own stat-strip
-   (distinct component from progress.js's .kpi-tile, Phase D1); text-on-light-fill
-   pattern. */
-:root[data-theme='dark'] .stat-tile-icon { background: var(--color-warning-bg); color: var(--color-accent-700); }
-
-/* issue #450 follow-up — real, reported bug: #444's "force a single grid
-   column below 480px" fix (see that issue's own comment on `.stat-strip`
-   below) assumed a single column left "comfortably enough" width for the
-   tile's icon + value + label to sit on one row, but that assumption still
-   broke on a narrow-enough phone: `.stat-tile-value`/`.stat-tile-label` had
-   no `white-space: nowrap`, so once the icon + all three text pieces
-   couldn't fit on one flex row, the text wrapped *inside itself* instead
-   ("0" / "/" / "484" each on their own line, "Items" / "done" each on their
-   own line) — the exact "broken layout, not a normal responsive stack"
-   symptom #444 already diagnosed once, just not fully closed. Fixing this by
-   assuming a wider available width a second time would only move the same
-   failure to the next narrower device; the real fix is structural: value and
-   label are wrapped in `.stat-tile-body` (a column, dashboard.js) so the tile
-   only ever needs to fit the icon alongside one column's worth of width
-   (whichever of "0 / 484" or "Items done" is wider), not all three pieces
-   side by side — and `nowrap` on both guarantees neither can ever break
-   mid-text regardless of how narrow that column gets. */
-.stat-tile-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.stat-tile-value { display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
-.stat-tile-number { font-size: var(--text-3xl); font-weight: 900; color: var(--color-accent-700); font-variant-numeric: tabular-nums; }
-:root[data-theme='dark'] .stat-tile-number { color: var(--color-accent-700); }
-.stat-tile-total { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat-tile-label { display: block; font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; white-space: nowrap; }
-
-.stat-tile-ring-wrap { position: relative; display: grid; place-items: center; justify-self: center; flex-shrink: 0; }
-/* issue #6 Phase 4.1 fix — was `display: grid` with no columns, which
-   auto-places each child (the number, the "%" span) into its own implicit
-   row instead of sitting inline, stacking "0" above "%" instead of reading
-   "0%". flex keeps them on one line regardless of font-size mismatch
-   between the two children. `align-items: center`, not `baseline` — this
-   box (64px, sized to match the SVG ring) is much taller than the text's
-   own line box, and baseline alignment only lines up items' text baselines
-   with each other, it does not center that line within extra container
-   height — the previous `baseline` value rendered "0%" pinned near the
-   container's top-left instead of centered inside the ring (caught from a
-   live screenshot, not visible in a DOM-position-only check, since the
-   flex box's own bounding rect was already pixel-perfect). */
-.stat-tile-ring-value {
-  position: absolute;
-  inset: 0;
+/* issue #489 — replaces #460's two-`.stat-tile` layout (an icon+count tile
+   plus a 64px `.stat-tile-ring`) with a single block: identity name + save
+   state on top (`.roadmap-summary-top`, wraps the existing
+   `.current-roadmap-badge` + `.roadmap-meta-row`), then a large count +
+   right-aligned percentage row, then a 12px full-width bar
+   (`.roadmap-summary-progress`). A ring reads harder to parse at a glance
+   than a bar for the older end of this app's audience — `progressRing.js`
+   remains in use at phase-head call sites (a much smaller scale, where a
+   ring still suits), just not here. */
+.roadmap-summary-top {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.roadmap-summary-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.roadmap-summary-progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roadmap-summary-count { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; min-width: 0; }
+.roadmap-summary-count-number { font-size: var(--text-3xl); font-weight: 900; color: var(--color-accent-700); font-variant-numeric: tabular-nums; }
+:root[data-theme='dark'] .roadmap-summary-count-number { color: var(--color-accent-700); }
+.roadmap-summary-count-total { font-size: var(--text-lg); color: var(--color-text-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.roadmap-summary-count-label { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; }
+
+.roadmap-summary-percent {
+  flex-shrink: 0;
+  font-size: var(--text-xl);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--color-accent-700);
 }
-:root[data-theme='dark'] .stat-tile-ring-value { color: var(--color-accent-700); }
-/* percentStat (dashboard.js) reuses the shared .stat-tile-number class (32px,
-   sized for the big "Items done" tile) — scope it down inside the 64px ring
-   so it doesn't overflow/wrap. */
-.stat-tile-ring-value .stat-tile-number { font-size: var(--text-lg); }
-.stat-tile-ring-value span:not(.stat-tile-number) { font-size: var(--text-base); margin-left: 1px; }
+:root[data-theme='dark'] .roadmap-summary-percent { color: var(--color-accent-700); }
+
+/* 12px full-width bar, per issue #489's spec — flat `--color-accent` fill,
+   matching `.mini-bar-fill`'s own solid-color treatment (issue #206's
+   Alpenglow "no gradients anywhere in the app, solid colors only" decision,
+   see design-system.md) rather than a gradient. Width is set via
+   roadmapSummaryBarFill.style.width in dashboard.js (a direct CSSOM
+   mutation, not the HTML `style` attribute the CSP blocks — same
+   `ring.style.width`/`listbox.style.width` precedent already used by
+   featureTour.js/select.js), since a continuous 0-100% value has no
+   sensible discrete class-bucket scheme. */
+.roadmap-summary-bar-track {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+  overflow: hidden;
+}
+.roadmap-summary-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  transition: width var(--duration-enter) var(--ease-spring);
+}
 
 /* Real, reported bug (live screenshot): `.stat-strip`'s base grid declaration
    was missing entirely — the only rule anywhere in this file mentioning
@@ -5714,24 +5665,13 @@ html[data-scrolling] .dropdown-menu {
 @media (max-width: 480px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 16px 12px 88px; }
-  /* issue #460 — on a phone, the identity block wraps above the stats (the
-     base `.roadmap-summary-card`'s `flex-wrap` already does this). The two
-     stat tiles side-by-side (matching wider tiers) genuinely don't fit at
-     the narrowest real phone widths (~320px, e.g. iPhone SE) without
-     overflowing — a real, measured `document.documentElement.scrollWidth`
-     overflow, not a guess — so they stack full-width instead, same
-     mobile-stacking precedent `.stat-strip`'s own `≤480px` rule below
-     already established before this card existed. The divider between them
-     switches from a left border to a top border to match. */
+  /* issue #489 — the identity row (`.roadmap-summary-top`) already wraps
+     name/save-state onto their own lines at this width via its own
+     `flex-wrap`, and the progress block below it is a single full-width
+     column at every tier, so — unlike #460's two-side-by-side-tile layout
+     this replaces — there's no separate narrow-phone stacking rule needed
+     here. */
   .roadmap-summary-card { padding: 14px 16px; gap: 12px; }
-  .roadmap-summary-stats { width: 100%; flex-direction: column; }
-  .roadmap-summary-stats .stat-tile { padding: 0; }
-  .roadmap-summary-stats .stat-tile + .stat-tile {
-    border-left: none;
-    border-top: 1px solid var(--color-border);
-    margin-top: 12px;
-    padding-top: 12px;
-  }
   .roadmap-filters-card { padding: 14px 16px; }
   /* Issue #444 — live-reported, screenshotted: `.stat-strip`'s
      `repeat(auto-fit, minmax(200px, 1fr))` let two `.stat-tile`s keep
