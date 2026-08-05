@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures.js';
 
 // Requires the Firebase Auth/Database emulator (issue #37) for anything past sign-in —
-// dashboard-only checks (`.check-actions`, `.check-item`) are skipped without it.
+// dashboard-only checks (`.check-item-overflow-btn`, `.check-item`) are skipped without it.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 test.describe('cross-device / responsive consistency (issue #36)', () => {
@@ -54,7 +54,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
   test.describe('dashboard: hover/touch reveal and touch target sizing', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-    test('.check-actions is visible without hovering on a touch-capable device, and checklist rows meet the 44px minimum', async ({ page }) => {
+    test('.check-item-overflow-btn is visible without hovering on a touch-capable device, and checklist rows meet the 44px minimum', async ({ page }) => {
       test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
       await page.goto('/#/signin');
       await page.click('text=Continue as guest');
@@ -70,7 +70,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
       const firstRow = page.locator('.check-item').nth(0);
-      const opacity = await firstRow.locator('.check-actions').evaluate((el) => getComputedStyle(el).opacity);
+      const opacity = await firstRow.locator('.check-item-overflow-btn').evaluate((el) => getComputedStyle(el).opacity);
       expect(opacity).toBe('1');
 
       const rowBox = await firstRow.boundingBox();

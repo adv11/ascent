@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, openRowOverflowMenu } from './fixtures.js';
 
 // Requires the Firebase Auth/Database emulator (issue #37) — same reasoning
 // as tests/e2e/reviewReminders.test.js.
@@ -39,7 +39,7 @@ test.describe('review-due tag grouping (issue #182)', () => {
     await secondRow.locator('.check-box').click();
 
     for (const row of [firstRow, secondRow]) {
-      await row.locator('[data-action="edit"]').click();
+      await openRowOverflowMenu(row, 'Open');
       await page.fill('.item-panel input[placeholder*="two-pointer"]', 'two-pointer');
       await page.click('.item-panel >> text=Save changes');
       await expect(page.locator('.item-panel')).toBeHidden();

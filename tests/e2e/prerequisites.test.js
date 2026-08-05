@@ -1,11 +1,11 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, openRowOverflowMenu } from './fixtures.js';
 
 // Requires the Firebase Auth/Database emulator (issue #37) — every scenario here
 // needs a real (anonymous) sign-in so roadmapStore's Firebase paths actually run.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 
 async function openItemPanelForRow(row) {
-  await row.locator('[data-action="edit"]').click();
+  await openRowOverflowMenu(row, 'Open');
 }
 
 test.describe('optional topic prerequisites (issue #381)', () => {

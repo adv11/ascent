@@ -319,10 +319,10 @@ describe('row-height virtualization estimate (issue #450)', () => {
     return buildSectionRows(items, item => document.createElement('div'));
   }
 
-  it('falls back to the 67px cold-start constant when nothing has been measured yet', async () => {
+  it('falls back to the 66px cold-start constant when nothing has been measured yet', async () => {
     const { estimateRowHeight } = await import('../../src/ui/pages/dashboard.js');
     const wrapper = await buildWrapper(3);
-    expect(estimateRowHeight(wrapper)).toBe(67);
+    expect(estimateRowHeight(wrapper)).toBe(66);
   });
 
   it('uses the running average of real measured heights once at least one row has been measured', async () => {
@@ -347,7 +347,7 @@ describe('row-height virtualization estimate (issue #450)', () => {
     const { estimateRowHeight, recordMeasuredHeight } = await import('../../src/ui/pages/dashboard.js');
     const wrapper = await buildWrapper(3);
     recordMeasuredHeight(wrapper, 0, 0);
-    expect(estimateRowHeight(wrapper)).toBe(67);
+    expect(estimateRowHeight(wrapper)).toBe(66);
   });
 
   it('sumRowHeights uses the caller-provided fallback for any still-unmeasured index', async () => {

@@ -5371,3 +5371,27 @@ automatically instead of ending the tour early, and `dashboard.js`'s
 sidebar-nav-item tour steps fall back to their `.bottom-nav-item` equivalents
 when the sidebar isn't rendered. See `.claude/rules/ui-styling.md`'s "The
 sidebar/bottom-nav split" entry for the full breakpoint/component contract.
+
+### 2026-08-05 — PR #TBD — Checklist topic row rebuild (issue #486, B1)
+
+`dashboard.js`'s `renderItemRow` (the densest, most-repeated element in the app —
+up to nine controls, wrapping onto three or four lines at narrow widths) is now a
+fixed 66px-minimum two-line row: checkbox, title, and one grey meta line
+(`buildRowMetaText()` — `"Must do · 2 links · 25 min tracked"`, each segment
+omitted when it has nothing to say). Priority moved from a `.priority-tag` pill
+to a 3px `check-item-p-{priority}` inset `box-shadow` left edge. Every secondary
+control (notes glyph, "completed via todo" glyph, timer/"Add to today" button,
+"Mark reviewed" button, Edit) collapsed into one `buildRowOverflowMenu()` ⋮
+trigger built on the existing `createDropdown()` component (`dropdown.js`,
+already used by `onboarding.js`'s card overflow menu) — Open / Add to today /
+Mark reviewed (only while review-due) / Add a link / Delete. `itemPanel.js`'s
+`openItemPanel({ focusField })` gained a `'resources'` value (focuses the
+resource-label input) alongside the existing `'notes'`, so "Add a link" can jump
+straight to the resource-add row. The checkbox and the ⋮ trigger stay
+independent sibling controls per WAI-ARIA's no-focusable-content rule for
+`role="checkbox"` — see `.claude/rules/ui-styling.md`'s existing entry on this.
+`ROW_HEIGHT_ESTIMATE` (the row-virtualization cold-start fallback) is
+re-measured 67px → 66px to match the new fixed row height. `.resource-count`/
+`.notes-indicator`/`.completed-via-todo-indicator`/`.check-actions` are removed
+from `app.css`; `.check-item`/`.check-box`/`.check-meta` (new) are the row's
+E2E-stable selectors going forward.

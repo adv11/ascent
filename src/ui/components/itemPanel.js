@@ -503,7 +503,7 @@ export function openItemPanel({ item, allItems, onSave, onDelete, onClose, focus
   requestAnimationFrame(() => {
     overlay.classList.add('show');
     panel.classList.add('show');
-    (focusField === 'notes' ? notesTextarea : titleInput).focus();
+    (focusField === 'notes' ? notesTextarea : focusField === 'resources' ? labelInput : titleInput).focus();
   });
 
   const onKey = e => { if (e.key === 'Escape') close(); };

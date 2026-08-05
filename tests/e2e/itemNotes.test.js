@@ -1,13 +1,8 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, openFirstItemPanel } from './fixtures.js';
 
 // Requires the Firebase Auth/Database emulator (issue #37) — every scenario here
 // needs a real (anonymous) sign-in so roadmapStore's Firebase paths actually run.
 const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
-
-async function openFirstItemPanel(page) {
-  await page.locator('[data-action="edit"]').nth(0).click();
-  await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
-}
 
 // The "Autosaved" indicator itself only depends on the 800ms
 // NOTES_AUTOSAVE_DEBOUNCE_MS timer firing (itemPanel.js) — it's shown
@@ -38,7 +33,7 @@ test.describe('personal notes per topic (issue #15)', () => {
     await expect(page.locator('.notes-textarea')).toHaveValue('Remember: virtual threads need JDK 21+');
   });
 
-  test('a saved note shows the notes indicator on the roadmap row, and clicking it focuses the notes textarea', async ({ page }) => {
+  test('a saved note reopens correctly via the row overflow menu\'s "Open" action', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
@@ -46,20 +41,14 @@ test.describe('personal notes per topic (issue #15)', () => {
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
-    const firstRow = page.locator('.check-item').nth(0);
-    await expect(firstRow.locator('[data-action="notes"]')).toHaveCount(0);
-
     await openFirstItemPanel(page);
     await page.locator('.notes-textarea').fill('Key command examples here');
     await expect(page.locator('.notes-status')).toContainText('Autosaved', { timeout: AUTOSAVE_INDICATOR_TIMEOUT });
     await page.locator('button', { hasText: 'Cancel' }).click();
     await expect(page.locator('.item-panel')).toHaveCount(0);
 
-    const notesIndicator = firstRow.locator('[data-action="notes"]');
-    await expect(notesIndicator).toBeVisible();
-    await notesIndicator.click();
-    await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator('.notes-textarea')).toBeFocused();
+    await openFirstItemPanel(page);
+    await expect(page.locator('.notes-textarea')).toHaveValue('Key command examples here');
   });
 
   test('notes survive a page reload', async ({ page }) => {

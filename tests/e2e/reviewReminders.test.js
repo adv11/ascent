@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, openRowOverflowMenu } from './fixtures.js';
 
 // Requires the Firebase Auth/Database emulator (issue #37) — needs a real
 // (anonymous) sign-in so roadmapStore's Firebase paths actually run.
@@ -60,9 +60,7 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     await expect(reviewChip).toHaveClass(/active/);
 
     const dueRow = page.locator('.check-item').first();
-    const markReviewedBtn = dueRow.locator('[data-action="mark-reviewed"]');
-    await expect(markReviewedBtn).toBeVisible();
-    await markReviewedBtn.click();
+    await openRowOverflowMenu(dueRow, 'Mark reviewed');
 
     await expect(page.locator('.toast')).toContainText('Marked', { timeout: 5_000 });
     await expect(reviewBadge).toBeHidden({ timeout: 5_000 });

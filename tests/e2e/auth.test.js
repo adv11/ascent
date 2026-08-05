@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { test, expect, openRowOverflowMenu } from './fixtures.js';
 
 // Tests that require real Firebase credentials are skipped until FIREBASE_CONFIGURED=true.
 // The fixtures.js page extension injects window.__USE_FIREBASE_EMULATOR__ so the app
@@ -98,7 +98,7 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
   await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
 
-  await page.locator('[data-action="edit"]').nth(0).click();
+  await openRowOverflowMenu(page.locator('.check-item').first(), 'Open');
   await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
   const initialCount = await page.locator('.item-panel .resource-card').count();
   await page.fill('input[placeholder*="Link label"]', 'Test resource');
