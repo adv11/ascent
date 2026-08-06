@@ -176,7 +176,7 @@ describe('renderSettings — signed-in view (issue #16)', () => {
     expect(document.documentElement.hasAttribute('data-animations-off')).toBe(false);
   });
 
-  it('the "Install Ascent" row is hidden until beforeinstallprompt fires, then dismiss hides it again (issue #19)', async () => {
+  it('the "Install Ascent" row is hidden until beforeinstallprompt fires (issue #19)', async () => {
     const app = await freshSettings(user);
     const installRow = Array.from(app.querySelectorAll('.settings-row')).find(row => row.textContent.includes('Install Ascent'));
     expect(installRow.hidden).toBe(true);
@@ -186,9 +186,5 @@ describe('renderSettings — signed-in view (issue #16)', () => {
     event.userChoice = Promise.resolve({ outcome: 'dismissed' });
     window.dispatchEvent(event);
     expect(installRow.hidden).toBe(false);
-
-    const dismissBtn = Array.from(installRow.querySelectorAll('button')).find(b => b.textContent === "Don't show this again");
-    dismissBtn.click();
-    expect(installRow.hidden).toBe(true);
   });
 });

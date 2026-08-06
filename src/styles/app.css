@@ -995,11 +995,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .field-input, .search-input, .import-paste-area { caret-color: var(--color-accent); }
 
 /* Segmented control (design-system.md §5) — for exclusive-choice groups
-   (priority filter, theme picker). Base class only this phase, same
-   "built, not yet wired into a page" precedent as .tabs (issue #125) —
-   the dashboard priority filter and theme toggle adopt this in a later
-   phase alongside their own page's markup changes. */
-.seg { display: inline-flex; border: 1px solid var(--color-border); }
+   (priority filter, theme picker; settings.js's Text size row, issue #495,
+   this control's first real call site). `border-radius` + `overflow: hidden`
+   on the `.seg` container (not on each `.seg-item`) rounds the group's outer
+   corners while clipping every inner item to a plain rectangle — the
+   standard segmented-control technique, and simpler than rounding only the
+   first/last item's outer corners by hand. */
+.seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
 .seg-item {
   padding: var(--space-2) var(--space-4);
   background: var(--color-surface);

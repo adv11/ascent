@@ -15,7 +15,7 @@ import { getTheme, setTheme, onThemeChange } from '../../services/theme.js';
 import { KEYS } from '../../services/localStorageKeys.js';
 import { createIcon } from '../components/icons.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
-import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPrompt } from '../../services/pwaInstall.js';
+import { isInstallable, onInstallabilityChange, promptInstall } from '../../services/pwaInstall.js';
 import { createFeatureBadge, dismissFeatureBadge } from '../components/featureBadge.js';
 import { createSelect } from '../components/select.js';
 import { priorityLabel } from '../utils/priorityLabels.js';
@@ -311,18 +311,6 @@ function buildProfileSection(user) {
   ]);
 }
 
-// issue #435 — real user report: this button reads as broken because
-// clicking it just silently removes the row with no other feedback (the
-// one action on this page with no toast, unlike every other Preferences
-// control right above it — see `filterSelect`'s "Default filter saved."
-// toast a few lines up). It IS wired correctly (dismissInstallPrompt()
-// permanently hides this "install to your device" prompt via
-// KEYS.PWA_INSTALL_DISMISSED, same purpose as dismissing any other
-// one-time nag in this app) — the fix is a confirmation toast, not new
-// logic, so a user can tell the click actually did something.
-// issue #450 follow-up — click registered fine, but "Dismiss" didn't say
-// what it does (permanently hide this row) — relabeled, plus a `title`
-// tooltip noting it's permanent (unlike a snoozable banner).
 function buildInstallRow() {
   const installBtn = el('button', {
     type: 'button',
@@ -341,17 +329,6 @@ function buildInstallRow() {
       installRow.hidden = !isInstallable();
     }
   });
-  const dismissInstallBtn = el('button', {
-    type: 'button', className: 'btn btn-ghost btn-sm',
-    text: "Don't show this again",
-    title: "Hides this install prompt for good. You can still install Ascent later from your browser's own menu.",
-    onClick: () => {
-      dismissFeatureBadge('pwa-install');
-      dismissInstallPrompt();
-      installRow.hidden = true;
-      showToast('Install prompt dismissed.', 'success');
-    }
-  });
   const installRow = el('div', { className: 'settings-row', hidden: !isInstallable() }, [
     el('div', { className: 'settings-row-main' }, [
       el('span', { className: 'settings-row-label-group' }, [
@@ -359,8 +336,7 @@ function buildInstallRow() {
         createFeatureBadge('pwa-install')
       ].filter(Boolean)),
       el('span', { className: 'settings-row-value', text: 'Add Ascent to your device for offline access.' }),
-      installBtn,
-      dismissInstallBtn
+      installBtn
     ])
   ]);
   const unsubInstall = onInstallabilityChange(installable => { installRow.hidden = !installable; });
