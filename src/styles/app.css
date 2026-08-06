@@ -168,14 +168,27 @@
      sizes and are now fluid clamp() pairs so 360px→1920px needs no breakpoint
      jump, instead of a single fixed size. Token names are unchanged — only the
      values became clamp() — so every existing call site keeps working as-is. */
-  --text-xs:   0.75rem;
-  --text-sm:   0.875rem;
-  --text-base: 1rem;
-  --text-lg:   1.25rem;
-  --text-xl:   1.5625rem;
-  --text-2xl:  clamp(1.5rem, 1.3rem + 1vw, 1.953rem);
-  --text-3xl:  clamp(1.75rem, 1.4rem + 1.75vw, 2.441rem);
-  --text-4xl:  clamp(2rem, 1.5rem + 2.5vw, 3.052rem);
+  /* issue #496 follow-up (live report) — Text size (settings.js's Preferences
+     tab) used to scale the whole app, not just text: it set `font-size` on
+     `<html>`, and every spacing/icon/radius token in this file happens to
+     also be `rem`-based, so "Largest" inflated gaps, icon tiles, and card
+     padding right along with the type scale — real, reported bloat on the
+     onboarding roadmap grid (icon boxes, badge-to-heading gaps, and dead
+     space all growing together, not just the text). `--text-scale` is now
+     the only thing `data-text-size` touches (see the `html[data-text-size=...]`
+     rule below) — every `--text-*` token is wrapped in `calc(... *
+     var(--text-scale))` so only font-size responds to the preference;
+     `--space-*`/`--radius-*`/icon-size tokens are untouched regardless of
+     text size. */
+  --text-scale: 1;
+  --text-xs:   calc(0.75rem * var(--text-scale));
+  --text-sm:   calc(0.875rem * var(--text-scale));
+  --text-base: calc(1rem * var(--text-scale));
+  --text-lg:   calc(1.25rem * var(--text-scale));
+  --text-xl:   calc(1.5625rem * var(--text-scale));
+  --text-2xl:  calc(clamp(1.5rem, 1.3rem + 1vw, 1.953rem) * var(--text-scale));
+  --text-3xl:  calc(clamp(1.75rem, 1.4rem + 1.75vw, 2.441rem) * var(--text-scale));
+  --text-4xl:  calc(clamp(2rem, 1.5rem + 2.5vw, 3.052rem) * var(--text-scale));
 
   /* Responsive layout primitives (issue #482 A1) — the one shared place that
      decides content width and minimum tap-target size, so every page/component
@@ -510,12 +523,16 @@
 html { scroll-behavior: smooth; }
 html, body { min-height: 100%; }
 
-/* Text size preference (issue #495) — scales the root font size, which every
-   `--text-*` token in this file is rem-based against, so the whole app scales
-   uniformly with no per-component change needed. Applied synchronously before
-   first paint by themeBootstrap.js to avoid a layout flash on reload. */
-html[data-text-size='large'] { font-size: 112.5%; }
-html[data-text-size='largest'] { font-size: 125%; }
+/* Text size preference (issue #495, revised by issue #496 follow-up) — sets
+   `--text-scale` (:root's default `1`) rather than root `font-size`. Every
+   `--text-*` token reads `--text-scale` directly (see the `:root` block
+   above), so only font-size responds to this preference now — `--space-*`,
+   `--radius-*`, icon-size tokens, and anything else `rem`-based that isn't a
+   `--text-*` token stays fixed regardless of text size. Applied
+   synchronously before first paint by themeBootstrap.js to avoid a layout
+   flash on reload. */
+html[data-text-size='large'] { --text-scale: 1.125; }
+html[data-text-size='largest'] { --text-scale: 1.25; }
 
 body {
   font-family: var(--font-body);

@@ -5630,3 +5630,24 @@ per the issue's design reference; and `.auth-form .field-input` gained
 `min-height: 52px` for a taller input row at this card's scale (16px text was already
 guaranteed by the existing `--text-base` type-scale floor, issue #482, so no separate
 iOS-zoom-on-focus fix was needed here).
+
+### 2026-08-06 — PR #TBD — Text size preference no longer scales spacing (issue #496 follow-up, live report)
+
+Found while preparing #496's PR: issue #495's Text size preference
+(`Default`/`Large`/`Largest`) scaled the whole app, not just text. It worked by setting
+`font-size` directly on `<html>` (`app.css`), and since `--space-*`/`--radius-*`/card
+padding tokens are also `rem`-based (not just `--text-*`), turning on "Largest" inflated
+gaps, icon tiles, and card padding right along with the type scale — reported live as
+icon boxes and the "AI-powered" badge crowding into "Create your own roadmap" on the
+onboarding roadmap grid, reproduced exactly by setting `data-text-size='largest'` and
+comparing computed styles before/after (root font-size 20px → card padding 24px → 30px,
+title font-size scaling correctly both ways).
+
+Fixed with a `--text-scale` custom property (`:root`, default `1`) that only the
+`--text-*` tokens read — each is now `calc(<value> * var(--text-scale))` instead of a
+bare `rem` value — and `html[data-text-size='large'|'largest']` sets `--text-scale`
+(`1.125`/`1.25`) instead of `font-size`. `<html>`'s own font-size stays at the browser
+default regardless of this preference, so every `rem`-based token that isn't a
+`--text-*` token (spacing, radius, icon sizes, chip dimensions) is unaffected by text
+size. See `.claude/rules/ui-styling.md`'s "Text size and animations-off preferences"
+entry for the updated contract.
