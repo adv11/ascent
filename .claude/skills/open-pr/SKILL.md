@@ -8,6 +8,27 @@ description: Use right before and when opening a pull request in this repo — t
 Relocated from `CLAUDE.md`'s MANDATORY WORKFLOW section (issue #86) with no content
 changes — see `docs/adr/ADR-007-agent-memory-architecture.md`.
 
+## If the issue has an attached design reference image, you must have actually looked at it
+
+Found the hard way (issues #482–#492, the "A1"–"B7" responsive-redesign batch): every
+one of those issues had a `raw.githubusercontent.com/.../*.png` design screenshot
+attached, and every one of those PRs was implemented from the issue's *written* spec
+text alone, without ever fetching and viewing the image — the resulting UI diverged
+significantly from the reference (spacing, radius, card weight, missing controls) with
+nothing catching it until a much later manual review. Written spec text is a lossy
+summary of a screenshot, not a substitute for it.
+
+Before opening a PR for any issue that has an attached image:
+1. Download it (`curl` into your scratchpad) and view it with `Read` — do not skip this
+   because the issue body already "describes" the design in words.
+2. Run the app locally (`npm run dev`) and take a real screenshot of the page/component
+   you changed, at a comparable viewport/theme.
+3. Compare the two side by side. Note in the PR body ("Testing" section) any deliberate
+   deviation from the reference and why — never silently ship something that looks
+   different from the picture with no explanation.
+4. If you cannot access the image (network restricted, private asset), say so explicitly
+   in the PR rather than proceeding as if the visual gap doesn't exist.
+
 1. `npm test` — zero failures
 2. `npm run lint` — zero errors
 3. `npm run check:cache-version` — bump `sw.js`'s `CACHE_VERSION` if it fails (issue #17

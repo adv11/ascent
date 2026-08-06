@@ -119,6 +119,58 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   let picking = false;
   const cardEls = [];
+  // Issue #493 — every card now shows a topic count + thin progress bar,
+  // not just a topic count. `getAllRoadmapsForSearch()` (roadmapStore.js) is
+  // the one read-only, cache-first call that resolves real completion state
+  // for every *started* roadmap (built-in or custom) in one batch — fetched
+  // once per grid render and shared across every card's footer, rather than
+  // one bespoke store call per card. A not-yet-started built-in template has
+  // no entry in that list (it was never started), so its progress falls back
+  // to `template.buildItems()` — the same call the old topic-count-only
+  // footer already made — with done always 0, since a fresh seed has no
+  // completed topics by definition.
+  let progressDataPromise = null;
+  function ensureProgressData() {
+    if (!progressDataPromise) {
+      progressDataPromise = store.getAllRoadmapsForSearch
+        ? store.getAllRoadmapsForSearch().catch(() => [])
+        : Promise.resolve([]);
+    }
+    return progressDataPromise;
+  }
+  // `started` distinguishes "128 / 484 done" (a roadmap with real, tracked
+  // completion — every started roadmap, even one at 0 done) from "142
+  // topics" (a not-yet-started template, which has no completion state to
+  // report at all) — matching the issue's own design reference screenshot,
+  // where only started roadmaps show a "done" count.
+  //
+  // The fill's width is a bucketed CSS class (nearest 5%,
+  // `.template-card-progress-fill-{0,5,…,100}`, app.css), not an inline
+  // `style="width:…"` — a native `<progress>` element was tried first, but
+  // real-browser testing found its `::-webkit-progress-value` pseudo-styling
+  // doesn't reliably apply (rendered as a solid dark bar regardless of
+  // actual percentage) — see app.css's own comment on this class for the
+  // full story.
+  function applyCardProgress(countEl, fillEl, { total, done, started }) {
+    countEl.textContent = !total ? 'Starts empty' : started ? `${done} / ${total} done` : `${total} topics`;
+    const pct = total ? Math.round((done / total) * 100 / 5) * 5 : 0;
+    fillEl.className = `template-card-progress-fill${pct ? ` template-card-progress-fill-${pct}` : ''}`;
+  }
+  function loadCardProgress(id, countEl, fillEl, fallbackBuildItems) {
+    ensureProgressData().then(list => {
+      const entry = list.find(r => r.id === id);
+      if (entry) {
+        const items = Object.values(entry.items).filter(i => !i.deleted);
+        applyCardProgress(countEl, fillEl, { total: items.length, done: items.filter(i => i.done).length, started: true });
+      } else if (fallbackBuildItems) {
+        fallbackBuildItems().then(items => {
+          applyCardProgress(countEl, fillEl, { total: Object.keys(items).length, done: 0, started: false });
+        }).catch(() => { countEl.textContent = ''; });
+      } else {
+        applyCardProgress(countEl, fillEl, { total: 0, done: 0, started: false });
+      }
+    }).catch(() => { countEl.textContent = ''; });
+  }
   // Overflow-menu dropdowns (issue #206 §4.1) are portaled to document.body
   // while open (see dropdown.js's own comment on why) — renderVisibleGrid()
   // tears down and rebuilds every card, so each dropdown's own document
@@ -193,6 +245,10 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
 
   const visibleGrid = el('div', { className: 'template-grid', role: 'list' });
   const hiddenSection = el('div', { className: 'hidden-templates-section' });
+  // Issue #493 — "1 of your own · 7 ready-made", per the design reference
+  // screenshot's grid-heading meta text. Updated inside renderVisibleGrid()
+  // itself, alongside the counts it's derived from.
+  const gridMetaEl = el('span', { className: 'template-grid-meta' });
 
   // Favoriting (issue #177) — up to MAX_FAVORITE_ROADMAPS roadmaps (built-in
   // or custom, no distinction) can be starred; starred cards sort before
@@ -317,15 +373,27 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   // by the "picking" state class toggles elsewhere) since that's the outer
   // visual card, not the inner button.
   function buildCreateCard() {
+    // Issue #493 follow-up — as a full-width row band, icon/badge/name/desc
+    // can no longer all sit as flat flex-row siblings: the badge (a fixed,
+    // short pill) and the name/desc (the widest content) fought over the
+    // same row's shrink budget, wrapping "AI-powered" onto two lines (real,
+    // reported). Grouping badge+name+desc into their own column, separate
+    // from the icon, gives the row exactly two flex items instead of four —
+    // the icon never shrinks, and the copy column wraps its *text*, never
+    // its badge.
     const pickBtn = el('button', {
       type: 'button',
       className: 'template-card-pick',
       onClick: handleCreate
     }, [
       el('span', { className: 'template-card-icon' }, [createIcon('plus', { size: 'lg' })]),
-      el('span', { className: 'template-card-ai-badge', text: 'AI-powered' }),
-      el('span', { className: 'template-card-name', text: 'Create your own roadmap' }),
-      el('span', { className: 'template-card-desc', text: 'Answer a few questions, generate it with an AI assistant, and paste the result back in.' })
+      el('div', { className: 'template-card-create-copy' }, [
+        el('div', { className: 'template-card-create-heading' }, [
+          el('span', { className: 'template-card-ai-badge', text: 'AI-powered' }),
+          el('span', { className: 'template-card-name', text: 'Create your own roadmap' })
+        ]),
+        el('span', { className: 'template-card-desc', text: 'Answer a few questions, generate it with an AI assistant, and paste the result back in.' })
+      ])
     ]);
     // onClick/e.target === cardEl fallback: same dead-padding-zone fix as
     // buildCard()/buildCustomCard() — see buildCard()'s comment for the story.
@@ -346,7 +414,10 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     ]);
     cardEls.push(cardEl);
     createCardEl = cardEl;
-    return el('div', { role: 'listitem' }, [cardEl]);
+    // Issue #493 — "Create your own roadmap" is a full-width band above the
+    // rest of the grid, not a grid cell sized like every other card;
+    // `.template-full-band` (app.css) spans every column of `.template-grid`.
+    return el('div', { className: 'template-full-band', role: 'listitem' }, [cardEl]);
   }
 
   async function pickCustomRoadmap(roadmap, cardEl) {
@@ -385,6 +456,19 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     showToast(`Deleted "${roadmap.title}".`, 'success');
   }
 
+  // Issue #493 — shared by buildCard()/buildCustomCard(): icon tile (46px,
+  // see app.css) with the favorited-roadmap star badge riding its own
+  // top-left corner, plus a status badge (Current/In progress) alongside it.
+  function buildCardHeader(iconName, roadmapId, badgeEl) {
+    return el('div', { className: 'template-card-header' }, [
+      el('div', { className: 'template-card-icon-wrap' }, [
+        el('span', { className: 'template-card-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(iconName, { size: 'lg' })]),
+        buildFavoriteIndicator(roadmapId)
+      ].filter(Boolean)),
+      badgeEl
+    ].filter(Boolean));
+  }
+
   function buildCustomCard(roadmap) {
     const isCurrent = roadmap.id === activeTemplateId;
     const isStarted = startedTemplateIds.includes(roadmap.id);
@@ -393,18 +477,22 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       : isStarted
         ? el('span', { className: 'template-card-started-badge', text: 'In progress' })
         : null;
-    const footerEl = el('div', { className: 'template-card-footer' }, [badgeEl].filter(Boolean));
+    const countEl = el('span', { className: 'template-card-count', text: 'Loading topics…' });
+    const fillEl = el('span', { className: 'template-card-progress-fill' });
+    const trackEl = el('span', { className: 'template-card-progress-track', 'aria-hidden': 'true' }, [fillEl]);
+    const footerEl = el('div', { className: 'template-card-footer' }, [countEl, trackEl]);
 
+    // Issue #493 — the primary "pick this roadmap" control now wraps just the
+    // <h3> title; the click/tap target is stretched over the whole card by
+    // this button's own CSS `::after` (see app.css's .template-card-pick
+    // comment) rather than the button itself wrapping every visual element.
     const pickBtn = el('button', {
       type: 'button',
       className: 'template-card-pick',
       'aria-current': isCurrent ? 'true' : null,
       onClick: () => pickCustomRoadmap(roadmap, cardEl)
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(pickCustomRoadmapIcon(roadmap.id), { size: 'lg' })]),
-      el('span', { className: 'template-card-name', text: roadmap.title }),
-      el('span', { className: 'template-card-desc', text: roadmap.description || 'Your own roadmap.' }),
-      footerEl
+      el('h3', { className: 'template-card-name', text: roadmap.title })
     ]);
     // Issue #6 Phase 9 — see buildCard()'s identical comment: plain wrapper,
     // role="button" moved onto the nested .template-card-pick button so the
@@ -416,29 +504,34 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
       onClick: e => { if (e.target === cardEl) pickCustomRoadmap(roadmap, cardEl); }
     }, [
-      pickBtn,
-      buildFavoriteIndicator(roadmap.id),
+      buildCardHeader(pickCustomRoadmapIcon(roadmap.id), roadmap.id, badgeEl),
       buildCardOverflowMenu(roadmap.title, [
         buildFavoriteMenuAction(roadmap.id, roadmap.title),
         { text: 'Delete', danger: true, onClick: () => deleteCustomCard(roadmap, cardEl) }
       ]),
+      pickBtn,
+      el('p', { className: 'template-card-desc', text: roadmap.description || 'Your own roadmap.' }),
+      footerEl,
       buildPickingOverlay()
     ].filter(Boolean));
 
     cardEls.push(cardEl);
+    loadCardProgress(roadmap.id, countEl, fillEl, null);
     return el('div', { role: 'listitem' }, [cardEl]);
   }
 
   function buildCard(template) {
     const isCurrent = template.id === activeTemplateId;
     const isStarted = startedTemplateIds.includes(template.id);
-    const countEl = el('span', { className: 'template-card-count', text: 'Loading topics…' });
     const badgeEl = isCurrent
       ? el('span', { className: 'template-card-current-badge', text: 'Current' })
       : isStarted
         ? el('span', { className: 'template-card-started-badge', text: 'In progress' })
         : null;
-    const footerEl = el('div', { className: 'template-card-footer' }, [countEl, badgeEl]);
+    const countEl = el('span', { className: 'template-card-count', text: 'Loading topics…' });
+    const fillEl = el('span', { className: 'template-card-progress-fill' });
+    const trackEl = el('span', { className: 'template-card-progress-track', 'aria-hidden': 'true' }, [fillEl]);
+    const footerEl = el('div', { className: 'template-card-footer' }, [countEl, trackEl]);
 
     const pickBtn = el('button', {
       type: 'button',
@@ -446,10 +539,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       'aria-current': isCurrent ? 'true' : null,
       onClick: () => pickTemplate(template, cardEl)
     }, [
-      el('span', { className: 'template-card-icon', 'aria-hidden': 'true' }, [createDecorativeIcon(template.icon, { size: 'lg' })]),
-      el('span', { className: 'template-card-name', text: template.name }),
-      el('span', { className: 'template-card-desc', text: template.description }),
-      footerEl
+      el('h3', { className: 'template-card-name', text: template.name })
     ]);
     // Issue #6 Phase 9 — the card is a plain wrapper; role="button" moved off
     // it onto the real nested .template-card-pick button so the overflow
@@ -474,23 +564,19 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
       onClick: e => { if (e.target === cardEl) pickTemplate(template, cardEl); }
     }, [
-      pickBtn,
-      buildFavoriteIndicator(template.id),
+      buildCardHeader(template.icon, template.id, badgeEl),
       buildCardOverflowMenu(template.name, [
         buildFavoriteMenuAction(template.id, template.name),
         { text: 'Hide', onClick: () => hideTemplate(template, cardEl) }
       ]),
+      pickBtn,
+      el('p', { className: 'template-card-desc', text: template.description }),
+      footerEl,
       buildPickingOverlay()
     ].filter(Boolean));
 
     cardEls.push(cardEl);
-
-    template.buildItems().then(items => {
-      const count = Object.keys(items).length;
-      countEl.textContent = count ? `${count} topics` : 'Starts empty';
-    }).catch(() => {
-      countEl.textContent = '';
-    });
+    loadCardProgress(template.id, countEl, fillEl, () => template.buildItems());
 
     return el('div', { role: 'listitem' }, [cardEl]);
   }
@@ -564,15 +650,15 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     dropdownEls = [];
     visibleGrid.replaceChildren();
     visibleGrid.appendChild(buildCreateCard());
+    const visibleTemplates = TEMPLATES.filter(t => !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id));
     const pickable = [
       ...customRoadmaps.map(roadmap => ({ id: roadmap.id, build: () => buildCustomCard(roadmap) })),
-      ...TEMPLATES
-        .filter(t => !hiddenTemplateIds.includes(t.id) || startedTemplateIds.includes(t.id))
-        .map(template => ({ id: template.id, build: () => buildCard(template) }))
+      ...visibleTemplates.map(template => ({ id: template.id, build: () => buildCard(template) }))
     ];
     pickable
       .sort((a, b) => Number(favoriteRoadmapIds.includes(b.id)) - Number(favoriteRoadmapIds.includes(a.id)))
       .forEach(entry => visibleGrid.appendChild(entry.build()));
+    gridMetaEl.textContent = `${customRoadmaps.length} of your own · ${visibleTemplates.length} ready-made`;
   }
 
   renderVisibleGrid();
@@ -683,6 +769,16 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
             : 'Choose a template to get started. You can add, edit, or remove topics anytime, and start more templates later without losing progress.'
         })
       ]),
+      // Issue #493 — "Pick one to switch to" + the "N of your own · M
+      // ready-made" meta text, matching the design reference screenshot.
+      // Only shown once there's a real grid of roadmaps to switch between
+      // (i.e. not first-time onboarding, which has no "switch to" framing).
+      isSwitchingTemplate
+        ? el('div', { className: 'template-grid-heading' }, [
+          el('h2', { className: 'template-grid-title', text: 'Pick one to switch to' }),
+          gridMetaEl
+        ])
+        : null,
       visibleGrid,
       hiddenSection
     ].filter(Boolean))
