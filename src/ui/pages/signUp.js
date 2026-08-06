@@ -173,10 +173,8 @@ export function renderSignUp(app, { user }) {
     title: 'Create your account',
     subtitle: 'Track your roadmap, resources, and progress in one place.',
     children: [form],
-    footer: el('p', {}, [
-      'Already have an account? ',
-      el('a', { href: '#/signin', className: 'link', text: 'Sign in' })
-    ]),
+    mode: 'signup',
+    onModeChange: newMode => { if (newMode === 'signin') navigate('/signin'); },
     footnote: 'Roadmaps · Links · Progress tracking · Multi-device sync'
   });
   app.replaceChildren(node);

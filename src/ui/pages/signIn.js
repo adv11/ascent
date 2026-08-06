@@ -202,18 +202,17 @@ export function renderSignIn(app, { user }) {
 
   const bodySlot = el('div', {});
 
-  const { node, cleanup, titleEl, subtitleEl } = authShell({
+  const { node, cleanup, titleEl, subtitleEl, modeSwitchEl } = authShell({
     title: 'Welcome back',
     subtitle: 'Sign in to sync your roadmap across devices.',
     children: [bodySlot],
-    footer: el('p', {}, [
-      'New here? ',
-      el('a', { href: '#/signup', className: 'link', text: 'Create an account' })
-    ]),
+    mode: 'signin',
+    onModeChange: newMode => { if (newMode === 'signup') navigate('/signup'); },
     footnote: 'Built for anyone learning, revising, or tracking progress toward a goal.'
   });
 
   function showSignInView(prefillEmail = '') {
+    modeSwitchEl?.classList.remove('auth-mode-switch-hidden');
     titleEl.textContent = 'Welcome back';
     subtitleEl.textContent = 'Sign in to sync your roadmap across devices.';
     bodySlot.replaceChildren(buildSignInForm({
@@ -223,6 +222,10 @@ export function renderSignIn(app, { user }) {
   }
 
   function showResetView(prefillEmail = '') {
+    // Issue #496 — the reset-password step is a third state layered on top
+    // of sign-in, not a sign-in/sign-up choice, so the mode switch hides
+    // while it's showing.
+    modeSwitchEl?.classList.add('auth-mode-switch-hidden');
     titleEl.textContent = 'Reset your password';
     subtitleEl.textContent = "Enter your email and we'll send you a link to set a new one.";
     const { form, focus } = buildResetForm({
@@ -235,6 +238,7 @@ export function renderSignIn(app, { user }) {
   }
 
   function showResetSuccess(sentEmail) {
+    modeSwitchEl?.classList.add('auth-mode-switch-hidden');
     titleEl.textContent = 'Check your inbox';
     subtitleEl.textContent = '';
 

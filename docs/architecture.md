@@ -5600,3 +5600,33 @@ phones under ~400px wide, since the 16px type-scale floor forbids shrinking it t
 shortened to "Roadmap" (matching its already-single-word siblings) plus a defensive
 `white-space: nowrap` + ellipsis floor on `.bottom-nav-item-label` for any future label.
 `CACHE_VERSION` bumped 107 → 108.
+
+### 2026-08-06 — PR #TBD — Auth: one screen, two modes (issue #496, C4)
+
+`src/ui/pages/signIn.js` and `src/ui/pages/signUp.js` remain two routes
+(`/signin`/`/signup`, each still its own lazy-loaded module) but now render visibly as
+one shell with a mode switch, not two independent screens — a user who lands on the
+wrong one no longer has to navigate away and back. `authShell.js`'s `authShell()`
+gained an optional `mode`/`onModeChange` pair: when both are passed, it renders a
+full-width `.seg`/`.seg-item` (the existing shared segmented-control classes,
+`design-system.md` §5) "Sign in / Sign up" switch in the card header, returned as
+`modeSwitchEl` so a caller mid-flow can hide it. Clicking a segment calls the existing
+router's `navigate()` to the other auth route — a real route change (so the URL/back
+button stay correct and each page's own `renderSignIn`/`renderSignUp` guard logic is
+unaffected), not an in-place DOM swap between two divergent form implementations.
+`signIn.js`'s reset-password step (still the pre-existing `bodySlot`-swap-within-the-
+same-shell mechanism, unchanged structurally) now also adds a new
+`.auth-mode-switch-hidden` class to `modeSwitchEl` while showing — the reset step is a
+third state layered on top of sign-in, not a sign-in/sign-up choice, so the switch
+isn't a meaningful control there. The old "New here? Create an account"/"Already have
+an account? Sign in" footer links on both pages are removed, since the switch now
+covers that job.
+
+Two CSS changes scoped to the auth shell specifically, not global: `.auth-marketing`'s
+hide breakpoint split out of the shared `≤1024px` tier (still used by the landing hero,
+which this issue doesn't touch) into its own `≤960px` tier — the merged card is
+narrower than the landing hero and had room to keep the marketing panel a bit longer
+per the issue's design reference; and `.auth-form .field-input` gained
+`min-height: 52px` for a taller input row at this card's scale (16px text was already
+guaranteed by the existing `--text-base` type-scale floor, issue #482, so no separate
+iOS-zoom-on-focus fix was needed here).
