@@ -118,16 +118,49 @@ export async function createLineChart(canvas, { labels, totals }) {
   });
 }
 
+// A small "draw the value above each bar" plugin — Chart.js core has no
+// built-in per-bar data-label rendering (that's the separate
+// chartjs-plugin-datalabels package, not worth a second CDN dependency for
+// one small text draw). C2 (issue #494) scope item 4's "per-bar values" —
+// registered inline, scoped to this one chart instance via `plugins: [...]`
+// rather than `Chart.register()`, so it never affects the line chart above.
+const barValueLabelsPlugin = {
+  id: 'barValueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const textColor = cssVar('--color-text-muted', '#6b6156');
+    ctx.save();
+    ctx.fillStyle = textColor;
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta.data.forEach((bar, i) => {
+      const value = chart.data.datasets[0].data[i];
+      if (value === 0) return;
+      ctx.fillText(String(value), bar.x, bar.y - 4);
+    });
+    ctx.restore();
+  }
+};
+
 // createBarChart(canvas, { labels, counts, rollingAverage }) — B5's daily
 // velocity bars plus a 7-day rolling-average overlay line. The overlay is a
 // dashed accent line (design-system.md §5's "dashed accent projection"),
 // distinguishing it visually from the solid-accent bars beneath it.
+// C2 (issue #494) scope item 4 — today's bar (always the last one, since
+// buildVelocitySeries() always ends the window on today) renders at full
+// opacity; every other bar renders at 45%, so today reads as the
+// highlighted point in the series.
 export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
   const Chart = await loadChartModule();
   const accentColor = cssVarHsl('--v3-accent', cssVar('--color-accent', '#0CB656'));
   const accentMutedColor = cssVarHsl('--v3-accent-muted', cssVar('--color-accent-700', '#AE1800'));
+  const todayIndex = counts.length - 1;
+  const barColors = counts.map((_, i) => (i === todayIndex ? accentColor : `color-mix(in srgb, ${accentColor} 45%, transparent)`));
   const { x, y } = axisOptions();
   return new Chart(canvas.getContext('2d'), {
+    plugins: [barValueLabelsPlugin],
     data: {
       labels,
       datasets: [
@@ -135,7 +168,7 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
           type: 'bar',
           label: 'Items completed',
           data: counts,
-          backgroundColor: accentColor
+          backgroundColor: barColors
         },
         {
           type: 'line',
@@ -153,6 +186,7 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
     options: {
       maintainAspectRatio: false,
       responsive: true,
+      layout: { padding: { top: 16 } },
       scales: { x, y: { ...y, beginAtZero: true, ticks: { ...y.ticks, precision: 0 } } },
       plugins: { legend: { display: false } }
     }

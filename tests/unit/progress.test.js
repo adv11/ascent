@@ -57,11 +57,11 @@ async function freshProgress(user, items = [], entries = {}) {
 describe('renderProgress — basic mount', () => {
   const user = { isAnonymous: false, uid: 'u1', email: 'jane@example.com' };
 
-  it('renders the page header and all six section cards', async () => {
+  it('renders the page header and all five section cards', async () => {
     const { app } = await freshProgress(user);
-    expect(app.querySelector('.progress-header h1').textContent).toBe('Progress');
-    expect(app.querySelectorAll('.progress-card')).toHaveLength(6);
-    expect(app.querySelector('.stat-strip')).not.toBeNull();
+    expect(app.querySelector('.progress-hero-statement')).not.toBeNull();
+    expect(app.querySelectorAll('.progress-card')).toHaveLength(5);
+    expect(app.querySelector('.kpi-layout')).not.toBeNull();
   });
 
   it('renders 5 kpi tiles, one hero-highlighted', async () => {
@@ -106,10 +106,11 @@ describe('renderProgress — phase breakdown and priority table', () => {
     expect(navigate).toHaveBeenCalledWith('/app');
   });
 
-  it('renders a priority table row per phase with a data-band cell', async () => {
+  it('each phase-breakdown row carries a spine dot with the phase\'s dominant priority', async () => {
     const { app } = await freshProgress(user, items);
-    expect(app.querySelectorAll('.priority-table tbody tr')).toHaveLength(2);
-    expect(app.querySelector('.priority-cell[data-band]')).not.toBeNull();
+    const dot = app.querySelector('.phase-breakdown-spine-dot');
+    expect(dot).not.toBeNull();
+    expect(dot.dataset.priority).toBe('P0');
   });
 });
 
