@@ -5518,3 +5518,26 @@ why that distinction matters under this app's CSP. `aria-hidden` throughout
 (the same progress is already in each phase-head's own ring/count) and
 degrades to nothing when the phase list is empty. The same pattern is meant to
 be reused on the Progress page's "By phase" section under the still-open #494.
+
+### 2026-08-06 — PR #TBD — Roadmap picker rebuilt as a clean grid (issue #493, C1)
+
+`onboarding.js`'s picker cards changed shape from "one big `<button>` wrapping
+every visual element" to a card with a real `<button>` wrapping only its
+`<h3>` title, whose CSS `::after` (`position: absolute; inset: 0`) stretches
+the click/tap target over the whole card — resolving against `.template-card`
+(the nearest `position: relative` ancestor), since the button itself is left
+`position: static` on purpose. The ⋯ overflow trigger and (on the create
+card) the info-corner button both get `z-index: 2` to stay above that
+overlay's `z-index: 1`. The favorited-roadmap star badge moved from the
+card's own top-right corner to a small ringed badge riding the new 46px icon
+tile's top-left corner. "Create your own roadmap" stays the grid's first
+`[role="listitem"]` (not moved out of the DOM) but gets a new
+`.template-full-band` wrapper spanning every grid column, reading as a
+full-width band above the rest of the picker. Per-card topic count/progress
+comes from a new batched read, `store.getAllRoadmapsForSearch()`, shared
+across every card in one grid render rather than one call per card. Progress
+fill width is a bucketed CSS class (nearest 5%,
+`.template-card-progress-fill-{0,5,…,100}`) over a plain div track/fill pair
+— a native `<progress>` element was tried first but dropped after
+real-browser testing showed its `::-webkit-progress-value` pseudo-styling
+doesn't reliably apply. `CACHE_VERSION` bumped 104 → 105.

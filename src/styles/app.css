@@ -1384,8 +1384,15 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   position: relative;
 }
 
+/* Issue #493 — widened from 880px. `.template-grid`'s card minmax grew
+   220px -> 290px to match the issue's design reference, and 880px was tuned
+   for the old, narrower card: 3 columns of 290px + 2x16px gaps need >=902px,
+   which 880px doesn't clear, so the grid silently dropped to 2-up at 1280px
+   (real, caught via a live screenshot comparison — the issue's own testing
+   requirement calls for 3-up at 1280px). 960px clears it with headroom
+   while staying under --content-max (1080px, A1's own page-width cap). */
 .onboarding-inner {
-  width: min(880px, 100%);
+  width: min(960px, 100%);
   position: relative;
   z-index: 1;
   display: grid;
@@ -1395,12 +1402,29 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .onboarding-head { text-align: center; display: grid; gap: 8px; justify-items: center; }
 .onboarding-back { justify-self: start; }
 
+.template-grid-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.template-grid-title { font-size: var(--text-lg); font-weight: 800; margin: 0; }
+.template-grid-meta { font-size: var(--text-base); color: var(--color-text-muted); }
+
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   align-items: stretch;
   gap: 16px;
 }
+
+/* Issue #493 — "Create your own roadmap" is a full-width band above the
+   card grid, not a grid cell. Rather than moving it out of the DOM (which
+   would break every existing test/click-flow keyed on it being the grid's
+   first `.template-card`), it stays the grid's first `[role="listitem"]`
+   and this modifier just makes its own grid cell span every column. */
+.template-grid > .template-full-band { grid-column: 1 / -1; }
 
 /* issue #206 §3.2 — clickable card (the whole card picks a template via the
    nested .template-card-pick button), so it gets the hover-lift treatment.
@@ -1455,33 +1479,44 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 :root[data-theme='dark'] .template-card-picking-overlay { color: var(--color-accent-700); }
 .template-card.picking .template-card-picking-overlay { display: flex; }
 .template-card-picking-overlay .btn-spinner { width: 16px; height: 16px; border-width: 2px; }
-/* issue #6 Phase 9 — the "pick this template" action is now a real <button>
-   nested inside the (non-interactive) `.template-card` div, sibling to the
-   corner hide/delete/info button, instead of `.template-card` itself
-   carrying role="button" with a focusable button nested inside it — axe-core
-   correctly flags a role="button"/role="checkbox" element that contains
-   other focusable descendants (WCAG 4.1.2; ARIA's button/checkbox roles
-   don't allow focusable children). This wrapper is deliberately unstyled
-   beyond making it fill the card and behave like transparent flex-column
-   content — `.template-card` itself keeps 100% of its original visual
-   styling (background/border/shadow/padding) unchanged. */
+/* issue #493 — the "pick this roadmap" primary control is a real <button>
+   wrapping just the <h3> title (not the whole card's content the way it
+   used to) — its `::after` (absolute, `inset: 0`) is what actually stretches
+   the click/tap target over the entire card, resolving against `.template-card`
+   itself (the nearest `position: relative` ancestor), since this button is
+   left `position: static` on purpose. Never `all: unset` here — that would
+   also reset `outline`, which silently defeats the `:focus-visible` ring
+   below (WCAG 2.4.7); only the specific properties a plain button needs are
+   reset. `.template-card-overflow`'s `z-index: 2` (below) sits above this
+   `::after`, so the ⋯ trigger stays clickable despite the stretched overlay. */
 .template-card-pick {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  position: static;
+  display: block;
   width: 100%;
-  min-width: 0;
   background: none;
-  border: none;
+  border: 0;
   padding: 0;
   margin: 0;
   font: inherit;
   color: inherit;
-  text-align: inherit;
+  text-align: left;
   cursor: pointer;
 }
+.template-card-pick::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+}
 .template-card-pick:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.template-card-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.template-card-icon-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
 /* issue #206 §3.2 — 3px TOP border only; right/bottom/left stay the card's
    normal 1px solid --color-border, untouched by this rule (border-top only
    sets the top edge). Was a border-image gradient; reverted to a plain solid
@@ -1490,10 +1525,36 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .template-card-current {
   border-top: 3px solid var(--color-accent);
 }
-.template-card-icon { display: inline-flex; font-size: var(--icon-size-lg); line-height: 1; }
-.template-card-name { font-size: var(--text-lg); font-weight: 800; }
-.template-card-desc { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.5; }
-.template-card-footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; }
+/* Issue #493 — a 46px icon tile (was a bare, un-contained icon glyph) so a
+   favorited card's star badge has a real corner to ride (see
+   .template-card-favorite-indicator below). */
+.template-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-accent-700);
+}
+:root[data-theme='dark'] .template-card-icon { color: var(--color-accent-700); }
+.template-card-name { font-size: var(--text-lg); font-weight: 800; margin: 0; }
+/* Two-line clamp (issue #493) — a longer AI-generated custom-roadmap
+   description no longer pushes same-row cards to mismatched heights. */
+.template-card-desc {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.template-card-footer { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 8px; }
 .template-card-count {
   font-size: 12px;
   font-weight: 700;
@@ -1501,6 +1562,56 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+/* Thin per-card progress bar (issue #493). A native <progress> was tried
+   first — its `.value`/`.max` are plain DOM properties, which would have
+   avoided an inline `style` cleanly — but real-browser testing found its
+   `::-webkit-progress-bar`/`::-webkit-progress-value` pseudo-styling doesn't
+   reliably apply (rendered as a solid dark bar regardless of actual
+   percentage, confirmed visually, not just a computed-style artifact).
+   Replaced with a plain track/fill div pair — the same "capped set of
+   discrete CSS classes instead of an inline style" pattern this file already
+   uses for animation-delay (see `.check-item.entering-delay-N` above) — the
+   fill's width is set via one of `.template-card-progress-fill-{0,5,…,100}`,
+   never a `style="width:…"` (index.html's CSP silently drops inline style
+   anyway — see .claude/rules/ui-styling.md's "Never set an inline style
+   attribute" rule). `--color-border-strong` (this app's fully-opaque "ink"
+   token — near-black in light theme) was also wrong for the track's "empty"
+   state in an earlier version of this rule; `--color-border`, the same color
+   at its already-alpha-blended, actually-light divider strength, is correct. */
+.template-card-progress-track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  overflow: hidden;
+}
+.template-card-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  width: 0%;
+}
+.template-card-progress-fill-5 { width: 5%; }
+.template-card-progress-fill-10 { width: 10%; }
+.template-card-progress-fill-15 { width: 15%; }
+.template-card-progress-fill-20 { width: 20%; }
+.template-card-progress-fill-25 { width: 25%; }
+.template-card-progress-fill-30 { width: 30%; }
+.template-card-progress-fill-35 { width: 35%; }
+.template-card-progress-fill-40 { width: 40%; }
+.template-card-progress-fill-45 { width: 45%; }
+.template-card-progress-fill-50 { width: 50%; }
+.template-card-progress-fill-55 { width: 55%; }
+.template-card-progress-fill-60 { width: 60%; }
+.template-card-progress-fill-65 { width: 65%; }
+.template-card-progress-fill-70 { width: 70%; }
+.template-card-progress-fill-75 { width: 75%; }
+.template-card-progress-fill-80 { width: 80%; }
+.template-card-progress-fill-85 { width: 85%; }
+.template-card-progress-fill-90 { width: 90%; }
+.template-card-progress-fill-95 { width: 95%; }
+.template-card-progress-fill-100 { width: 100%; }
 /* issue #155 v2 Phase D3 (full completion pass) — plain text, straight swap. */
 :root[data-theme='dark'] .template-card-count { color: var(--color-accent-700); }
 /* issue #206 §3.6 — "Current" gets a small solid-filled dot (::before) next
@@ -1571,6 +1682,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
+  /* Above .template-card-pick's own stretched ::after overlay (z-index: 1,
+     issue #493) — same reasoning as .dropdown.template-card-overflow. */
+  z-index: 2;
 }
 .template-card-info-corner:hover { color: var(--color-accent-700); border-color: var(--color-border-strong); }
 /* issue #155 v2 Phase D3 (full completion pass) — straight text/border swap. */
@@ -1593,10 +1707,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    trigger out of its absolute corner slot into the card's normal flex flow, which fed
    a wrong trigger rect into `positionMenu()` (dropdown.js) and rendered the portaled
    menu partly off-screen — reported live as a blank white box overlapping the cards. */
-.dropdown.template-card-overflow { position: absolute; top: 12px; right: 12px; }
+/* z-index: 2 (issue #493) — sits above .template-card-pick's own stretched
+   `::after` overlay (z-index: 1), so the ⋯ trigger stays independently
+   clickable/focusable instead of the pick button's overlay swallowing the
+   click. */
+.dropdown.template-card-overflow { position: absolute; top: 10px; right: 10px; z-index: 2; }
+/* 44x44 (issue #493 — "rather than an icon button's default 36px"), not the
+   old 24px circular corner button; the @media (pointer: coarse) override
+   below still grows it to 46px for the same 44px-boundary rounding reason
+   documented on that block. */
 .template-card-overflow-btn {
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -1611,42 +1733,32 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 :root[data-theme='dark'] .template-card-overflow-btn:hover,
 :root[data-theme='dark'] .template-card-overflow-btn[aria-expanded='true'] { color: var(--color-accent-700); border-color: var(--color-border-strong); }
 
-/* Favorited-roadmap on-card indicator (issue #395) — a plain, non-interactive
-   cue, never a click target (favoriting stays a ⋯-menu-only action, see
+/* Favorited-roadmap on-card indicator (issue #395, repositioned onto the icon
+   tile's own corner in issue #493) — a plain, non-interactive cue, never a
+   click target (favoriting stays a ⋯-menu-only action, see
    buildFavoriteMenuAction()/buildFavoriteIndicator() in onboarding.js).
-   Top-left was tried first and rejected — .template-card-icon (the
-   decorative per-template/roadmap icon, left-aligned at the very top of
-   .template-card-pick's content, no top-left corner reserved for it) sits
-   directly under a top-left corner slot and visibly overlapped the star.
-   Stacked instead in the existing top-right corner column, left of
-   .template-card-overflow-btn/.template-card-info-corner — reviving the
-   pre-issue #206 two-corner-button offset this card family used when a
-   standalone favorite button and a hide/delete button shared this same
-   corner (see the `.dropdown.template-card-overflow` comment above noting
-   that offset is otherwise no longer needed). `right: 66px` (not the old
-   `right: 44px`, i.e. `12 + 24 + 8px gap`) is sized for the *larger* of the
-   two states that button can be in: `.template-card-overflow-btn`/
-   `.template-card-info-corner` grow to 46×46px under `@media (pointer:
-   coarse)` (issue #377) while staying anchored at the same `right: 12px`,
-   so their left edge shifts to `12 + 46 = 58px` from the card's right edge
-   at that size — `66px` (`12 + 46 + 8px gap`) clears that worst case, so
-   this indicator never overlaps the other button at *either* pointer
-   granularity, just with a bit more breathing room than 44px would give at
-   the plain-mouse 24px size. Both corner slots stay well inside
-   `.template-card`'s own `--space-6` padding at every registered breakpoint
-   (no width-specific override changes that padding — grepped before relying
-   on it), so this never bleeds outside the card. */
+   `.template-card-icon` is now a real 46px tile (see above), which gives this
+   badge a real corner to ride — a small 20px circle at -7px/-7px with a 2px
+   ring in the card's own surface color, so it reads as a badge sitting on
+   top of the tile rather than clipping the icon glyph underneath. Positioned
+   relative to `.template-card-icon-wrap` (not `.template-card` itself), so it
+   never has to coordinate with the ⋯ trigger's own top-right corner slot —
+   the two occupy entirely different corners of the card now. */
 .template-card-favorite-indicator {
   position: absolute;
-  top: 12px;
-  right: 66px;
-  width: 24px;
-  height: 24px;
+  top: -7px;
+  left: -7px;
+  width: 20px;
+  height: 20px;
   display: grid;
   place-items: center;
+  border-radius: 50%;
+  background: var(--color-warning-bg);
   color: var(--color-accent);
+  border: 2px solid hsl(var(--v3-surface));
   pointer-events: none;
 }
+.template-card-favorite-indicator svg { width: 12px; height: 12px; }
 .template-card-favorite-indicator svg path { fill: currentColor; }
 
 .hidden-templates-section { display: grid; gap: 12px; justify-items: center; }
@@ -1697,10 +1809,47 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .template-card-create:hover, .template-card-create:has(.template-card-pick:focus-visible) { box-shadow: var(--shadow-lg); }
 .template-card-create .template-card-icon { color: var(--color-neutral-700); }
 .template-card-create .template-card-name { color: var(--color-neutral-700); }
+/* Issue #493 — as a full-width band, the create card reads better as a
+   horizontal row (icon left, copy right) than the centered column the
+   original grid-cell card used. Scoped to `.template-full-band` so this
+   never affects the card if it's ever rendered somewhere narrower again. */
+.template-full-band .template-card-create {
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  gap: var(--space-4);
+}
+.template-full-band .template-card-create .template-card-pick {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+}
+/* Issue #493 follow-up — badge+name+desc as one column beside the icon, not
+   four flat flex-row siblings (see buildCreateCard()'s own comment for the
+   real, reported wrapping bug this replaces). */
+.template-card-create-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.template-card-create-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.template-full-band .template-card-create .template-card-name { margin: 0; }
+.template-full-band .template-card-create .template-card-desc { -webkit-line-clamp: 1; }
 .template-card-ai-badge {
   align-self: center;
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   height: var(--chip-height);
   padding: 0 var(--chip-padding-x);
   border-radius: var(--radius-full);
