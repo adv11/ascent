@@ -2959,6 +2959,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   flex-wrap: wrap;
   gap: 8px 16px;
 }
+/* Issue #522 audit follow-up — groups the "Saved …" meta text with the new
+   "Switch roadmap" button so `.roadmap-summary-top`'s `space-between` still
+   only has two real items (the identity badge, and this group) rather than
+   three fighting over the row. */
+.roadmap-summary-top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
 .roadmap-summary-progress {
   display: flex;
