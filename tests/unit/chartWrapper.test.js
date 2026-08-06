@@ -85,8 +85,18 @@ describe('createBarChart', () => {
 
   it('falls back to the light-theme default colors when a token is unset', async () => {
     const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
-    const chart = await createBarChart(fakeCanvas(), { labels: [], counts: [], rollingAverage: [] });
-    expect(chart.config.data.datasets[0].backgroundColor).toBe('#0CB656');
+    const chart = await createBarChart(fakeCanvas(), { labels: ['Jul 1'], counts: [4], rollingAverage: [2.5] });
+    expect(chart.config.data.datasets[0].backgroundColor).toEqual(['#0CB656']);
     expect(chart.config.options.scales.y.ticks.color).toBe('#6b6156');
+  });
+
+  it('highlights only today\'s (the last) bar at full opacity, muting the rest', async () => {
+    const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
+    const chart = await createBarChart(fakeCanvas(), { labels: ['Jul 1', 'Jul 2', 'Jul 3'], counts: [1, 2, 3], rollingAverage: [1, 1.5, 2] });
+    const colors = chart.config.data.datasets[0].backgroundColor;
+    expect(colors).toHaveLength(3);
+    expect(colors[2]).toBe('#0CB656');
+    expect(colors[0]).toMatch(/color-mix/);
+    expect(colors[1]).toMatch(/color-mix/);
   });
 });

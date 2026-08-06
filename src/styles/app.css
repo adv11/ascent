@@ -3040,6 +3040,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    `auto-fit` alone doesn't guarantee that on its own. */
 .stat-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); align-items: stretch; }
 
+/* C2 (issue #494) scope item 2 — the Progress page's asymmetric KPI layout:
+   one large hero tile beside a 2x2 grid of four supporting tiles, rather
+   than .stat-strip's five equal-width tiles ("five identical tiles read as
+   a report; this reads as designed," per the issue). Collapses to one
+   column below 760px. */
+.kpi-layout { display: grid; grid-template-columns: minmax(240px, 1.1fr) 2fr; gap: var(--space-4); align-items: stretch; }
+.kpi-layout .kpi-tile-hero { height: 100%; }
+.kpi-grid-secondary { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
+@media (max-width: 760px) {
+  .kpi-layout { grid-template-columns: 1fr; }
+  .kpi-grid-secondary { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .kpi-grid-secondary { grid-template-columns: 1fr; }
+}
+
 /* issue #155 v2 Phase B — a distinct new component, `.kpi-tile`, not a `.stat-tile`
    variant despite the issue's own bullet naming it "`.stat-tile`": `.stat-tile` above
    is already shipped (issue #6 Phase 4.1) as a horizontal icon-left/number-right row
@@ -5133,8 +5149,9 @@ html[data-scrolling] .dropdown-menu {
 .progress-content { padding: var(--space-6); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); max-width: 1160px; margin: 0 auto; width: 100%; align-content: start; }
 
 .progress-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
-.progress-header h1 { margin: 0; font-size: var(--text-xl); }
-.progress-header-subtitle { margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-base); }
+/* C2 (issue #494) scope item 1 — one derived display line replaces the old
+   static "Progress" h1 + subtitle pair; see buildHeroStatement() (progress.js). */
+.progress-hero-statement { margin: 0; font-size: var(--text-2xl); font-weight: 700; max-width: 640px; }
 .progress-header-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 /* Real, reported mismatch (issue #309, same shape as .app-topbar-status's
    fix above): the "This Week/This Month/All Time" `.filter-chip`s (36px)
@@ -5292,12 +5309,36 @@ html[data-scrolling] .dropdown-menu {
 .chart-container .skeleton-card { position: absolute; inset: 0; height: 100%; }
 .chart-canvas-loading { display: none; }
 
-/* Phase breakdown (B6) — a flat list of horizontal bars, deliberately not
-   .phase-card (that class carries expand/collapse chrome this list doesn't
-   need). The bar itself is an inline SVG rect with a `width` *attribute*
-   (not inline `style`, per the CSP rule) driven by setAttribute, same
-   pattern progressRing.js already uses for its own dynamic stroke-dashoffset. */
-.phase-breakdown-list { display: grid; gap: var(--space-3); align-content: start; }
+/* C2 (issue #494) scope item 4 — "+N this week" headline figure, next to the
+   "Cumulative progress" card title (progress.js's lineHeadlineSlot). */
+.progress-card-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.progress-card-title-row .progress-card-title { margin-bottom: 0; }
+.chart-headline-figure { margin: 0; font-size: var(--text-lg); font-weight: 700; color: var(--color-accent-700); }
+:root[data-theme='dark'] .chart-headline-figure { color: var(--color-accent-700); }
+.progress-card-title-hint { margin: 0; font-size: var(--text-base); color: var(--color-text-muted); }
+
+/* Phase breakdown (B6, merged with the old priority table in issue #494's
+   C2) — a flat list of horizontal bars, deliberately not .phase-card (that
+   class carries expand/collapse chrome this list doesn't need). The bar
+   itself is an inline SVG rect with a `width` *attribute* (not inline
+   `style`, per the CSP rule) driven by setAttribute, same pattern
+   progressRing.js already uses for its own dynamic stroke-dashoffset.
+   `.phase-breakdown-list` carries a left-hand spine rule (`::before`) that
+   every row's `.phase-breakdown-spine-dot` sits on top of — a flow-positioned
+   cousin of the dashboard's own JS-pixel-measured `.phase-spine` (issue
+   #492, `.claude/rules/ui-styling.md`); these rows are uniform-height flex
+   items, so no per-row pixel measurement is needed to thread them together. */
+.phase-breakdown-list { display: grid; gap: var(--space-3); align-content: start; position: relative; padding-left: 4px; }
+.phase-breakdown-list::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 9px;
+  width: 2px;
+  background: var(--color-border);
+  border-radius: 1px;
+}
 .phase-breakdown-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -5312,13 +5353,15 @@ html[data-scrolling] .dropdown-menu {
   color: inherit;
   cursor: pointer;
   border-radius: 6px;
+  position: relative;
 }
 .phase-breakdown-row:hover, .phase-breakdown-row:focus-visible { background: var(--color-surface-raised); outline: none; }
-.phase-breakdown-dot { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
-.phase-breakdown-dot[data-priority="P0"] { background: var(--color-p0); }
-.phase-breakdown-dot[data-priority="P1"] { background: var(--color-p1); }
-.phase-breakdown-dot[data-priority="P2"] { background: var(--color-p2); }
-.phase-breakdown-dot[data-priority="P3"] { background: var(--color-p3); }
+.phase-breakdown-spine-dot { position: relative; z-index: 1; width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; background: var(--color-bg); border: 2px solid var(--color-border-strong); }
+.phase-breakdown-spine-dot[data-priority="P0"] { border-color: var(--color-p0); }
+.phase-breakdown-spine-dot[data-priority="P1"] { border-color: var(--color-p1); }
+.phase-breakdown-spine-dot[data-priority="P2"] { border-color: var(--color-p2); }
+.phase-breakdown-spine-dot[data-priority="P3"] { border-color: var(--color-p3); }
+.phase-breakdown-spine-dot[data-complete="true"] { background: var(--color-accent); border-color: var(--color-accent); }
 .phase-breakdown-main { display: grid; gap: 4px; min-width: 0; }
 .phase-breakdown-name { font-weight: 600; font-size: var(--text-base); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .phase-breakdown-count { font-size: var(--text-base); color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -5345,25 +5388,26 @@ html[data-scrolling] .dropdown-menu {
 .kpi-tile-hero .mini-bar-track { fill: rgba(0, 0, 0, 0.14); }
 .stat-tile-bar { margin-top: 6px; }
 
-/* Priority x phase table (B7) */
-.priority-table-wrap { overflow-x: auto; }
-.priority-table { width: 100%; border-collapse: collapse; font-size: var(--text-base); }
-.priority-table th, .priority-table td { padding: 8px 10px; text-align: center; white-space: nowrap; }
-.priority-table th:first-child, .priority-table td:first-child { text-align: left; }
-.priority-table thead th { color: var(--color-text-muted); font-weight: 600; border-bottom: 1px solid var(--color-border); }
-.priority-table td { border-bottom: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
-.priority-table tbody tr:last-child td { border-bottom: none; }
-.priority-cell[data-band="empty"] { color: var(--color-text-muted); }
-.priority-cell[data-band="low"] { background: var(--color-danger-bg); color: var(--color-danger); }
-.priority-cell[data-band="mid"] { background: var(--color-warning-bg); color: var(--color-warning); }
-.priority-cell[data-band="high"] { background: var(--color-success-bg); color: var(--color-success); }
-
-/* Projected completion (B8) */
-.projection-card-body { display: grid; gap: 4px; justify-items: center; text-align: center; }
+/* Projected completion (B8) — C2 (issue #494) scope item 6 rebuilt this into
+   the page's closing statement: a large date first, a supporting pace line,
+   and the "speed up" note in an accent-*tinted* strip rather than a full
+   accent block (the hero KPI tile already carries this page's one
+   full-accent surface — see §9's "exactly one full-accent surface per
+   viewport" review rule). */
+.projection-card-body { display: grid; gap: var(--space-2); justify-items: center; text-align: center; }
+.projection-headline { font-size: var(--text-3xl); font-weight: 800; color: var(--color-text); }
 .projection-pace { color: var(--color-text-muted); font-size: var(--text-base); }
-.projection-headline { font-size: var(--text-2xl); font-weight: 800; color: var(--color-accent-700); }
-:root[data-theme='dark'] .projection-headline { color: var(--color-accent-700); }
-.projection-boost { color: var(--color-text-muted); font-size: var(--text-base); }
+.projection-boost-strip {
+  margin-top: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+:root[data-theme='dark'] .projection-boost-strip { color: var(--color-accent-700); }
 .projection-empty { color: var(--color-text-muted); text-align: center; }
 
 /* Roadmap comparison modal (issue #285) — reuses .modal-overlay/.modal-card and
@@ -5400,7 +5444,6 @@ html[data-scrolling] .dropdown-menu {
 
 @media (max-width: 480px) {
   .progress-card { padding: var(--space-4); }
-  .priority-table { font-size: var(--text-base); }
 }
 
 /* ==========================================================================

@@ -77,16 +77,6 @@ export function buildVelocitySeries(effectiveLog, days, now = Date.now()) {
   return { labels: dates.map(formatShortDate), counts, rollingAverage };
 }
 
-// B7's cell-shading bands — green (>=67%) / amber (>=34%) / red (<34%) /
-// empty (no topics of that priority in that phase at all).
-export function priorityBand(done, total) {
-  if (total === 0) return 'empty';
-  const pct = (done / total) * 100;
-  if (pct >= 67) return 'high';
-  if (pct >= 34) return 'mid';
-  return 'low';
-}
-
 // The priority most items in a given phase carry — computePhaseBreakdown()
 // doesn't itself track priority (it only knows done/total per phase), so
 // this derives one from the already-computed priorityBreakdown instead of
@@ -119,6 +109,25 @@ function renderMiniBar(pct) {
     svgEl('rect', { class: 'mini-bar-fill', x: '0', y: '0', width: String(clamped), height: '8', rx: '4' })
   );
   return svg;
+}
+
+// C2 (issue #494) scope item 1 — one derived display line replacing the old
+// static subtitle + chip row, e.g. "Four days running, and 26% of the way
+// up." Never fabricated: both clauses come straight from computeAnalytics()'s
+// own streaks.current/overview.pct, just phrased as a sentence instead of two
+// separate stat numbers (`.claude/rules/content-style.md`'s plain-language
+// rule). A zero-streak/zero-progress account gets an inviting opener instead
+// of "Zero days running" reading like a failure state.
+const ORDINAL_DAY_WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'];
+function streakClause(currentStreak) {
+  if (currentStreak === 0) return "Let's get moving";
+  const word = currentStreak < ORDINAL_DAY_WORDS.length ? ORDINAL_DAY_WORDS[currentStreak] : String(currentStreak);
+  return `${word} day${currentStreak === 1 ? '' : 's'} running`;
+}
+export function buildHeroStatement({ streaks, overview }) {
+  const streak = streakClause(streaks.current);
+  if (overview.total === 0) return `${streak} — add your first topic to get started.`;
+  return `${streak}, and ${overview.pct}% of the way up.`;
 }
 
 function renderRangeChips(active, onChange) {
@@ -183,7 +192,12 @@ function renderStatCards(analytics, animate, timeSpentSeconds) {
     longestValue.textContent = String(streaks.longest);
   }
 
-  return el('div', { className: 'stat-strip' }, [
+  // C2 (issue #494) scope item 2 — one large hero tile (topics complete,
+  // with its own bar) beside a 2x2 grid of four supporting tiles, rather
+  // than five identical tiles in a row (which "reads as a report," per the
+  // issue). `.kpi-layout`/`.kpi-grid-secondary` collapse to one column below
+  // 760px (app.css).
+  return el('div', { className: 'kpi-layout' }, [
     renderStatTile({
       icon: 'check',
       value: doneValue,
@@ -194,41 +208,56 @@ function renderStatCards(analytics, animate, timeSpentSeconds) {
       zero: overview.done === 0,
       caption: overview.done === 0 ? 'Check off your first topic to get started.' : undefined
     }),
-    renderStatTile({
-      icon: 'flame',
-      value: currentValue,
-      total: el('span', { className: 'kpi-tile-total', text: streaks.current === 1 ? 'day' : 'days' }),
-      label: 'Current streak',
-      zero: streaks.current === 0,
-      caption: streaks.current === 0
-        ? 'Complete a topic today to start your streak.'
-        : streakFreezesAvailable > 0
-          ? `${streakFreezesAvailable} missed-day cover${streakFreezesAvailable === 1 ? '' : 's'} available.`
-          : 'No missed-day cover available.'
-    }),
-    renderStatTile({
-      icon: 'sparkle',
-      value: longestValue,
-      total: el('span', { className: 'kpi-tile-total', text: streaks.longest === 1 ? 'day' : 'days' }),
-      label: 'Longest streak',
-      zero: streaks.longest === 0
-    }),
-    renderStatTile({
-      icon: 'trendingUp',
-      value: velocityValue,
-      total: el('span', { className: 'kpi-tile-total', text: '/ day' }),
-      label: 'Per day',
-      zero: velocity === 0,
-      caption: velocity === 0 ? 'Complete topics daily to build up your average.' : undefined
-    }),
-    renderStatTile({
-      icon: 'timer',
-      value: el('span', { text: formatTimeSpent(timeSpentSeconds) }),
-      label: 'Time tracked'
-    })
+    el('div', { className: 'kpi-grid-secondary' }, [
+      renderStatTile({
+        icon: 'flame',
+        value: currentValue,
+        total: el('span', { className: 'kpi-tile-total', text: streaks.current === 1 ? 'day' : 'days' }),
+        label: 'Current streak',
+        zero: streaks.current === 0,
+        caption: streaks.current === 0
+          ? 'Complete a topic today to start your streak.'
+          : streakFreezesAvailable > 0
+            ? `${streakFreezesAvailable} missed-day cover${streakFreezesAvailable === 1 ? '' : 's'} available.`
+            : 'No missed-day cover available.'
+      }),
+      renderStatTile({
+        icon: 'sparkle',
+        value: longestValue,
+        total: el('span', { className: 'kpi-tile-total', text: streaks.longest === 1 ? 'day' : 'days' }),
+        label: 'Longest streak',
+        zero: streaks.longest === 0
+      }),
+      renderStatTile({
+        icon: 'trendingUp',
+        value: velocityValue,
+        total: el('span', { className: 'kpi-tile-total', text: '/ day' }),
+        label: 'Per day',
+        zero: velocity === 0,
+        caption: velocity === 0 ? 'Complete topics daily to build up your average.' : undefined
+      }),
+      renderStatTile({
+        icon: 'timer',
+        value: el('span', { text: formatTimeSpent(timeSpentSeconds) }),
+        label: 'Time tracked'
+      })
+    ])
   ]);
 }
 
+// C2 (issue #494) scope item 5 — merges the old separate "Phase breakdown"
+// and "Priority × phase" cards into one card of tappable rows (name, bar,
+// percentage, count) — the priority table didn't survive 360px and was the
+// least-read block on the page (per the issue). Each row's dot still carries
+// its dominant priority (dominantPriorityFor() below), so the priority
+// signal isn't lost, just folded into the existing row instead of a second
+// wide table. Threaded with a left-hand spine (`.phase-breakdown-spine`), a
+// lighter flow-positioned cousin of the dashboard's own JS-pixel-measured
+// `.phase-spine` (issue #492, `.claude/rules/ui-styling.md`) — these rows
+// are uniform-height flex items, so a simple CSS `::before` rule + one dot
+// per row is enough to read as "the same spine," without needing that
+// component's `getBoundingClientRect()` machinery.
+//
 // B6 — clicking a row writes the target phase's title to a one-shot
 // sessionStorage signal and navigates to the dashboard; dashboard.js reads
 // and clears it on mount to open + scroll to that phase (see
@@ -240,15 +269,16 @@ function renderPhaseBreakdownList(phaseBreakdown, priorityBreakdown) {
   return el('div', { className: 'phase-breakdown-list' },
     phaseBreakdown.map(row => {
       const priority = dominantPriorityFor(row.phase, priorityBreakdown);
+      const complete = row.total > 0 && row.done === row.total;
       const button = el('button', {
         type: 'button',
-        className: 'phase-breakdown-row',
+        className: `phase-breakdown-row${complete ? ' phase-breakdown-row-complete' : ''}`,
         onClick: () => {
           sessionStorage.setItem(KEYS.SCROLL_TO_PHASE, row.phase);
           navigate('/app');
         }
       }, [
-        el('span', { className: 'phase-breakdown-dot', dataset: { priority } }),
+        el('span', { className: 'phase-breakdown-spine-dot', dataset: { priority, complete: String(complete) } }),
         el('span', { className: 'phase-breakdown-main' }, [
           el('span', { className: 'phase-breakdown-name', text: row.phase || 'Untitled phase' }),
           renderMiniBar(row.pct)
@@ -260,31 +290,6 @@ function renderPhaseBreakdownList(phaseBreakdown, priorityBreakdown) {
     }));
 }
 
-function renderPriorityTable(priorityBreakdown) {
-  if (!priorityBreakdown.length) {
-    return el('p', { className: 'progress-empty', text: 'No topics yet — add some to your roadmap to see this table.' });
-  }
-  return el('div', { className: 'priority-table-wrap' }, [
-    el('table', { className: 'priority-table' }, [
-      el('thead', {}, [
-        el('tr', {}, [el('th', { text: 'Phase' }), ...PRIORITIES.map(p => el('th', { text: priorityLabel(p) }))])
-      ]),
-      el('tbody', {},
-        priorityBreakdown.map(row => el('tr', {}, [
-          el('td', { text: row.phase || 'Untitled phase' }),
-          ...PRIORITIES.map(p => {
-            const { done, total } = row.priorities[p];
-            return el('td', {
-              className: 'priority-cell',
-              dataset: { band: priorityBand(done, total) },
-              text: total ? `${done}/${total}` : '—'
-            });
-          })
-        ])))
-    ])
-  ]);
-}
-
 function renderProjectionCard(projection) {
   if (projection.complete) {
     return el('p', { className: 'projection-empty', text: "You've completed every topic in this roadmap. Nice work." });
@@ -292,10 +297,16 @@ function renderProjectionCard(projection) {
   if (projection.noRecentActivity) {
     return el('p', { className: 'projection-empty', text: 'No recent activity. Check off 3 topics today to get back on track.' });
   }
+  // C2 (issue #494) scope item 6 — the page's closing statement: a large
+  // date, a supporting pace line, and the "speed up" note in an
+  // accent-tinted strip (`.projection-boost-strip`) rather than a full
+  // accent block — the hero KPI tile already carries this page's one
+  // full-accent surface (§9's "exactly one full-accent surface per
+  // viewport" review rule), so this is a tint, not a second solid fill.
   return el('div', { className: 'projection-card-body' }, [
-    el('p', { className: 'projection-pace', text: `At your current pace (${projection.velocity.toFixed(1)} topics/day)` }),
-    el('p', { className: 'projection-headline', text: `~${projection.daysToComplete} days · ${formatLongDate(projection.projectedDate)}` }),
-    el('p', { className: 'projection-boost', text: `Speed up by 2 topics/day → done by ${formatLongDate(projection.boostedProjectedDate)}.` })
+    el('p', { className: 'projection-headline', text: formatLongDate(projection.projectedDate) }),
+    el('p', { className: 'projection-pace', text: `~${projection.daysToComplete} days to go at your current pace (${projection.velocity.toFixed(1)} topics/day).` }),
+    el('p', { className: 'projection-boost-strip', text: `Speed up by 2 topics/day → done by ${formatLongDate(projection.boostedProjectedDate)}.` })
   ]);
 }
 
@@ -345,13 +356,14 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   const guestBanner = createGuestBanner(user);
   const bottomNav = createBottomNav({ activeRoute: '/progress' });
 
+  const heroStatementSlot = el('h1', { className: 'progress-hero-statement' });
   const statStripSlot = el('div', {});
   const heatmapSlot = el('div', {});
   const phaseBreakdownSlot = el('div', {});
-  const priorityTableSlot = el('div', {});
   const projectionSlot = el('div', {});
   const rangeToggleSlot = el('div', {});
   const velocityEmptySlot = el('div', {});
+  const lineHeadlineSlot = el('p', { className: 'chart-headline-figure' });
   const lineCanvas = el('canvas', { className: 'chart-canvas-loading' });
   const barCanvas = el('canvas', { className: 'chart-canvas-loading' });
   const lineSkeleton = createSkeletonCard();
@@ -384,16 +396,16 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
   const content = el('div', { className: 'app-content progress-content', id: 'main-content', tabindex: '-1' }, [
     guestBanner,
     el('header', { className: 'progress-header' }, [
-      el('div', {}, [
-        el('h1', { text: 'Progress' }),
-        el('p', { className: 'progress-header-subtitle', text: 'Your preparation journey at a glance.' })
-      ]),
+      heroStatementSlot,
       el('div', { className: 'progress-header-actions' }, [rangeToggleSlot, compareBtn, shareBtn])
     ]),
     statStripSlot,
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Activity' }), heatmapSlot]),
     el('div', { className: 'progress-card' }, [
-      el('h2', { className: 'progress-card-title', text: 'Cumulative progress' }),
+      el('div', { className: 'progress-card-title-row' }, [
+        el('h2', { className: 'progress-card-title', text: 'Cumulative progress' }),
+        lineHeadlineSlot
+      ]),
       el('div', { className: 'chart-container' }, [lineSkeleton, lineCanvas])
     ]),
     el('div', { className: 'progress-card' }, [
@@ -401,8 +413,13 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
       velocityEmptySlot,
       el('div', { className: 'chart-container' }, [barSkeleton, barCanvas])
     ]),
-    el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Phase breakdown' }), phaseBreakdownSlot]),
-    el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Priority × phase' }), priorityTableSlot]),
+    el('div', { className: 'progress-card' }, [
+      el('div', { className: 'progress-card-title-row' }, [
+        el('h2', { className: 'progress-card-title', text: 'By phase' }),
+        el('p', { className: 'progress-card-title-hint', text: 'Tap a phase to open it' })
+      ]),
+      phaseBreakdownSlot
+    ]),
     el('div', { className: 'progress-card' }, [el('h2', { className: 'progress-card-title', text: 'Finishing date' }), projectionSlot])
   ]);
 
@@ -436,6 +453,12 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     const days = currentRangeDays();
     const cumulative = buildCumulativeSeries(effectiveLog, days);
     const velocitySeries = buildVelocitySeries(effectiveLog, days);
+    // C2 (issue #494) scope item 4 — "+N this week" headline figure above
+    // the cumulative-progress line, independent of the range toggle (always
+    // the last 7 real days, matching what "this week" means everywhere else
+    // on this page).
+    const thisWeekTotal = lastNDateKeys(7, Date.now()).reduce((sum, date) => sum + (effectiveLog[date] || 0), 0);
+    lineHeadlineSlot.textContent = `+${thisWeekTotal} this week`;
     // issue #206 §6 — a flat-zero velocity chart (no completions anywhere in the
     // selected range) reads as an error/loading state rather than "nothing to show
     // yet" without a caption. Small solid gold dot, not a full illustration.
@@ -487,11 +510,11 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     // the item-count cap (800) and the daily-todo cap (20 active).
     const roadmapSeconds = Object.values(items).reduce((sum, item) => sum + (item.timeSpentSeconds || 0), 0);
     const todoSeconds = (dailyTodoStore?.getSnapshot().todos || []).reduce((sum, todo) => sum + (todo.timeSpentSeconds || 0), 0);
+    heroStatementSlot.textContent = buildHeroStatement(analytics);
     statStripSlot.replaceChildren(renderStatCards(analytics, !hasAnimatedStats, roadmapSeconds + todoSeconds));
     hasAnimatedStats = true;
     heatmapSlot.replaceChildren(createHeatmap(analytics.heatmapData));
     phaseBreakdownSlot.replaceChildren(renderPhaseBreakdownList(analytics.phaseBreakdown, analytics.priorityBreakdown));
-    priorityTableSlot.replaceChildren(renderPriorityTable(analytics.priorityBreakdown));
     projectionSlot.replaceChildren(renderProjectionCard(analytics.projection));
     rangeToggleSlot.replaceChildren(renderRangeChips(selectedRange, value => {
       selectedRange = value;
