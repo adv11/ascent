@@ -6119,6 +6119,103 @@ html[data-scrolling] .dropdown-menu {
   .roadmap-filters-card { padding: 16px 18px; }
 }
 
+/* Issue #497 (D1) — every modal becomes a bottom sheet below 720px. Implemented
+   once in the shared shell every listed modal builds on (`.modal-overlay`/
+   `.modal-card`, `modal.js`) plus `.panel-overlay`/`.item-panel`
+   (`itemPanel.js`, which predates and doesn't reuse `modal.js`'s classes) —
+   confirmDialog, commandPalette, importRoadmapModal, shareRoadmapModal,
+   deleteAccountModal, and feedbackModal all get the sheet treatment for free
+   with zero per-component CSS, since they only ever add an extra class
+   alongside `modal-card`, never replace it. The drag handle is a `::before`
+   pseudo-element, not a DOM node — no component needed a JS change for this
+   issue. Threshold widened from the item panel's previous 480px (issue #6
+   Phase 8) to 720px so every modal in this batch switches to a sheet at the
+   same viewport width, matching the design reference's single "below 720px"
+   rule rather than each modal picking its own breakpoint. */
+@media (max-width: 720px) {
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 22px 22px 0 0;
+    max-height: 92vh;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding-top: 36px;
+    position: relative;
+  }
+  .modal-card::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: hsl(var(--v3-divider) / 0.8);
+  }
+  /* Close buttons absolutely positioned in a card's top-right corner need to
+     clear the drag handle's reserved top padding, and grow to the 44px+
+     tap-min floor regardless of pointer type — a phone-viewport rule, not a
+     touch-capability one (the design reference ties this to width, not
+     pointer type), so it's intentionally not gated on `(pointer: coarse)`
+     the way most touch-target rules in this file are. */
+  .modal-close, .feedback-modal-close {
+    top: 16px;
+    width: var(--tap-min);
+    height: var(--tap-min);
+  }
+  /* Primary action goes full width and the action row stops right-aligning
+     — matches the design reference's "primary action is full width" rule,
+     whichever footer-row class a given modal happens to use. */
+  .confirm-dialog-actions,
+  .feedback-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 16px;
+  }
+  .confirm-dialog-actions .btn,
+  .feedback-form-actions .btn {
+    width: 100%;
+  }
+
+  /* `.item-panel` gets the identical sheet shape (radius/max-height/drag
+     handle) as `.modal-card` above, just applied to its own
+     `.panel-overlay`/`.panel-header` shell instead. */
+  .item-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 92vh;
+    height: 92dvh;
+    border-radius: 22px 22px 0 0;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(100%);
+  }
+  .item-panel.show { transform: translateY(0); }
+  .item-panel .panel-header { position: relative; padding-top: 28px; }
+  .item-panel .panel-header::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: hsl(var(--v3-divider) / 0.8);
+  }
+  .panel-footer { flex-direction: column; align-items: stretch; }
+  .panel-footer-right { margin-left: 0; width: 100%; }
+  .panel-footer-right .btn { flex: 1; }
+}
+
 @media (max-width: 480px) {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 16px 12px 88px calc(12px + var(--phase-spine-gutter)); }
@@ -6142,28 +6239,10 @@ html[data-scrolling] .dropdown-menu {
      tile its full width back, which is comfortably enough for the content
      to stay on one line. */
   .stat-strip { grid-template-columns: 1fr; }
-  /* issue #6 Phase 8 — full-screen slide-up from the bottom instead of a
-     side-slide panel on phone widths; the ≥481px side-slide behavior above
-     is unchanged. */
-  .item-panel {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: 88vh;
-    height: 88dvh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-top: 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    transform: translateY(100%);
-  }
-  .item-panel.show { transform: translateY(0); }
-  .panel-footer { flex-direction: column; align-items: stretch; }
-  .panel-footer-right { margin-left: 0; width: 100%; }
-  .panel-footer-right .btn { flex: 1; }
-  .confirm-dialog-actions { flex-direction: column; }
-  .confirm-dialog-actions .btn { width: 100%; }
+  /* `.item-panel`'s bottom-sheet treatment (was issue #6 Phase 8, gated at
+     this same ≤480px tier) moved to the shared ≤720px bottom-sheet block
+     above (issue #497) — see that block's own comment for why the threshold
+     widened. Don't re-add it here. */
   .landing-hero-title { font-size: var(--text-3xl); }
   .landing-hero-actions { flex-direction: column; align-items: stretch; }
   .landing-hero-actions .btn { width: 100%; }
