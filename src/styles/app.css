@@ -897,7 +897,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      gradient is always light green regardless of theme (issue #416 Phase 1). */
   color: #000;
   border-color: transparent;
-  border-radius: var(--v3-radius-lg);
   box-shadow: var(--v3-shadow-glow);
 }
 .btn-primary:hover:not(:disabled) { box-shadow: var(--v3-shadow-glow-lg); transform: translateY(-2px); }
@@ -909,7 +908,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: hsl(var(--v3-surface));
   color: var(--color-text);
   border-color: var(--color-divider);
-  border-radius: var(--v3-radius-lg);
 }
 .btn-secondary:hover:not(:disabled) { border-color: hsl(var(--v3-accent) / 0.4); color: var(--v3-accent-ink, var(--color-accent)); transform: translateY(-2px); }
 
@@ -1001,7 +999,7 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    corners while clipping every inner item to a plain rectangle — the
    standard segmented-control technique, and simpler than rounding only the
    first/last item's outer corners by hand. */
-.seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
 .seg-item {
   padding: var(--space-2) var(--space-4);
   background: var(--color-surface);
