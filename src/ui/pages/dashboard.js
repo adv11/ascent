@@ -2373,7 +2373,19 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
                 roadmapBadgeIconSlot,
                 roadmapBadgeNameEl
               ]),
-              roadmapMetaRow
+              // Issue #522 audit follow-up — B4 (#489)'s own design reference
+              // (03-dashboard.png) shows a "Switch roadmap" button right here
+              // on the summary card, alongside the "Saved …" meta text — a
+              // real gap in the shipped card, not a deliberate omission: the
+              // sidebar's "Your roadmaps" nav item (issue #6 Phase 2's
+              // comment above `onDeleteAccount`) already reaches the same
+              // destination, but that's a different, less discoverable path
+              // than a button on the exact card a user is already looking
+              // at. Additive, not a replacement for the sidebar link.
+              el('div', { className: 'roadmap-summary-top-right' }, [
+                roadmapMetaRow,
+                el('a', { className: 'btn btn-secondary btn-sm', href: '#/onboarding', text: 'Switch roadmap' })
+              ])
             ]),
             el('div', { className: 'roadmap-summary-progress' }, [
               el('div', { className: 'roadmap-summary-progress-row' }, [

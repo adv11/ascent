@@ -5541,3 +5541,25 @@ fill width is a bucketed CSS class (nearest 5%,
 — a native `<progress>` element was tried first but dropped after
 real-browser testing showed its `::-webkit-progress-value` pseudo-styling
 doesn't reliably apply. `CACHE_VERSION` bumped 104 → 105.
+
+### 2026-08-06 — PR #TBD — Audit: A1–B7 shipped UI vs. design reference screenshots (issue #522)
+
+Every issue in the A1–B7 responsive-redesign batch (#482–#492, all merged) had an
+attached design reference screenshot that no PR in that batch appears to have actually
+been visually checked against — found while starting issue #493 (C1) and confirmed by
+fetching and comparing all five referenced images
+(`docs/screenshots/responsive-redesign/{01-foundations,03-dashboard,03-dashboard-mobile,
+04-onboarding,08-panels-modals}.png`) against the live app. Most of the batch held up:
+the topic row's two-line/one-overflow shape (B1), the nav fold (A3), the progress spine
+(B7), and the foundations page's own color/spacing/control-size tokens all matched their
+references closely on direct comparison. The one concrete, confirmed gap was B4
+(#489)'s roadmap summary card — its own reference (`03-dashboard.png`) shows a "Switch
+roadmap" button next to the "Saved …" text that the shipped card never got.
+`dashboard.js`'s `.roadmap-summary-top` now wraps that meta text and a new
+`<a href="#/onboarding">Switch roadmap</a>` button in `.roadmap-summary-top-right`,
+keeping `.roadmap-summary-top`'s `justify-content: space-between` to exactly two real
+items (the identity badge, and this group). Additive, not a replacement for the
+sidebar's existing "Your roadmaps" nav item. `.claude/skills/open-pr`'s pre-PR checklist
+(updated in #493's own PR) now requires this same fetch-and-compare step before any
+future PR touching an issue with an attached design image. `CACHE_VERSION` bumped 105 →
+106.
