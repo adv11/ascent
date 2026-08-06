@@ -31,6 +31,8 @@ beforeEach(() => {
   document.body.innerHTML = '';
   localStorage.clear();
   document.documentElement.dataset.theme = 'light';
+  delete document.documentElement.dataset.textSize;
+  document.documentElement.removeAttribute('data-animations-off');
 });
 
 async function freshSettings(user) {
@@ -52,10 +54,16 @@ describe('renderSettings — guest view (issue #16)', () => {
 describe('renderSettings — signed-in view (issue #16)', () => {
   const user = { isAnonymous: false, uid: 'u1', email: 'jane@example.com', emailVerified: false };
 
-  it('renders Profile, Preferences, Data, and Danger zone sections', async () => {
+  it('renders the four Account/Preferences/Your data/Delete account tabs, one panel visible at a time', async () => {
     const app = await freshSettings(user);
+    const tabLabels = Array.from(app.querySelectorAll('[role="tab"]')).map(el => el.textContent);
+    expect(tabLabels).toEqual(['Account', 'Preferences', 'Your data', 'Delete account']);
+
     const titles = Array.from(app.querySelectorAll('.settings-section-title')).map(el => el.textContent);
-    expect(titles).toEqual(['Profile', 'Preferences', 'Data', 'Danger zone']);
+    expect(titles).toEqual(['Account', 'Preferences', 'Your data', 'Delete account']);
+
+    const panels = app.querySelectorAll('.tab-panel');
+    expect(Array.from(panels).filter(p => p.classList.contains('active'))).toHaveLength(1);
   });
 
   it('shows the current email and an unverified badge', async () => {
@@ -141,6 +149,31 @@ describe('renderSettings — signed-in view (issue #16)', () => {
     themeSelect.value = 'dark';
     themeSelect.dispatchEvent(new Event('change'));
     expect(getTheme()).toBe('dark');
+  });
+
+  it('clicking a text size segment persists it and applies the data-text-size attribute (issue #495)', async () => {
+    const app = await freshSettings(user);
+    const seg = Array.from(app.querySelectorAll('.seg[aria-label="Text size"] .seg-item'));
+    const largeBtn = seg.find(btn => btn.textContent === 'Large');
+    largeBtn.click();
+    expect(largeBtn.getAttribute('aria-selected')).toBe('true');
+    expect(localStorage.getItem(KEYS.TEXT_SIZE)).toBe('large');
+    expect(document.documentElement.dataset.textSize).toBe('large');
+  });
+
+  it('toggling "Turn off animations" persists the preference (issue #495)', async () => {
+    const app = await freshSettings(user);
+    const checkbox = app.querySelector('#animationsOff');
+    expect(checkbox.checked).toBe(false);
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
+    expect(localStorage.getItem(KEYS.ANIMATIONS_OFF)).toBe('true');
+    expect(document.documentElement.hasAttribute('data-animations-off')).toBe(true);
+
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event('change'));
+    expect(localStorage.getItem(KEYS.ANIMATIONS_OFF)).toBeNull();
+    expect(document.documentElement.hasAttribute('data-animations-off')).toBe(false);
   });
 
   it('the "Install Ascent" row is hidden until beforeinstallprompt fires, then dismiss hides it again (issue #19)', async () => {

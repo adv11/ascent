@@ -19,6 +19,14 @@ import { isInstallable, onInstallabilityChange, promptInstall, dismissInstallPro
 import { createFeatureBadge, dismissFeatureBadge } from '../components/featureBadge.js';
 import { createSelect } from '../components/select.js';
 import { priorityLabel } from '../utils/priorityLabels.js';
+import { createTabs } from '../components/tabs.js';
+import { getTextSize, setTextSize, getAnimationsOff, setAnimationsOff } from '../../services/uiPreferences.js';
+
+const TEXT_SIZE_OPTIONS = [
+  { value: 'default', label: 'Default' },
+  { value: 'large', label: 'Large' },
+  { value: 'largest', label: 'Largest' }
+];
 
 const FILTER_OPTIONS = [
   { value: 'ALL', label: 'All' },
@@ -27,6 +35,40 @@ const FILTER_OPTIONS = [
   { value: 'P2', label: priorityLabel('P2') },
   { value: 'P3', label: priorityLabel('P3') }
 ];
+
+// A small exclusive-choice segmented control (design-system.md §5's `.seg`/
+// `.seg-item`, this its first real call site — same "built, not yet wired
+// into a page" precedent tabs.js itself was in before this issue). Not a
+// full component module since this page is the only caller; `onChange`
+// fires with the newly selected value.
+function buildSegmentedControl(options, { value, ariaLabel, onChange }) {
+  let current = value;
+  const buttons = options.map(opt => el('button', {
+    type: 'button',
+    className: 'seg-item',
+    'aria-selected': String(opt.value === current),
+    text: opt.label,
+    onClick: () => {
+      if (opt.value === current) return;
+      current = opt.value;
+      buttons.forEach((btn, i) => btn.setAttribute('aria-selected', String(options[i].value === current)));
+      onChange(current);
+    }
+  }));
+  return el('div', { className: 'seg', role: 'radiogroup', 'aria-label': ariaLabel }, buttons);
+}
+
+// A checkbox-driven toggle switch (`.switch`/`.switch-input`/`.switch-track`,
+// app.css, this page's first real call site) — `role="switch"` plus the
+// existing `checked`/`change` checkbox contract, so callers wire it exactly
+// like `animationsOffCheckbox` used to be wired as a plain checkbox.
+function buildSwitch({ id, checked }) {
+  const input = el('input', { type: 'checkbox', id, role: 'switch', className: 'switch-input' });
+  input.checked = checked;
+  const track = el('span', { className: 'switch-track', 'aria-hidden': 'true' });
+  const wrap = el('span', { className: 'switch' }, [input, track]);
+  return { wrap, input };
+}
 
 // A collapsible "Change X" row shared by the change-email and change-password
 // flows below — a button that expands into a form in place, matching the
@@ -260,7 +302,8 @@ function buildProfileSection(user) {
   ]);
 
   return el('section', { className: 'settings-section' }, [
-    el('h2', { className: 'settings-section-title', text: 'Profile' }),
+    el('h2', { className: 'settings-section-title', text: 'Account' }),
+    el('p', { className: 'settings-section-subtitle', text: 'Your name, email, and password.' }),
     nameRow,
     emailRow,
     passwordRow,
@@ -268,24 +311,19 @@ function buildProfileSection(user) {
   ]);
 }
 
-function buildPreferencesSection() {
-  const themeSelect = createSelect(
-    [{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }],
-    { value: getTheme(), ariaLabel: 'Theme', className: 'settings-select' }
-  );
-  themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
-  const unsubTheme = onThemeChange(theme => { themeSelect.value = theme; });
-
-  const filterSelect = createSelect(FILTER_OPTIONS, {
-    value: readDefaultFilterPreference(),
-    ariaLabel: 'Default filter',
-    className: 'settings-select'
-  });
-  filterSelect.addEventListener('change', () => {
-    localStorage.setItem(KEYS.DEFAULT_FILTER, filterSelect.value);
-    showToast('Default filter saved.', 'success');
-  });
-
+// issue #435 — real user report: this button reads as broken because
+// clicking it just silently removes the row with no other feedback (the
+// one action on this page with no toast, unlike every other Preferences
+// control right above it — see `filterSelect`'s "Default filter saved."
+// toast a few lines up). It IS wired correctly (dismissInstallPrompt()
+// permanently hides this "install to your device" prompt via
+// KEYS.PWA_INSTALL_DISMISSED, same purpose as dismissing any other
+// one-time nag in this app) — the fix is a confirmation toast, not new
+// logic, so a user can tell the click actually did something.
+// issue #450 follow-up — click registered fine, but "Dismiss" didn't say
+// what it does (permanently hide this row) — relabeled, plus a `title`
+// tooltip noting it's permanent (unlike a snoozable banner).
+function buildInstallRow() {
   const installBtn = el('button', {
     type: 'button',
     className: 'btn btn-secondary btn-sm',
@@ -303,18 +341,6 @@ function buildPreferencesSection() {
       installRow.hidden = !isInstallable();
     }
   });
-  // issue #435 — real user report: this button reads as broken because
-  // clicking it just silently removes the row with no other feedback (the
-  // one action on this page with no toast, unlike every other Preferences
-  // control right above it — see `filterSelect`'s "Default filter saved."
-  // toast a few lines up). It IS wired correctly (dismissInstallPrompt()
-  // permanently hides this "install to your device" prompt via
-  // KEYS.PWA_INSTALL_DISMISSED, same purpose as dismissing any other
-  // one-time nag in this app) — the fix is a confirmation toast, not new
-  // logic, so a user can tell the click actually did something.
-  // issue #450 follow-up — click registered fine, but "Dismiss" didn't say
-  // what it does (permanently hide this row) — relabeled, plus a `title`
-  // tooltip noting it's permanent (unlike a snoozable banner).
   const dismissInstallBtn = el('button', {
     type: 'button', className: 'btn btn-ghost btn-sm',
     text: "Don't show this again",
@@ -338,9 +364,50 @@ function buildPreferencesSection() {
     ])
   ]);
   const unsubInstall = onInstallabilityChange(installable => { installRow.hidden = !installable; });
+  return { installRow, unsubInstall };
+}
+
+function buildPreferencesSection() {
+  const themeSelect = createSelect(
+    [{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }],
+    { value: getTheme(), ariaLabel: 'Theme', className: 'settings-select' }
+  );
+  themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
+  const unsubTheme = onThemeChange(theme => { themeSelect.value = theme; });
+
+  const filterSelect = createSelect(FILTER_OPTIONS, {
+    value: readDefaultFilterPreference(),
+    ariaLabel: 'Default filter',
+    className: 'settings-select'
+  });
+  filterSelect.addEventListener('change', () => {
+    localStorage.setItem(KEYS.DEFAULT_FILTER, filterSelect.value);
+    showToast('Default filter saved.', 'success');
+  });
+
+  const textSizeControl = buildSegmentedControl(TEXT_SIZE_OPTIONS, {
+    value: getTextSize(),
+    ariaLabel: 'Text size',
+    onChange: size => {
+      setTextSize(size);
+      showToast('Text size saved.', 'success');
+    }
+  });
+
+  const { wrap: animationsOffSwitch, input: animationsOffCheckbox } = buildSwitch({
+    id: 'animationsOff',
+    checked: getAnimationsOff()
+  });
+  animationsOffCheckbox.addEventListener('change', () => {
+    setAnimationsOff(animationsOffCheckbox.checked);
+    showToast(animationsOffCheckbox.checked ? 'Animations turned off.' : 'Animations turned on.', 'success');
+  });
+
+  const { installRow, unsubInstall } = buildInstallRow();
 
   const section = el('section', { className: 'settings-section' }, [
     el('h2', { className: 'settings-section-title', text: 'Preferences' }),
+    el('p', { className: 'settings-section-subtitle', text: 'How Ascent looks and what it shows you first.' }),
     el('div', { className: 'settings-row' }, [
       el('div', { className: 'settings-row-main' }, [
         el('span', { className: 'settings-row-label', text: 'Theme' }),
@@ -352,6 +419,24 @@ function buildPreferencesSection() {
         el('span', { className: 'settings-row-label', text: 'Default filter' }),
         filterSelect
       ])
+    ]),
+    el('div', { className: 'settings-row' }, [
+      el('div', { className: 'settings-row-main' }, [
+        el('span', { className: 'settings-row-label-group' }, [
+          el('span', { className: 'settings-row-label', text: 'Text size' }),
+        ]),
+        el('span', { className: 'settings-row-value', text: 'Makes every label and topic bigger, across the whole app.' })
+      ]),
+      textSizeControl
+    ]),
+    el('div', { className: 'settings-row' }, [
+      el('div', { className: 'settings-row-main' }, [
+        el('label', { className: 'settings-row-label-group', for: 'animationsOff' }, [
+          el('span', { className: 'settings-row-label', text: 'Animations' })
+        ]),
+        animationsOffSwitch
+      ]),
+      el('p', { className: 'settings-row-hint', text: 'Turn off if movement on screen bothers you.' })
     ]),
     installRow
   ]);
@@ -367,7 +452,8 @@ function buildPreferencesSection() {
 
 function buildDataSection(store) {
   return el('section', { className: 'settings-section' }, [
-    el('h2', { className: 'settings-section-title', text: 'Data' }),
+    el('h2', { className: 'settings-section-title', text: 'Your data' }),
+    el('p', { className: 'settings-section-subtitle', text: 'Export a backup of your roadmap data.' }),
     el('div', { className: 'settings-row' }, [
       el('div', { className: 'settings-row-main' }, [
         el('span', { className: 'settings-row-label', text: 'Export your roadmap data' }),
@@ -384,7 +470,8 @@ function buildDataSection(store) {
 
 function buildDangerZone() {
   return el('section', { className: 'settings-section danger-zone' }, [
-    el('h2', { className: 'settings-section-title', text: 'Danger zone' }),
+    el('h2', { className: 'settings-section-title', text: 'Delete account' }),
+    el('p', { className: 'settings-section-subtitle', text: 'Permanently delete your account and roadmap data.' }),
     el('div', { className: 'settings-row' }, [
       el('div', { className: 'settings-row-main' }, [
         el('span', { className: 'settings-row-label', text: 'Delete account' }),
@@ -441,7 +528,15 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
         const data = buildDataSection(store);
         const danger = buildDangerZone();
         cleanupSections = [preferences];
-        return el('div', { className: 'settings-sections' }, [profile, preferences, data, danger]);
+        const tabs = createTabs({
+          items: [
+            { id: 'account', label: 'Account', panel: profile },
+            { id: 'preferences', label: 'Preferences', panel: preferences },
+            { id: 'data', label: 'Your data', panel: data },
+            { id: 'delete', label: 'Delete account', panel: danger }
+          ]
+        });
+        return el('div', { className: 'settings-tabs' }, [tabs]);
       })();
 
   const shell = el('div', { className: 'app-shell-2 settings-page fade-in' }, [
