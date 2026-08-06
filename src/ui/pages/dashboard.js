@@ -406,6 +406,12 @@ function cssToken(name, fallback) {
 // phases skip it.
 const LARGE_PHASE_ITEM_THRESHOLD = 40;
 
+// Issue #492 — comfortably above animatePhaseBody()'s own `--duration-base`
+// FLIP animation (240ms by default) so the post-toggle spine recompute below
+// always runs after the animated card has settled into its final height,
+// not mid-animation.
+const PHASE_SPINE_ANIMATION_SETTLE_MS = 320;
+
 // Issue #6 Phase 7 — FLIP height animation for phase-card expand/collapse,
 // replacing the previous plain `display: none/block` + CSS fade (native
 // `display` toggles can't be transitioned at all). Element.animate() runs on
@@ -908,8 +914,12 @@ export function renderPhaseCard(phase, pi, {
   const sectionTotal = visibleSections.reduce((acc, s) => acc + s.items.length, 0);
   const isOpen = openPhases.has(pi);
   const pct = sectionTotal ? Math.round((sectionDone / sectionTotal) * 100) : 0;
+  // Issue #492 — read by updatePhaseSpine() to color each phase's spine dot;
+  // computed here since sectionDone/sectionTotal already exist for the
+  // progress ring and shouldn't be re-derived a second time elsewhere.
+  const status = sectionTotal === 0 ? 'not-started' : sectionDone === 0 ? 'not-started' : sectionDone === sectionTotal ? 'complete' : 'in-progress';
 
-  return el('section', { className: `phase-card ${isOpen ? 'open' : ''}`, dataset: { phase: String(pi), phaseTitle: phase.title, priority: phase.priority } }, [
+  return el('section', { className: `phase-card ${isOpen ? 'open' : ''}`, dataset: { phase: String(pi), phaseTitle: phase.title, priority: phase.priority, status } }, [
     el('button', {
       type: 'button',
       className: 'phase-head',
@@ -1052,6 +1062,16 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     }
   });
   const content = el('main', { className: 'dashboard-content', id: 'main-content', tabindex: '-1' });
+  // Issue #492 — the vertical progress spine down the phase list's left
+  // gutter. Rebuilt (dots) and repositioned (fill height) by
+  // updatePhaseSpine() below; re-appended to `content` on every render()
+  // since that function's own `content.replaceChildren()` would otherwise
+  // discard it along with the phase cards it tracks.
+  const phaseSpine = el('div', { className: 'phase-spine', 'aria-hidden': 'true' }, [
+    el('div', { className: 'phase-spine-track' }),
+    el('div', { className: 'phase-spine-fill' }),
+    el('div', { className: 'phase-spine-dots' })
+  ]);
   // Issue #6 Phase 9 — aria-live so "Saving…"/"Saved to cloud"/"Save failed"
   // reaches a screen-reader user instead of only ever being a silent visual
   // change; 'polite' since a save-state change is never urgent enough to
@@ -1815,6 +1835,13 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
 
           const phaseCard = content.querySelector(`.phase-card[data-phase="${targetPi}"]`);
           if (phaseCard) animatePhaseBody(phaseCard, opening);
+          // Issue #492 — opening/closing a phase shifts every subsequent
+          // phase-head's position (the FLIP animation grows/shrinks this
+          // card's height), so the spine needs both an immediate recompute
+          // (reduced-motion, or the instant class change) and one after the
+          // animation settles.
+          updatePhaseSpine();
+          setTimeout(updatePhaseSpine, PHASE_SPINE_ANIMATION_SETTLE_MS);
 
           const toggleAllBtn = app.querySelector('[data-toggle-all]');
           if (toggleAllBtn) {
@@ -1839,6 +1866,8 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     if (!visibleCount) {
       content.append(createEmptyState({ icon: 'search', title: 'No matching topics. Try another filter or search term.' }));
     }
+    content.append(phaseSpine);
+    updatePhaseSpine();
 
     const toggleAllBtn = app.querySelector('[data-toggle-all]');
     if (toggleAllBtn) {
@@ -1938,7 +1967,13 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       progressEl.textContent = `${visibleDone}/${visible.length}`;
       const ring = phaseCard.querySelector('.progress-ring');
       if (ring) ring._setPct(visible.length ? Math.round((visibleDone / visible.length) * 100) : 0);
+      // Issue #492 — a done-toggle can move a phase between not-started/
+      // in-progress/complete without changing which items are visible, so
+      // the spine dot's status needs the same patch-in-place treatment as
+      // the ring right above it.
+      phaseCard.dataset.status = visible.length === 0 ? 'not-started' : visibleDone === 0 ? 'not-started' : visibleDone === visible.length ? 'complete' : 'in-progress';
     });
+    updatePhaseSpine();
 
     checkForCelebration(allItems);
   }
@@ -2123,6 +2158,51 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     el('span', { className: 'review-due-nav-icon' }, [createIcon('bell', { size: 'xs' })]),
     reviewDueText
   ]);
+
+  // Issue #492 — one dot per rendered phase-card, positioned against its own
+  // `.phase-head` (a fixed-height element regardless of open/closed state,
+  // unlike the card itself) so the spine never shifts when a phase expands.
+  // Both the track and the fill are sized in real pixels off these dot
+  // positions, not a percentage of container height: the track stops at the
+  // last rendered phase's dot (not `.dashboard-content`'s own height, which
+  // includes trailing padding), and the fill is drawn to the vertical centre
+  // of the last phase with any progress at all — either would otherwise land
+  // past or mid-card and read arbitrary.
+  function updatePhaseSpine() {
+    const track = phaseSpine.querySelector('.phase-spine-track');
+    const fill = phaseSpine.querySelector('.phase-spine-fill');
+    const dotsWrap = phaseSpine.querySelector('.phase-spine-dots');
+    if (!track || !fill || !dotsWrap) return;
+    const cards = Array.from(content.querySelectorAll('.phase-card'));
+    dotsWrap.replaceChildren();
+    if (!cards.length) {
+      phaseSpine.hidden = true;
+      return;
+    }
+    phaseSpine.hidden = false;
+    const contentTop = content.getBoundingClientRect().top;
+    let fillHeight = 0;
+    let trackHeight = 0;
+    cards.forEach(card => {
+      const head = card.querySelector('.phase-head');
+      if (!head) return;
+      const rect = head.getBoundingClientRect();
+      const y = rect.top - contentTop + rect.height / 2;
+      const status = card.dataset.status || 'not-started';
+      const dot = el('span', { className: `phase-spine-dot phase-spine-dot-${status}` });
+      dot.style.top = `${y}px`;
+      dotsWrap.append(dot);
+      if (status !== 'not-started') fillHeight = y;
+      // Issue #492 follow-up — the track must stop at the last *rendered*
+      // phase's dot, not stretch to fill `.dashboard-content`'s own height
+      // (which includes trailing bottom padding/whitespace below the last
+      // phase-card) — a real, reported bug where the line ran on well past
+      // the roadmap's actual content.
+      trackHeight = y;
+    });
+    track.style.height = `${trackHeight}px`;
+    fill.style.height = `${fillHeight}px`;
+  }
 
   function updateReviewDueBadge(allItems) {
     const dueCount = getReviewDueItems(allItems).length;
@@ -2533,7 +2613,15 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   // preventDefault() and has no reason to block the browser's own scroll
   // optimizations.
   window.addEventListener('scroll', scheduleVirtualizeRows, { passive: true });
-  window.addEventListener('resize', scheduleVirtualizeRows);
+  // Issue #492 — the spine's dot positions and fill height are measured in
+  // real pixels off each phase-head's rect, so a viewport resize (which can
+  // reflow row heights at the responsive breakpoints) needs the same
+  // recompute a resize already triggers for row virtualization.
+  function handleWindowResize() {
+    scheduleVirtualizeRows();
+    updatePhaseSpine();
+  }
+  window.addEventListener('resize', handleWindowResize);
 
   return () => {
     activeTourCleanup?.();
@@ -2554,7 +2642,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     clearTimeout(saveBadgeTimer);
     window.removeEventListener('keydown', handleGlobalKeydown);
     window.removeEventListener('scroll', scheduleVirtualizeRows);
-    window.removeEventListener('resize', scheduleVirtualizeRows);
+    window.removeEventListener('resize', handleWindowResize);
     if (virtualizeRaf != null) cancelAnimationFrame(virtualizeRaf);
     closeShortcutsOverlay();
     detachFilterPanelTrap?.();
