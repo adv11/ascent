@@ -5563,3 +5563,40 @@ sidebar's existing "Your roadmaps" nav item. `.claude/skills/open-pr`'s pre-PR c
 (updated in #493's own PR) now requires this same fetch-and-compare step before any
 future PR touching an issue with an attached design image. `CACHE_VERSION` bumped 105 →
 106.
+
+### 2026-08-06 — PR #TBD — Settings split into four tabs (issue #495, C3)
+
+`settings.js`'s Profile/Preferences/Data/Danger-zone sections, previously one long
+scroll, are now `tabs.js`'s `createTabs()` panels — that component's first real call
+site (it shipped in issue #6 Phase 3.6, fully built and tested, but issue #125's audit
+found no page that actually needed real tabs at the time; this is that page). Each
+section keeps its existing `.settings-section` markup and gets wrapped as a
+`tab-panel` by `createTabs()` itself, so only one group renders at a time; `.tabs`
+gained `flex-wrap: wrap` (`app.css`) so the tab row wraps rather than overflows/scrolls
+at narrow widths. New `src/services/uiPreferences.js` adds two device-level
+preferences — Text size (`Default`/`Large`/`Largest`, scaling the root font size via a
+new `data-text-size` attribute + three `app.css` rules, since every `--text-*` token is
+`rem`-based) and Turn off animations (a plain `data-animations-off` boolean attribute,
+not yet consumed by any CSS — issue #499 (D3)'s upcoming motion pass wires the actual
+suppression) — both persisted through two new `localStorageKeys.js` entries
+(`KEYS.TEXT_SIZE`/`KEYS.ANIMATIONS_OFF`) and applied synchronously by
+`themeBootstrap.js` before first paint, the same no-FOUC pattern the existing theme
+bootstrap already uses. See `docs/api.md`'s `uiPreferences.js` entry and
+`.claude/rules/ui-styling.md`'s "Text size and animations-off preferences" entry for
+the full contract. Two real cascade/layout bugs were found and fixed live during this
+issue's own manual verification (not caught by the unit suite, which runs in jsdom and
+doesn't compute a real CSS cascade): (1) `.tab-panel:not(.active) { display: none; }`
+replaces a bare `.tab-panel { display: none; }` — the bare form is equal specificity to
+`.settings-section`'s own `display: grid`, and since that rule is declared later in
+`app.css`, it silently won the cascade and left every inactive panel visible; (2)
+`.tab-panel.active`'s own `display: block` was then found to have the identical
+problem in reverse — as two classes, it outranked and collapsed `.settings-section`'s
+`display: grid` (and its `gap`) for the *active* panel, which is why the fix keeps only
+the entrance animation on that rule and lets the panel's own content class decide its
+display. Both are documented inline in `app.css`. A related, separately-reported bug in
+`bottomNav.js` (unrelated code, found during the same responsive pass) is fixed
+alongside: the "My roadmap" tab label wrapped onto two lines in its narrow column on
+phones under ~400px wide, since the 16px type-scale floor forbids shrinking it to fit —
+shortened to "Roadmap" (matching its already-single-word siblings) plus a defensive
+`white-space: nowrap` + ellipsis floor on `.bottom-nav-item-label` for any future label.
+`CACHE_VERSION` bumped 107 → 108.

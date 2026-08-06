@@ -6,7 +6,15 @@ import { createIcon } from './icons.js';
 // below the sidebar's >=900px breakpoint (app.css); the >=900px sidebar is
 // unchanged and still the only nav shown there.
 const NAV_ITEMS = [
-  { route: '/app', label: 'My roadmap', icon: 'dashboard' },
+  // 'Roadmap', not 'My roadmap' — issue #495 follow-up. At 16px bold (the
+  // app-wide type-scale floor, see .claude/rules/ui-styling.md — this label
+  // can never render smaller to "make it fit"), 'My roadmap' wrapped onto
+  // two lines inside its quarter-width column on any phone ≲400px wide,
+  // overflowing this bar's fixed height while the other three single-word
+  // labels stayed on one line — real, reported visual bug. Every sibling
+  // label is already one word; this one now matches instead of being the
+  // one exception that needed two.
+  { route: '/app', label: 'Roadmap', icon: 'dashboard' },
   { route: '/progress', label: 'Progress', icon: 'progress' },
   { route: '/onboarding', label: 'Browse', icon: 'roadmaps' },
   { route: '/settings', label: 'Settings', icon: 'settings' }

@@ -615,3 +615,28 @@ extends `isValidUrl()`'s http/https-only allowlist with `mailto:` for the one
 email link, without widening the shared helper itself; a link that fails
 validation is dropped from the rendered list entirely, never rendered as an
 unsafe `href`.
+
+## `src/services/uiPreferences.js` — text size + animations-off preferences (issue #495)
+
+Two small device-level preferences, same `localStorage` + subscribe/notify shape
+as `theme.js`. Both are applied synchronously by `themeBootstrap.js` (a
+`data-text-size`/`data-animations-off` attribute on `<html>`, set before CSS
+loads) so a reload never flashes the default size or briefly shows an
+animation that should be off — see `.claude/rules/ui-styling.md`'s "Text size
+and animations-off preferences" entry for the full contract.
+
+| Export | Signature | Notes |
+|---|---|---|
+| `getTextSize` | `() => 'default' \| 'large' \| 'largest'` | Reads `KEYS.TEXT_SIZE`; falls back to `'default'` for a missing or invalid stored value. |
+| `setTextSize` | `(size) => void` | Persists to `KEYS.TEXT_SIZE`, sets `document.documentElement.dataset.textSize`, notifies subscribers. |
+| `onTextSizeChange` | `(callback) => unsubscribe` | Same subscribe/unsubscribe shape as `theme.js`'s `onThemeChange`. |
+| `getAnimationsOff` | `() => boolean` | Reads `KEYS.ANIMATIONS_OFF`; `true` only if the stored value is exactly `'true'`. |
+| `setAnimationsOff` | `(off: boolean) => void` | `true` writes `KEYS.ANIMATIONS_OFF = 'true'`; `false` removes the key entirely (never persists `'false'`, same precedent as `TOUR_DONE`/`ONBOARDING_DONE`). Toggles the `data-animations-off` attribute and notifies subscribers either way. |
+| `onAnimationsOffChange` | `(callback) => unsubscribe` | Same shape as `onTextSizeChange`. |
+
+`KEYS.TEXT_SIZE` (`'ascent-text-size'`) and `KEYS.ANIMATIONS_OFF`
+(`'ascent-animations-off'`) are the two new `localStorageKeys.js` entries this
+issue adds. `settings.js`'s Preferences tab is the only current call site
+(a `createSelect()` for text size, a checkbox for animations-off); the
+`data-animations-off` attribute itself has no consumer yet — issue #499 (D3)'s
+motion pass is what will read it to actually suppress animations.

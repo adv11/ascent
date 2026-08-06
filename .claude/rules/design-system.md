@@ -114,8 +114,30 @@ Rules:
 
 - **Three-step radius scale — the exact opposite of v2's "radius 0 everywhere."**
   - `--radius-sm: 0.5rem` (8px) — small controls, checkboxes.
-  - `--radius-md: 0.75rem` (12px) — chips, inputs, mobile menu button.
-  - `--radius-lg: 1rem` (16px) — cards, buttons, the nav pill, modals.
+  - `--radius-md: 0.75rem` (12px) — chips, inputs, mobile menu button, **and buttons/
+    segmented controls (revised, issue #495 follow-up — see below)**.
+  - `--radius-lg: 1rem` (16px) — cards, the nav pill, modals.
+  - **Buttons moved from `--radius-lg` to `--radius-md` (issue #495 follow-up, live
+    user feedback).** §5 originally put `.btn-primary`/`.btn-secondary` at `--radius-lg`
+    (16px) while `.field-input`/`createSelect()`'s trigger stayed at `--radius-md`
+    (12px, §5's own "Inputs" rule) — `.btn-danger` was *already* un-overridden at the
+    base `--radius-md`, so the three button variants didn't even agree with each other
+    before this fix, only `.btn-primary`/`.btn-secondary` did. The mismatch is most
+    visible wherever a button sits directly beside a select/input in the same row
+    (e.g. `settings.js`'s "Install app" button next to the Theme/Default filter
+    selects) — different curvature on same-height controls in the same row reads as
+    an inconsistency, not a deliberate visual distinction. `.btn-primary`/
+    `.btn-secondary`'s `border-radius: var(--v3-radius-lg)` overrides were removed
+    (both now inherit `.btn`'s base `--radius-md`, matching `.btn-danger`), and
+    `.seg`'s own radius moved from `--radius-lg` to `--radius-md` to match — every
+    interactive form-adjacent control (buttons, inputs, selects, segmented controls)
+    is `--radius-md` now. **`--radius-lg` remains for cards, the nav pill, and modals**
+    — those are a different, deliberately rounder category (large surfaces, not
+    inline form controls) and were not touched by this fix; don't "fix" a card/modal
+    down to `--radius-md` by analogy without a fresh, separate report of that
+    specifically looking wrong. If you add a new interactive control that will ever
+    render in the same row as a button or a `.field-input`-based control (select,
+    text input, textarea), default it to `--radius-md`, not `--radius-lg`.
 - **Flat content, elevated overlays (issue #483, superseding this section's original
   "glass everywhere" rule from #430/#440/#455).** A dashboard with twenty-plus
   identically blurred, identically glowing glass panels reads as noise, not depth, and
@@ -183,11 +205,16 @@ Rules:
   black text in light mode / `--color-bg` text in dark mode (portfolio uses literal
   black `text-black` on the gradient in both themes since the gradient is always light
   green — verify this still passes contrast against the *lightest* stop of the gradient,
-  not just the average, in Phase 1), `--radius-lg`, `--shadow-glow` resting →
-  `--shadow-glow-lg` + lift on hover. `.btn-secondary` — glass surface
-  (`hsl(var(--color-surface) / 0.7)`, `backdrop-filter: blur(8px)`), 1px divider border,
+  not just the average, in Phase 1), `--radius-md` (moved from `--radius-lg`, issue
+  #495 follow-up — see §4), `--shadow-glow` resting → `--shadow-glow-lg` + lift on
+  hover. `.btn-secondary` — glass surface (`hsl(var(--color-surface) / 0.7)`,
+  `backdrop-filter: blur(8px)`), 1px divider border, `--radius-md` (same #495 move),
   hover border tints accent + text tints accent. `.btn-cta` stays merged into
-  `.btn-primary` (unchanged from v2).
+  `.btn-primary` (unchanged from v2, issue #297) — since `.btn-cta` is not a separate
+  stylesheet rule but literally `.btn-primary` under an additional class name (every
+  former `.btn-cta` call site in `landing.js` now renders `.btn-primary`), the #495
+  radius move applies there too; there is no surviving "pill CTA" radius distinct
+  from every other primary button.
 - **Checkboxes**: squares are replaced by **rounded squares** (`--radius-sm`). Unchecked
   = 1.5px ink border; done = accent fill + white check, same interaction as v2 otherwise;
   done row text = line-through at 50% opacity (unchanged).

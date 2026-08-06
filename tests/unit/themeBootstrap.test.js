@@ -19,6 +19,8 @@ function runBootstrap() {
 
 beforeEach(() => {
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.textSize;
+  document.documentElement.removeAttribute('data-animations-off');
   localStorage.clear();
   // Reset matchMedia mock to default (light preference) from setup.js
   window.matchMedia.mockImplementation(query => ({
@@ -75,5 +77,35 @@ describe('themeBootstrap — system preference fallback', () => {
   it('uses "light" when no stored value and system prefers light', () => {
     runBootstrap();
     expect(document.documentElement.dataset.theme).toBe('light');
+  });
+});
+
+describe('themeBootstrap — text size and animations-off (issue #495)', () => {
+  it('applies a stored large/largest text size', () => {
+    localStorage.setItem('ascent-text-size', 'largest');
+    runBootstrap();
+    expect(document.documentElement.dataset.textSize).toBe('largest');
+  });
+
+  it('leaves data-text-size unset for the default size', () => {
+    runBootstrap();
+    expect(document.documentElement.dataset.textSize).toBeUndefined();
+  });
+
+  it('ignores an invalid stored text size', () => {
+    localStorage.setItem('ascent-text-size', 'huge');
+    runBootstrap();
+    expect(document.documentElement.dataset.textSize).toBeUndefined();
+  });
+
+  it('sets data-animations-off when the preference is stored', () => {
+    localStorage.setItem('ascent-animations-off', 'true');
+    runBootstrap();
+    expect(document.documentElement.hasAttribute('data-animations-off')).toBe(true);
+  });
+
+  it('leaves data-animations-off unset by default', () => {
+    runBootstrap();
+    expect(document.documentElement.hasAttribute('data-animations-off')).toBe(false);
   });
 });

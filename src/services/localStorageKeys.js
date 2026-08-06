@@ -121,7 +121,18 @@ export const KEYS = {
   // only (sessionStorage, not localStorage — see guestBanner.js's own
   // comment for why this reappears on a fresh session rather than being
   // dismissed forever on this device).
-  GUEST_BANNER_DISMISSED: 'ascent-guest-banner-dismissed'
+  GUEST_BANNER_DISMISSED: 'ascent-guest-banner-dismissed',
+  // Text size preference (issue #495) — 'default' | 'large' | 'largest',
+  // scaling the root font size. Device-level, same pattern as THEME (not
+  // per-account, never cleared on sign-out, applied synchronously by
+  // themeBootstrap.js before first paint to avoid a layout flash).
+  TEXT_SIZE: 'ascent-text-size',
+  // Animations-off preference (issue #495) — only ever written 'true', same
+  // never-persist-'false' precedent as TOUR_DONE/ONBOARDING_DONE (absence
+  // means "animations on", so there's nothing useful to write on the false
+  // path). Read by #499 (D3)'s motion pass, which wires the actual effect;
+  // this issue only adds the persisted preference itself.
+  ANIMATIONS_OFF: 'ascent-animations-off'
 };
 
 export function verifyDismissedKey(uid) {

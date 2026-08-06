@@ -510,6 +510,13 @@
 html { scroll-behavior: smooth; }
 html, body { min-height: 100%; }
 
+/* Text size preference (issue #495) — scales the root font size, which every
+   `--text-*` token in this file is rem-based against, so the whole app scales
+   uniformly with no per-component change needed. Applied synchronously before
+   first paint by themeBootstrap.js to avoid a layout flash on reload. */
+html[data-text-size='large'] { font-size: 112.5%; }
+html[data-text-size='largest'] { font-size: 125%; }
+
 body {
   font-family: var(--font-body);
   /* issue #206 §5 follow-up — was a page-wide radial gold/rose glow behind
@@ -890,7 +897,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      gradient is always light green regardless of theme (issue #416 Phase 1). */
   color: #000;
   border-color: transparent;
-  border-radius: var(--v3-radius-lg);
   box-shadow: var(--v3-shadow-glow);
 }
 .btn-primary:hover:not(:disabled) { box-shadow: var(--v3-shadow-glow-lg); transform: translateY(-2px); }
@@ -902,7 +908,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   background: hsl(var(--v3-surface));
   color: var(--color-text);
   border-color: var(--color-divider);
-  border-radius: var(--v3-radius-lg);
 }
 .btn-secondary:hover:not(:disabled) { border-color: hsl(var(--v3-accent) / 0.4); color: var(--v3-accent-ink, var(--color-accent)); transform: translateY(-2px); }
 
@@ -988,11 +993,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .field-input, .search-input, .import-paste-area { caret-color: var(--color-accent); }
 
 /* Segmented control (design-system.md §5) — for exclusive-choice groups
-   (priority filter, theme picker). Base class only this phase, same
-   "built, not yet wired into a page" precedent as .tabs (issue #125) —
-   the dashboard priority filter and theme toggle adopt this in a later
-   phase alongside their own page's markup changes. */
-.seg { display: inline-flex; border: 1px solid var(--color-border); }
+   (priority filter, theme picker; settings.js's Text size row, issue #495,
+   this control's first real call site). `border-radius` + `overflow: hidden`
+   on the `.seg` container (not on each `.seg-item`) rounds the group's outer
+   corners while clipping every inner item to a plain rectangle — the
+   standard segmented-control technique, and simpler than rounding only the
+   first/last item's outer corners by hand. */
+.seg { display: inline-flex; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
 .seg-item {
   padding: var(--space-2) var(--space-4);
   background: var(--color-surface);
@@ -2426,7 +2433,16 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-accent-700);
 }
 .bottom-nav-item-icon { display: inline-flex; }
-.bottom-nav-item-label { line-height: 1; }
+/* `white-space: nowrap` + ellipsis, not a wrap — this bar's height is fixed
+   (`--bottom-nav-h`), so a label that wraps to two lines overflows it
+   instead of growing it (issue #495 follow-up, real reported bug: "My
+   roadmap" wrapped in its quarter-width column on a narrow phone while its
+   single-word siblings stayed on one line). The label itself was shortened
+   to a single word so this never triggers in practice; this is the
+   defensive floor for any future label that's still too long for its column
+   at the narrowest supported width, degrading to a truncated ellipsis
+   instead of a broken layout. */
+.bottom-nav-item-label { line-height: 1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .offline-banner {
   display: none;
@@ -4792,23 +4808,45 @@ html[data-scrolling] .dropdown-menu {
 .tour-welcome-body { color: var(--color-text-muted); margin: 0 0 20px; }
 .tour-welcome-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
 
-/* 3.6 Tabs */
-.tabs { display: flex; border-bottom: 1px solid var(--color-border); gap: 0; }
+/* 3.6 Tabs — filled pill style (issue #495's settings.js, this component's
+   first real call site, restyled from the original underline treatment to
+   match that issue's design reference). Wraps rather than scrolling on a
+   narrow viewport (the 360px requirement) since each pill is independently
+   sized, not sharing one continuous border. */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .tab {
   font: inherit;
   font-size: var(--text-base);
   font-weight: 700;
-  color: var(--color-text-muted);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: var(--space-3) var(--space-4);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
-.tab[aria-selected='true'] { color: var(--color-accent-700); border-bottom-color: var(--color-accent); }
+/* --color-accent-600, not the base --color-accent — same axe-caught
+   contrast fix .btn-primary/.seg-item already document. */
+.tab[aria-selected='true'] { background: var(--color-accent-600); color: var(--color-ink-on-accent); border-color: var(--color-accent-600); }
 .tab:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; animation: fade-in var(--duration-base) var(--ease-out); }
+/* :not(.active), not a bare `.tab-panel` — a panel's own content class (e.g.
+   settings.js's `.settings-section`, which sets `display: grid`) is equal
+   specificity to a single bare class selector, so a same-specificity rule
+   declared later in this file (as `.settings-section` is) would otherwise
+   win the cascade and leave every inactive panel visible regardless of this
+   rule. `:not(.active)` bumps this to two classes' worth of specificity so
+   it always wins, independent of source order (issue #495 follow-up, found
+   live — see the Build Log). The active rule below deliberately sets no
+   `display` of its own (only the entrance animation) — a `.tab-panel.active`
+   selector is two classes, which would itself outrank and silently collapse
+   `.settings-section`'s own `display: grid` (and its `gap`) the same way;
+   letting the panel's own content class decide its display keeps this
+   primitive content-agnostic, the way `.tabs`' first call site (this issue)
+   needs it to be. */
+.tab-panel:not(.active) { display: none; }
+.tab-panel.active { animation: fade-in var(--duration-base) var(--ease-out); }
+.settings-tabs .tab-panel.active { margin-top: var(--space-6); }
 
 /* 3.7 Progress ring (issue #206 §7) — flat solid stroke. Was a
    var(--gradient-alpenglow) <linearGradient> (progressRing.js built a real
@@ -5075,6 +5113,46 @@ html[data-scrolling] .dropdown-menu {
   .settings-section { background: var(--color-surface-raised); }
 }
 .settings-section-title { margin: 0; font-size: var(--text-lg); }
+.settings-section-subtitle { margin: -8px 0 0; color: var(--color-text-muted); }
+
+/* A checkbox-driven toggle switch (issue #495) — this app's first, matching
+   the design reference's "Animations"/"Daily reminders" style row instead of
+   a plain checkbox. A real `input[type=checkbox]` (keyboard/screen-reader
+   operable) sits visually hidden inside `.switch`; `.switch-track` is a
+   sibling `<span>` carrying the visible track/thumb via `::after` — never a
+   pseudo-element directly on the input itself, which several browsers don't
+   reliably render on a form control with `appearance: none`. */
+.switch { position: relative; display: inline-flex; width: 44px; height: 26px; flex-shrink: 0; }
+.switch-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  pointer-events: none;
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transition: transform var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+.switch-input:checked + .switch-track { background: var(--color-accent-600); border-color: var(--color-accent-600); }
+.switch-input:checked + .switch-track::after { transform: translateX(18px); background: var(--color-ink-on-accent); }
+.switch-input:focus-visible + .switch-track { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 /* A single row's label + control sit on one line on wide viewports and stack
    on narrow ones — the same "don't rely on equal source lengths" caution as
