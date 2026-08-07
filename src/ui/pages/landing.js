@@ -1,6 +1,8 @@
 import { el } from '../dom.js';
 import { createBrandMark } from '../components/brand.js';
+import { createThemeToggle } from '../components/themeToggle.js';
 import { svgIcon } from '../utils/svg.js';
+import { createDecorativeIcon } from '../components/decorativeIcon.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 import { observeReveal } from '../utils/scrollReveal.js';
 
@@ -65,8 +67,22 @@ const STEPS = [
 // on a product moving toward real paying users. This is a real, derived stat
 // instead of an invented "social proof" quote.
 function landingProofLine() {
-  return `${TEMPLATES.length} starter roadmaps and counting — or build your own from scratch.`;
+  return `${TEMPLATES.length} starter roadmaps, or build your own with AI. No signup needed to try it.`;
 }
+
+const PRIVACY_FACTS = [
+  { title: 'Works offline', text: 'Install it to your phone. Your roadmap keeps working with no connection, and syncs when you are back.' },
+  { title: 'No tracking', text: 'No analytics scripts, no ad pixels, no third parties reading your progress.' },
+  { title: 'Your data leaves easily', text: 'Export JSON, CSV, Markdown, or a printed PDF whenever you want. Delete everything in two clicks.' },
+  { title: 'Free to try', text: 'Guest mode needs no account at all. Create one later and your progress comes with you.' }
+];
+
+const PROGRESS_FACTS = [
+  'A streak count that survives one missed day',
+  'A heatmap of every day you showed up',
+  'Your real pace, and the date you finish at it',
+  'A shareable read-only link, or a printed PDF'
+];
 
 function scrollToSection(id) {
   const target = document.getElementById(id);
@@ -75,44 +91,90 @@ function scrollToSection(id) {
   target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
 }
 
+// Nav responsive shedding (issue #500) is CSS-driven, not JS — three tiers
+// declared in app.css: full width shows all section links + Sign in + Start
+// free; a mid tier (matching .landing-nav-links' own hide breakpoint) drops
+// the section links first via display: none; a narrower tier additionally
+// hides the .landing-nav-signin link, keeping only the brand mark, theme
+// toggle, and the primary "Start free" button. No JS media-query listener
+// needed — see the `.landing-nav-signin`/`.landing-nav-links` rules.
 function buildNav() {
   const featuresLink = el('button', { type: 'button', className: 'landing-nav-link', text: 'Features' });
   featuresLink.addEventListener('click', () => scrollToSection('landing-features'));
   const stepsLink = el('button', { type: 'button', className: 'landing-nav-link', text: 'How it works' });
   stepsLink.addEventListener('click', () => scrollToSection('landing-steps'));
+  const privacyLink = el('button', { type: 'button', className: 'landing-nav-link', text: 'Privacy' });
+  privacyLink.addEventListener('click', () => scrollToSection('landing-privacy'));
 
-  return el('header', { className: 'landing-nav' }, [
+  const themeToggle = createThemeToggle();
+  themeToggle.classList.add('landing-nav-theme-toggle');
+
+  const nav = el('header', { className: 'landing-nav' }, [
     el('div', { className: 'landing-nav-inner' }, [
       el('a', { className: 'brand', href: '#/signin' }, createBrandMark()),
-      el('nav', { className: 'landing-nav-links', 'aria-label': 'Page sections' }, [featuresLink, stepsLink]),
+      el('nav', { className: 'landing-nav-links', 'aria-label': 'Page sections' }, [featuresLink, stepsLink, privacyLink]),
       el('div', { className: 'landing-nav-actions' }, [
-        el('a', { className: 'btn btn-ghost', href: '#/signin', text: 'Sign in' }),
-        el('a', { className: 'btn btn-primary', href: '#/signup', text: 'Start for free' })
+        themeToggle,
+        el('a', { className: 'btn btn-ghost landing-nav-signin', href: '#/signin', text: 'Sign in' }),
+        el('a', { className: 'btn btn-primary', href: '#/signup', text: 'Start free' })
       ])
     ])
   ]);
+  nav._cleanup = themeToggle._cleanup;
+  return nav;
 }
 
-// Decorative mock of the dashboard — plain el()-built blocks, not an
-// external screenshot asset. Keeps the "no build step, no bundler, no
+// Decorative mock of the dashboard checklist — plain el()-built blocks, not
+// an external screenshot asset. Keeps the "no build step, no bundler, no
 // external dependency" convention intact instead of requiring a committed
-// PNG (and a Playwright-based generation step) for one hero graphic.
+// PNG (and a Playwright-based generation step) for one hero graphic. The
+// topic titles/priority sublabels are illustrative UI chrome (matching this
+// app's own real checklist row shape and this template's real phase/topic
+// naming), not a claimed live stat — the "no fabricated stat" rule in this
+// file governs landingProofLine()'s number, not a decorative mockup, same
+// distinction the pre-existing grey-bar version already relied on.
+const MOCK_ROWS = [
+  { title: 'Object-oriented programming', sub: 'Core Java · Must do', done: true },
+  { title: 'Collections Framework', sub: 'Core Java · Must do · 2 links', done: true },
+  { title: 'Streams and lambdas', sub: 'Core Java · Must do', done: false },
+  { title: 'Spring Boot basics', sub: 'Spring · Should do', done: false },
+  { title: 'Kafka fundamentals', sub: 'Messaging · Later', done: false }
+];
+const MOCK_TEMPLATE = TEMPLATES[0];
+const MOCK_DONE = 128;
+const MOCK_TOTAL = 484;
+const MOCK_PHASES = 19;
+const MOCK_STREAK = 4;
+const MOCK_PERCENT = Math.round((MOCK_DONE / MOCK_TOTAL) * 100);
+
+// Sized explicitly per call site (12px in the 18px hero-mock check box, 14px
+// in the 22px progress-fact circle) — iconSvg()'s own default (26px) is
+// built for functional chrome, not these small decorative circles, and
+// overflowed both containers when reused at that default size (found live).
+function buildMockCheckIcon(size = 12) {
+  return svgIcon([{ d: 'M6 12.5l4 4L18 8', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }], { size });
+}
+
 function buildHeroMock() {
-  // Fill widths are a capped set of discrete CSS classes (landing-mock-fill-1
-  // through -4), not a per-element inline style — see the "Never set an
-  // inline style attribute" convention (root CLAUDE.md / ui-styling rules).
-  const rows = [1, 2, 3, 4].map(n => el('div', { className: 'landing-mock-row' }, [
-    el('span', { className: 'landing-mock-check', 'aria-hidden': 'true' }),
-    el('span', { className: 'landing-mock-bar' }, [el('span', { className: `landing-mock-bar-fill landing-mock-fill-${n}` })])
+  const rows = MOCK_ROWS.map(row => el('div', { className: `landing-mock-row${row.done ? ' is-done' : ''}` }, [
+    el('span', { className: 'landing-mock-check', 'aria-hidden': 'true' }, row.done ? [buildMockCheckIcon()] : []),
+    el('div', { className: 'landing-mock-row-text' }, [
+      el('span', { className: 'landing-mock-row-title', text: row.title }),
+      el('span', { className: 'landing-mock-row-sub', text: row.sub })
+    ])
   ]));
   return el('div', { className: 'landing-hero-mock', 'aria-hidden': 'true' }, [
     el('div', { className: 'landing-mock-card' }, [
       el('div', { className: 'landing-mock-head' }, [
-        el('span', { className: 'landing-mock-dot' }),
-        el('span', { className: 'landing-mock-dot' }),
-        el('span', { className: 'landing-mock-dot' })
+        el('span', { className: 'landing-mock-avatar', text: 'JB' }),
+        el('div', { className: 'landing-mock-head-text' }, [
+          el('span', { className: 'landing-mock-head-title', text: MOCK_TEMPLATE.name }),
+          el('span', { className: 'landing-mock-head-sub', text: `${MOCK_DONE} of ${MOCK_TOTAL} done · ${MOCK_STREAK}-day streak` })
+        ]),
+        el('span', { className: 'landing-mock-ring', text: `${MOCK_PERCENT}%` })
       ]),
-      el('div', { className: 'landing-mock-body' }, rows)
+      el('div', { className: 'landing-mock-body' }, rows),
+      el('div', { className: 'landing-mock-foot', text: `+ ${MOCK_TOTAL - MOCK_ROWS.length} more topics across ${MOCK_PHASES} phases` })
     ])
   ]);
 }
@@ -131,10 +193,10 @@ function buildHero() {
     el('span', { className: 'text-gradient-brand', text: 'next move' }),
     '.'
   ]);
-  const subtitle = el('p', { className: 'landing-hero-subtitle reveal', text: 'The roadmap tracker for anyone learning, revising, or leveling up. Pick a starting point, track every topic, and always know what’s next.' });
+  const subtitle = el('p', { className: 'landing-hero-subtitle reveal', text: 'Pick a roadmap, tick off what you learn, and always know what’s next. Built for anyone studying, revising, or leveling up — on a phone, a tablet, or a desk.' });
   const actions = el('div', { className: 'landing-hero-actions reveal' }, [
-    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' }),
-    el('a', { className: 'btn btn-secondary btn-lg', href: '#/signin', text: 'Sign in' })
+    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start free — no card' }),
+    el('a', { className: 'btn btn-secondary btn-lg', href: '#/signup', text: 'Try it as a guest' })
   ]);
   const stat = el('p', { className: 'landing-hero-stat reveal', text: landingProofLine() });
   const mock = buildHeroMock();
@@ -152,6 +214,28 @@ function buildHero() {
   ]);
 }
 
+// Template strip — every chip is derived from the real TEMPLATES registry
+// (never a hardcoded list), plus one closing chip that opens the same
+// AI-import guide the onboarding picker uses. Clicking any chip sends a
+// signed-out visitor to sign-up, since picking a real template requires an
+// account (or a guest session) to persist progress against.
+function buildTemplateStrip() {
+  const heading = el('p', { className: 'eyebrow landing-strip-eyebrow reveal' }, [
+    el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
+    'Start from one of these'
+  ]);
+  observeReveal(heading);
+  const chips = TEMPLATES.map(t => el('a', { className: 'landing-template-chip', href: '#/signup' }, [
+    createDecorativeIcon(t.icon, { size: 'sm' }),
+    el('span', { text: t.name })
+  ]));
+  const aiChip = el('a', { className: 'landing-template-chip landing-template-chip-ai', href: '#/signup', text: '+ Build your own with AI' });
+  return el('section', { className: 'landing-template-strip' }, [
+    heading,
+    el('div', { className: 'landing-template-chips' }, [...chips, aiChip])
+  ]);
+}
+
 function buildSectionEyebrow(label) {
   return el('p', { className: 'eyebrow landing-section-eyebrow' }, [
     el('span', { className: 'eyebrow-dot', 'aria-hidden': 'true' }),
@@ -162,10 +246,10 @@ function buildSectionEyebrow(label) {
 // Section headings scroll-reveal on entering the viewport (design-system.md
 // §7's whileInView equivalent) — reveals once, never re-triggers on scroll-back.
 function buildFeatures() {
-  const heading = el('h2', { className: 'landing-section-title reveal', text: 'Two ways to start' });
+  const heading = el('h2', { className: 'landing-section-title reveal', text: 'A roadmap in one click, or one you write yourself.' });
   observeReveal(heading);
   return el('section', { className: 'landing-features', id: 'landing-features' }, [
-    buildSectionEyebrow('Get started'),
+    buildSectionEyebrow('Two ways to start'),
     heading,
     el('div', { className: 'landing-feature-grid' }, FEATURES.map(f => el('div', { className: 'feature-card' }, [
       el('span', { className: 'feature-card-icon', 'aria-hidden': 'true' }, [f.icon()]),
@@ -176,10 +260,10 @@ function buildFeatures() {
 }
 
 function buildSteps() {
-  const heading = el('h2', { className: 'landing-section-title reveal', text: 'How it works' });
+  const heading = el('h2', { className: 'landing-section-title reveal', text: 'Three steps. That is the whole learning curve.' });
   observeReveal(heading);
   return el('section', { className: 'landing-steps', id: 'landing-steps' }, [
-    buildSectionEyebrow('The process'),
+    buildSectionEyebrow('How it works'),
     heading,
     el('ol', { className: 'landing-steps-list' }, STEPS.map((s, i) => el('li', { className: 'step-card' }, [
       el('span', { className: 'step-card-number', text: String(i + 1) }),
@@ -190,12 +274,90 @@ function buildSteps() {
   ]);
 }
 
+// Decorative mock of the Progress page's heatmap + stat trio — same
+// "illustrative UI chrome, not a claimed stat" convention as buildHeroMock()
+// above. 12 columns x 7 rows, a capped set of discrete heat-level classes
+// (never an inline style, per the CSP rule in ui-styling.md) driven by a
+// small deterministic pattern so the mock always renders identically rather
+// than reading as flaky/random.
+const HEAT_PATTERN = [0, 2, 3, 1, 0, 2, 4, 3, 2, 0, 1, 3, 4, 2, 0, 3, 2, 1, 0, 4, 3, 2, 1, 0, 2, 3, 4, 2, 0, 1, 3, 2, 4, 0, 2, 3, 1, 0, 4, 2, 3, 1, 0, 2, 4, 3, 2, 0, 1, 3, 2, 4, 0, 3, 2, 1, 0, 4, 3, 2, 0, 1, 2, 3, 4, 0, 2, 1, 3, 0, 2, 4, 3, 1, 0, 2, 3, 4, 0, 1, 2, 3, 0, 4];
+
+function buildMiniHeatmap() {
+  const cells = HEAT_PATTERN.map(level => el('span', { className: `landing-heat-cell landing-heat-${level}` }));
+  return el('div', { className: 'landing-heat-grid', 'aria-hidden': 'true' }, cells);
+}
+
+function buildProgressMock() {
+  return el('div', { className: 'landing-progress-mock', 'aria-hidden': 'true' }, [
+    el('div', { className: 'landing-progress-stats' }, [
+      el('div', { className: 'landing-progress-stat' }, [
+        el('span', { className: 'landing-progress-stat-label', text: 'Done' }),
+        el('span', { className: 'landing-progress-stat-value', text: String(MOCK_DONE) })
+      ]),
+      el('div', { className: 'landing-progress-stat' }, [
+        el('span', { className: 'landing-progress-stat-label', text: 'Streak' }),
+        el('span', { className: 'landing-progress-stat-value', text: `${MOCK_STREAK}d` })
+      ]),
+      el('div', { className: 'landing-progress-stat' }, [
+        el('span', { className: 'landing-progress-stat-label', text: 'Per day' }),
+        el('span', { className: 'landing-progress-stat-value', text: '3.2' })
+      ])
+    ]),
+    el('p', { className: 'landing-heat-caption', text: 'Last 12 weeks' }),
+    buildMiniHeatmap()
+  ]);
+}
+
+function buildProgressSplit() {
+  const heading = el('h2', { className: 'landing-section-title landing-progress-title reveal', text: 'See the streak, not just the list.' });
+  observeReveal(heading);
+  const subtitle = el('p', { className: 'landing-progress-subtitle reveal', text: 'Every tick feeds a heatmap, a streak count, and a finishing date based on your real pace. It is the difference between a checklist and knowing you are actually getting somewhere.' });
+  observeReveal(subtitle);
+  const facts = el('ul', { className: 'landing-progress-facts reveal' }, PROGRESS_FACTS.map(text => el('li', {}, [
+    el('span', { className: 'landing-fact-check', 'aria-hidden': 'true' }, [buildMockCheckIcon(14)]),
+    el('span', { text })
+  ])));
+  observeReveal(facts);
+  const mock = buildProgressMock();
+  mock.classList.add('reveal');
+  observeReveal(mock);
+
+  return el('section', { className: 'landing-progress', id: 'landing-progress' }, [
+    el('div', { className: 'landing-progress-copy' }, [
+      buildSectionEyebrow('Progress'),
+      heading,
+      subtitle,
+      facts
+    ]),
+    mock
+  ]);
+}
+
+function buildPrivacyStrip() {
+  const heading = el('h2', { className: 'landing-section-title reveal sr-only-heading', text: 'Built to respect your data' });
+  observeReveal(heading);
+  return el('section', { className: 'landing-privacy', id: 'landing-privacy' }, [
+    heading,
+    el('div', { className: 'landing-privacy-grid' }, PRIVACY_FACTS.map(f => el('div', { className: 'landing-privacy-fact' }, [
+      el('h3', { className: 'landing-privacy-fact-title', text: f.title }),
+      el('p', { className: 'landing-privacy-fact-text', text: f.text })
+    ])))
+  ]);
+}
+
 function buildCta() {
   const heading = el('h2', { className: 'landing-cta-title reveal', text: 'Ready to engineer your next move?' });
   observeReveal(heading);
+  // Not scroll-revealed on its own (issue #500 follow-up, found live): a
+  // second observeReveal() on this element inside the same flex row as the
+  // heading intermittently never fired, leaving the subtitle permanently at
+  // opacity 0 — always-visible plain text is a safer bet than chasing that
+  // specific IntersectionObserver interaction, and this line is secondary
+  // copy that doesn't need its own entrance beat separate from the heading.
+  const subtitle = el('p', { className: 'landing-cta-subtitle', text: 'Free, no card, and you can start as a guest.' });
   return el('section', { className: 'landing-cta' }, [
-    heading,
-    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start for free' })
+    el('div', { className: 'landing-cta-copy' }, [heading, subtitle]),
+    el('a', { className: 'btn btn-primary btn-lg', href: '#/signup', text: 'Start free' })
   ]);
 }
 
@@ -216,6 +378,10 @@ function buildFooter() {
 // Marketing page shown at '#/' to signed-out visitors (issue #6 Phase 6);
 // main.js routes an already-signed-in user straight to '/app' before this
 // ever renders, so this function never needs to check `user` itself.
+// Full rebuild (issue #500, D4) — sticky nav that sheds links then sign-in
+// as it narrows, a hero with a real checklist mock, a template strip, two
+// feature cards, three steps, a progress split with a heatmap mock, a
+// four-fact privacy strip, an accent CTA banner, and a slim footer.
 export function renderLanding(app) {
   // Issue #6 Phase 9 — id="main-content"/tabindex="-1" is the skip link's
   // jump target (index.html), so Tab from page load can bypass the nav bar
@@ -225,18 +391,21 @@ export function renderLanding(app) {
   // onboarding.js's/progress.js's/settings.js's own app-shell-2 wrapper);
   // landing.js was the one page missing it, found while auditing route
   // transition coverage for the motion-system pass.
+  const nav = buildNav();
   const node = el('div', { className: 'landing-page fade-in' }, [
-    buildNav(),
+    nav,
     el('main', { id: 'main-content', tabindex: '-1' }, [
       buildHero(),
+      buildTemplateStrip(),
       buildFeatures(),
       buildSteps(),
-      el('section', { className: 'landing-proof' }, [
-        el('p', { className: 'landing-proof-text', text: landingProofLine() })
-      ]),
+      buildProgressSplit(),
+      buildPrivacyStrip(),
       buildCta()
     ]),
     buildFooter()
   ]);
+  node._cleanup = nav._cleanup;
   app.replaceChildren(node);
+  return node;
 }

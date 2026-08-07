@@ -28,6 +28,26 @@ describe('landing page', () => {
     expect(signInLinks.length).toBeGreaterThan(0);
   });
 
+  it('renders a template chip for every starter template, plus a build-your-own chip', () => {
+    const app = setup();
+    const chips = [...app.querySelectorAll('.landing-template-chip')];
+    expect(chips.length).toBe(TEMPLATES.length + 1);
+    TEMPLATES.forEach(t => {
+      expect(chips.some(c => c.textContent.includes(t.name))).toBe(true);
+    });
+  });
+
+  it('renders the progress split with a heatmap mock', () => {
+    const app = setup();
+    expect(app.querySelector('#landing-progress')).not.toBeNull();
+    expect(app.querySelectorAll('.landing-heat-cell').length).toBeGreaterThan(0);
+  });
+
+  it('renders all four privacy facts', () => {
+    const app = setup();
+    expect(app.querySelectorAll('.landing-privacy-fact').length).toBe(4);
+  });
+
   it('renders exactly two feature cards', () => {
     const app = setup();
     expect(app.querySelectorAll('.feature-card').length).toBe(2);

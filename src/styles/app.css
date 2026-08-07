@@ -5705,6 +5705,10 @@ html[data-scrolling] .dropdown-menu {
 .landing-nav-link:hover { color: var(--color-text); }
 .landing-nav-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .landing-nav-actions { display: flex; align-items: center; gap: var(--space-3); }
+/* issue #500 (D4) — theme toggle lives in the nav now, matching the design
+   reference; reuses the shared .btn-icon 36px sizing, no new size rule
+   needed. */
+.landing-nav-theme-toggle { flex-shrink: 0; }
 
 /* issue #155 (ZeBeyond direction) — position:relative so .landing-hero-copy/
    .landing-hero-mock's z-index: 1 has a containing block to stack above the
@@ -5764,9 +5768,39 @@ html[data-scrolling] .dropdown-menu {
 @supports not (backdrop-filter: blur(1px)) {
   .landing-mock-card { background: var(--color-surface-raised); }
 }
-.landing-mock-head { display: flex; gap: 6px; padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border); }
-.landing-mock-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border-strong); }
-.landing-mock-body { display: grid; gap: var(--space-4); padding: var(--space-6) var(--space-6); }
+/* issue #500 (D4) — the hero mock became a real checklist card (identity
+   row + progress ring + priority-labeled rows), replacing the earlier
+   generic grey-bar mock. Still a pure el()-built decorative mockup, aria-hidden
+   and not a real store-driven render — see landing.js's MOCK_ROWS comment. */
+.landing-mock-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border); }
+.landing-mock-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--v3-radius-md);
+  background: hsl(var(--v3-accent) / 0.14);
+  color: var(--v3-accent-ink, hsl(var(--v3-accent)));
+  font-weight: 700;
+  font-size: var(--text-base);
+}
+.landing-mock-head-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.landing-mock-head-title { font-weight: 700; font-size: var(--text-base); color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.landing-mock-head-sub { font-size: var(--text-base); color: var(--color-text-muted); }
+.landing-mock-ring {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--v3-accent));
+  color: hsl(var(--v3-accent));
+  font-weight: 700;
+  font-size: 10px;
+}
+.landing-mock-body { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-6); }
 .landing-mock-row { display: flex; align-items: center; gap: var(--space-3); }
 /* v3 (issue #416 Phase 3) — design-system.md §5 "Checkboxes: rounded
    squares (--radius-sm)... done = accent fill", superseding v2's zero-radius
@@ -5777,20 +5811,22 @@ html[data-scrolling] .dropdown-menu {
 .landing-mock-check {
   width: 18px;
   height: 18px;
-  border-radius: var(--v3-radius-sm);
-  border: 2px solid hsl(var(--v3-accent));
-  background: hsl(var(--v3-accent) / 0.12);
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--v3-radius-sm);
+  border: 2px solid hsl(var(--v3-accent) / 0.5);
+  color: var(--v3-accent-ink, hsl(var(--v3-accent)));
 }
-/* v3 (issue #416 Phase 3) — design-system.md §5 "Progress: gradient fill",
-   superseding v2's flat-accent-fill rule (issue #301, the comment this
-   replaces). */
-.landing-mock-bar { flex: 1; height: 10px; background: var(--color-border-strong); overflow: hidden; }
-.landing-mock-bar-fill { display: block; height: 100%; background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end))); }
-.landing-mock-fill-1 { width: 92%; }
-.landing-mock-fill-2 { width: 68%; }
-.landing-mock-fill-3 { width: 100%; }
-.landing-mock-fill-4 { width: 45%; }
+/* intentional: fixed black checkmark on the always-bright green fill, same
+   both themes — matches .btn-primary's own "fixed black on bright accent"
+   reasoning (design-system.md §5). */
+.landing-mock-row.is-done .landing-mock-check { border-color: hsl(var(--v3-accent)); background: hsl(var(--v3-accent)); color: #000; }
+.landing-mock-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.landing-mock-row-title { font-size: var(--text-base); font-weight: 600; color: var(--color-text); }
+.landing-mock-row.is-done .landing-mock-row-title { text-decoration: line-through; opacity: 0.55; }
+.landing-mock-row-sub { font-size: var(--text-base); color: var(--color-text-muted); }
+.landing-mock-foot { padding: var(--space-3) var(--space-6) var(--space-4); font-size: var(--text-base); color: var(--color-text-muted); border-top: 1px solid var(--color-border); }
 
 .landing-section-eyebrow { display: flex; justify-content: center; margin-bottom: var(--space-3); }
 .landing-section-title {
@@ -5900,11 +5936,137 @@ html[data-scrolling] .dropdown-menu {
 .step-card-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-base); margin: 0 0 var(--space-2); color: var(--color-text); }
 .step-card-text { font-size: var(--text-base); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
-.landing-proof { text-align: center; padding: 0 var(--space-6) var(--space-12); }
-/* v3 (issue #416 Phase 3) — recolored from the v2 red/orange
-   --color-accent-700 to the v3 green accent, both themes (a single v3-token
-   rule now covers both, replacing the old light/dark conditional pair). */
-.landing-proof-text { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-lg); color: var(--v3-accent-ink, hsl(var(--v3-accent))); max-width: 52ch; margin: 0 auto; }
+/* issue #500 (D4) — the template strip: a horizontal chip row derived from
+   the real TEMPLATES registry, sitting in its own subtly-tinted band between
+   the hero and the feature cards, matching the design reference. */
+.landing-template-strip {
+  background: hsl(var(--v3-surface) / 0.5);
+  border-top: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
+  padding: var(--space-8) var(--space-6);
+}
+.landing-strip-eyebrow { display: flex; justify-content: center; margin-bottom: var(--space-4); }
+.landing-template-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  max-width: 960px;
+  margin: 0 auto;
+}
+.landing-template-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: hsl(var(--v3-surface-elevated));
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: var(--text-base);
+  text-decoration: none;
+  transition: transform var(--duration-fast, 150ms) var(--ease-out), border-color var(--duration-fast, 150ms) var(--ease-out);
+}
+.landing-template-chip:hover { transform: translateY(-2px); border-color: hsl(var(--v3-accent) / 0.5); }
+.landing-template-chip:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.landing-template-chip-ai {
+  background: hsl(var(--v3-accent) / 0.12);
+  border-color: hsl(var(--v3-accent) / 0.4);
+  color: var(--v3-accent-ink, hsl(var(--v3-accent)));
+}
+
+/* issue #500 (D4) — the progress split: copy + a fact list on the left, a
+   decorative mock of the Progress page's stat trio + heatmap on the right,
+   the same "illustrative UI chrome" convention buildHeroMock() established. */
+.landing-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-12);
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-6);
+}
+.landing-progress-copy { position: relative; z-index: 1; }
+.landing-progress-title { text-align: left; margin: 0 0 var(--space-4); }
+.landing-progress-subtitle { font-size: var(--text-base); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0 0 var(--space-6); max-width: 46ch; }
+.landing-progress-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.landing-progress-facts li { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-base); color: var(--color-text); }
+/* intentional: fixed black checkmark on the always-bright green fill, same
+   reasoning as .landing-mock-row.is-done .landing-mock-check above. */
+.landing-fact-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: hsl(var(--v3-accent));
+  color: #000;
+}
+/* Flat, not glass — a page content surface, not an overlay (design-system.md
+   §4's "flat content, elevated overlays" rule, issue #483). */
+.landing-progress-mock {
+  background: hsl(var(--v3-surface));
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  border-radius: var(--v3-radius-lg);
+  padding: var(--space-6);
+}
+.landing-progress-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+.landing-progress-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border-radius: var(--v3-radius-md);
+  background: hsl(var(--v3-surface-elevated));
+  border: 1px solid hsl(var(--v3-divider) / 0.6);
+}
+.landing-progress-stat-label { font-size: var(--text-base); color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); }
+.landing-progress-stat-value { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 700; font-size: var(--text-xl, var(--text-lg)); color: var(--color-text); }
+.landing-heat-caption { font-size: var(--text-base); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); margin: 0 0 var(--space-3); }
+/* 84 cells = 12 weeks x 7 days (HEAT_PATTERN's own length, landing.js). A
+   real calendar heatmap reads top-to-bottom as days-of-week, left-to-right
+   as weeks — that's rows fixed at 7 with auto-flow:column adding as many
+   implicit *columns* as needed, not the reverse. The previous version fixed
+   the *column* count (14) with auto-flow:column, which has no bound on row
+   count and unbounded row-count with auto-flow:column means the browser
+   keeps adding columns instead of wrapping — every cell rendered in one
+   single 84-wide row that overflowed the card (found live, screenshotted).
+   minmax(0, 1fr) on the auto column track (not a bare 1fr) so it can still
+   shrink below its content size — same "1fr has no width ceiling of its
+   own" rule this file's ui-styling.md documents elsewhere. */
+.landing-heat-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  overflow: hidden;
+}
+.landing-heat-cell { aspect-ratio: 1; border-radius: 3px; }
+.landing-heat-0 { background: hsl(var(--v3-heat-0)); }
+.landing-heat-1 { background: hsl(var(--v3-heat-1)); }
+.landing-heat-2 { background: hsl(var(--v3-heat-2)); }
+.landing-heat-3 { background: hsl(var(--v3-heat-3)); }
+.landing-heat-4 { background: hsl(var(--v3-heat-4)); }
+
+/* issue #500 (D4) — the four-fact privacy strip. `.sr-only-heading` gives
+   the section a real accessible heading (WCAG landmark navigation) without
+   showing one visually, matching the design reference's headingless layout —
+   same visually-hidden-but-present clip technique `.phase-progress.sr-only`
+   already uses elsewhere in this file. */
+.sr-only-heading { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.landing-privacy { max-width: 1160px; margin: 0 auto; padding: var(--space-12) var(--space-6); }
+.landing-privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-8);
+}
+.landing-privacy-fact-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 600; font-size: var(--text-lg); margin: 0 0 var(--space-2); color: var(--color-text); }
+.landing-privacy-fact-text { font-size: var(--text-base); line-height: var(--leading-loose); color: var(--color-text-muted); margin: 0; }
 
 /* issue #299 — design-system.md §2: "the accent runs as a field in exactly
    one pattern: poster statements (landing closing banner). Nowhere else."
@@ -5921,26 +6083,40 @@ html[data-scrolling] .dropdown-menu {
    --color-accent fill to the v3 brand gradient (design-system.md §2's
    "gradients are back and encouraged... primary buttons" — this band is
    effectively one large CTA surface). */
+/* issue #500 (D4) — the banner became an inset rounded card (design
+   reference: left-aligned copy + subtitle, a white/ground-colored button on
+   the right) rather than the previous full-bleed edge-to-edge poster strip;
+   still the one "solid accent field" surface on the page per design-system.md
+   §2's "poster statements only" rule. */
 .landing-cta {
-  text-align: center;
-  width: 100%;
-  margin: var(--space-8) 0 0;
-  padding: var(--space-16) var(--space-6);
+  max-width: 1160px;
+  margin: var(--space-8) auto var(--space-16);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--v3-radius-lg);
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-6);
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, hsl(var(--v3-gradient-start)), hsl(var(--v3-gradient-end)));
 }
+.landing-cta-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: var(--space-2); }
 /* intentional: fixed black text on the always-bright gradient fill above,
    same both themes — matches .btn-primary's own "fixed black, same in both
    themes" reasoning (design-system.md §5, issue #416 Phase 1). */
-.landing-cta-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 700; font-size: var(--text-3xl); letter-spacing: -0.015em; margin: 0; color: #000; position: relative; z-index: 1; max-width: 20ch; }
+.landing-cta-title { font-family: var(--font-heading-v3, var(--font-display)); font-weight: 700; font-size: var(--text-2xl); letter-spacing: -0.015em; margin: 0; color: #000; max-width: 24ch; }
+/* intentional: fixed black, not a diluted/opacity version of it — an alpha
+   mix here would blend toward the gradient's own bright green and drop well
+   below the black title's already-tight 3.76:1 (light theme) contrast
+   margin against this field; a plain, undiluted color at a smaller
+   size/weight is what carries the visual de-emphasis instead. */
+.landing-cta-subtitle { margin: 0; font-size: var(--text-base); font-weight: 500; color: #000; max-width: 40ch; }
 .landing-cta .btn-primary {
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
   /* intentional: fixed black fill so the button reads as a solid "inverse"
      CTA against the gradient band behind it, same both themes. */
   background: #000;
@@ -6119,6 +6295,10 @@ html[data-scrolling] .dropdown-menu {
   .landing-hero { grid-template-columns: 1fr; }
   .landing-hero-actions { justify-content: flex-start; }
   .landing-hero-mock { order: -1; }
+  /* issue #500 (D4) — the progress split collapses to a single column at
+     the same tier the hero does, copy first then the stat/heatmap mock. */
+  .landing-progress { grid-template-columns: 1fr; gap: var(--space-8); }
+  .landing-progress-title, .landing-progress-subtitle { text-align: left; }
 }
 
 /* Issue #496 (C4) — the auth marketing panel now hides at its own 960px
@@ -6138,6 +6318,11 @@ html[data-scrolling] .dropdown-menu {
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
   .dashboard-content { padding: 18px 16px 84px calc(16px + var(--phase-spine-gutter)); }
   .landing-nav-links { display: none; }
+  /* issue #500 (D4) — nav sheds the section links first (above), then the
+     Sign in link at a narrower tier below — Start free + the brand mark +
+     theme toggle are the only actions guaranteed to survive down to the
+     smallest supported width. */
+  .landing-template-chips { gap: var(--space-2); }
   /* issue #460 — the two glass cards' desktop padding (20-24px) reads too
      spacious once the viewport itself is this narrow; match `.dashboard-header`'s
      own tightened padding at this tier instead of the two cards ballooning
@@ -6274,6 +6459,13 @@ html[data-scrolling] .dropdown-menu {
   .landing-hero-actions { flex-direction: column; align-items: stretch; }
   .landing-hero-actions .btn { width: 100%; }
   .landing-cta-title { font-size: var(--text-2xl); }
+  /* issue #500 (D4) — the last nav tier: Sign in is shed here, after the
+     section links (already hidden at 768px above), leaving only the brand
+     mark, theme toggle, and the primary "Start free" button. */
+  .landing-nav-signin { display: none; }
+  .landing-cta { flex-direction: column; align-items: stretch; text-align: center; padding: var(--space-8); }
+  .landing-cta-copy { align-items: center; }
+  .landing-cta .btn-primary { width: 100%; }
   /* issue #6 Phase 8 — a horizontal-scroll row instead of wrapping, so the
      priority filter chips stay a single tappable row on a phone width
      instead of eating vertical space with a second/third wrapped line.
