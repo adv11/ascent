@@ -5778,4 +5778,4 @@ poor fit for a widget that only needs a done/total count per roadmap). It reuses
 same cache-first `fetchTemplateData()`/`resolveRoadmapItems()` resolution but reduces
 each roadmap down to `{ id, title, done, total }` immediately, never returning or
 retaining any roadmap's full item map. See `.claude/rules/roadmap-store.md`'s own entry
-for the full contract. `CACHE_VERSION` bumped 113 → 114.
+for the full contract. `CACHE_VERSION` bumped 114 → 115.
