@@ -80,7 +80,7 @@ describe('createTopbar — command palette wiring (issue #125)', () => {
   });
 });
 
-describe('createTopbar — avatar menu (issue #488)', () => {
+describe('createTopbar — avatar menu (issue #488, bell re-split out in #503)', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     localStorage.clear();
@@ -90,18 +90,18 @@ describe('createTopbar — avatar menu (issue #488)', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders a single avatar button with no separate bell/theme/create-account controls', () => {
+  it('renders a single avatar button plus its own bell, with no theme/create-account controls', () => {
     const topbar = createTopbar(baseProps({ user: { isAnonymous: true } }));
     document.body.append(topbar);
 
     expect(topbar.querySelector('.app-topbar-avatar-btn')).not.toBeNull();
-    expect(topbar.querySelector('.app-topbar-bell')).toBeNull();
+    expect(topbar.querySelector('.app-topbar-bell')).not.toBeNull();
     expect(topbar.querySelector('.theme-toggle')).toBeNull();
     expect(topbar.querySelector('.app-topbar-status')).toBeNull();
     topbar._cleanup();
   });
 
-  it('clicking the avatar opens a dropdown containing "What\'s New" and Settings', () => {
+  it('clicking the avatar opens a dropdown containing Settings', () => {
     const topbar = createTopbar(baseProps());
     document.body.append(topbar);
 
@@ -109,7 +109,16 @@ describe('createTopbar — avatar menu (issue #488)', () => {
     const labels = [...document.querySelectorAll('.dropdown-item')].map(el => el.textContent);
 
     expect(labels).toContain('Settings');
-    expect(labels).toContain("What's New");
+    topbar._cleanup();
+  });
+
+  it('clicking the bell opens the changelog drawer', () => {
+    const topbar = createTopbar(baseProps());
+    document.body.append(topbar);
+
+    topbar.querySelector('.app-topbar-bell').click();
+
+    expect(document.querySelector('.changelog-drawer')).not.toBeNull();
     topbar._cleanup();
   });
 });

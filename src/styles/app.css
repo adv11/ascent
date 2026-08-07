@@ -198,6 +198,18 @@
   /* issue #492 — width reserved down the dashboard phase list's left gutter
      for the progress spine (track + one dot per phase). */
   --phase-spine-gutter: clamp(26px, 3vw, 34px);
+  /* issue #503 follow-up — real, reported bug: `.dashboard-header`'s own
+     left/right padding is what insets its children
+     (`.roadmap-summary-card`/`.next-up-card`/`.roadmap-filters-card`) from
+     the page edge; `.daily-todo-panel` and `.dashboard-content` are
+     siblings of that header, not children of it, so they never got the
+     same inset and rendered visibly wider (their own card border sitting
+     right at `.app-content`'s edge instead of matching the others). One
+     shared token, read by all three, so a future breakpoint retune can't
+     silently drift them out of sync again — see each selector's own
+     `max-width: 768px`/`480px`/`375px` override below for the matching
+     narrower values. */
+  --dashboard-gutter-x: 20px;
 
   --font-weight-regular:  400;
   --font-weight-medium:   500;
@@ -2331,11 +2343,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* Issue #488 — `.app-topbar-status` (review-due/daily-todo badges, sync
    pill, "Create account") is retired along with the `.icon-btn-group`
    height-matching hack it needed (issue #309/#435/#450) — the topbar is now
-   just breadcrumb + `.icon-btn-group` (search + avatar), two same-size
-   36px icon-only controls with no third differently-sized row to stay in
-   sync with. */
+   just breadcrumb + `.icon-btn-group` (search + bell + avatar), same-size
+   36px icon-only controls with no differently-sized row to stay in sync
+   with. Issue #503 (E3) added the bell back as its own button — see that
+   selector's own comment. */
 .icon-btn-group { height: 36px; box-sizing: border-box; }
 .icon-btn-group .app-topbar-command-btn,
+.icon-btn-group .app-topbar-bell,
 .icon-btn-group .app-topbar-avatar-btn {
   width: 28px;
   height: 28px;
@@ -2356,11 +2370,28 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
 }
 .app-topbar-command-btn:hover { background: var(--color-surface-raised); }
+/* "What's New" bell trigger (`notificationBell.js`, issue #503/E3) — same
+   unstyled-until-hover 36px treatment as `.app-topbar-command-btn`. Briefly
+   folded into the avatar as `.avatar-unread-dot` during issue #488's interim
+   call; the dot is back on the bell itself as `.app-topbar-bell-dot`. */
+.app-topbar-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+.app-topbar-bell:hover { background: var(--color-surface-raised); }
+.app-topbar-bell-dot { position: absolute; top: 6px; right: 6px; }
 /* Avatar/account-menu trigger (issue #488) — same unstyled-until-hover 36px
    treatment as `.app-topbar-command-btn`, wrapping the shared `.avatar`
-   component. The unread-changelog dot (the old separate bell's own badge,
-   now folded into the avatar per #E3) is absolutely positioned over the
-   avatar's top-right corner. */
+   component. */
 .app-topbar-avatar-btn {
   position: relative;
   display: inline-flex;
@@ -2375,7 +2406,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
 }
 .app-topbar-avatar-btn:hover { background: var(--color-surface-raised); }
-.app-topbar-avatar-btn .avatar-unread-dot { position: absolute; top: 2px; right: 2px; }
 
 /* `grid-column: 2` is required, not decorative — without an explicit
    placement, CSS Grid's auto-placement algorithm places the next in-flow
@@ -2525,7 +2555,9 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-bottom-color: var(--color-border-strong);
   color: var(--color-accent-700);
 }
-.verification-msg { flex: 1; min-width: 0; }
+/* issue #503 follow-up — same fix as .guest-banner-msg below (identical
+   shape, identical shrink-to-nothing bug on a narrow viewport). */
+.verification-msg { flex: 1; min-width: min(220px, 100%); }
 .verification-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
 
 /* Issue #488 — replaces the old topbar-status "Local only" sync pill +
@@ -2544,7 +2576,18 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-lg);
   font-size: var(--text-base);
 }
-.guest-banner-msg { flex: 1; min-width: 0; color: var(--color-text-muted); }
+/* issue #503 follow-up — real, reported bug: `min-width: 0` let this flex
+   item shrink all the way toward zero on a narrow viewport instead of ever
+   reaching the point flex-wrap is meant to kick in for — with "Create
+   account" + the dismiss button also competing for the same row and
+   neither eager to shrink below their own text/icon's min-content, nearly
+   all the deficit landed on this item, squeezing its text into a
+   several-words-tall single narrow column instead of wrapping the row onto
+   a new line. A real (not zero) min-width means the buttons wrap onto
+   their own line, below full-width message text, the moment there's
+   genuinely not enough room — matching `.verification-msg`'s identical fix
+   below (same shape, same bug). */
+.guest-banner-msg { flex: 1; min-width: min(220px, 100%); color: var(--color-text-muted); }
 .guest-banner-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
 
 .backup-reminder-banner {
@@ -3028,11 +3071,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   .import-column-paste .import-paste-area { min-height: 260px; flex: 1; }
 }
 
-/* issue #298 — same flat-surface/2px-rule fix as .app-topbar above. */
+/* issue #298 originally gave this header its own flat background + a 2px
+   border-bottom "major section boundary" rule, matching .app-topbar's
+   treatment at the time. issue #503 follow-up — real, reported bug: every
+   section inside this header (.roadmap-summary-card/.next-up-card/
+   .roadmap-filters-card) is now its own individually-rounded `.card`, each
+   with its own background/border/radius — this outer header's own flat
+   background + square-cornered border-bottom is a leftover from before
+   that per-section `.card` system existed. With it still here, it painted
+   a flat, unrounded rule flush against `.daily-todo-panel` immediately
+   below (zero gap, since the border sits at this header's own padding-box
+   edge) — reading as "one rectangular seam" cutting across two rounded
+   cards, and effectively boxing an already-carded region in a second,
+   redundant box (the "box inside a box" pattern this app's own design
+   system otherwise avoids — see ui-styling.md's card-consolidation note).
+   Removed; only the safe-area-aware padding remains, since layout/spacing
+   is still this element's job even though visual chrome no longer is. */
 .dashboard-header {
-  background: var(--color-surface);
-  border-bottom: 2px solid var(--color-divider);
-  padding: max(18px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 20px max(20px, env(safe-area-inset-left));
+  padding: max(18px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 20px max(var(--dashboard-gutter-x), env(safe-area-inset-left));
 }
 
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -3650,16 +3706,27 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    sharp edge instead of two identical --v3-radius-lg corners. `.daily-todo-panel`
    is genuine page content (not an overlay/dialog/dropdown), so it gets the
    same flat, opaque treatment every other content-surface card already has. */
+/* issue #503 follow-up — real, reported inconsistency: this card's rounded
+   corners read visibly flatter than `.roadmap-filters-card`/`.next-up-card`
+   right above it, even though all three share the exact same 16px
+   `--v3-radius-lg`. The actual difference wasn't radius — it's that those
+   other cards compose the shared `.card` class (`app.css`, above), which
+   draws a subtle gradient-tinted hairline ring via `.card::before` on top of
+   the plain divider border; that extra ring is what makes an identical
+   curve read as crisply rounded. This card never had the `.card` class
+   (`dailyTodoPanel.js` now adds it) — background/border/radius below are
+   now redundant with `.card`'s own (kept only for the properties `.card`
+   doesn't set: layout/sizing), and `.card:hover`'s hover-lift transform is
+   cancelled right below, since this panel deliberately has no hover-lift
+   (only the todo rows inside it are clickable, see the comment above). */
 .daily-todo-panel {
   max-width: 1160px;
-  margin: 0 auto 18px;
-  width: 100%;
+  margin: 0 var(--dashboard-gutter-x) 18px;
+  width: auto;
   box-sizing: border-box;
-  background: hsl(var(--v3-surface));
-  border: 1px solid var(--color-divider);
-  border-radius: var(--v3-radius-lg);
   padding: var(--space-6);
 }
+.daily-todo-panel:hover { transform: none; border-color: var(--color-divider); }
 .daily-todo-heading-row {
   display: flex;
   align-items: center;
@@ -3942,8 +4009,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      :root) reserves room for the progress spine so it never overlaps a
      phase-card's own left edge; this file's other three .dashboard-content
      padding overrides (below and the two responsive breakpoints) add the
-     same gutter to their own left value. */
-  padding: 22px 20px 80px calc(20px + var(--phase-spine-gutter));
+     same gutter to their own left value. Right/top/bottom read
+     --dashboard-gutter-x (issue #503 follow-up) so this card's right edge
+     always lines up with .dashboard-header's/.daily-todo-panel's own. */
+  padding: 22px var(--dashboard-gutter-x) 80px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter));
   display: grid;
   gap: 12px;
   align-content: start;
@@ -4078,7 +4147,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
      open roadmap. See tests/e2e/scrollBackgroundFlash.test.js. */
   background: hsl(var(--v3-surface));
   border: 1px solid var(--color-divider);
-  border-left-width: 3px;
   border-radius: var(--v3-radius-lg);
   overflow: hidden;
 }
@@ -4151,13 +4219,17 @@ html[data-scrolling] .dropdown-menu {
   box-shadow: none;
 }
 
-/* Issue #6 Phase 4.2 — left-border priority accent, reusing the same
-   --color-p0..--color-p3 tokens .badge/.priority-tag already use, so a phase card's
-   priority reads consistently with every other priority-colored element. */
-.phase-card[data-priority="P0"] { border-left-color: var(--color-p0); }
-.phase-card[data-priority="P1"] { border-left-color: var(--color-p1); }
-.phase-card[data-priority="P2"] { border-left-color: var(--color-p2); }
-.phase-card[data-priority="P3"] { border-left-color: var(--color-p3); }
+/* Issue #6 Phase 4.2's left-border priority accent (`.phase-card[data-priority]`
+   border-left-color, at a wider 3px border-left-width) is removed — issue
+   #503 follow-up, real reported bug: since issue #486 gave every checklist
+   row its own priority-coloured left accent (`.check-item::before`, per
+   topic, more precise since a row's priority can differ from its phase's),
+   this card-level accent sat immediately next to that row-level one at a
+   slightly different x-offset, reading as a doubled/misaligned line rather
+   than one clean accent. The phase's own priority is still shown via its
+   `.badge` in `.phase-head`; the row-level accent is the single remaining
+   left-edge line.
+*/
 
 .phase-head {
   width: 100%;
@@ -4291,13 +4363,12 @@ html[data-scrolling] .dropdown-menu {
 
 /* Checklist items — issue #486 (B1): fixed two-line row (checkbox, title,
    one grey meta line) at a 66px minimum height, replacing the old
-   up-to-nine-control/up-to-four-line row. Priority is a 3px coloured inset
-   left edge (box-shadow, not border-left — an inset shadow can't shift the
-   row's own box model/padding the way a real border-left would) instead of
-   a separate `.priority-tag` pill; every secondary control (Open, Add to
-   today, Mark reviewed, Add a link, Delete) lives in the `.check-item-overflow-btn`
-   ⋮ menu at the row's trailing edge instead. */
+   up-to-nine-control/up-to-four-line row. Priority is a 3px coloured left
+   edge instead of a separate `.priority-tag` pill; every secondary control
+   (Open, Add to today, Mark reviewed, Add a link, Delete) lives in the
+   `.check-item-overflow-btn` ⋮ menu at the row's trailing edge instead. */
 .check-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -4311,10 +4382,38 @@ html[data-scrolling] .dropdown-menu {
 .check-item:hover { background: var(--color-surface-raised); }
 .check-item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-.check-item-p-P0 { box-shadow: inset 3px 0 0 var(--color-p0); }
-.check-item-p-P1 { box-shadow: inset 3px 0 0 var(--color-p1); }
-.check-item-p-P2 { box-shadow: inset 3px 0 0 var(--color-p2); }
-.check-item-p-P3 { box-shadow: inset 3px 0 0 var(--color-p3); }
+/* issue #503 follow-up — real, reported bug: the priority accent used to be
+   an `inset 3px 0 0` box-shadow, which paints *inside* the row's own border
+   layer at the same stacking step as `border-bottom` above. Where two
+   same-priority rows sit back to back, the 1px grey divider still crosses
+   the 3px accent strip at every row boundary, notching a visible grey tick
+   into what should read as one continuous coloured line down a run of
+   same-priority rows — worse the more rows are open, since it repeats at
+   every ~66px. A `::before` overlay paints as generated content *after* the
+   element's own background/border in the paint order, so it sits on top of
+   that notch instead of getting cut by it, giving a genuinely unbroken
+   strip across consecutive rows with no box-model/padding side effects
+   (same reason the original comment gave for using an inset shadow instead
+   of a real `border-left` in the first place). */
+.check-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  /* 1px overlap top/bottom, not a flush 0/0 — a same-height adjacent row's
+     own `border-bottom` sits exactly on this row's bottom pixel, and
+     sub-pixel rounding between the two independently-laid-out boxes can
+     still leave a hairline of that grey border visible even though this
+     layer paints after it (see the ::before comment above `.check-item` for
+     why paint order alone isn't quite enough). Overlapping by 1px in both
+     directions guarantees full coverage regardless of that rounding. */
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+}
+.check-item-p-P0::before { background: var(--color-p0); }
+.check-item-p-P1::before { background: var(--color-p1); }
+.check-item-p-P2::before { background: var(--color-p2); }
+.check-item-p-P3::before { background: var(--color-p3); }
 
 /* Issue #379 — `.check-item-focused` is the j/k keyboard-navigation focus
    ring: a purely visual state (dashboard.js tracks it via a plain id, not
@@ -6473,8 +6572,13 @@ html[data-scrolling] .dropdown-menu {
 }
 
 @media (max-width: 768px) {
-  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 16px max(16px, env(safe-area-inset-left)); }
-  .dashboard-content { padding: 18px 16px 84px calc(16px + var(--phase-spine-gutter)); }
+  /* --dashboard-gutter-x set once here (issue #503 follow-up) — .dashboard-header's
+     padding, .daily-todo-panel's margin, and .dashboard-content's padding
+     all read it, so this single override keeps every dashboard section's
+     left/right edge in sync instead of three separately-tuned literals. */
+  :root { --dashboard-gutter-x: 16px; }
+  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 16px max(var(--dashboard-gutter-x), env(safe-area-inset-left)); }
+  .dashboard-content { padding: 18px var(--dashboard-gutter-x) 84px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
   .landing-nav-links { display: none; }
   /* issue #500 (D4) — nav sheds the section links first (above), then the
      Sign in link at a narrower tier below — Start free + the brand mark +
@@ -6587,8 +6691,10 @@ html[data-scrolling] .dropdown-menu {
 }
 
 @media (max-width: 480px) {
-  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left)); }
-  .dashboard-content { padding: 16px 12px 88px calc(12px + var(--phase-spine-gutter)); }
+  /* --dashboard-gutter-x, see the ≤768px tier's own comment above. */
+  :root { --dashboard-gutter-x: 12px; }
+  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 16px max(var(--dashboard-gutter-x), env(safe-area-inset-left)); }
+  .dashboard-content { padding: 16px var(--dashboard-gutter-x) 88px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
   /* issue #489 — the identity row (`.roadmap-summary-top`) already wraps
      name/save-state onto their own lines at this width via its own
      `flex-wrap`, and the progress block below it is a single full-width
@@ -6767,7 +6873,15 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .my-report-details { padding: 0 14px 14px; font-size: var(--text-base); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
 
 @media (max-width: 375px) {
-  .dashboard-content { padding: 14px 10px 88px calc(10px + var(--phase-spine-gutter)); }
+  /* --dashboard-gutter-x, see the ≤768px tier's own comment above. This
+     tier previously had no matching .dashboard-header override at all —
+     .dashboard-content alone dropped to 10px here while .dashboard-header
+     (and therefore .roadmap-summary-card/.next-up-card/.roadmap-filters-card)
+     stayed at the ≤480px tier's 12px, a second small version of the same
+     misalignment bug. Setting the shared token here fixes both at once. */
+  :root { --dashboard-gutter-x: 10px; }
+  .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 16px max(var(--dashboard-gutter-x), env(safe-area-inset-left)); }
+  .dashboard-content { padding: 14px var(--dashboard-gutter-x) 88px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
   .modal-card { padding: 26px 20px 22px; }
 }
 
@@ -6814,6 +6928,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      mouse/desktop row. */
   .app-topbar .icon-btn-group { height: 56px; }
   .icon-btn-group .app-topbar-command-btn,
+  .icon-btn-group .app-topbar-bell,
   .icon-btn-group .app-topbar-avatar-btn {
     width: var(--tap-min);
     height: var(--tap-min);

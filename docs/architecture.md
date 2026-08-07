@@ -5779,3 +5779,65 @@ same cache-first `fetchTemplateData()`/`resolveRoadmapItems()` resolution but re
 each roadmap down to `{ id, title, done, total }` immediately, never returning or
 retaining any roadmap's full item map. See `.claude/rules/roadmap-store.md`'s own entry
 for the full contract. `CACHE_VERSION` bumped 114 → 115.
+
+### 2026-08-08 — PR TBD — What's New bell split back out of the avatar, checklist accent-line notch fix (issue #503, E3)
+
+New module `src/ui/components/notificationBell.js`: the dot-badged "What's New" bell
+lives in `topbar.js`'s icon group again, next to search and the avatar, matching the
+responsive-redesign design reference. This reverts issue #488's interim "fold the bell
+into the avatar dropdown" call — `topbar.js` no longer builds its own unread-dot/
+changelog-open logic inline, `notificationBell.js` owns that (still backed by
+`changelogDrawer.js`/`changelogSeen.js`, unchanged). `sidebar.js`'s account menu keeps
+its own "What's New" item as a second, harmless entry point on pages with a full
+sidebar.
+
+Also fixed, in the same PR: `.check-item`'s priority accent (the coloured left edge)
+moved from an `inset` box-shadow to a `::before` overlay, to close a real rendering gap
+where the row's own `border-bottom` could leave a visible grey notch in the accent at
+every row boundary — see `app.css`'s comment above `.check-item::before` for the
+mechanism.
+
+A third fix landed after initial review: the "Today" (Daily Todos) card's rounded
+corners read visibly flatter than `.roadmap-filters-card`/`.next-up-card` right above
+it, despite all three sharing the identical 16px `--v3-radius-lg`. Confirmed via pixel
+measurement (not just visual impression) that the radius itself was equal on both —
+the actual gap was that those other cards compose the shared `.card` class, which draws
+a gradient-tinted hairline ring via `.card::before` on top of the plain divider border,
+making an identical curve read as crisply rounded; `.daily-todo-panel` never had the
+`.card` class. `dailyTodoPanel.js`'s root element now composes `card daily-todo-panel`;
+`.daily-todo-panel:hover` cancels `.card:hover`'s hover-lift transform, since this panel
+was deliberately built with no hover-lift (only the todo rows inside it are clickable).
+
+A fourth round of fixes, same PR, found by continuing to compare against the design
+reference and live feedback:
+
+1. `.dashboard-header` (wrapping the roadmap-summary/next-up/filter cards) still had a
+   flat `background` + 2px `border-bottom` "major section boundary" left over from
+   before those cards became individually-rounded `.card`s (issue #298) — painting a
+   flat rectangular seam flush against `.daily-todo-panel` below it with zero gap.
+   Removed; only the safe-area-aware padding remains.
+2. `.daily-todo-panel`/`.dashboard-content` rendered visibly wider than the header's
+   own cards — those get their inset from `.dashboard-header`'s own left/right padding
+   (as a parent), while the panel/content are siblings of the header, not children, so
+   they never picked up an equivalent inset. New `--dashboard-gutter-x` token (`:root`,
+   retuned at the 768px/480px/375px breakpoints — the 375px tier previously had no
+   `.dashboard-header` override at all, a second small instance of the same bug) is now
+   the single source `.dashboard-header`'s padding, `.daily-todo-panel`'s margin, and
+   `.dashboard-content`'s padding all read, so a future breakpoint retune can't drift
+   them out of sync the way three independently-tuned literals did.
+3. `.phase-card`'s own 3px priority-coloured left border (issue #6 Phase 4.2) sat
+   immediately next to the newer, more precise per-topic accent
+   (`.check-item::before`, issue #486, this same PR) at a slightly different x-offset —
+   reading as a doubled/misaligned line rather than one clean accent down the
+   checklist. Removed the card-level border accent; the phase's priority is still shown
+   via its `.badge`, and the per-row accent is now the only left-edge line.
+4. `.guest-banner-msg`/`.verification-msg` (same shared banner shape) had `min-width: 0`,
+   letting the flex item shrink toward zero on a narrow viewport instead of the row ever
+   wrapping — nearly all the deficit landed on the message text, squeezing it into a
+   many-lines-tall narrow column while "Create account"/dismiss held their ground.
+   Changed to `min-width: min(220px, 100%)` so the controls wrap onto their own line
+   below full-width text once there's genuinely not enough room, matching the same
+   real-`min-width`-forces-a-wrap fix `.daily-todo-panel` needed for none of the same
+   reasons — worth remembering as a general flex-wrap pattern.
+
+`CACHE_VERSION` bumped 116 → 117.
