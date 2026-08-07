@@ -5,9 +5,15 @@
 // to 0), so calling it again later would resume from wherever the last
 // render left off — callers that only want this on first render (see
 // dashboard.js's hasAnimatedStats guard) are responsible for only calling it
-// once.
-export function animateCountUp(el, to, { duration = 600, formatFn = String } = {}) {
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+// once. Default duration lowered from 600 to 200ms (issue #499, D3 motion
+// pass) — CSS custom properties can't be read directly in JS math, so this
+// mirrors --duration-base's value rather than importing it; keep the two in
+// sync if --duration-base is ever retuned.
+export function animateCountUp(el, to, { duration = 200, formatFn = String } = {}) {
+  const skipAnimation =
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
+    document.documentElement.hasAttribute('data-animations-off');
+  if (skipAnimation) {
     el.textContent = formatFn(to);
     return;
   }
