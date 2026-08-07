@@ -5651,3 +5651,23 @@ default regardless of this preference, so every `rem`-based token that isn't a
 `--text-*` token (spacing, radius, icon sizes, chip dimensions) is unaffected by text
 size. See `.claude/rules/ui-styling.md`'s "Text size and animations-off preferences"
 entry for the updated contract.
+
+### 2026-08-06 — PR #TBD — Every modal becomes a bottom sheet below 720px (issue #497, D1)
+
+Implemented once in the shared `.modal-overlay`/`.modal-card` shell (`modal.js`) and
+`.panel-overlay`/`.item-panel` (`itemPanel.js`), so every modal built on either —
+confirmDialog, itemPanel, commandPalette, importRoadmapModal, shareRoadmapModal,
+deleteAccountModal, feedbackModal — gets the sheet treatment for free with zero
+per-component CSS or JS change. Below 720px (widened from the item panel's previous
+480px, issue #6 Phase 8), `.modal-overlay` docks its card to the bottom of the
+viewport instead of centering it; `.modal-card` goes full width with
+`border-radius: 22px 22px 0 0`, `max-height: 92dvh` and internal scroll, and a
+drag-handle bar rendered as a `::before` pseudo-element (no DOM node, so no
+component needed a JS change). Close buttons (`.modal-close`, `.feedback-modal-close`)
+grow to the 48px `--tap-min` floor at this width regardless of pointer type — a
+phone-viewport rule tied to the design reference's own width-based spec, not the
+usual `(pointer: coarse)` touch-capability gate most touch-target rules in this file
+use. Primary actions in `.confirm-dialog-actions`/`.feedback-form-actions` stack and
+go full width; `deleteAccountModal.js`/`importRoadmapModal.js` already used
+`.btn-block` on their primary buttons and needed no change. `CACHE_VERSION` bumped
+109 → 110.
