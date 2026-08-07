@@ -5779,3 +5779,20 @@ same cache-first `fetchTemplateData()`/`resolveRoadmapItems()` resolution but re
 each roadmap down to `{ id, title, done, total }` immediately, never returning or
 retaining any roadmap's full item map. See `.claude/rules/roadmap-store.md`'s own entry
 for the full contract. `CACHE_VERSION` bumped 114 → 115.
+
+### 2026-08-08 — PR TBD — What's New bell split back out of the avatar, checklist accent-line notch fix (issue #503, E3)
+
+New module `src/ui/components/notificationBell.js`: the dot-badged "What's New" bell
+lives in `topbar.js`'s icon group again, next to search and the avatar, matching the
+responsive-redesign design reference. This reverts issue #488's interim "fold the bell
+into the avatar dropdown" call — `topbar.js` no longer builds its own unread-dot/
+changelog-open logic inline, `notificationBell.js` owns that (still backed by
+`changelogDrawer.js`/`changelogSeen.js`, unchanged). `sidebar.js`'s account menu keeps
+its own "What's New" item as a second, harmless entry point on pages with a full
+sidebar.
+
+Also fixed, in the same PR: `.check-item`'s priority accent (the coloured left edge)
+moved from an `inset` box-shadow to a `::before` overlay, to close a real rendering gap
+where the row's own `border-bottom` could leave a visible grey notch in the accent at
+every row boundary — see `app.css`'s comment above `.check-item::before` for the
+mechanism. `CACHE_VERSION` bumped 116 → 117.

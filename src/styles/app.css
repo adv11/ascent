@@ -2331,11 +2331,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* Issue #488 — `.app-topbar-status` (review-due/daily-todo badges, sync
    pill, "Create account") is retired along with the `.icon-btn-group`
    height-matching hack it needed (issue #309/#435/#450) — the topbar is now
-   just breadcrumb + `.icon-btn-group` (search + avatar), two same-size
-   36px icon-only controls with no third differently-sized row to stay in
-   sync with. */
+   just breadcrumb + `.icon-btn-group` (search + bell + avatar), same-size
+   36px icon-only controls with no differently-sized row to stay in sync
+   with. Issue #503 (E3) added the bell back as its own button — see that
+   selector's own comment. */
 .icon-btn-group { height: 36px; box-sizing: border-box; }
 .icon-btn-group .app-topbar-command-btn,
+.icon-btn-group .app-topbar-bell,
 .icon-btn-group .app-topbar-avatar-btn {
   width: 28px;
   height: 28px;
@@ -2356,11 +2358,28 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
 }
 .app-topbar-command-btn:hover { background: var(--color-surface-raised); }
+/* "What's New" bell trigger (`notificationBell.js`, issue #503/E3) — same
+   unstyled-until-hover 36px treatment as `.app-topbar-command-btn`. Briefly
+   folded into the avatar as `.avatar-unread-dot` during issue #488's interim
+   call; the dot is back on the bell itself as `.app-topbar-bell-dot`. */
+.app-topbar-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+.app-topbar-bell:hover { background: var(--color-surface-raised); }
+.app-topbar-bell-dot { position: absolute; top: 6px; right: 6px; }
 /* Avatar/account-menu trigger (issue #488) — same unstyled-until-hover 36px
    treatment as `.app-topbar-command-btn`, wrapping the shared `.avatar`
-   component. The unread-changelog dot (the old separate bell's own badge,
-   now folded into the avatar per #E3) is absolutely positioned over the
-   avatar's top-right corner. */
+   component. */
 .app-topbar-avatar-btn {
   position: relative;
   display: inline-flex;
@@ -2375,7 +2394,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   border-radius: var(--radius-full);
 }
 .app-topbar-avatar-btn:hover { background: var(--color-surface-raised); }
-.app-topbar-avatar-btn .avatar-unread-dot { position: absolute; top: 2px; right: 2px; }
 
 /* `grid-column: 2` is required, not decorative — without an explicit
    placement, CSS Grid's auto-placement algorithm places the next in-flow
@@ -4291,13 +4309,12 @@ html[data-scrolling] .dropdown-menu {
 
 /* Checklist items — issue #486 (B1): fixed two-line row (checkbox, title,
    one grey meta line) at a 66px minimum height, replacing the old
-   up-to-nine-control/up-to-four-line row. Priority is a 3px coloured inset
-   left edge (box-shadow, not border-left — an inset shadow can't shift the
-   row's own box model/padding the way a real border-left would) instead of
-   a separate `.priority-tag` pill; every secondary control (Open, Add to
-   today, Mark reviewed, Add a link, Delete) lives in the `.check-item-overflow-btn`
-   ⋮ menu at the row's trailing edge instead. */
+   up-to-nine-control/up-to-four-line row. Priority is a 3px coloured left
+   edge instead of a separate `.priority-tag` pill; every secondary control
+   (Open, Add to today, Mark reviewed, Add a link, Delete) lives in the
+   `.check-item-overflow-btn` ⋮ menu at the row's trailing edge instead. */
 .check-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -4311,10 +4328,38 @@ html[data-scrolling] .dropdown-menu {
 .check-item:hover { background: var(--color-surface-raised); }
 .check-item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-.check-item-p-P0 { box-shadow: inset 3px 0 0 var(--color-p0); }
-.check-item-p-P1 { box-shadow: inset 3px 0 0 var(--color-p1); }
-.check-item-p-P2 { box-shadow: inset 3px 0 0 var(--color-p2); }
-.check-item-p-P3 { box-shadow: inset 3px 0 0 var(--color-p3); }
+/* issue #503 follow-up — real, reported bug: the priority accent used to be
+   an `inset 3px 0 0` box-shadow, which paints *inside* the row's own border
+   layer at the same stacking step as `border-bottom` above. Where two
+   same-priority rows sit back to back, the 1px grey divider still crosses
+   the 3px accent strip at every row boundary, notching a visible grey tick
+   into what should read as one continuous coloured line down a run of
+   same-priority rows — worse the more rows are open, since it repeats at
+   every ~66px. A `::before` overlay paints as generated content *after* the
+   element's own background/border in the paint order, so it sits on top of
+   that notch instead of getting cut by it, giving a genuinely unbroken
+   strip across consecutive rows with no box-model/padding side effects
+   (same reason the original comment gave for using an inset shadow instead
+   of a real `border-left` in the first place). */
+.check-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  /* 1px overlap top/bottom, not a flush 0/0 — a same-height adjacent row's
+     own `border-bottom` sits exactly on this row's bottom pixel, and
+     sub-pixel rounding between the two independently-laid-out boxes can
+     still leave a hairline of that grey border visible even though this
+     layer paints after it (see the ::before comment above `.check-item` for
+     why paint order alone isn't quite enough). Overlapping by 1px in both
+     directions guarantees full coverage regardless of that rounding. */
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+}
+.check-item-p-P0::before { background: var(--color-p0); }
+.check-item-p-P1::before { background: var(--color-p1); }
+.check-item-p-P2::before { background: var(--color-p2); }
+.check-item-p-P3::before { background: var(--color-p3); }
 
 /* Issue #379 — `.check-item-focused` is the j/k keyboard-navigation focus
    ring: a purely visual state (dashboard.js tracks it via a plain id, not
@@ -6814,6 +6859,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      mouse/desktop row. */
   .app-topbar .icon-btn-group { height: 56px; }
   .icon-btn-group .app-topbar-command-btn,
+  .icon-btn-group .app-topbar-bell,
   .icon-btn-group .app-topbar-avatar-btn {
     width: var(--tap-min);
     height: var(--tap-min);

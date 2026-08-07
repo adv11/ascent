@@ -6,10 +6,7 @@ import { searchTopicsAcrossRoadmaps } from '../../core/roadmap/globalTopicSearch
 import { KEYS } from '../../services/localStorageKeys.js';
 import { createAvatar } from './avatar.js';
 import { buildAccountMenu } from './sidebar.js';
-import { openChangelogDrawer } from './changelogDrawer.js';
-import { CHANGELOG, APP_VERSION } from '../../data/changelog.js';
-import { getLastSeenChangelogVersion, setLastSeenChangelogVersion } from '../../services/changelogSeen.js';
-import { isNewerVersion } from '../../core/changelog/version.js';
+import { createNotificationBell } from './notificationBell.js';
 
 // Issue #125 — the app-wide navigation items the command palette searches.
 function navigationItems() {
@@ -96,29 +93,19 @@ export function createTopbar({ breadcrumb, user, store, dailyTodoStore, onDelete
     onClick: openPalette
   }, [createIcon('search', { size: 'sm' })]);
 
-  // Issue #488 (per #E3) — the bell folds into the avatar: unread changelog
-  // state is a small dot on the avatar itself, and "What's New" becomes a
-  // menu item inside its dropdown, rather than a separate icon button.
-  const lastSeenVersion = getLastSeenChangelogVersion();
-  const unreadDot = el('span', {
-    className: 'avatar-unread-dot notification-badge notification-badge-dot',
-    hidden: !isNewerVersion(APP_VERSION, lastSeenVersion)
-  });
-  function openChangelog() {
-    openChangelogDrawer({
-      entries: [...CHANGELOG].sort((a, b) => b.version - a.version),
-      onClose: () => {}
-    });
-    setLastSeenChangelogVersion(APP_VERSION);
-    unreadDot.hidden = true;
-  }
+  // Issue #503 (E3) — the bell is its own dot-badged icon button beside the
+  // avatar, per the responsive-redesign design reference. notificationBell.js
+  // owns its own unread-dot state and "What's New" trigger; the avatar no
+  // longer carries a folded-in dot (see that file's comment for the #488
+  // interim history this supersedes).
+  const notificationBell = createNotificationBell();
 
   const userLabel = user.isAnonymous ? 'Guest session' : (user.displayName || user.email || 'Signed in');
   const avatarTrigger = el('button', {
     type: 'button',
     className: 'app-topbar-avatar-btn',
     'aria-label': `Account menu — ${userLabel}`
-  }, [createAvatar(user, 'sm'), unreadDot]);
+  }, [createAvatar(user, 'sm')]);
 
   const { identity: avatarMenu, importInput } = buildAccountMenu({
     user,
@@ -127,15 +114,16 @@ export function createTopbar({ breadcrumb, user, store, dailyTodoStore, onDelete
     identityTrigger: avatarTrigger,
     onDeleteAccount,
     onStartTour,
-    onOpenChangelog: openChangelog,
     align: 'end'
   });
 
-  // issue #155 (ZeBeyond direction) — search + the avatar trigger grouped in
-  // a bordered pill container, matching the reference's icon-button cluster.
-  // Grouping only, not a reimplementation of either control.
+  // issue #155 (ZeBeyond direction) — search + the bell + the avatar trigger
+  // grouped in a bordered pill container, matching the reference's
+  // icon-button cluster. Grouping only, not a reimplementation of any
+  // control.
   const iconGroup = el('div', { className: 'icon-btn-group' }, [
     commandPaletteBtn,
+    notificationBell,
     avatarMenu
   ]);
 
