@@ -2843,6 +2843,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .shared-item-priority { font-size: var(--text-base); color: var(--color-text-muted); }
 .shared-item-resource-count { display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-muted); font-size: var(--text-base); flex-shrink: 0; }
 
+/* --color-accent-600 flips brightness direction between themes (a darkened
+   step in light theme, a *lighter* step in dark theme — see its own comment
+   above --color-accent-600's declaration), so it needs its matched
+   --color-ink-on-accent text token, not a fixed white — a fixed white read
+   near-invisible against dark theme's light-mint accent-600 fill, a real
+   contrast bug found via a live screenshot. Same pairing .btn-primary/
+   .seg-item/.reset-success-icon already use for exactly this reason. */
 .shared-view-cta-banner {
   display: flex;
   flex-wrap: wrap;
@@ -2851,17 +2858,20 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   gap: 16px;
   padding: var(--space-8) 2.5rem;
   background: var(--color-accent-600);
+  color: var(--color-ink-on-accent);
   border: none;
 }
 .shared-view-cta-banner::before { display: none; }
-.shared-view-cta-text h2 { margin: 0 0 4px; color: hsl(0 0% 100%); }
-/* intentional: fixed white text on the always-solid accent-600 fill, same
-   both themes — same "solid accent CTA field" precedent as .landing-cta. */
-.shared-view-cta-text p { margin: 0; color: hsl(0 0% 100% / 0.85); }
+.shared-view-cta-text h2 { margin: 0 0 4px; color: inherit; }
+.shared-view-cta-text p { margin: 0; color: inherit; opacity: 0.85; }
 .shared-view-cta-banner .btn-cta-inverse {
   flex-shrink: 0;
   background: hsl(0 0% 100%);
-  color: var(--color-accent-700);
+  /* intentional: fixed dark green on a fixed white pill, same both themes —
+     the pill itself never changes color with theme (a "cutout" look against
+     the accent-600 field above), so its text can't read a theme-flipping
+     ink token either; verified >=8:1 against white in both themes. */
+  color: #034E24;
   border-color: transparent;
   box-shadow: none;
 }
