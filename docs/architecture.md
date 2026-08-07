@@ -5807,4 +5807,37 @@ making an identical curve read as crisply rounded; `.daily-todo-panel` never had
 `.card` class. `dailyTodoPanel.js`'s root element now composes `card daily-todo-panel`;
 `.daily-todo-panel:hover` cancels `.card:hover`'s hover-lift transform, since this panel
 was deliberately built with no hover-lift (only the todo rows inside it are clickable).
+
+A fourth round of fixes, same PR, found by continuing to compare against the design
+reference and live feedback:
+
+1. `.dashboard-header` (wrapping the roadmap-summary/next-up/filter cards) still had a
+   flat `background` + 2px `border-bottom` "major section boundary" left over from
+   before those cards became individually-rounded `.card`s (issue #298) — painting a
+   flat rectangular seam flush against `.daily-todo-panel` below it with zero gap.
+   Removed; only the safe-area-aware padding remains.
+2. `.daily-todo-panel`/`.dashboard-content` rendered visibly wider than the header's
+   own cards — those get their inset from `.dashboard-header`'s own left/right padding
+   (as a parent), while the panel/content are siblings of the header, not children, so
+   they never picked up an equivalent inset. New `--dashboard-gutter-x` token (`:root`,
+   retuned at the 768px/480px/375px breakpoints — the 375px tier previously had no
+   `.dashboard-header` override at all, a second small instance of the same bug) is now
+   the single source `.dashboard-header`'s padding, `.daily-todo-panel`'s margin, and
+   `.dashboard-content`'s padding all read, so a future breakpoint retune can't drift
+   them out of sync the way three independently-tuned literals did.
+3. `.phase-card`'s own 3px priority-coloured left border (issue #6 Phase 4.2) sat
+   immediately next to the newer, more precise per-topic accent
+   (`.check-item::before`, issue #486, this same PR) at a slightly different x-offset —
+   reading as a doubled/misaligned line rather than one clean accent down the
+   checklist. Removed the card-level border accent; the phase's priority is still shown
+   via its `.badge`, and the per-row accent is now the only left-edge line.
+4. `.guest-banner-msg`/`.verification-msg` (same shared banner shape) had `min-width: 0`,
+   letting the flex item shrink toward zero on a narrow viewport instead of the row ever
+   wrapping — nearly all the deficit landed on the message text, squeezing it into a
+   many-lines-tall narrow column while "Create account"/dismiss held their ground.
+   Changed to `min-width: min(220px, 100%)` so the controls wrap onto their own line
+   below full-width text once there's genuinely not enough room, matching the same
+   real-`min-width`-forces-a-wrap fix `.daily-todo-panel` needed for none of the same
+   reasons — worth remembering as a general flex-wrap pattern.
+
 `CACHE_VERSION` bumped 116 → 117.
