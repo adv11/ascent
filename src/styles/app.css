@@ -2886,7 +2886,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    default-underline) so the whole line reads as one calm, muted caption. */
 .shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: var(--text-base); text-decoration: none; }
 .shared-view-attribution:hover, .shared-view-attribution:focus-visible { text-decoration: underline; }
+/* .brand-mark's inner <svg> carries its own fixed width="20"/height="20"
+   HTML attributes (brandGlyph(), brand.js) — shrinking only the outer box
+   here left the glyph at its native 20px size inside an 18px box, poking
+   out asymmetrically instead of scaling down with it. The child selector
+   forces the svg to fill its (smaller) box so place-items: center centers
+   a correctly-sized glyph, not an oversized one. */
 .shared-view-attribution .brand-mark { width: 18px; height: 18px; }
+.shared-view-attribution .brand-mark svg { width: 100%; height: 100%; }
 .shared-view-footer-note { color: var(--color-text-muted); font-size: var(--text-base); }
 
 @media (max-width: 480px) {
