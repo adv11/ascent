@@ -5739,3 +5739,43 @@ so the spine line always started above the first phase card's own dot instead of
 `CACHE_VERSION` bumped 111 → 113 (112 as part of the token pass itself, 113 for these
 two follow-up fixes — busted separately since the first bump had already been deployed
 to a local dev session before the follow-ups landed).
+
+### 2026-08-07 — PR #TBD — Share-progress card generator rebuilt (issue #501, E1)
+
+`src/ui/components/shareCard.js`/`shareModal.js` used to be a fixed single-card modal
+(issue #8 Part C): one hardcoded light-theme canvas for the active roadmap only, an
+`ascent.dev` footer literal that never matched the actual deployed host. Rebuilt as a
+real generator, following the design reference attached to issue #501.
+
+`shareCard.js` is now a dumb renderer: `generateShareCard(cardData)` takes a plain,
+pre-computed shape (`style`, `headlinePct`/`headlineLabel`, up to 3 `stats`,
+`activityCells`/`phaseNames`/`dateLabel`/`link` — each `null` when its toggle is off)
+and draws it against one of three **explicit, literal** palettes (`light`/`dark`/
+`green`) — deliberately not `cssVar()` reads off the live DOM, since a canvas has no CSS
+cascade and must not silently follow whichever theme the site happens to be in. New
+`shareSiteUrl()` reads `window.location.host` (never a literal), stripped of a leading
+`www.`. `generateBadgeCard()` (the separate phase/roadmap-completion celebration card,
+issue #181) is untouched — out of this issue's scope.
+
+`shareModal.js`'s `openShareModal({ store, dailyTodoStore, analytics, activityLog })`
+builds the actual UI: a scope picker (this roadmap / all roadmaps / today's todos / a
+single phase), the style picker, five include toggles, an editable caption with four
+rotating presets and hashtag chips, and eight share-intent targets (X, LinkedIn,
+WhatsApp, Threads, Reddit, Telegram, Facebook, email — window.open() share-intent URLs,
+new brand-mark icons added to `icons.js` for the five that didn't already exist) plus
+Download/Copy image/Copy link. `buildCardData()` is the one place a scope selection
+turns into `shareCard.js`'s render shape; streak/velocity/the activity heatmap are
+user-global (from the already-computed `analytics`/`activityLog` the Progress page
+holds) and apply identically regardless of scope — only headline/stats/phase-names
+differ per scope. The preview canvas is the true 1200×630 element, CSS-scaled down via
+a plain `width: 100%` (never a separately-styled approximation), so the exported PNG is
+guaranteed to match what was previewed.
+
+The "all roadmaps combined" scope needed a new store method,
+`roadmapStore.getAllRoadmapsSummary()` — a counts-only sibling to the existing
+`getAllRoadmapsForSearch()` (which resolves every started roadmap's *full* item map, a
+poor fit for a widget that only needs a done/total count per roadmap). It reuses the
+same cache-first `fetchTemplateData()`/`resolveRoadmapItems()` resolution but reduces
+each roadmap down to `{ id, title, done, total }` immediately, never returning or
+retaining any roadmap's full item map. See `.claude/rules/roadmap-store.md`'s own entry
+for the full contract. `CACHE_VERSION` bumped 113 → 114.

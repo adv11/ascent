@@ -379,7 +379,7 @@ export function renderProgress(app, { user, store, activityLogStore, dailyTodoSt
     onClick: async () => {
       if (!latestAnalytics) return;
       try {
-        await openShareModal(latestAnalytics, latestEffectiveLog);
+        await openShareModal({ store, dailyTodoStore, analytics: latestAnalytics, activityLog: latestEffectiveLog });
       } catch (error) {
         console.error('Failed to generate share card', error);
         showToast('Could not generate the share card. Try again.', 'error');

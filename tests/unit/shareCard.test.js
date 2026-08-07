@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { generateShareCard } from '../../src/ui/components/shareCard.js';
+import { generateShareCard, generateBadgeCard, getCardStyleNames, shareSiteUrl } from '../../src/ui/components/shareCard.js';
 import { BRAND_NAME } from '../../src/ui/components/brand.js';
 
 // jsdom's canvas getContext('2d') returns null without the optional `canvas`
@@ -13,9 +13,8 @@ let originalGetContext;
 function fakeCtx() {
   const ctx = {
     fillRect: vi.fn(), fillText: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(),
-    lineTo: vi.fn(), closePath: vi.fn(), fill: vi.fn(), arcTo: vi.fn(),
-    rect: vi.fn(), stroke: vi.fn(), strokeRect: vi.fn(),
-    createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+    lineTo: vi.fn(), closePath: vi.fn(), fill: vi.fn(), rect: vi.fn(),
+    stroke: vi.fn(), strokeRect: vi.fn(),
     set fillStyle(v) { calls.fillStyle.push(v); },
     get fillStyle() { return calls.fillStyle[calls.fillStyle.length - 1]; },
     set strokeStyle(v) { calls.strokeStyle = v; },
@@ -29,7 +28,6 @@ function fakeCtx() {
     set textBaseline(v) { calls.textBaseline = v; },
     get textBaseline() { return calls.textBaseline; }
   };
-  // Record fillText calls with a plain wrapper so assertions can read args.
   const realFillText = ctx.fillText;
   ctx.fillText = (...args) => { calls.fillTextArgs.push(args); return realFillText(...args); };
   return ctx;
@@ -48,46 +46,98 @@ afterEach(() => {
   HTMLCanvasElement.prototype.getContext = originalGetContext;
 });
 
-function fakeAnalytics(overrides = {}) {
+function fakeCardData(overrides = {}) {
   return {
-    overview: { total: 340, done: 128, pct: 38 },
-    streaks: { current: 14, longest: 21 },
-    velocity: 4.2,
-    phaseBreakdown: [{ phase: 'Java', done: 1, total: 2, pct: 50 }, { phase: 'Spring', done: 0, total: 1, pct: 0 }],
-    priorityBreakdown: [],
-    heatmapData: [],
-    projection: { remainingItems: 212, velocity: 4.2, daysToComplete: 50 },
+    style: 'light',
+    headlinePct: 26,
+    headlineLabel: 'of my Java Backend Engineer roadmap',
+    stats: [{ value: '128/484', label: 'topics done' }, { value: '4-day', label: 'current streak' }, { value: '3.2', label: 'topics a day' }],
+    activityCells: null,
+    phaseNames: ['Core Java', 'Concurrency'],
+    dateLabel: '2 August 2026',
+    link: 'localhost:8931',
     ...overrides
   };
 }
 
 describe('generateShareCard', () => {
   it('returns a 1200x630 canvas', async () => {
-    const canvas = await generateShareCard(fakeAnalytics(), {}, Date.now());
+    const canvas = await generateShareCard(fakeCardData());
     expect(canvas.width).toBe(1200);
     expect(canvas.height).toBe(630);
   });
 
-  it('draws the brand name (never a hardcoded literal elsewhere) — uppercase per design-system.md\'s wordmark rule', async () => {
-    await generateShareCard(fakeAnalytics(), {}, Date.now());
+  it('draws the brand name uppercase', async () => {
+    await generateShareCard(fakeCardData());
     const texts = calls.fillTextArgs.map(args => args[0]);
     expect(texts.some(t => t.includes(BRAND_NAME.toUpperCase()))).toBe(true);
   });
 
-  it('draws the completion stats and streak', async () => {
-    await generateShareCard(fakeAnalytics(), {}, Date.now());
+  it('draws the headline percentage and label', async () => {
+    await generateShareCard(fakeCardData());
     const texts = calls.fillTextArgs.map(args => args[0]);
-    expect(texts.some(t => t.includes('128 items complete · 38%'))).toBe(true);
-    expect(texts.some(t => t.includes('14-day streak'))).toBe(true);
+    expect(texts.some(t => t.includes('26%'))).toBe(true);
+    expect(texts.some(t => t.includes('of my Java Backend Engineer roadmap'))).toBe(true);
   });
 
-  it('draws phase tags from the phase breakdown', async () => {
-    await generateShareCard(fakeAnalytics(), {}, Date.now());
+  it('draws every stat value and label', async () => {
+    await generateShareCard(fakeCardData());
     const texts = calls.fillTextArgs.map(args => args[0]);
-    expect(texts.some(t => t.includes('Java') && t.includes('Spring'))).toBe(true);
+    expect(texts).toContain('128/484');
+    expect(texts).toContain('4-day');
+    expect(texts).toContain('current streak');
   });
 
-  it('does not throw when phaseBreakdown is empty', async () => {
-    await expect(generateShareCard(fakeAnalytics({ phaseBreakdown: [] }), {}, Date.now())).resolves.toBeTruthy();
+  it('draws phase names when provided', async () => {
+    await generateShareCard(fakeCardData());
+    const texts = calls.fillTextArgs.map(args => args[0]);
+    expect(texts.some(t => t.includes('Core Java') && t.includes('Concurrency'))).toBe(true);
+  });
+
+  it('omits phase names, date, and link when their toggle data is null', async () => {
+    await generateShareCard(fakeCardData({ phaseNames: null, dateLabel: null, link: null }));
+    const texts = calls.fillTextArgs.map(args => args[0]);
+    expect(texts.some(t => t.includes('Core Java'))).toBe(false);
+    expect(texts).not.toContain('2 August 2026');
+    expect(texts).not.toContain('localhost:8931');
+  });
+
+  it('does not throw with an empty stats array', async () => {
+    await expect(generateShareCard(fakeCardData({ stats: [] }))).resolves.toBeTruthy();
+  });
+
+  it('falls back to the light style for an unknown style name', async () => {
+    await expect(generateShareCard(fakeCardData({ style: 'not-a-style' }))).resolves.toBeTruthy();
+  });
+
+  it('renders each of the three named card styles without throwing', async () => {
+    for (const style of getCardStyleNames()) {
+      await expect(generateShareCard(fakeCardData({ style }))).resolves.toBeTruthy();
+    }
+  });
+});
+
+describe('shareSiteUrl', () => {
+  it('returns window.location.host', () => {
+    expect(shareSiteUrl()).toBe(window.location.host);
+  });
+
+  it('strips a leading www.', () => {
+    const original = window.location;
+    delete window.location;
+    window.location = { ...original, host: 'www.example.com' };
+    expect(shareSiteUrl()).toBe('example.com');
+    window.location = original;
+  });
+});
+
+describe('generateBadgeCard', () => {
+  it('returns a 1200x630 canvas and draws the headline', async () => {
+    const canvas = await generateBadgeCard('roadmap', 'Java Backend Engineer');
+    expect(canvas.width).toBe(1200);
+    expect(canvas.height).toBe(630);
+    const texts = calls.fillTextArgs.map(args => args[0]);
+    expect(texts).toContain('Roadmap complete!');
+    expect(texts).toContain('Java Backend Engineer');
   });
 });

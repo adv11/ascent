@@ -2673,10 +2673,59 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .confirm-dialog-body { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.6; }
 .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 
-/* Share card preview modal (issue #8, Part C) */
-.share-modal-card { max-width: 600px; display: grid; gap: 14px; position: relative; max-height: 90vh; overflow-y: auto; }
+/* Share card preview modal — rebuilt as a full generator (issue #501,
+   superseding the original issue #8 Part C fixed single-card modal).
+   Widened from the old 600px single-column layout to a two-column
+   preview/controls grid, matching the design reference's 09-share-progress
+   layout — the preview stays a fixed-max-width column while the controls
+   column scrolls independently within the shared modal-card scroll bound. */
+.share-modal-card { max-width: 980px; display: grid; gap: 14px; position: relative; max-height: 90vh; overflow-y: auto; }
 .share-modal-card .modal-close { position: absolute; top: 8px; right: 8px; }
-.share-card-preview { width: 100%; height: auto; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.share-modal-subtitle { color: var(--color-text-muted); font-size: var(--text-base); margin: -6px 0 4px; }
+.share-modal-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+@media (min-width: 800px) {
+  .share-modal-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+}
+.share-modal-preview-col { display: grid; gap: 14px; position: sticky; top: 0; }
+@media (max-width: 799px) {
+  .share-modal-preview-col { position: static; }
+}
+.share-modal-controls-col { display: grid; gap: 20px; min-width: 0; }
+.share-preview-heading { display: flex; justify-content: space-between; align-items: baseline; }
+.share-preview-label { font-size: var(--text-base); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+/* The preview canvas is the true 1200x630 element, CSS-scaled down via a
+   plain width:100% — never a separately-styled approximation — so the
+   downloaded PNG is guaranteed pixel-identical to what was previewed. */
+.share-preview-wrap { position: relative; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); transition: opacity var(--duration-fast) var(--ease-out); }
+.share-preview-wrap.share-preview-loading { opacity: 0.5; }
+.share-card-preview { width: 100%; height: auto; display: block; }
+.share-style-row { display: flex; align-items: center; gap: 12px; }
+.share-control-block { display: grid; gap: 12px; }
+.share-control-heading { font-size: var(--text-base); font-weight: 700; color: var(--color-text); margin: 0; }
+.share-caption-heading-row { display: flex; justify-content: space-between; align-items: center; }
+
+.share-scope-group { display: grid; gap: 8px; }
+.share-scope-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: hsl(var(--v3-surface));
+}
+.share-scope-option:has(.share-scope-input:checked) { border-color: var(--color-accent); background: hsl(var(--v3-accent) / 0.08); }
+.share-scope-input { flex-shrink: 0; accent-color: var(--color-accent); width: 18px; height: 18px; }
+.share-scope-option-body { display: grid; gap: 2px; min-width: 0; }
+.share-scope-option-label { font-weight: 700; color: var(--color-text); }
+.share-scope-option-desc { font-size: var(--text-base); color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.share-phase-select-slot:empty { display: none; }
+
+.share-toggles { display: grid; gap: 4px; }
+.share-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+.share-toggle-label { color: var(--color-text); font-size: var(--text-base); }
+
 .share-caption-label { display: grid; gap: 6px; font-size: var(--text-base); font-weight: 600; color: var(--color-text); }
 .share-caption-input {
   font: inherit;
@@ -2688,6 +2737,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   color: var(--color-text);
   resize: vertical;
 }
+.share-hashtag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-hashtag-row .tag-chip { cursor: pointer; border: 1px solid var(--color-divider); background: hsl(var(--v3-surface)); font: inherit; text-transform: none; letter-spacing: normal; font-weight: 600; }
+
+.share-targets-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.share-target-btn { justify-content: flex-start; gap: 8px; }
+
 .share-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* Roadmap sharing — published snapshot link (issue #131, close button +
@@ -3482,24 +3537,25 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 /* issue #298 — design-system.md §4: "Elevation only for overlays... Flat
    surfaces otherwise" (dropped the --shadow-sm this flat card had) and a 2px
    rule for a major section boundary (was a 1px colored border). */
-/* v3 (issue #416 Phase 2 — #424): the Daily Todos rail gets the same glass
-   treatment as .phase-card above, superseding #298's flat/2px-rule comment
-   directly above (kept as history). */
+/* issue #483's "flat content, elevated overlays" sweep (see that rule's own
+   comment on .phase-card/.roadmap-filters-card above) missed this card —
+   the #416 Phase 2 glass treatment below predates #483 and was never
+   revisited. Real, reported bug: the translucent `backdrop-filter` blur
+   here visibly softens this card's corner/edge rendering compared to the
+   flat `.roadmap-filters-card` directly above it in the dashboard's own
+   layout, so the seam between the two reads as one rounded edge meeting one
+   sharp edge instead of two identical --v3-radius-lg corners. `.daily-todo-panel`
+   is genuine page content (not an overlay/dialog/dropdown), so it gets the
+   same flat, opaque treatment every other content-surface card already has. */
 .daily-todo-panel {
   max-width: 1160px;
   margin: 0 auto 18px;
   width: 100%;
   box-sizing: border-box;
-  background: hsl(var(--v3-surface) / 0.85);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
+  background: hsl(var(--v3-surface));
+  border: 1px solid var(--color-divider);
   border-radius: var(--v3-radius-lg);
-  box-shadow: 0 16px 36px -26px hsl(var(--v3-accent) / 0.25);
   padding: var(--space-6);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .daily-todo-panel { background: var(--color-surface-raised); }
 }
 .daily-todo-heading-row {
   display: flex;
@@ -3957,7 +4013,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    scroll-perf mitigation to drop for them. Only the surfaces this issue
    deliberately left glass (genuine overlays, plus the handful of
    `.card`-duplicating components not in this issue's scope) still need it. */
-html[data-scrolling] .daily-todo-panel,
 html[data-scrolling] .settings-section,
 html[data-scrolling] .settings-guest-card,
 html[data-scrolling] .feature-card,
