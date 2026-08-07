@@ -9,7 +9,6 @@ import { startRouter, registerRoute, navigate, getRoute, getNavGeneration } from
 import { renderLanding } from './ui/pages/landing.js';
 import { renderDeveloperProfile } from './ui/pages/developerProfile.js';
 import { renderSharedRoadmapView } from './ui/pages/sharedRoadmapView.js';
-import { createFeedbackWidget } from './ui/components/feedbackWidget.js';
 import { registerServiceWorker } from './services/serviceWorkerRegistration.js';
 import { initReminderScheduler } from './services/reminderScheduler.js';
 import { showToast } from './ui/components/toast.js';
@@ -50,17 +49,11 @@ const store = createRoadmapStore({
 const dailyTodoStore = createDailyTodoStore({
   onCompletionToggle: delta => (delta > 0 ? activityLogStore.recordCompletion() : activityLogStore.recordUncompletion())
 });
-// App-lifetime, never unmounted — same precedent as feedbackWidget.js above
-// (issue #132).
+// App-lifetime, never unmounted (issue #132).
 initReminderScheduler(dailyTodoStore);
 
 let currentUser = null;
 let routeCleanup = null;
-
-// Mounted once, directly on document.body, outside the router (issue #9) —
-// must never be unmounted/re-mounted on route change, see CLAUDE.md.
-const feedbackWidget = createFeedbackWidget({ user: null });
-document.body.appendChild(feedbackWidget);
 
 // The actual root cause of issue #294's CI flake (tests/e2e/
 // customRoadmapRace.test.js), found by adding temporary debug logging and
@@ -198,7 +191,6 @@ authApi.onChange(async user => {
   const isSignInTransition = user?.uid !== lastAuthUid;
   lastAuthUid = user?.uid ?? null;
   currentUser = user;
-  feedbackWidget._setUser(user);
   // Captured *before* the await below, specifically to detect whether the
   // user (or, in a test, an explicit page.goto) navigated elsewhere while
   // this auth resolution was still in flight. router.js's getNavGeneration()

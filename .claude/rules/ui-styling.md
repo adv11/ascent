@@ -126,20 +126,20 @@ and `.toast-stack` (fixed near the bottom) add `env(safe-area-inset-bottom)` to 
 needs the same treatment.
 
 **Two `position: fixed` corner elements that can both be visible at once must not share
-the same corner — a real, reported visual bug.** `.save-badge` and `.feedback-widget-trigger`
-(the latter mounted once on `document.body` for the whole app session, never unmounted —
-see `.claude/rules/roadmap-store.md`'s `feedbackWidget.js` note) were both fixed to
-`bottom: ~20-24px; right: ~20-24px`, so whenever a save event fired, the feedback button
-(higher z-index, always present) visually sat on top of — and partially hid — the save
-badge underneath it. Fixed by stacking the save badge directly above the feedback trigger
-(`.save-badge`'s `bottom` raised to clear the trigger's own bottom offset + rendered height
-+ a gap) rather than moving it to the opposite corner, which isn't safe either: the
-dashboard/progress/settings app-shell sidebar (`.app-sidebar`, `position: sticky` but still
-occupying a full-height 240px column) would sit underneath a fixed bottom-left element on
-every page that has it. Before adding a new fixed-position corner element (a toast, a
-badge, a floating action button), check every other fixed corner element already on the
-pages it can appear alongside — verify visually with both potentially visible at once,
-not just each in isolation.
+the same corner — a real, reported visual bug.** `.save-badge` and the old floating
+`feedbackWidget.js` trigger (retired in issue #498 — see `.claude/rules/roadmap-store.md`'s
+"In-app feedback & bug reporting" note) used to both be fixed to `bottom: ~20-24px; right:
+~20-24px`, so whenever a save event fired, the feedback button (higher z-index, always
+present) visually sat on top of — and partially hid — the save badge underneath it. Fixed
+at the time by stacking the save badge above the feedback trigger; once the trigger was
+removed, `.save-badge` reverted to a plain `bottom: 20px; right: 20px` offset (issue #498)
+— there's nothing left to clear. Moving a corner element to the opposite corner instead of
+stacking isn't generally safe either: the dashboard/progress/settings app-shell sidebar
+(`.app-sidebar`, `position: sticky` but still occupying a full-height 240px column) would
+sit underneath a fixed bottom-left element on every page that has it. Before adding a new
+fixed-position corner element (a toast, a badge, a floating action button), check every
+other fixed corner element already on the pages it can appear alongside — verify visually
+with both potentially visible at once, not just each in isolation.
 
 **`.modal-overlay` uses `align-items: safe center`, not plain `center` — never change this back.** Plain `align-items: center` on an overflowing flex container (which `.modal-overlay` is, once any `.modal-card` content is taller than the viewport) clips both the top and bottom of the content equally and makes the clipped parts permanently unreachable by scrolling — a well-known flexbox+overflow trap, not a bug in any one modal's content. Found when `dailyTodoGuide.js`'s content grew long enough to push its "Got it" button below the fold on a short window, with no way to scroll to it (issue #56 follow-up). `align-items: safe center` centers when content fits and falls back to start-aligned (scrollable to both real ends) when it doesn't — combined with `overflow-y: auto` on `.modal-overlay` itself. This fixes every modal in the app that could ever grow tall (confirmDialog, item panel, guide modals), not just the one that surfaced it — if you ever add long-form modal content, you don't need a special case for it.
 

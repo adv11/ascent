@@ -54,13 +54,13 @@ describe('renderSettings — guest view (issue #16)', () => {
 describe('renderSettings — signed-in view (issue #16)', () => {
   const user = { isAnonymous: false, uid: 'u1', email: 'jane@example.com', emailVerified: false };
 
-  it('renders the four Account/Preferences/Your data/Delete account tabs, one panel visible at a time', async () => {
+  it('renders the five Account/Preferences/Support/Your data/Delete account tabs, one panel visible at a time', async () => {
     const app = await freshSettings(user);
     const tabLabels = Array.from(app.querySelectorAll('[role="tab"]')).map(el => el.textContent);
-    expect(tabLabels).toEqual(['Account', 'Preferences', 'Your data', 'Delete account']);
+    expect(tabLabels).toEqual(['Account', 'Preferences', 'Support', 'Your data', 'Delete account']);
 
     const titles = Array.from(app.querySelectorAll('.settings-section-title')).map(el => el.textContent);
-    expect(titles).toEqual(['Account', 'Preferences', 'Your data', 'Delete account']);
+    expect(titles).toEqual(['Account', 'Preferences', 'Support', 'Your data', 'Delete account']);
 
     const panels = app.querySelectorAll('.tab-panel');
     expect(Array.from(panels).filter(p => p.classList.contains('active'))).toHaveLength(1);

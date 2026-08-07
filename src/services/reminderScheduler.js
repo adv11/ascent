@@ -65,8 +65,8 @@ function scheduleTimer(todo, now) {
 // notify the same way), so completing or deleting a todo before its
 // reminder fires cancels the pending timer rather than letting a stale
 // notification arrive for something already done. Returns an unsubscribe
-// function; call once at app startup (main.js), same "app-lifetime, no
-// per-route cleanup" precedent as feedbackWidget.js.
+// function; call once at app startup (main.js) — app-lifetime, no per-route
+// cleanup.
 export function initReminderScheduler(store) {
   return store.subscribe(snapshot => {
     if (!remindersEnabled()) {

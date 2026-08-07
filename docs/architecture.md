@@ -5671,3 +5671,33 @@ use. Primary actions in `.confirm-dialog-actions`/`.feedback-form-actions` stack
 go full width; `deleteAccountModal.js`/`importRoadmapModal.js` already used
 `.btn-block` on their primary buttons and needed no change. `CACHE_VERSION` bumped
 109 → 110.
+
+### 2026-08-07 — PR #TBD — Retire the floating feedback widget (issue #498, D2)
+
+`src/ui/components/feedbackWidget.js` (issue #9's permanently-mounted, bottom-right
+floating "Send feedback" trigger) is deleted outright. It was the one component
+`main.js` mounted directly on `document.body`, outside the router, for the app's
+whole lifetime (CLAUDE.md's now-removed "one deliberate exception to wire cleanup
+into the route's cleanup return" paragraph existed only to document this) — on a
+phone it sat on top of page content, and since issue #484 added `bottomNav.js`, on
+top of the bottom tab bar too.
+
+Both of the widget's actions move to places a user already goes to manage their
+account: `sidebar.js`'s `buildAccountMenu()` gained a "Send feedback" item (next to
+the existing "My reports" item, both now adjacent and opening `feedbackModal.js`/
+`myReports.js` respectively), and `settings.js` gained a fifth tab, "Support"
+(alongside Account/Preferences/Your data/Delete account, `createTabs()`), with the
+same two actions as rows. Both entry points call the identical, unchanged
+`feedbackModal.js`/`myReports.js` — only how they're reached changed, not what they
+open.
+
+`app.css`'s `.feedback-widget-trigger`/`-emoji`/`-label` rules are removed along with
+the component. `.save-badge` — which used to be stacked above the feedback trigger's
+own bottom offset specifically to avoid the two overlapping in the same corner
+(`.claude/rules/ui-styling.md`'s "two fixed corner elements" rule) — reverts to a
+plain `bottom: 20px; right: 20px` offset, since there's nothing left in that corner
+to clear. `dashboard.js`'s `buildTourSteps()` drops its old standalone "Send feedback
+anytime" step (which targeted `.feedback-widget-trigger`, no longer renderable) and
+folds a mention of feedback into the existing "Share, back up, and review reports"
+account-menu step instead, since both now live behind the same `.app-sidebar-identity`
+trigger. `CACHE_VERSION` bumped 110 → 111.

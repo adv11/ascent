@@ -63,7 +63,7 @@
      uses), just not real body-text-size text or a text-hosting solid fill.
      --color-accent-600 (#067436) is the darkened step that clears 5.90:1
      against white — the fill any text-hosting control (.btn-primary,
-     .seg-item's active fill, .kpi-tile-hero, .feedback-widget-trigger) must
+     .seg-item's active fill, .kpi-tile-hero) must
      read instead of the base token, exactly the existing established
      pattern each of those call sites already documents in its own comment. */
   --color-accent-600:  #067436;  /* solid fill for text-hosting controls + hover step; 5.90:1 with white */
@@ -4997,24 +4997,16 @@ html[data-scrolling] .dropdown-menu {
   color: var(--color-text-muted);
 }
 
-/* Save badge — stacked directly above the feedback widget trigger, not
-   sharing its bottom-right corner. Both are permanently fixed to that same
-   corner (.feedback-widget-trigger below is mounted once on document.body
-   for the whole app session — .claude/rules/roadmap-store.md's "never
-   unmount" note on feedbackWidget.js), so whenever a save-badge event fired
-   at the same time the feedback button visually sat on top of (and
-   partially hid) the save badge's text — reported live with a screenshot
-   ("Save f[ailed]" clipped behind "Feedback"). Moving to the opposite
-   (bottom-left) corner isn't safe either — the dashboard/progress/settings
-   app-shell sidebar (`.app-sidebar`, 240px, `position: sticky` but still
-   occupying that full-height column) would sit underneath a fixed-position
-   badge there. `84px` = the feedback trigger's own bottom offset (24px) +
-   its rendered height (`padding: 12px 18px` + text-sm line-height + border,
-   ~46px) + a 12px gap, rounded up — if the feedback trigger's own size ever
-   changes, re-check this offset still clears it. */
+/* Save badge — bottom-right corner. Used to be stacked above the floating
+   feedback widget trigger to avoid overlapping it (issue #9); that trigger
+   was retired in issue #498 (feedback moved into the account menu/Settings),
+   so this reverts to a plain fixed bottom-right offset. If a new fixed
+   bottom-right corner element is ever added, re-check .claude/rules/
+   ui-styling.md's "two fixed corner elements" rule before assuming they can
+   coexist. */
 .save-badge {
   position: fixed;
-  bottom: calc(84px + env(safe-area-inset-bottom));
+  bottom: calc(20px + env(safe-area-inset-bottom));
   right: calc(20px + env(safe-area-inset-right));
   background: var(--color-surface);
   color: var(--color-text);
@@ -6265,48 +6257,11 @@ html[data-scrolling] .dropdown-menu {
    spec. Fixed to the viewport corner, so it needs the same safe-area-inset
    treatment every other fixed edge element in this app gets
    (.claude/rules/ui-styling.md). */
-/* design-system.md §5 — "Feedback widget: solid accent square." Was a
-   neutral --color-surface pill with a border (issue #301 follow-up); now a
-   flat solid fill with ground-colored text/icon, matching .btn-primary's own
-   fill/text pairing — including that rule's own fix: fill reads
-   --color-accent-600, not the base --color-accent. The base accent measures
-   only ~3.76:1 against --color-ink-on-accent in light theme (axe-caught,
-   found via a real CI failure — issue #337's merge commit shipped this exact
-   regression, color-contrast id, .feedback-widget-label/-trigger, "serious"),
-   below the 4.5:1 WCAG AA floor for 14px bold text; --color-accent-600 clears
-   it at ~4.94:1. Same token, same reasoning as .btn-primary above — keep
-   both in sync if either's fill token ever changes. */
-/* v3 (issue #416 Phase 5 — #430) — border-radius moves off v2's literal `0`
-   onto the v3 pill/lg radius, and the shadow onto the v3 glow, matching
-   every other floating accent-fill affordance in the app
-   (.btn-primary/.progress-digest CTA). */
-.feedback-widget-trigger {
-  position: fixed;
-  bottom: max(24px, env(safe-area-inset-bottom));
-  right: max(24px, env(safe-area-inset-right));
-  z-index: 150;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
-  border-radius: var(--v3-radius-lg);
-  border: none;
-  background: var(--color-accent-600);
-  color: var(--color-ink-on-accent);
-  font-weight: 700;
-  font-size: var(--text-base);
-  box-shadow: var(--v3-shadow-glow);
-  cursor: pointer;
-  opacity: 0;
-  transform: scale(0.85);
-  transition: transform 220ms var(--ease-spring, ease), opacity 220ms ease, box-shadow 160ms ease, background-color 160ms ease;
-}
-.feedback-widget-trigger.feedback-widget-visible { opacity: 1; transform: scale(1); }
-.feedback-widget-trigger:hover { box-shadow: var(--v3-shadow-glow-lg); background: color-mix(in srgb, var(--color-accent-600) 88%, black); transform: scale(1) translateY(-2px); }
-.feedback-widget-trigger:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-:root[data-theme='dark'] .feedback-widget-trigger:focus-visible { outline-color: var(--color-accent); }
-.feedback-widget-emoji { font-size: var(--text-lg); line-height: 1; }
-
+/* issue #498 — the floating feedback trigger (.feedback-widget-trigger/
+   -emoji/-label) was retired here; "Send feedback" now lives in the account
+   menu (sidebar.js) and a Settings row (settings.js), both opening this same
+   feedbackModal.js. If you find a stray reference to those classes, it's a
+   regression, not something still in use. */
 .feedback-modal-card { max-width: 480px; width: 100%; position: relative; }
 .feedback-modal-close { position: absolute; top: 16px; right: 16px; }
 .feedback-modal-body { display: flex; flex-direction: column; gap: 16px; }
@@ -6426,17 +6381,6 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .my-report-severity-low, .my-report-severity-medium { background: var(--color-warning-bg); color: var(--color-warning); }
 .my-report-details { padding: 0 14px 14px; font-size: var(--text-base); color: var(--color-text); display: flex; flex-direction: column; gap: 6px; }
 
-/* Collapse the feedback trigger to icon-only below 480px (issue #9 §2.1) —
-   the full "Feedback" pill is wide enough to crowd a phone-width corner
-   otherwise. Stays a square (radius 0), not a circular FAB — design-system.md
-   §5's "solid accent square" rule applies at every width, not just desktop
-   (issue #301 follow-up; this was a leftover circular-FAB treatment from
-   before that rule existed). */
-@media (max-width: 480px) {
-  .feedback-widget-label { display: none; }
-  .feedback-widget-trigger { padding: 12px; }
-}
-
 @media (max-width: 375px) {
   .dashboard-content { padding: 14px 10px 88px calc(10px + var(--phase-spine-gutter)); }
   .modal-card { padding: 26px 20px 22px; }
@@ -6477,7 +6421,6 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .filter-chip { min-height: 46px; }
   .check-item { min-height: 46px; }
   .daily-todo-overflow-btn, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
-  .feedback-widget-trigger { min-height: 46px; }
   .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
   /* issue #435 — same border-clip bug as the base rule above, at the touch
      tier: the group must grow to actually fit a real touch target (var(--tap-min)
@@ -6607,7 +6550,6 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   body:not(.print-mode) .app-sidebar,
   body:not(.print-mode) .bottom-nav,
   body:not(.print-mode) .command-palette,
-  body:not(.print-mode) .feedback-widget-trigger,
   body:not(.print-mode) .save-badge,
   body:not(.print-mode) .toast-stack,
   body:not(.print-mode) .tour-scrim,
