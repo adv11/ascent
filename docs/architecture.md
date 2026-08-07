@@ -5795,4 +5795,16 @@ Also fixed, in the same PR: `.check-item`'s priority accent (the coloured left e
 moved from an `inset` box-shadow to a `::before` overlay, to close a real rendering gap
 where the row's own `border-bottom` could leave a visible grey notch in the accent at
 every row boundary — see `app.css`'s comment above `.check-item::before` for the
-mechanism. `CACHE_VERSION` bumped 116 → 117.
+mechanism.
+
+A third fix landed after initial review: the "Today" (Daily Todos) card's rounded
+corners read visibly flatter than `.roadmap-filters-card`/`.next-up-card` right above
+it, despite all three sharing the identical 16px `--v3-radius-lg`. Confirmed via pixel
+measurement (not just visual impression) that the radius itself was equal on both —
+the actual gap was that those other cards compose the shared `.card` class, which draws
+a gradient-tinted hairline ring via `.card::before` on top of the plain divider border,
+making an identical curve read as crisply rounded; `.daily-todo-panel` never had the
+`.card` class. `dailyTodoPanel.js`'s root element now composes `card daily-todo-panel`;
+`.daily-todo-panel:hover` cancels `.card:hover`'s hover-lift transform, since this panel
+was deliberately built with no hover-lift (only the todo rows inside it are clickable).
+`CACHE_VERSION` bumped 116 → 117.

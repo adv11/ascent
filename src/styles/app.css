@@ -3668,16 +3668,27 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    sharp edge instead of two identical --v3-radius-lg corners. `.daily-todo-panel`
    is genuine page content (not an overlay/dialog/dropdown), so it gets the
    same flat, opaque treatment every other content-surface card already has. */
+/* issue #503 follow-up — real, reported inconsistency: this card's rounded
+   corners read visibly flatter than `.roadmap-filters-card`/`.next-up-card`
+   right above it, even though all three share the exact same 16px
+   `--v3-radius-lg`. The actual difference wasn't radius — it's that those
+   other cards compose the shared `.card` class (`app.css`, above), which
+   draws a subtle gradient-tinted hairline ring via `.card::before` on top of
+   the plain divider border; that extra ring is what makes an identical
+   curve read as crisply rounded. This card never had the `.card` class
+   (`dailyTodoPanel.js` now adds it) — background/border/radius below are
+   now redundant with `.card`'s own (kept only for the properties `.card`
+   doesn't set: layout/sizing), and `.card:hover`'s hover-lift transform is
+   cancelled right below, since this panel deliberately has no hover-lift
+   (only the todo rows inside it are clickable, see the comment above). */
 .daily-todo-panel {
   max-width: 1160px;
   margin: 0 auto 18px;
   width: 100%;
   box-sizing: border-box;
-  background: hsl(var(--v3-surface));
-  border: 1px solid var(--color-divider);
-  border-radius: var(--v3-radius-lg);
   padding: var(--space-6);
 }
+.daily-todo-panel:hover { transform: none; border-color: var(--color-divider); }
 .daily-todo-heading-row {
   display: flex;
   align-items: center;

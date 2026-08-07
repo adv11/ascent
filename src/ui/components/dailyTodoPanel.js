@@ -449,7 +449,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
   const unsubStore = store.subscribe(render);
   const tickTimer = setInterval(render, TICK_MS);
 
-  const node = el('section', { className: 'daily-todo-panel' }, [
+  const node = el('section', { className: 'card daily-todo-panel' }, [
     el('div', { className: 'daily-todo-heading-row' }, [
       el('span', { className: 'daily-todo-icon' }, [createIcon('timer', { size: 'sm' })]),
       el('h2', { className: 'daily-todo-heading', text: 'Today' }),
