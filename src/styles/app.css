@@ -2764,40 +2764,126 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .share-link-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text); }
 
-.shared-view-container { min-height: 100vh; min-height: 100dvh; padding: 32px 20px; max-width: 900px; margin: 0 auto; }
-.shared-view-loading { color: var(--color-text-muted); text-align: center; padding: 60px 0; }
+/* issue #502 — public shared-roadmap view (E2), rebuilt to match the design
+   reference (docs/screenshots/responsive-redesign/10-shared-roadmap.png)
+   onto the current v3 flat-content component set (.card/.badge/--chip-*
+   tokens, design-system.md §4). No app navigation on this page (the issue's
+   own scope note) — every link is a marketing entry point (home, sign up),
+   never a link into the app shell; the theme toggle is the one interactive
+   control an unauthenticated visitor gets besides those. */
+.shared-view-container { min-height: 100vh; min-height: 100dvh; padding: 32px 20px calc(32px + env(safe-area-inset-bottom)); max-width: var(--content-max, 1080px); margin: 0 auto; }
+.shared-view-chrome { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--color-divider); }
+.shared-view-brand { display: inline-flex; align-items: center; }
+.shared-view-chrome-actions { display: flex; align-items: center; gap: 12px; }
+.shared-view-content { display: grid; gap: 20px; }
+/* .shared-view-content's own gap only ever separates the loading-state's
+   skeleton children — renderSnapshot()/renderRevoked() each return a single
+   node, so the real inter-section spacing (header → stats → phases → CTA →
+   footer) has to live on .shared-view itself, not its parent. Missing this
+   rule was a real bug: every section rendered flush against the next with
+   zero gap, found live via a screenshot report. */
+.shared-view { display: grid; gap: 20px; }
+
+.shared-view-loading-state { display: grid; gap: 16px; }
+.shared-view-stats-skeleton { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.shared-view-loading-state .skeleton-card { height: 88px; }
+
 .shared-view-state { display: grid; gap: 12px; justify-items: center; text-align: center; padding: 80px 20px; }
-.shared-view-header { margin-bottom: 24px; }
-.shared-view-subtitle { color: var(--color-text-muted); }
+.shared-view-state-icon { color: var(--color-text-muted); margin-bottom: 4px; }
+.shared-view-state-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 8px; }
+
+.shared-view-header { display: grid; gap: 10px; }
+.shared-view-readonly-badge { display: inline-flex; align-items: center; gap: 6px; width: fit-content; height: auto; padding: 6px var(--chip-padding-x); background: hsl(var(--v3-surface)); border: 1px solid var(--color-divider); border-radius: var(--radius-full); color: var(--color-text-muted); font-family: var(--font-body); font-size: var(--text-base); font-weight: 600; text-transform: none; }
+.shared-view-header h1 { margin: 0; }
+.shared-view-subtitle { color: var(--color-text-muted); margin: 0; }
+
+.shared-view-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.shared-stat-tile { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; }
+.shared-stat-tile-label { font-size: var(--text-base); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); }
+.shared-stat-tile-headline { display: flex; align-items: baseline; gap: 8px; }
+.shared-stat-tile-number { font-size: var(--text-3xl); font-weight: 800; color: var(--color-text); }
+.shared-stat-tile-sub { font-size: var(--text-base); color: var(--color-text-muted); }
+.shared-stat-tile-bar { width: 100%; height: 6px; display: block; }
+.shared-stat-tile-bar-track { fill: var(--color-border-strong, var(--color-divider)); }
+.shared-stat-tile-bar-fill { fill: var(--color-accent); }
+
 .shared-view-phases { display: grid; gap: 20px; }
-.shared-phase-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  padding: 18px 20px;
-}
-.shared-section { margin-top: 12px; }
-.shared-item-list { display: grid; gap: 8px; list-style: none; padding: 0; margin: 8px 0 0; }
+.shared-phase-card { padding: 18px 20px; }
+.shared-phase-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.shared-phase-card-head h2 { margin: 0; }
+.shared-phase-card-counts { font-size: var(--text-base); color: var(--color-text-muted); }
+.shared-phase-card-percent { font-size: var(--text-xl); font-weight: 800; color: var(--color-text); flex-shrink: 0; }
+.shared-section { margin-top: 14px; }
+.shared-section h3 { font-size: var(--text-base); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: var(--tracking-caps, 0.08em); margin: 0 0 8px; }
+.shared-item-list { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
 .shared-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: hsl(var(--v3-surface));
+  border: 1px solid var(--color-divider);
+}
+.shared-item-check {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border-strong, var(--color-divider));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-bg);
+}
+.shared-item-check-done { background: var(--color-accent); border-color: var(--color-accent); }
+.shared-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.shared-item-title { color: var(--color-text); font-weight: 600; }
+.shared-item-done .shared-item-title { color: var(--color-text-muted); text-decoration: line-through; }
+.shared-item-priority { font-size: var(--text-base); color: var(--color-text-muted); }
+.shared-item-resource-count { display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-muted); font-size: var(--text-base); flex-shrink: 0; }
+
+.shared-view-cta-banner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
+  justify-content: space-between;
+  gap: 16px;
+  padding: var(--space-8) 2.5rem;
+  background: var(--color-accent-600);
+  border: none;
 }
-.shared-item-status { width: 18px; text-align: center; color: var(--color-accent-700); font-weight: 700; }
-/* issue #155 v2 Phase D3 (full completion pass) — sharedRoadmapView.js's public
-   read-only page; straight text swaps. */
-:root[data-theme='dark'] .shared-item-status { color: var(--color-accent-700); }
-.shared-item-title { flex: 1; min-width: 0; }
-.shared-item-done .shared-item-title { color: var(--color-text-muted); text-decoration: line-through; }
-.shared-item-resources { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
-.shared-resource-link { color: var(--color-accent-700); font-size: var(--text-base); }
-:root[data-theme='dark'] .shared-resource-link { color: var(--color-accent-700); }
-.shared-view-footer { margin-top: 32px; text-align: center; }
-.shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: var(--text-base); }
+.shared-view-cta-banner::before { display: none; }
+.shared-view-cta-text h2 { margin: 0 0 4px; color: hsl(0 0% 100%); }
+/* intentional: fixed white text on the always-solid accent-600 fill, same
+   both themes — same "solid accent CTA field" precedent as .landing-cta. */
+.shared-view-cta-text p { margin: 0; color: hsl(0 0% 100% / 0.85); }
+.shared-view-cta-banner .btn-cta-inverse {
+  flex-shrink: 0;
+  background: hsl(0 0% 100%);
+  color: var(--color-accent-700);
+  border-color: transparent;
+  box-shadow: none;
+}
+.shared-view-cta-banner .btn-cta-inverse:hover { background: hsl(0 0% 96%); transform: translateY(-1px); }
+
+.shared-view-footer { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 20px; border-top: 1px solid var(--color-divider); }
+/* A plain small icon + "Made with Ascent" line — deliberately not
+   createBrandMark()'s full icon+wordmark pair (.brand-mark/.brand-name are
+   bold/uppercase/text-xl, sized for real page headers), which used to sit
+   awkwardly inline next to this footer's own plain-text label at a visibly
+   different size/weight. Text-decoration is set explicitly (not inherited
+   default-underline) so the whole line reads as one calm, muted caption. */
+.shared-view-attribution { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: var(--text-base); text-decoration: none; }
+.shared-view-attribution:hover, .shared-view-attribution:focus-visible { text-decoration: underline; }
+.shared-view-attribution .brand-mark { width: 18px; height: 18px; }
+.shared-view-footer-note { color: var(--color-text-muted); font-size: var(--text-base); }
+
+@media (max-width: 480px) {
+  .shared-view-cta-banner { flex-direction: column; align-items: stretch; text-align: center; }
+  .shared-view-cta-banner .btn { width: 100%; }
+  .shared-view-footer { flex-direction: column; text-align: center; }
+}
 
 @media (max-width: 480px) {
   .share-modal-actions { flex-direction: column; }
