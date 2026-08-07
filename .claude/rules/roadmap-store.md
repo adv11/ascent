@@ -1178,6 +1178,22 @@ read-only,
 `fetchTemplateData()`/`resolveRoadmapItems()`-backed pattern rather than building a
 second bespoke multi-roadmap fetch path.
 
+**`getAllRoadmapsSummary()` — a counts-only sibling to `getAllRoadmapsForSearch()`, for
+the share-card generator's "all my roadmaps together" scope (issue #501).**
+`getAllRoadmapsForSearch()` above resolves and returns every started roadmap's *full*
+item map, which global topic search genuinely needs (it has to scan every title/notes/
+resource string) — that's overkill for a widget that only ever wants a done/total count
+per roadmap, like the share card's "all roadmaps" scope. `getAllRoadmapsSummary()`
+reuses the identical `fetchTemplateData()`/`resolveRoadmapItems()` cache-first
+resolution (same read-only, never-touches-`roadmapCache` discipline as
+`getAllRoadmapsForSearch()`), but reduces each roadmap's resolved items down to
+`{ id, title, done, total }` immediately and never returns or retains the item map
+itself — nothing calling this method ever sees a roadmap's full items object. Returns
+`{ roadmaps: [{ id, title, done, total }], done, total }` (the last two summed across
+every roadmap), resolved concurrently via `Promise.all` like every other multi-roadmap
+read in this file. If you need per-roadmap counts anywhere else, reuse this rather than
+calling `getAllRoadmapsForSearch()` and reducing its full item maps yourself.
+
 **Further ESLint complexity cleanup beyond issue #129's setUser split (issue #279) —
 more of the same extraction discipline, not a new pattern.** `resolveRoadmapItems()`'s
 merge branches share one new helper, `buildMergedResolution({ sourceItems, sourcePhases,

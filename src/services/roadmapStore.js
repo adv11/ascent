@@ -1015,6 +1015,35 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     }));
   }
 
+  // "All my roadmaps" share-card scope (issue #501) — sums done/total across every
+  // started roadmap without holding every roadmap's full item map at once. Reuses the
+  // exact same cache -> Firebase -> local blob -> seed resolution
+  // getAllRoadmapsForSearch() above already runs (same read-only, never-touches-
+  // roadmapCache discipline), but reduces each roadmap's items down to a
+  // `{ id, title, done, total }` count immediately and discards the resolved item map —
+  // nothing here ever returns or retains a roadmap's full items object, unlike
+  // getAllRoadmapsForSearch(), which the command palette's search genuinely needs the
+  // full item list for. Runs concurrently across every roadmap, same Promise.all
+  // discipline as every other multi-roadmap read in this file (issue #121 item 6).
+  async function getAllRoadmapsSummary() {
+    const perRoadmap = await Promise.all(startedTemplateIds.map(async id => {
+      const templateDataPromise = fetchTemplateData(id);
+      const { items } = await resolveRoadmapItems(id, templateDataPromise);
+      const title = isCustomRoadmapId(id)
+        ? (customRoadmaps.find(r => r.id === id)?.title || 'Untitled roadmap')
+        : (getTemplate(id)?.name || id);
+      const nonDeleted = Object.values(items).filter(item => !item.deleted);
+      const total = nonDeleted.length;
+      const done = nonDeleted.filter(item => item.done).length;
+      return { id, title, done, total };
+    }));
+    return {
+      roadmaps: perRoadmap,
+      done: perRoadmap.reduce((sum, r) => sum + r.done, 0),
+      total: perRoadmap.reduce((sum, r) => sum + r.total, 0)
+    };
+  }
+
   // Read-only snapshot of *any* started roadmap's items/phases (issue #285's
   // comparison view) — reuses the exact same cache -> Firebase -> local blob
   // -> seed resolution order resolveRoadmapItems() already applies to every
@@ -2094,6 +2123,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     removeResource,
     importBackupItems,
     getAllRoadmapsForSearch,
+    getAllRoadmapsSummary,
     getRoadmapSnapshotForComparison,
     flush,
     retrySaveNow,

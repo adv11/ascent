@@ -2897,3 +2897,40 @@ describe('automatic save retry with backoff — issue #153 root cause #2', () =>
     expect(lastSnapshot.saveState).toBe('saved');
   });
 });
+
+describe('getAllRoadmapsSummary (issue #501 — share card "all roadmaps" scope)', () => {
+  it('sums done/total across every started roadmap without returning any roadmap\'s full item map', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend', 'frontend'] });
+    dbApi.getRoadmap.mockResolvedValue({
+      version: 1,
+      items: {
+        a: { id: 'a', title: 'A', done: true, deleted: false },
+        b: { id: 'b', title: 'B', done: false, deleted: false },
+        c: { id: 'c', title: 'C', done: false, deleted: true }
+      }
+    });
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'summary-user' });
+
+    const summary = await store.getAllRoadmapsSummary();
+
+    expect(summary.roadmaps).toHaveLength(2);
+    expect(summary.roadmaps.every(r => !('items' in r))).toBe(true);
+    const javaBackend = summary.roadmaps.find(r => r.id === 'java-backend');
+    expect(javaBackend).toBeTruthy();
+    expect(javaBackend.total).toBe(store.getSnapshot().items.length);
+    expect(summary.total).toBeGreaterThanOrEqual(javaBackend.total);
+    expect(summary.done).toBeGreaterThanOrEqual(0);
+  });
+
+  it('never mutates roadmapCache/activeTemplateId — a purely read-only summary', async () => {
+    dbApi.getMeta.mockResolvedValue({ onboardingDone: true, activeTemplateId: 'java-backend', startedTemplateIds: ['java-backend', 'frontend'] });
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'summary-readonly-user' });
+    const before = store.getSnapshot().activeTemplateId;
+
+    await store.getAllRoadmapsSummary();
+
+    expect(store.getSnapshot().activeTemplateId).toBe(before);
+  });
+});
