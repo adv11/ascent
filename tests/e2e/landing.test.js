@@ -11,9 +11,9 @@ test('signed-out visitor hitting "/" sees the landing page, not sign-in', async 
   await expect(page.locator('.landing-hero-title')).toContainText('Engineer your next move.');
 });
 
-test('landing page "Start for free" navigates to sign-up', async ({ page }) => {
+test('landing page "Start free" navigates to sign-up', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.landing-hero-actions').getByText('Start for free').click();
+  await page.locator('.landing-hero-actions').getByText('Start free', { exact: false }).click();
   await expect(page).toHaveURL(/#\/signup/, { timeout: 10_000 });
 });
 
@@ -35,4 +35,10 @@ test('landing page nav link smooth-scrolls to a section without changing the rou
 test('landing page renders both feature cards', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.feature-card')).toHaveCount(2);
+});
+
+test('landing page renders the template strip and progress split', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.landing-template-chip').first()).toBeVisible();
+  await expect(page.locator('#landing-progress')).toBeVisible();
 });

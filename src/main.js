@@ -289,7 +289,8 @@ registerRoute('/', () => {
     navigate('/app', true);
     return;
   }
-  renderLanding(app);
+  const node = renderLanding(app);
+  return node._cleanup;
 });
 
 startRouter('/signin');
