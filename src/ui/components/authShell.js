@@ -10,10 +10,33 @@ import { createAuthMarketingPanel } from './authMarketingPanel.js';
 // before this phase; only the wrapping structure around it changed, so the
 // mobile view is exactly today's existing layout, not a second one to
 // maintain (see `.claude/rules/ui-styling.md`).
-export function authShell({ title, subtitle, children, footer, footnote }) {
+//
+// Issue #496 (C4) — `mode`/`onModeChange` add an optional segmented
+// Sign in/Sign up switch to the card header, so a user who landed on the
+// wrong screen doesn't have to navigate away and back. Both are optional:
+// a caller that omits them (none currently do, but this keeps the shell
+// reusable for a future non-mode-switching auth-adjacent screen) simply
+// gets no switch rendered. The switch is returned as `modeSwitchEl` so the
+// reset-password step can hide it — that step isn't a sign-in/sign-up
+// choice, it's a third state layered on top of one of the two.
+export function authShell({ title, subtitle, children, footer, footnote, mode, onModeChange }) {
   const toggleBtn = createThemeToggle();
   const titleEl = el('h1', { className: 'auth-title', text: title });
   const subtitleEl = el('p', { className: 'auth-subtitle', text: subtitle });
+  const modeSwitchEl = mode && onModeChange
+    ? el('div', { className: 'seg auth-mode-switch', role: 'tablist', 'aria-label': 'Sign in or sign up' }, [
+      el('button', {
+        type: 'button', className: 'seg-item', text: 'Sign in',
+        role: 'tab', 'aria-selected': mode === 'signin' ? 'true' : 'false',
+        onClick: () => onModeChange('signin')
+      }),
+      el('button', {
+        type: 'button', className: 'seg-item', text: 'Sign up',
+        role: 'tab', 'aria-selected': mode === 'signup' ? 'true' : 'false',
+        onClick: () => onModeChange('signup')
+      })
+    ])
+    : null;
   const node = el('div', { className: 'auth-page fade-in' }, [
     createAuthMarketingPanel(),
     el('div', { className: 'auth-page-right' }, [
@@ -24,7 +47,7 @@ export function authShell({ title, subtitle, children, footer, footnote }) {
           toggleBtn
         ]),
         el('div', { className: 'auth-card-lg' }, [
-          el('header', { className: 'auth-card-head' }, [titleEl, subtitleEl]),
+          el('header', { className: 'auth-card-head' }, [modeSwitchEl, titleEl, subtitleEl].filter(Boolean)),
           el('div', { className: 'auth-card-body' }, children),
           footer ? el('footer', { className: 'auth-card-foot' }, footer) : null
         ].filter(Boolean)),
@@ -32,5 +55,5 @@ export function authShell({ title, subtitle, children, footer, footnote }) {
       ])
     ])
   ]);
-  return { node, cleanup: toggleBtn._cleanup, titleEl, subtitleEl };
+  return { node, cleanup: toggleBtn._cleanup, titleEl, subtitleEl, modeSwitchEl };
 }

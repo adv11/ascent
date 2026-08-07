@@ -168,14 +168,27 @@
      sizes and are now fluid clamp() pairs so 360px→1920px needs no breakpoint
      jump, instead of a single fixed size. Token names are unchanged — only the
      values became clamp() — so every existing call site keeps working as-is. */
-  --text-xs:   0.75rem;
-  --text-sm:   0.875rem;
-  --text-base: 1rem;
-  --text-lg:   1.25rem;
-  --text-xl:   1.5625rem;
-  --text-2xl:  clamp(1.5rem, 1.3rem + 1vw, 1.953rem);
-  --text-3xl:  clamp(1.75rem, 1.4rem + 1.75vw, 2.441rem);
-  --text-4xl:  clamp(2rem, 1.5rem + 2.5vw, 3.052rem);
+  /* issue #496 follow-up (live report) — Text size (settings.js's Preferences
+     tab) used to scale the whole app, not just text: it set `font-size` on
+     `<html>`, and every spacing/icon/radius token in this file happens to
+     also be `rem`-based, so "Largest" inflated gaps, icon tiles, and card
+     padding right along with the type scale — real, reported bloat on the
+     onboarding roadmap grid (icon boxes, badge-to-heading gaps, and dead
+     space all growing together, not just the text). `--text-scale` is now
+     the only thing `data-text-size` touches (see the `html[data-text-size=...]`
+     rule below) — every `--text-*` token is wrapped in `calc(... *
+     var(--text-scale))` so only font-size responds to the preference;
+     `--space-*`/`--radius-*`/icon-size tokens are untouched regardless of
+     text size. */
+  --text-scale: 1;
+  --text-xs:   calc(0.75rem * var(--text-scale));
+  --text-sm:   calc(0.875rem * var(--text-scale));
+  --text-base: calc(1rem * var(--text-scale));
+  --text-lg:   calc(1.25rem * var(--text-scale));
+  --text-xl:   calc(1.5625rem * var(--text-scale));
+  --text-2xl:  calc(clamp(1.5rem, 1.3rem + 1vw, 1.953rem) * var(--text-scale));
+  --text-3xl:  calc(clamp(1.75rem, 1.4rem + 1.75vw, 2.441rem) * var(--text-scale));
+  --text-4xl:  calc(clamp(2rem, 1.5rem + 2.5vw, 3.052rem) * var(--text-scale));
 
   /* Responsive layout primitives (issue #482 A1) — the one shared place that
      decides content width and minimum tap-target size, so every page/component
@@ -510,12 +523,16 @@
 html { scroll-behavior: smooth; }
 html, body { min-height: 100%; }
 
-/* Text size preference (issue #495) — scales the root font size, which every
-   `--text-*` token in this file is rem-based against, so the whole app scales
-   uniformly with no per-component change needed. Applied synchronously before
-   first paint by themeBootstrap.js to avoid a layout flash on reload. */
-html[data-text-size='large'] { font-size: 112.5%; }
-html[data-text-size='largest'] { font-size: 125%; }
+/* Text size preference (issue #495, revised by issue #496 follow-up) — sets
+   `--text-scale` (:root's default `1`) rather than root `font-size`. Every
+   `--text-*` token reads `--text-scale` directly (see the `:root` block
+   above), so only font-size responds to this preference now — `--space-*`,
+   `--radius-*`, icon-size tokens, and anything else `rem`-based that isn't a
+   `--text-*` token stays fixed regardless of text size. Applied
+   synchronously before first paint by themeBootstrap.js to avoid a layout
+   flash on reload. */
+html[data-text-size='large'] { --text-scale: 1.125; }
+html[data-text-size='largest'] { --text-scale: 1.25; }
 
 body {
   font-family: var(--font-body);
@@ -1356,6 +1373,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 
 .auth-card-head { padding: 28px 28px 0; }
+/* Issue #496 (C4) — full-width Sign in/Sign up switch, reusing the shared
+   .seg/.seg-item classes (design-system.md §5) with a block layout override
+   so both segments split the card's width evenly instead of the default
+   inline-content sizing every other .seg use (priority filter, theme
+   picker) relies on. */
+.auth-mode-switch { display: flex; width: 100%; margin-bottom: 20px; }
+.auth-mode-switch .seg-item { flex: 1; text-align: center; }
+.auth-mode-switch-hidden { display: none; }
 .auth-title { font-family: var(--font-heading-v3, var(--font-display)); font-size: clamp(26px, 4vw, 32px); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
 .auth-subtitle { margin-top: 8px; color: var(--color-text-muted); font-size: var(--text-base); font-family: var(--font-body-v3, var(--font-body)); }
 .auth-card-body { padding: 24px 28px; display: grid; gap: 16px; }
@@ -1380,6 +1405,14 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .auth-divider::before, .auth-divider::after { content: ''; height: 1px; background: var(--color-border); }
 .auth-footnote { text-align: center; color: var(--color-text-muted); font-size: 12px; font-weight: 600; }
+
+/* Issue #496 (C4) — auth-page inputs are taller than the app-wide
+   .field-input default (16px text already comes from --text-base, the
+   type-scale floor, but a bare padding-driven height reads cramped at this
+   card's larger scale). Scoped to .auth-form specifically, not a global
+   .field-input change — every other form in the app keeps its existing
+   height. */
+.auth-form .field-input { min-height: 52px; }
 
 /* Onboarding template picker */
 .onboarding-page {
@@ -6052,10 +6085,6 @@ html[data-scrolling] .dropdown-menu {
 }
 
 @media (max-width: 1024px) {
-  /* issue #6 Phase 5.1 — marketing panel hidden, .auth-page-right becomes
-     the sole (full-width) column: today's original centered-card layout. */
-  .auth-page { grid-template-columns: 1fr; }
-  .auth-marketing { display: none; }
   /* issue #6 Phase 6/8 — hero collapses to a single column; mock preview
      drops below the copy instead of sitting beside it. Flush-left, not
      centered (issue #309) — design-system.md §4's "never center hero copy
@@ -6063,6 +6092,19 @@ html[data-scrolling] .dropdown-menu {
   .landing-hero { grid-template-columns: 1fr; }
   .landing-hero-actions { justify-content: flex-start; }
   .landing-hero-mock { order: -1; }
+}
+
+/* Issue #496 (C4) — the auth marketing panel now hides at its own 960px
+   tier rather than sharing the 1024px tier above with the landing hero:
+   the merged sign-in/sign-up shell is narrower content than the landing
+   hero, and hiding the panel too early (at 1024px) squashed the card's
+   own 440px column against a 960-1024px viewport for no reason — the
+   panel had room to stay. This was previously grouped with the 1024px
+   block above (issue #6 Phase 5.1); split out as its own tier by direct
+   design request, not a generalizable breakpoint. */
+@media (max-width: 960px) {
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-marketing { display: none; }
 }
 
 @media (max-width: 768px) {
