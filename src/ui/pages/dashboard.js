@@ -2175,6 +2175,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     }
     phaseSpine.hidden = false;
     const contentTop = content.getBoundingClientRect().top;
+    let firstY = null;
     let fillHeight = 0;
     let trackHeight = 0;
     cards.forEach(card => {
@@ -2182,6 +2183,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       if (!head) return;
       const rect = head.getBoundingClientRect();
       const y = rect.top - contentTop + rect.height / 2;
+      if (firstY === null) firstY = y;
       const status = card.dataset.status || 'not-started';
       const dot = el('span', { className: `phase-spine-dot phase-spine-dot-${status}` });
       dot.style.top = `${y}px`;
@@ -2194,8 +2196,17 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       // the roadmap's actual content.
       trackHeight = y;
     });
-    track.style.height = `${trackHeight}px`;
-    fill.style.height = `${fillHeight}px`;
+    // Issue #499 follow-up — the track/fill both had a fixed CSS `top: 0`,
+    // the very top of `.dashboard-content` (above its own padding-top), while
+    // this function only ever set `height` — so the line always started
+    // visibly above the first phase card's own dot instead of at it (real,
+    // reported: "left side vertical line is above the first row"). Both now
+    // start at the first rendered phase's own dot position, matching where
+    // the line visually needs to begin.
+    track.style.top = `${firstY}px`;
+    track.style.height = `${trackHeight - firstY}px`;
+    fill.style.top = `${firstY}px`;
+    fill.style.height = `${Math.max(0, fillHeight - firstY)}px`;
   }
 
   function updateReviewDueBadge(allItems) {

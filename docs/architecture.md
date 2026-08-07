@@ -5701,3 +5701,41 @@ anytime" step (which targeted `.feedback-widget-trigger`, no longer renderable) 
 folds a mention of feedback into the existing "Share, back up, and review reports"
 account-menu step instead, since both now live behind the same `.app-sidebar-identity`
 trigger. `CACHE_VERSION` bumped 110 → 111.
+
+### 2026-08-07 — PR #TBD — Motion pass (issue #499, D3)
+
+Standardized the last remaining ad hoc literal durations onto named `--duration-*`/
+`--ease-*` tokens and closed the gap where the Animations-off preference (#495/#C3) set
+`data-animations-off` on `<html>` but no CSS rule anywhere read it. Three new tokens
+(`app.css` `:root`): `--duration-route: 180ms` (route fade, was a literal 420ms on
+`.fade-in`), `--duration-tick: 160ms` (checklist row "tick" pop, `.check-box.check-pop`,
+was `--duration-fast`/120ms), `--duration-sheet: 220ms` (the item panel/bottom-sheet
+slide transition, `.item-panel`, was a literal `280ms cubic-bezier(.2,.9,.3,1)` — now
+`var(--duration-sheet) var(--ease-spring)`, the same curve just named). Card stagger
+(`--stagger-base`, 40ms up to six children) and count-up-on-mount already existed from
+earlier passes; count-up's default duration (`src/utils/countUp.js`) was lowered from
+600ms to 200ms, since CSS custom properties can't be read from JS math directly.
+
+A new global rule mirrors the existing `prefers-reduced-motion: reduce` catch-all:
+`[data-animations-off], [data-animations-off] *, ... { animation-duration: 0.01ms
+!important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }`
+— so toggling "Animations off" in Settings now actually suppresses every CSS
+animation/transition app-wide, not just the ones with their own explicit override.
+`countUp.js`'s rAF-driven count-up isn't a CSS animation/transition, so it can't be
+reached by that rule — it now checks `document.documentElement.hasAttribute
+('data-animations-off')` directly, alongside its existing `prefers-reduced-motion` check.
+See `.claude/rules/ui-styling.md`'s "Text size and animations-off preferences" entry for
+the updated contract.
+
+Two follow-up fixes found during this pass's own live browser verification, same PR:
+`.check-body` is a flex column with no `align-items` (defaulting to `stretch`), which
+stretched `.check-title` (an `inline-block`) to the row's full width — its done-state
+`::after` strike-through line therefore drew across the entire row instead of just the
+title text. Fixed with `align-self: flex-start` (+ `max-width: 100%` so a long title
+still wraps) on `.check-title`. Separately, `.phase-spine-track`/`.phase-spine-fill` had
+a fixed CSS `top: 0` while `updatePhaseSpine()` (`dashboard.js`) only ever set `height`,
+so the spine line always started above the first phase card's own dot instead of at it
+— both now read a JS-computed `top` matching the first rendered phase's dot position.
+`CACHE_VERSION` bumped 111 → 113 (112 as part of the token pass itself, 113 for these
+two follow-up fixes — busted separately since the first bump had already been deployed
+to a local dev session before the follow-ups landed).

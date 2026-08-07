@@ -306,6 +306,16 @@
   --duration-slow: 360ms;
   --duration-enter: 480ms;
 
+  /* issue #499 (D3) — motion pass: standardize the last few remaining
+     ad hoc literal durations (route fade 420ms, sheet slide 280ms) onto
+     named tokens per the issue's exact spec. --duration-tick reuses
+     --ease-standard (already what .check-pop reads) — only the name is
+     new, so the "row tick spring" gets a self-documenting token instead
+     of a bare --duration-fast reference that doesn't say what it's for. */
+  --duration-route: 180ms;
+  --duration-tick: 160ms;
+  --duration-sheet: 220ms;
+
   --stagger-base: 40ms;
 
   /* v3 "developer portfolio" redesign (issue #416, Phase 4 — #428):
@@ -606,10 +616,16 @@ body {
    equivalent resting styles as a normal (non-animation) rule instead, so a
    plain `transform: none` there can never be confused with a "some
    transform is set" state. */
-.fade-in { animation: fade-in 420ms var(--ease-spring); }
+/* issue #499 (D3) — route fade retuned from a literal 420ms to the
+   --duration-route token (180ms), per the motion pass's exact spec and its
+   "no animation longer than 250ms except the sheet" testing requirement. */
+.fade-in { animation: fade-in var(--duration-route) var(--ease-out); }
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-in { animation: none; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -4341,7 +4357,12 @@ html[data-scrolling] .dropdown-menu {
   50% { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
-.check-box.check-pop { animation: check-pop var(--duration-fast) var(--ease-standard); }
+/* issue #499 (D3) — "row tick spring: 160ms" reuses --duration-tick, not
+   --duration-fast directly, so this animation's name-to-token mapping is
+   self-documenting even though the two tokens' values happen to differ
+   (120ms vs. 160ms) — --duration-fast is still used for the general
+   120-200ms hover/press rule elsewhere in this file (design-system.md §7). */
+.check-box.check-pop { animation: check-pop var(--duration-tick) var(--ease-standard); }
 @media (prefers-reduced-motion: reduce) {
   .check-box.check-pop { animation: none; }
 }
@@ -4355,8 +4376,16 @@ html[data-scrolling] .dropdown-menu {
 /* issue #6 Phase 7 — strike-through animates in via `::after` width 0% -> 100%
    instead of an instant `text-decoration: line-through`, per the animation
    inventory. `position: relative` + `display: inline-block` so the pseudo-element
-   sizes itself to the title's own rendered width, not the flex row's. */
-.check-title { position: relative; display: inline-block; font-size: var(--text-base); font-weight: 600; }
+   sizes itself to the title's own rendered width, not the flex row's.
+   issue #499 follow-up — `.check-body` is a flex column with no `align-items`,
+   which defaults to `stretch`: that stretched `.check-title` (an inline-block)
+   to the row's full width, so the done-state strike-through line spanned the
+   entire row instead of just the title text (real, reported: "cutting the
+   whole row" instead of just the text) — `align-self: flex-start` keeps the
+   title (and its `::after` line) sized to its own content, matching this
+   file's existing "a flex column's default `stretch` needs an explicit
+   `align-self: flex-start`" precedent (see the card-grid layout section above). */
+.check-title { position: relative; display: inline-block; align-self: flex-start; max-width: 100%; font-size: var(--text-base); font-weight: 600; }
 .check-title::after {
   content: '';
   position: absolute;
@@ -4482,7 +4511,13 @@ html[data-scrolling] .dropdown-menu {
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
   transform: translateX(100%);
-  transition: transform 280ms cubic-bezier(.2,.9,.3,1);
+  /* issue #499 (D3) — "sheet slide (from #D1): 220ms" reads --duration-sheet
+     instead of a literal 280ms; --ease-spring is the same curve
+     (cubic-bezier(.2,.9,.3,1)) this rule already hardcoded, just named. This
+     transition drives both the desktop translateX slide-in-from-right and
+     (via the ≤720px override's translateY values above) the mobile
+     bottom-sheet slide-up — one shared timing for both shapes. */
+  transition: transform var(--duration-sheet) var(--ease-spring);
 }
 .item-panel.show { transform: translateX(0); }
 
@@ -6441,6 +6476,18 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+/* issue #499 (D3) — the Animations-off preference added in #495/#C3 sets a
+   plain data-animations-off attribute on <html> (uiPreferences.js), but
+   until this pass nothing in app.css ever read it. Same shape as the
+   prefers-reduced-motion catch-all immediately above — a global !important
+   floor rather than a per-component opt-out, so every animation/transition
+   in this file (including any added after this pass) is covered without
+   needing its own explicit override. */
+[data-animations-off], [data-animations-off] *, [data-animations-off] *::before, [data-animations-off] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* Print/PDF export of a roadmap (issue #133 Part 2, restyled/branded in issue
