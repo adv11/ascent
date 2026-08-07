@@ -31,6 +31,22 @@ async function openFeedbackModalViaAccountMenu(page) {
   await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
 }
 
+// settings.js's Support tab (and every other tab) only renders for a real,
+// non-anonymous account — a guest session sees buildGuestView()'s single
+// "Create a free account" card instead, with no tabs at all. Same real
+// sign-up flow customRoadmapRace.test.js already uses.
+async function signUpNewUser(page) {
+  const uniqueEmail = `issue498-${Date.now()}@example.com`;
+  const password = 'TestPassword1!';
+  await page.goto('/#/signup');
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await page.locator('input[type="email"]').fill(uniqueEmail);
+  await page.locator('input[type="password"]').first().fill(password);
+  await page.locator('input[type="password"]').last().fill(password);
+  await page.locator('[type="submit"]').click();
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 15_000 });
+}
+
 test.describe('feedback entry points — account menu and Settings row (issue #498)', () => {
   test('account menu\'s "Send feedback" opens the type selector with three report types', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
@@ -47,7 +63,7 @@ test.describe('feedback entry points — account menu and Settings row (issue #4
 
   test('Settings page\'s Support tab has a "Send feedback" row opening the same modal', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await signInAsGuest(page);
+    await signUpNewUser(page);
     await page.goto('/#/settings');
     await expect(page.locator('.settings-page')).toBeVisible({ timeout: 10_000 });
 
@@ -82,7 +98,7 @@ test.describe('feedback entry points — account menu and Settings row (issue #4
 test.describe('feedback — full submit flow (requires Firebase emulator)', () => {
   test('guest fills and submits a bug report and sees the success screen with a reference id', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
-    await signInAsGuest(page);
+    await goToDashboardAsGuest(page);
 
     await openFeedbackModalViaAccountMenu(page);
     await page.locator('.feedback-type-card', { hasText: 'Bug report' }).click();

@@ -19,8 +19,10 @@ test.describe('feature tour (issue #17)', () => {
     await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
     await page.click('.tour-welcome-card [data-action="start"]');
 
-    // Issue #490 added an 11th step ("Track daily todos") to buildTourSteps().
-    for (let i = 0; i < 11; i += 1) {
+    // Issue #490 added an 11th step ("Track daily todos") to buildTourSteps();
+    // issue #498 removed the standalone "Send feedback anytime" step (folded
+    // into the account-menu step instead), bringing the count back to 10.
+    for (let i = 0; i < 10; i += 1) {
       await expect(page.locator('.tour-popover')).toBeVisible();
       await page.click('.tour-popover [data-action="next"], .tour-popover [data-action="finish"]');
     }
