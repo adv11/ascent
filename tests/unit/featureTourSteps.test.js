@@ -29,15 +29,15 @@ beforeEach(() => {
 // matching className (which would pass even if the real component's markup
 // drifted out of sync with the tour's own selectors). Assembles the same
 // pieces renderDashboard() itself mounts — sidebar (whose footer now also
-// carries the theme toggle, issue #488), topbar (whose avatar dropdown now
-// folds in the old changelog bell, same issue), and the app-lifetime
-// feedback widget — plus minimal phase-card/check-item stand-ins for the
-// two rows the original issue #17 steps already cover.
+// carries the theme toggle, issue #488, and whose account menu now also
+// carries "Send feedback", issue #498) and topbar (whose avatar dropdown now
+// folds in the old changelog bell, issue #488) — plus minimal phase-card/
+// check-item stand-ins for the two rows the original issue #17 steps already
+// cover.
 describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
   async function mountFreshDashboardChrome() {
     const { createSidebar } = await import('../../src/ui/components/sidebar.js');
     const { createTopbar } = await import('../../src/ui/components/topbar.js');
-    const { createFeedbackWidget } = await import('../../src/ui/components/feedbackWidget.js');
 
     const user = { isAnonymous: true, uid: 'guest-1' };
     const sidebar = createSidebar({
@@ -51,7 +51,6 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
       user,
       store: fakeStore()
     });
-    const feedbackWidget = createFeedbackWidget({ user });
 
     const phaseCard = document.createElement('div');
     phaseCard.className = 'phase-card';
@@ -62,8 +61,8 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
     const dailyTodoPanel = document.createElement('div');
     dailyTodoPanel.className = 'daily-todo-panel';
 
-    document.body.append(sidebar, topbar, feedbackWidget, phaseCard, checkItem, dailyTodoPanel);
-    return { sidebar, topbar, feedbackWidget };
+    document.body.append(sidebar, topbar, phaseCard, checkItem, dailyTodoPanel);
+    return { sidebar, topbar };
   }
 
   it('resolves every step target to a real, mounted element', async () => {
@@ -71,7 +70,7 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
     await mountFreshDashboardChrome();
 
     const steps = buildTourSteps();
-    expect(steps.length).toBeGreaterThanOrEqual(10);
+    expect(steps.length).toBeGreaterThanOrEqual(9);
     for (const step of steps) {
       const target = step.target();
       expect(target, `"${step.title}" target should resolve`).not.toBeNull();
@@ -89,19 +88,16 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
     }
   });
 
-  it('the Settings, account-menu, feedback, and changelog-bell steps point at their real components', async () => {
+  it('the Settings, account-menu, and changelog-bell steps point at their real components', async () => {
     const { buildTourSteps } = await import('../../src/ui/pages/dashboard.js');
-    const { sidebar, feedbackWidget } = await mountFreshDashboardChrome();
+    const { sidebar } = await mountFreshDashboardChrome();
 
     const steps = buildTourSteps();
     const settingsStep = steps.find(s => s.title === 'Update your settings');
     expect(settingsStep.target()).toBe(sidebar.querySelector('.app-sidebar-nav a[href="#/settings"]'));
 
-    const accountStep = steps.find(s => s.title === 'Share, back up, and review reports');
+    const accountStep = steps.find(s => s.title === 'Share, back up, and send feedback');
     expect(accountStep.target()).toBe(sidebar.querySelector('.app-sidebar-identity'));
-
-    const feedbackStep = steps.find(s => s.title === 'Send feedback anytime');
-    expect(feedbackStep.target()).toBe(feedbackWidget);
 
     const bellStep = steps.find(s => s.title === 'See what\'s new');
     expect(bellStep.target()).not.toBeNull();

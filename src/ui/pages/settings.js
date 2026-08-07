@@ -7,6 +7,8 @@ import { createTopbar } from '../components/topbar.js';
 import { createGuestBanner } from '../components/guestBanner.js';
 import { createBottomNav } from '../components/bottomNav.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
+import { openFeedbackModal } from '../components/feedbackModal.js';
+import { openMyReports } from '../components/myReports.js';
 import { exportBackupJson } from '../utils/backupActions.js';
 import { scorePassword, makePasswordToggle } from '../utils/password.js';
 import { isValidEmailFormat, attachFieldValidationIcon } from '../utils/fieldValidation.js';
@@ -426,6 +428,38 @@ function buildPreferencesSection() {
   return section;
 }
 
+// Issue #498 — the other entry point for feedback/reports, replacing
+// feedbackWidget.js's floating trigger (removed with this issue). Both this
+// and sidebar.js's account-menu item open the identical feedbackModal.js.
+function buildSupportSection(user) {
+  return el('section', { className: 'settings-section' }, [
+    el('h2', { className: 'settings-section-title', text: 'Support' }),
+    el('p', { className: 'settings-section-subtitle', text: 'Tell us what broke or what would help.' }),
+    el('div', { className: 'settings-row' }, [
+      el('div', { className: 'settings-row-main' }, [
+        el('span', { className: 'settings-row-label', text: 'Send feedback' }),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-secondary btn-sm',
+          text: 'Send feedback',
+          onClick: () => openFeedbackModal({ user })
+        })
+      ])
+    ]),
+    el('div', { className: 'settings-row' }, [
+      el('div', { className: 'settings-row-main' }, [
+        el('span', { className: 'settings-row-label', text: 'My reports' }),
+        el('button', {
+          type: 'button',
+          className: 'btn btn-secondary btn-sm',
+          text: 'My reports',
+          onClick: () => openMyReports({ user })
+        })
+      ])
+    ])
+  ]);
+}
+
 function buildDataSection(store) {
   return el('section', { className: 'settings-section' }, [
     el('h2', { className: 'settings-section-title', text: 'Your data' }),
@@ -501,6 +535,7 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
     : (() => {
         const profile = buildProfileSection(user);
         const preferences = buildPreferencesSection();
+        const support = buildSupportSection(user);
         const data = buildDataSection(store);
         const danger = buildDangerZone();
         cleanupSections = [preferences];
@@ -508,6 +543,7 @@ export function renderSettings(app, { user, store, dailyTodoStore }) {
           items: [
             { id: 'account', label: 'Account', panel: profile },
             { id: 'preferences', label: 'Preferences', panel: preferences },
+            { id: 'support', label: 'Support', panel: support },
             { id: 'data', label: 'Your data', panel: data },
             { id: 'delete', label: 'Delete account', panel: danger }
           ]

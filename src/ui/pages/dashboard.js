@@ -287,11 +287,10 @@ export function renderFilterChips(items, activeFilter, onFilterChange) {
 // not this feature's, per that same re-audit).
 //
 // Issue #293 — re-audited against every feature shipped since #17 and added
-// 4 more stops: Settings, the account menu (share/backup/reports), the
-// feedback widget, and the changelog bell. All four resolve reliably on a
-// brand-new dashboard (a fixed nav link, a fixed sidebar footer button, an
-// app-lifetime `document.body` trigger, and a fixed topbar button — none of
-// them conditionally rendered), unlike `.daily-todo-nav-badge`/
+// 3 more stops: Settings, the account menu (share/backup/feedback/reports),
+// and the changelog bell. Both resolve reliably on a brand-new dashboard (a
+// fixed nav link and a fixed topbar button — neither conditionally
+// rendered), unlike `.daily-todo-nav-badge`/
 // `.review-due-nav-badge` just above them in this same file, which are
 // `hidden` until a matching todo/review-due item exists and would end the
 // tour early (`showStep()`'s `if (!target) { end(); return; }`) for a
@@ -363,13 +362,8 @@ export function buildTourSteps() {
       // exists in the >=900px sidebar) — featureTour.js skips a step whose
       // target() resolves to null instead of ending the tour early.
       target: () => document.querySelector('.app-sidebar-identity'),
-      title: 'Share, back up, and review reports',
-      body: 'Open your account menu to share a read-only roadmap link, download a backup, or see your past feedback reports.'
-    },
-    {
-      target: () => document.querySelector('.feedback-widget-trigger'),
-      title: 'Send feedback anytime',
-      body: 'Spotted a bug or have an idea? Use this button to send feedback straight to us.'
+      title: 'Share, back up, and send feedback',
+      body: 'Open your account menu to share a read-only roadmap link, download a backup, or send feedback and see your past reports.'
     },
     {
       target: () => document.querySelector('.app-topbar-avatar-btn'),

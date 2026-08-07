@@ -11,6 +11,7 @@ import { KEYS } from '../../services/localStorageKeys.js';
 import { exportBackupJson, exportBackupCsv, exportBackupMarkdown, exportTodosIcs, importBackupFromFile } from '../utils/backupActions.js';
 import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { openMyReports } from './myReports.js';
+import { openFeedbackModal } from './feedbackModal.js';
 import { openShareRoadmapModal } from './shareRoadmapModal.js';
 
 // Issue #6 Phase 2.1. Nav list was originally just Dashboard + My Roadmaps —
@@ -67,6 +68,9 @@ export function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger,
   // immediately with no explanation.
   if (onStartTour) dropdownItems.push({ text: 'Take a tour', onClick: onStartTour });
   dropdownItems.push(
+    // Issue #498 — replaces feedbackWidget.js's floating trigger, which
+    // used to be the only way to reach the feedback form.
+    { text: 'Send feedback', onClick: () => openFeedbackModal({ user }) },
     { text: 'My reports', onClick: () => openMyReports({ user }) },
     // Issue #414 — the app-wide developer/creator profile, visible to every
     // signed-in identity (never gated behind !user.isAnonymous, matching

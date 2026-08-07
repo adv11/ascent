@@ -416,7 +416,10 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.feedback-widget-trigger').click();
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await page.locator('.app-sidebar-identity').click();
+    await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
     await expect(modal.locator('button', { hasText: 'My reports' })).toBeFocused();
@@ -429,7 +432,10 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.feedback-widget-trigger').click();
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await page.locator('.app-sidebar-identity').click();
+    await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
     await modal.locator('button', { hasText: 'My reports' }).click();
@@ -441,7 +447,10 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await page.locator('.feedback-widget-trigger').click();
+    await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await page.locator('.app-sidebar-identity').click();
+    await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
     await modal.locator('.feedback-type-card', { hasText: 'General feedback' }).click();

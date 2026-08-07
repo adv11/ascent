@@ -6,7 +6,7 @@ import { svgIcon } from '../utils/svg.js';
 // (src/data/templates/index.js), resource-type badge
 // (src/ui/utils/linkDetector.js's LINK_TYPE_META), custom-roadmap card icon
 // (src/ui/utils/customRoadmapIcon.js), and feedback-type category card
-// (feedbackModal.js/feedbackWidget.js/myReports.js). Replaces the raw
+// (feedbackModal.js/myReports.js). Replaces the raw
 // Unicode/emoji glyphs those modules used to hold directly (issue #136) and,
 // as of this migration, the Phosphor Duotone two-tone treatment that used to
 // visually distinguish decorative content from createIcon()'s flat chrome —
@@ -233,8 +233,8 @@ const DECORATIVE_ICON_SHAPES = {
     { d: 'M15 5.764v15' },
     { d: 'M9 3.236v15' }
   ],
-  // Feedback-type category cards (feedbackModal.js/feedbackWidget.js/
-  // myReports.js) — category-selection cards, same "decorative content tied
+  // Feedback-type category cards (feedbackModal.js/myReports.js) —
+  // category-selection cards, same "decorative content tied
   // to data" reasoning as template icons.
   // lucide: bug
   bug: () => [

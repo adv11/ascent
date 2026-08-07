@@ -32,9 +32,6 @@ vi.mock('../../src/services/migration.js', () => ({ migrateLocalStorageKeys: vi.
 vi.mock('../../src/services/serviceWorkerRegistration.js', () => ({ registerServiceWorker: vi.fn() }));
 vi.mock('../../src/services/reminderScheduler.js', () => ({ initReminderScheduler: vi.fn() }));
 vi.mock('../../src/ui/components/toast.js', () => ({ showToast: vi.fn() }));
-vi.mock('../../src/ui/components/feedbackWidget.js', () => ({
-  createFeedbackWidget: () => Object.assign(document.createElement('div'), { _setUser: vi.fn() }),
-}));
 vi.mock('../../src/ui/pages/landing.js', () => ({ renderLanding: vi.fn() }));
 vi.mock('../../src/ui/pages/sharedRoadmapView.js', () => ({ renderSharedRoadmapView: vi.fn() }));
 
