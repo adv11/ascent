@@ -2,37 +2,27 @@ import { el } from '../dom.js';
 import { attachFocusTrap } from './modal.js';
 import { setButtonLoading } from '../utils/buttonLoading.js';
 import { KEYS } from '../../services/localStorageKeys.js';
-import { validateReport } from '../../core/feedback/reportSchema.js';
+import { validateReport, MAX_TITLE_LENGTH } from '../../core/feedback/reportSchema.js';
 import { collectCurrentMetadata } from '../../core/feedback/metadataCollector.js';
 import { canSubmit, recordSubmit, msUntilNextSubmit } from '../../services/feedbackRateLimit.js';
 import { submitReport } from '../../services/feedbackStore.js';
 import { getTheme } from '../../services/theme.js';
 import { getRoute } from '../router.js';
-import { createField, createRadioGroup, createSystemInfoCheckbox, debounce } from './feedbackForm.js';
+import { createField, createSystemInfoCheckbox, debounce } from './feedbackForm.js';
 import { buildMyReportsView } from './myReports.js';
 import { createIcon } from './icons.js';
-import { createDecorativeIcon } from './decorativeIcon.js';
 
-// issue #136 Phase 2 follow-up — was raw '🐛'/'💡'/'💬' glyphs; decorativeIcon.js names now
+// Issue #505 — redesigned onto the E5 design reference's single-screen
+// "kind chips + one textarea" shape, replacing the old two-step type-select
+// grid → per-type multi-field form flow. Labels match the design image
+// verbatim (not the old "Bug report"/"Feature request"/"General feedback"
+// wording) — content-style.md's plain-language rule applies here same as
+// everywhere else.
 const REPORT_TYPE_META = {
-  bug: { icon: 'bug', label: 'Bug report', ariaLabel: 'Bug report' },
-  feature: { icon: 'lightbulb', label: 'Feature request', ariaLabel: 'Feature request' },
-  feedback: { icon: 'chat-circle', label: 'General feedback', ariaLabel: 'General feedback' }
+  bug: { label: 'Something is broken', placeholder: 'What happened, and what were you doing when it did?' },
+  feature: { label: 'An idea', placeholder: 'What would you like to see in Ascent?' },
+  feedback: { label: 'Something else', placeholder: 'What happened?' }
 };
-
-const SEVERITY_OPTIONS = [
-  { value: 'critical', label: 'Critical — app unusable' },
-  { value: 'high', label: 'High — major feature broken' },
-  { value: 'medium', label: 'Medium — partial issue' },
-  { value: 'low', label: 'Low — minor / cosmetic' }
-];
-
-const USAGE_FREQ_OPTIONS = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'occasionally', label: 'Occasionally' },
-  { value: 'one-time', label: 'One-time' }
-];
 
 function readDraft() {
   try {
@@ -56,87 +46,24 @@ function metadataSummary(metadata) {
   return `${metadata.browser} · ${metadata.os} · ${metadata.viewport} · ${metadata.currentRoute || '/'}`;
 }
 
-// Issue #281 — renderForm()/gatherFormValues() extraction. resolveTitlePlaceholder()
-// and buildTypeFields() (+ its three per-type helpers) pull the type-branching logic
-// that used to live inline in renderForm() out into named, module-scope functions;
-// readFieldValue() does the same for gatherFormValues()'s repeated `field?.getValue()
-// || null` pattern. Pure structural refactor — every field/placeholder/prefill value
-// is unchanged from the original inline code.
-function resolveTitlePlaceholder(type) {
-  if (type === 'bug') return 'Short description of what went wrong';
-  if (type === 'feature') return 'What would you like to see in Ascent?';
-  return undefined;
+// Issue #505 — the redesigned single screen has no separate Title field (the
+// design image shows only kind chips + one textarea), but reportSchema.js's
+// validators still require a non-empty `title` for every report type — the
+// backend/schema contract is unchanged by this visual redesign. Title is
+// derived from the body text itself: its first line, capped at
+// MAX_TITLE_LENGTH, same as how a git commit's subject line is implicitly
+// "the first line."
+function deriveTitleFromBody(body) {
+  const firstLine = (body || '').trim().split('\n')[0].trim();
+  return firstLine.slice(0, MAX_TITLE_LENGTH);
 }
 
-function applyRadioPrefill(radioGroupField, value) {
-  if (!value) return;
-  const radio = radioGroupField.node.querySelector(`input[value="${value}"]`);
-  if (radio) {
-    radio.checked = true;
-    radio.dispatchEvent(new Event('change'));
-  }
-}
-
-// Issue #348 collapsed Steps/Expected/Actual into one free-text field, and
-// made Severity optional (defaults to 'medium' — see reportSchema.js) rather
-// than a required radio group, to cut required typing before Submit unlocks.
-function buildBugTypeFields({ prefill, onChange }) {
-  const severityField = createRadioGroup({ name: 'severity', label: 'Severity', options: SEVERITY_OPTIONS, required: false });
-  applyRadioPrefill(severityField, prefill.severity);
-  const whatHappenedField = createField({
-    label: 'What happened?',
-    type: 'textarea',
-    maxLength: 2000,
-    value: prefill.whatHappened || '',
-    placeholder: 'What were you doing, what did you expect, and what happened instead?',
-    onChange
-  });
-  return {
-    fields: [whatHappenedField.node, severityField.node],
-    severityField, whatHappenedField
-  };
-}
-
-// Issue #348 collapsed "Describe the feature"/"Your use case" into one field.
-function buildFeatureTypeFields({ prefill, onChange }) {
-  const descriptionField = createField({
-    label: 'Describe the feature',
-    type: 'textarea',
-    maxLength: 2000,
-    value: prefill.description || '',
-    placeholder: 'What would you like to see, and why?',
-    onChange
-  });
-  const usageFreqField = createRadioGroup({ name: 'usageFreq', label: 'How often would you use it?', options: USAGE_FREQ_OPTIONS, required: false });
-  applyRadioPrefill(usageFreqField, prefill.usageFreq);
-  return {
-    fields: [descriptionField.node, usageFreqField.node],
-    descriptionField, usageFreqField
-  };
-}
-
-function buildFeedbackTypeFields({ prefill, onChange }) {
-  const descriptionField = createField({ label: 'Your feedback', type: 'textarea', maxLength: 2000, value: prefill.description || '', onChange });
-  return {
-    fields: [descriptionField.node],
-    descriptionField
-  };
-}
-
-function buildTypeFields(type, opts) {
-  if (type === 'bug') return buildBugTypeFields(opts);
-  if (type === 'feature') return buildFeatureTypeFields(opts);
-  return buildFeedbackTypeFields(opts);
-}
-
-function readFieldValue(field) {
-  return field?.getValue() || null;
-}
-
-// Multi-step modal: type select → form → success (issue #9 §2–§3, §8). One
-// long-lived overlay/card pair for the whole flow (not re-opened per step)
-// so `attachFocusTrap`/Escape/outside-click keep working across transitions —
-// same reasoning openModal()'s doc comment gives for reusing one card.
+// Single screen (kind chips + one textarea) → success, with "See my past
+// reports" branching to its own screen — replaces the old type-select-grid →
+// per-type-form two-step flow (issue #505). One long-lived overlay/card pair
+// for the whole thing (not re-opened per screen) so `attachFocusTrap`/
+// Escape/outside-click keep working across transitions — same reasoning
+// openModal()'s doc comment gives for reusing one card.
 export function openFeedbackModal({ user }) {
   let cooldownTimer = null;
   let activeListenerCleanup = null;
@@ -161,40 +88,9 @@ export function openFeedbackModal({ user }) {
     body.replaceChildren(...list);
   }
 
-  function renderTypeSelect() {
-    const draft = readDraft();
-    const myReportsBtn = el('button', {
-      type: 'button',
-      className: 'btn btn-ghost btn-sm',
-      text: 'My reports',
-      onClick: renderMyReports
-    });
-    setBody([
-      el('div', { className: 'feedback-type-header' }, [
-        el('h2', { className: 'modal-title', text: 'How can we help?' }),
-        myReportsBtn
-      ]),
-      draft
-        ? el('p', { className: 'form-message', text: `You have an unfinished ${REPORT_TYPE_META[draft.type].label.toLowerCase()} draft.` })
-        : null,
-      el('div', { className: 'feedback-type-grid' }, Object.entries(REPORT_TYPE_META).map(([type, meta]) =>
-        el('button', {
-          type: 'button',
-          className: 'feedback-type-card',
-          onClick: () => renderForm(type, draft?.type === type ? draft.form : {})
-        }, [
-          el('span', { className: 'feedback-type-emoji', 'aria-hidden': 'true' }, [createDecorativeIcon(meta.icon, { size: 'lg' })]),
-          el('span', { text: meta.label })
-        ])
-      )),
-      el('p', { className: 'feedback-privacy-note', text: 'Your feedback goes directly to the team.' })
-    ]);
-    myReportsBtn.focus();
-  }
-
   function renderMyReports() {
     const view = buildMyReportsView({ user });
-    const backBtn = el('button', { type: 'button', className: 'btn btn-ghost btn-sm', text: '← Back', onClick: renderTypeSelect });
+    const backBtn = el('button', { type: 'button', className: 'btn btn-ghost btn-sm', text: '← Back', onClick: renderMain });
     setBody([
       el('div', { className: 'feedback-type-header' }, [
         el('h2', { className: 'modal-title', text: 'My reports' }),
@@ -206,33 +102,58 @@ export function openFeedbackModal({ user }) {
     backBtn.focus();
   }
 
-  function renderForm(type, prefill = {}) {
-    const meta = REPORT_TYPE_META[type];
-    const form = {};
-    const fields = [];
+  // Issue #505 — one screen: kind chips (single-select, no separate step) +
+  // one textarea + "Send it" + "See my past reports", matching the E5 design
+  // reference exactly. `type` is plain closure state the chip row mutates —
+  // no re-render of the whole screen on a chip click, just an active-class
+  // swap and a placeholder update on the one shared textarea.
+  function renderMain() {
+    const draft = readDraft();
+    let type = draft?.type && REPORT_TYPE_META[draft.type] ? draft.type : 'bug';
 
-    const titleField = createField({ label: 'Title', maxLength: 120, value: prefill.title || '', placeholder: resolveTitlePlaceholder(type), onChange: persistDraft });
-    fields.push(titleField.node);
-    form.title = () => titleField.getValue();
+    const bodyField = createField({
+      label: 'What happened?',
+      type: 'textarea',
+      maxLength: 2000,
+      value: draft?.form ? (draft.form.whatHappened || draft.form.description || '') : '',
+      placeholder: REPORT_TYPE_META[type].placeholder,
+      onChange: persistDraft
+    });
 
-    const typeFields = buildTypeFields(type, { prefill, onChange: persistDraft });
-    fields.push(...typeFields.fields);
-    const { severityField, whatHappenedField, descriptionField, usageFreqField } = typeFields;
+    const chipButtons = Object.entries(REPORT_TYPE_META).map(([value, meta]) =>
+      el('button', {
+        type: 'button',
+        className: `filter-chip feedback-kind-chip ${value === type ? 'active' : ''}`,
+        'aria-pressed': String(value === type),
+        text: meta.label,
+        onClick: () => {
+          type = value;
+          chipButtons.forEach(btn => {
+            const isActive = btn.dataset.kind === type;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', String(isActive));
+          });
+          bodyField.input.placeholder = REPORT_TYPE_META[type].placeholder;
+          persistDraft();
+        }
+      })
+    );
+    chipButtons.forEach((btn, i) => { btn.dataset.kind = Object.keys(REPORT_TYPE_META)[i]; });
 
     const systemInfoCheckbox = createSystemInfoCheckbox({
-      checked: prefill.includeSystemInfo !== false,
+      checked: draft?.form?.includeSystemInfo !== false,
       summaryText: metadataSummary(collectCurrentMetadata({ route: getRoute(), theme: getTheme(), user })),
       onChange: persistDraft
     });
-    fields.push(systemInfoCheckbox.node);
 
     function gatherFormValues() {
+      const body = bodyField.getValue();
       return {
-        title: titleField.getValue(),
-        severity: readFieldValue(severityField),
-        whatHappened: readFieldValue(whatHappenedField),
-        description: readFieldValue(descriptionField),
-        usageFreq: readFieldValue(usageFreqField),
+        title: deriveTitleFromBody(body),
+        whatHappened: type === 'bug' ? body : null,
+        description: type !== 'bug' ? body : null,
+        severity: null,
+        usageFreq: null,
         includeSystemInfo: systemInfoCheckbox.isChecked()
       };
     }
@@ -247,8 +168,7 @@ export function openFeedbackModal({ user }) {
     const cooldownMessage = el('p', { className: 'form-message error feedback-cooldown-message', text: '' });
     cooldownMessage.hidden = true;
 
-    const submitBtn = el('button', { type: 'submit', className: 'btn btn-primary', text: `Submit ${meta.label.toLowerCase()} →` });
-    const cancelBtn = el('button', { type: 'button', className: 'btn btn-secondary', text: 'Cancel', onClick: renderTypeSelect });
+    const submitBtn = el('button', { type: 'submit', className: 'btn btn-primary btn-block', text: 'Send it' });
 
     function updateCooldownUi() {
       clearInterval(cooldownTimer);
@@ -280,13 +200,12 @@ export function openFeedbackModal({ user }) {
       errorMessage.hidden = true;
       const values = gatherFormValues();
       const errors = validateReport(type, values);
-      [titleField, whatHappenedField, descriptionField].forEach(f => f?.setError(null));
+      bodyField.setError(null);
       if (errors.length) {
-        const fieldMap = { 'title is required': titleField, 'whatHappened is required': whatHappenedField, 'description is required': descriptionField };
-        errors.forEach(err => fieldMap[err]?.setError('This field is required.'));
+        bodyField.setError('Tell us what happened before sending.');
         errorMessage.hidden = false;
         errorMessage.className = 'form-message error';
-        errorMessage.textContent = 'Fill in the required fields before submitting.';
+        errorMessage.textContent = 'Fill in what happened before sending.';
         return;
       }
       if (!canSubmit()) {
@@ -294,7 +213,7 @@ export function openFeedbackModal({ user }) {
         return;
       }
 
-      setButtonLoading(submitBtn, true, 'Submitting…');
+      setButtonLoading(submitBtn, true, 'Sending…');
       try {
         const metadata = systemInfoCheckbox.isChecked() ? collectCurrentMetadata({ route: getRoute(), theme: getTheme(), user }) : null;
         const reportId = await submitReport({
@@ -311,17 +230,27 @@ export function openFeedbackModal({ user }) {
         console.error('Feedback submission failed', error);
         errorMessage.hidden = false;
         errorMessage.className = 'form-message error';
-        errorMessage.textContent = 'Could not submit your report. Your draft has been saved — try again in a moment.';
+        errorMessage.textContent = 'Could not send your report. Your draft has been saved — try again in a moment.';
       } finally {
         setButtonLoading(submitBtn, false);
       }
     }
 
+    const myReportsBtn = el('button', {
+      type: 'button',
+      className: 'btn btn-ghost btn-sm feedback-my-reports-link',
+      text: 'See my past reports',
+      onClick: renderMyReports
+    });
+
     const formEl = el('form', { className: 'feedback-form', onSubmit: handleSubmit }, [
-      ...fields,
+      el('div', { className: 'feedback-kind-chips' }, chipButtons),
+      bodyField.node,
+      systemInfoCheckbox.node,
       errorMessage,
       cooldownMessage,
-      el('div', { className: 'feedback-form-actions' }, [cancelBtn, submitBtn])
+      submitBtn,
+      myReportsBtn
     ]);
 
     formEl.addEventListener('keydown', e => {
@@ -332,18 +261,13 @@ export function openFeedbackModal({ user }) {
     });
 
     setBody([
-      el('div', { className: 'feedback-type-header' }, [
-        el('h2', { className: 'modal-title' }, [
-          createDecorativeIcon(meta.icon, { size: 'sm' }),
-          ` ${meta.label}`
-        ]),
-      ]),
-      formEl,
-      el('p', { className: 'feedback-privacy-note', text: "Your report is sent to the Ascent team only. We never share it. Uncheck 'Include system info' to submit without metadata." })
+      el('h2', { className: 'modal-title', text: 'Send feedback' }),
+      el('p', { className: 'feedback-privacy-note', text: 'Tell us what broke or what would help. We read every one.' }),
+      formEl
     ]);
 
     updateCooldownUi();
-    titleField.input.focus();
+    bodyField.input.focus();
   }
 
   function renderSuccess(reportId) {
@@ -357,7 +281,7 @@ export function openFeedbackModal({ user }) {
         el('p', { className: 'form-message', text: "Thanks for helping improve Ascent! We'll review your report and may follow up if we need more details." }),
         el('p', { className: 'feedback-reference', text: `Reference: #${reference}` }),
         el('div', { className: 'feedback-form-actions' }, [
-          el('button', { type: 'button', className: 'btn btn-secondary', text: 'Send another', onClick: renderTypeSelect }),
+          el('button', { type: 'button', className: 'btn btn-secondary', text: 'Send another', onClick: renderMain }),
           closeBtn
         ])
       ])
@@ -382,7 +306,7 @@ export function openFeedbackModal({ user }) {
   const detachTrap = attachFocusTrap(card, { onEscape: close });
   document.body.classList.add('scroll-locked');
   document.body.appendChild(overlay);
-  renderTypeSelect();
+  renderMain();
 
   return { close };
 }

@@ -18,53 +18,52 @@ beforeEach(() => {
   submitReport.mockResolvedValue('report-abc12');
 });
 
-function clickType(label) {
-  const buttons = [...document.querySelectorAll('.feedback-type-card')];
+function clickKind(label) {
+  const buttons = [...document.querySelectorAll('.feedback-kind-chip')];
   buttons.find(b => b.textContent.includes(label)).click();
 }
 
-describe('openFeedbackModal — type selector', () => {
-  it('opens with a "How can we help?" title and three type cards', () => {
+function bodyTextarea() {
+  return document.querySelector('textarea.feedback-field-input');
+}
+
+describe('openFeedbackModal — single screen (issue #505)', () => {
+  it('opens with a "Send feedback" title, three kind chips, and "Something is broken" active by default', () => {
     openFeedbackModal({ user: USER });
-    expect(document.querySelector('.modal-title').textContent).toBe('How can we help?');
-    expect(document.querySelectorAll('.feedback-type-card')).toHaveLength(3);
+    expect(document.querySelector('.modal-title').textContent).toBe('Send feedback');
+    const chips = [...document.querySelectorAll('.feedback-kind-chip')];
+    expect(chips).toHaveLength(3);
+    expect(chips.map(c => c.textContent)).toEqual(['Something is broken', 'An idea', 'Something else']);
+    expect(chips[0].classList.contains('active')).toBe(true);
   });
 
-  it('transitions to the bug report form when Bug report is selected', () => {
+  it('switches the active chip on click without leaving the screen', () => {
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
+    clickKind('An idea');
+    const chips = [...document.querySelectorAll('.feedback-kind-chip')];
+    expect(chips.find(c => c.textContent === 'An idea').classList.contains('active')).toBe(true);
+    expect(chips.find(c => c.textContent === 'Something is broken').classList.contains('active')).toBe(false);
     expect(document.querySelector('.feedback-form')).not.toBeNull();
-    expect(document.querySelector('.modal-title').textContent).toContain('Bug report');
   });
-});
 
-describe('bug report form', () => {
-  it('renders all required fields, with no screenshot control', () => {
+  it('has one textarea, no screenshot control, and a "See my past reports" link', () => {
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
-    const labels = [...document.querySelectorAll('.field-label')].map(l => l.textContent);
-    expect(labels.some(l => l.startsWith('Title'))).toBe(true);
-    expect(labels.some(l => l.startsWith('Severity'))).toBe(true);
-    expect(labels.some(l => l.startsWith('What happened?'))).toBe(true);
+    expect(document.querySelectorAll('textarea.feedback-field-input')).toHaveLength(1);
     expect(document.querySelector('.feedback-screenshot')).toBeNull();
+    expect(document.querySelector('.feedback-my-reports-link').textContent).toBe('See my past reports');
   });
 
-  it('does not submit and shows an error when required fields are empty', async () => {
+  it('does not submit and shows an error when the textarea is empty', async () => {
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
     document.querySelector('.feedback-form').requestSubmit();
     await Promise.resolve();
     expect(submitReport).not.toHaveBeenCalled();
     expect(document.querySelector('.form-message.error')).not.toBeNull();
   });
 
-  it('submits successfully with just title + what-happened filled, leaving severity unset', async () => {
+  it('submits a "Something is broken" report with a title derived from the body text', async () => {
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
-
-    document.querySelectorAll('.feedback-field-input')[0].value = 'Dashboard flickers';
-    const textareas = document.querySelectorAll('textarea.feedback-field-input');
-    textareas[0].value = 'Checked an item and it flickered instead of staying checked.';
+    bodyTextarea().value = 'Dashboard flickers when checking an item.';
 
     document.querySelector('.feedback-form').requestSubmit();
     await Promise.resolve();
@@ -75,17 +74,28 @@ describe('bug report form', () => {
     const args = submitReport.mock.calls[0][0];
     expect(args.type).toBe('bug');
     expect(args.userId).toBe('uid-1');
+    expect(args.form.title).toBe('Dashboard flickers when checking an item.');
+    expect(args.form.whatHappened).toBe('Dashboard flickers when checking an item.');
     expect(args.form.severity).toBeNull();
     expect(document.querySelector('.feedback-reference').textContent).toBe('Reference: #REPOR');
   });
 
+  it('submits an "An idea" report into the description field, not whatHappened', async () => {
+    openFeedbackModal({ user: USER });
+    clickKind('An idea');
+    bodyTextarea().value = 'Add a dark mode for the print export.';
+    document.querySelector('.feedback-form').requestSubmit();
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+
+    const args = submitReport.mock.calls[0][0];
+    expect(args.type).toBe('feature');
+    expect(args.form.description).toBe('Add a dark mode for the print export.');
+    expect(args.form.whatHappened).toBeNull();
+  });
+
   it('unchecking "Include system info" submits metadata: null', async () => {
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
-    document.querySelectorAll('.feedback-field-input')[0].value = 'Bug title';
-    document.querySelector('input[name="severity"][value="low"]').click();
-    const textareas = document.querySelectorAll('textarea.feedback-field-input');
-    textareas[0].value = 'Something went wrong.';
+    bodyTextarea().value = 'Something went wrong.';
     document.querySelector('.feedback-system-info-checkbox input[type="checkbox"]').click();
 
     document.querySelector('.feedback-form').requestSubmit();
@@ -97,39 +107,23 @@ describe('bug report form', () => {
   });
 });
 
-describe('feature request form', () => {
-  it('has no screenshot control and no separate use-case field', () => {
-    openFeedbackModal({ user: USER });
-    clickType('Feature request');
-    expect(document.querySelector('.feedback-screenshot')).toBeNull();
-    const labels = [...document.querySelectorAll('.field-label')].map(l => l.textContent);
-    expect(labels.some(l => l.startsWith('Describe the feature'))).toBe(true);
-    expect(labels.some(l => l.startsWith('Your use case'))).toBe(false);
-  });
-});
-
 describe('draft autosave', () => {
-  it('persists a half-filled bug report to localStorage and restores it on reopen', async () => {
+  it('persists a half-filled report to localStorage and restores it on reopen', async () => {
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
-    document.querySelectorAll('.feedback-field-input')[0].value = 'Partial title';
-    document.querySelectorAll('.feedback-field-input')[0].dispatchEvent(new Event('input'));
+    bodyTextarea().value = 'Partial description';
+    bodyTextarea().dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
       expect(localStorage.getItem(KEYS.FEEDBACK_DRAFT)).not.toBeNull();
     });
     const draft = JSON.parse(localStorage.getItem(KEYS.FEEDBACK_DRAFT));
     expect(draft.type).toBe('bug');
-    expect(draft.form.title).toBe('Partial title');
+    expect(draft.form.whatHappened).toBe('Partial description');
   });
 
   it('clears the draft after a successful submit', async () => {
-    localStorage.setItem(KEYS.FEEDBACK_DRAFT, JSON.stringify({ type: 'bug', form: { title: 'x' } }));
+    localStorage.setItem(KEYS.FEEDBACK_DRAFT, JSON.stringify({ type: 'bug', form: { whatHappened: 'x' } }));
     openFeedbackModal({ user: USER });
-    clickType('Bug report');
-    document.querySelectorAll('.feedback-field-input')[0].value = 'Bug title';
-    document.querySelector('input[name="severity"][value="low"]').click();
-    const textareas = document.querySelectorAll('textarea.feedback-field-input');
-    textareas[0].value = 'Something went wrong.';
+    bodyTextarea().value = 'Something went wrong.';
     document.querySelector('.feedback-form').requestSubmit();
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     expect(localStorage.getItem(KEYS.FEEDBACK_DRAFT)).toBeNull();
@@ -140,7 +134,7 @@ describe('rate limit UI', () => {
   it('disables the submit button and shows a cooldown message after 3 recent submits', () => {
     localStorage.setItem(KEYS.FEEDBACK_RATE, JSON.stringify([Date.now(), Date.now(), Date.now()]));
     openFeedbackModal({ user: USER });
-    clickType('General feedback');
+    clickKind('Something else');
     const submitBtn = document.querySelector('.feedback-form button[type="submit"]');
     expect(submitBtn.disabled).toBe(true);
     expect(document.querySelector('.feedback-cooldown-message').hidden).toBe(false);
@@ -150,11 +144,20 @@ describe('rate limit UI', () => {
 describe('guest (anonymous) submission', () => {
   it('submits with isAnonymous true for a guest user', async () => {
     openFeedbackModal({ user: { uid: 'guest-1', isAnonymous: true } });
-    clickType('General feedback');
-    document.querySelectorAll('.feedback-field-input')[0].value = 'Guest feedback';
-    document.querySelectorAll('textarea.feedback-field-input')[0].value = 'Body text';
+    clickKind('Something else');
+    bodyTextarea().value = 'Body text';
     document.querySelector('.feedback-form').requestSubmit();
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     expect(submitReport.mock.calls[0][0].isAnonymous).toBe(true);
+  });
+});
+
+describe('"See my past reports" navigation', () => {
+  it('opens the My reports screen and returns to the main screen via Back', () => {
+    openFeedbackModal({ user: USER });
+    document.querySelector('.feedback-my-reports-link').click();
+    expect(document.querySelector('.modal-title').textContent).toBe('My reports');
+    document.querySelector('.feedback-type-header button').click();
+    expect(document.querySelector('.modal-title').textContent).toBe('Send feedback');
   });
 });

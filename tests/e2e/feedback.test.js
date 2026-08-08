@@ -48,17 +48,17 @@ async function signUpNewUser(page) {
 }
 
 test.describe('feedback entry points — account menu and Settings row (issue #498)', () => {
-  test('account menu\'s "Send feedback" opens the type selector with three report types', async ({ page }) => {
+  test('account menu\'s "Send feedback" opens the single screen with three kind chips', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await goToDashboardAsGuest(page);
 
     await openFeedbackModalViaAccountMenu(page);
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
-    await expect(modal.locator('.feedback-type-card')).toHaveCount(3);
-    await expect(modal.locator('.feedback-type-card', { hasText: 'Bug report' })).toBeVisible();
-    await expect(modal.locator('.feedback-type-card', { hasText: 'Feature request' })).toBeVisible();
-    await expect(modal.locator('.feedback-type-card', { hasText: 'General feedback' })).toBeVisible();
+    await expect(modal.locator('.feedback-kind-chip')).toHaveCount(3);
+    await expect(modal.locator('.feedback-kind-chip', { hasText: 'Something is broken' })).toBeVisible();
+    await expect(modal.locator('.feedback-kind-chip', { hasText: 'An idea' })).toBeVisible();
+    await expect(modal.locator('.feedback-kind-chip', { hasText: 'Something else' })).toBeVisible();
   });
 
   test('Settings page\'s Support tab has a "Send feedback" row opening the same modal', async ({ page }) => {
@@ -72,40 +72,34 @@ test.describe('feedback entry points — account menu and Settings row (issue #4
     await expect(page.locator('.modal-overlay[aria-label="Send feedback"]')).toBeVisible();
   });
 
-  test('selecting Bug report renders the bug form with all required fields', async ({ page }) => {
+  test('"Something is broken" is selected by default and the form has one textarea plus "Send it"', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await goToDashboardAsGuest(page);
     await openFeedbackModalViaAccountMenu(page);
-    await page.locator('.feedback-type-card', { hasText: 'Bug report' }).click();
     const form = page.locator('.feedback-form');
     await expect(form).toBeVisible();
-    await expect(form.locator('.field-label', { hasText: 'Title' })).toBeVisible();
+    await expect(form.locator('.feedback-kind-chip.active')).toHaveText('Something is broken');
     await expect(form.locator('.field-label', { hasText: 'What happened?' })).toBeVisible();
-    await expect(form.locator('.field-label', { hasText: 'Severity' })).toBeVisible();
-    await expect(form.locator('button[type="submit"]')).toHaveText(/Submit bug report/);
+    await expect(form.locator('button[type="submit"]')).toHaveText('Send it');
   });
 
-  test('submitting an empty bug form shows a validation error instead of submitting', async ({ page }) => {
+  test('submitting an empty form shows a validation error instead of submitting', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await goToDashboardAsGuest(page);
     await openFeedbackModalViaAccountMenu(page);
-    await page.locator('.feedback-type-card', { hasText: 'Bug report' }).click();
     await page.locator('.feedback-form button[type="submit"]').click();
-    await expect(page.getByText('Fill in the required fields before submitting.')).toBeVisible();
+    await expect(page.getByText('Fill in what happened before sending.')).toBeVisible();
   });
 });
 
 test.describe('feedback — full submit flow (requires Firebase emulator)', () => {
-  test('guest fills and submits a bug report and sees the success screen with a reference id', async ({ page }) => {
+  test('guest fills and submits a "Something is broken" report and sees the success screen with a reference id', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await goToDashboardAsGuest(page);
 
     await openFeedbackModalViaAccountMenu(page);
-    await page.locator('.feedback-type-card', { hasText: 'Bug report' }).click();
 
     const form = page.locator('.feedback-form');
-    await form.locator('.feedback-field-input').first().fill('Dashboard flickers on rapid toggle');
-    await form.locator('input[name="severity"][value="high"]').check();
     await form.locator('textarea.feedback-field-input').fill('Toggled rapidly and saw a visible flicker for ~1s instead of a clean update.');
 
     await form.locator('button[type="submit"]').click();
@@ -113,13 +107,12 @@ test.describe('feedback — full submit flow (requires Firebase emulator)', () =
     await expect(page.locator('.feedback-reference')).toHaveText(/^Reference: #\S{5}$/);
   });
 
-  test('"My reports" from the account menu shows submitted reports', async ({ page }) => {
+  test('"See my past reports" from inside the modal shows submitted reports', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await goToDashboardAsGuest(page);
 
     await openFeedbackModalViaAccountMenu(page);
-    await page.locator('.feedback-type-card', { hasText: 'General feedback' }).click();
-    await page.locator('.feedback-form .feedback-field-input').first().fill('Great app');
+    await page.locator('.feedback-kind-chip', { hasText: 'Something else' }).click();
     await page.locator('.feedback-form textarea.feedback-field-input').fill('Loving the dashboard.');
     await page.locator('.feedback-form button[type="submit"]').click();
     await expect(page.locator('.feedback-reference')).toBeVisible({ timeout: 10_000 });
@@ -127,7 +120,7 @@ test.describe('feedback — full submit flow (requires Firebase emulator)', () =
 
     await page.locator('.app-sidebar-identity').click();
     await page.locator('.dropdown-item', { hasText: 'My reports' }).click();
-    await expect(page.locator('.my-report-row', { hasText: 'Great app' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.my-report-row', { hasText: 'Loving the dashboard.' })).toBeVisible({ timeout: 10_000 });
   });
 
   test('rate limit UI shows a cooldown message after 3 recent submits', async ({ page }) => {
@@ -143,7 +136,6 @@ test.describe('feedback — full submit flow (requires Firebase emulator)', () =
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
     await openFeedbackModalViaAccountMenu(page);
-    await page.locator('.feedback-type-card', { hasText: 'General feedback' }).click();
     await expect(page.locator('.feedback-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('.feedback-cooldown-message')).toBeVisible();
   });

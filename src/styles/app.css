@@ -2590,6 +2590,24 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .guest-banner-msg { flex: 1; min-width: min(220px, 100%); color: var(--color-text-muted); }
 .guest-banner-dismiss { font-size: 16px; line-height: 1; padding: 2px 8px; }
 
+/* Issue #505 follow-up (live visual review) — on the dashboard specifically,
+   `.guest-banner` is a direct child of `.app-content`, flush with *its*
+   padding — but `.dashboard-header` (the very next sibling) adds its own
+   further `--dashboard-gutter-x` padding before `.roadmap-summary-card` and
+   friends, so the banner reads measurably wider than every card below it
+   (confirmed live: 1016px vs. 976px). Scoped to `.guest-banner` specifically
+   (not `.verification-banner`/`.backup-reminder-banner`/
+   `.progress-digest-banner`, its siblings in the same `.app-content` slot) —
+   those three are deliberately flush, full-bleed strips with a bottom border
+   only and no side border/radius, unlike `.guest-banner`'s bordered-card
+   look, which is what makes the width mismatch read as a bug here and not
+   there. Also scoped to `.dashboard` — settings.js/progress.js have no
+   equivalent second gutter layer for this to correct against. */
+.dashboard .app-content > .guest-banner {
+  margin-left: var(--dashboard-gutter-x);
+  margin-right: var(--dashboard-gutter-x);
+}
+
 .backup-reminder-banner {
   display: flex;
   align-items: center;
@@ -3883,12 +3901,6 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   display: grid;
   border-top: none;
 }
-.daily-todo-empty {
-  margin: 0;
-  padding: 14px 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-base);
-}
 
 /* Issue #490 — recomposed onto #486 B1's two-line row rule: checkbox ·
    title + one meta line · timer button · overflow. An urgent (danger-band,
@@ -4948,6 +4960,19 @@ html[data-scrolling] .dropdown-menu {
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
+}
+/* Issue #505 — `.dashboard-content`'s left padding includes
+   `--phase-spine-gutter` (issue #492) so real phase cards clear the spine's
+   dot column it draws down their left edge. When there are zero visible
+   phase cards (the "no filter matches"/"nothing found" empty states replace
+   the whole phase list), that gutter has nothing next to it to justify —
+   the card just reads as inset relative to `.roadmap-filters-card`/
+   `.daily-todo-panel` directly above it (confirmed live: 512px vs. 487px
+   left edge at one tested viewport). Cancel it here so the empty state's
+   left edge lines up with its sibling cards above; the right edge already
+   matches without any change (both read the same `--dashboard-gutter-x`). */
+.dashboard-content > .empty-state {
+  margin-left: calc(-1 * var(--phase-spine-gutter));
 }
 /* issue #206 §6 — small solid gold icon badge, not a generic muted-gray
    glyph. Was a gradient fill; reverted to solid per the app-wide
@@ -6845,41 +6870,12 @@ html[data-scrolling] .dropdown-menu {
 .feedback-type-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-right: 36px; }
 .feedback-privacy-note { font-size: var(--text-base); color: var(--color-text-muted); margin: 0; }
 
-.feedback-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-/* v3 (issue #416 Phase 5 — #430) — moved onto the glass-card recipe (was a
-   flat --color-surface-raised card with a plain 1px border, the single
-   clearest remaining "still looks like the old UI" surface flagged live
-   inside a modal that's otherwise already on the v3 `.modal-card` glass
-   treatment from earlier in this pass). */
-.feedback-type-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 20px 12px;
-  border-radius: var(--v3-radius-lg);
-  border: 1px solid hsl(var(--v3-divider) / 0.6);
-  background: hsl(var(--v3-surface) / 0.7);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  /* A <button> does not inherit `color`/`font` from the page by default (the
-     UA stylesheet gives it its own `color: buttontext`, effectively black) —
-     every custom button-like class in this app must set both explicitly, the
-     same way the shared .btn base class does. Omitting this rendered black
-     text on a dark-theme card, reported live (issue #9 follow-up). */
-  color: var(--color-text);
-  font: inherit;
-  font-weight: 700;
-  font-size: var(--text-base);
-  cursor: pointer;
-  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .feedback-type-card { background: var(--color-surface-raised); }
-}
-.feedback-type-card:hover { border-color: hsl(var(--v3-accent) / 0.4); background: hsl(var(--v3-accent) / 0.1); transform: translateY(-1px); }
-.feedback-type-card:focus-visible { outline: 2px solid hsl(var(--v3-accent)); outline-offset: 2px; }
-.feedback-type-emoji { font-size: var(--text-2xl); }
+/* Issue #505 — the old type-select-grid "3 large cards" screen and its
+   per-type multi-field form are replaced by one screen: a row of small
+   single-select kind chips (reusing `.filter-chip`'s existing look, same as
+   the priority/tag filter rows on the dashboard) plus one textarea. */
+.feedback-kind-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.feedback-my-reports-link { align-self: center; }
 
 .feedback-form { display: flex; flex-direction: column; gap: 16px; }
 .feedback-field { display: flex; flex-direction: column; gap: 6px; }
@@ -6887,48 +6883,6 @@ html[data-scrolling] .dropdown-menu {
 textarea.feedback-field-input { min-height: 88px; resize: vertical; }
 .feedback-char-counter { align-self: flex-end; font-size: var(--text-base); color: var(--color-text-muted); }
 .feedback-field-input.field-input-invalid { border-color: var(--color-danger); }
-
-/* issue #206 §5 follow-up — real feedback (screenshots): the Severity/
-   frequency radio groups rendered as a plain bare `<fieldset>` (the
-   browser's own inset-groove border + default legend padding, both never
-   reset) around unstyled OS-native radio circles — a jarring, off-theme box
-   next to every other themed field in the same modal. `.field.feedback-
-   field` used as a `<fieldset>` className needed its own reset since
-   `.field`'s existing rules (used everywhere else on a plain `<label>`/
-   `<div>`) never accounted for `<fieldset>`'s UA-stylesheet defaults. */
-.feedback-field.feedback-radio-fieldset { border: none; padding: 0; margin: 0; min-width: 0; }
-.feedback-field.feedback-radio-fieldset > legend { padding: 0; }
-.feedback-radio-group { display: flex; flex-direction: column; gap: 10px; }
-.feedback-radio-option { display: flex; align-items: center; gap: 10px; font-size: var(--text-base); color: var(--color-text); cursor: pointer; }
-/* Custom-styled radio circle matching `.check-box`'s visual language
-   (border → filled dot on check, same corner-radius/border-width idiom,
-   just circular) instead of the unstyled OS-native control the screenshots
-   showed. `appearance: none` strips every browser's native rendering
-   uniformly; the filled dot is a `::before` positioned via the radio's own
-   `position: relative` rather than a wrapping span, so no extra DOM node is
-   needed per option. */
-.feedback-radio-option input[type='radio'] {
-  appearance: none;
-  position: relative;
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  border: 1.5px solid var(--color-border-strong);
-  border-radius: 50%;
-  background: var(--color-surface);
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-standard);
-}
-.feedback-radio-option input[type='radio']:checked { border-color: var(--color-accent); }
-.feedback-radio-option input[type='radio']:checked::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: var(--color-accent);
-}
-.feedback-radio-option input[type='radio']:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 .feedback-system-info-checkbox { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-base); color: var(--color-text); cursor: pointer; }
 /* issue #206 §5 follow-up — was an unstyled native checkbox (OS-default blue

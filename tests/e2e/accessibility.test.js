@@ -411,7 +411,7 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
 // ruleset doesn't simulate open-state focus movement, so only a direct
 // document.activeElement assertion catches it.
 test.describe('automated accessibility checks — initial focus on open (issue #357)', () => {
-  test('feedbackModal type-select screen moves focus to "My reports"', async ({ page }) => {
+  test('feedbackModal single screen moves focus to the "What happened?" textarea', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
@@ -422,12 +422,12 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
-    await expect(modal.locator('button', { hasText: 'My reports' })).toBeFocused();
+    await expect(modal.locator('textarea.feedback-field-input')).toBeFocused();
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.modal-overlay[aria-label="Send feedback"]' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
-  test('feedbackModal "My reports" tab moves focus to the "← Back" button', async ({ page }) => {
+  test('feedbackModal "See my past reports" moves focus to the "← Back" button', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
@@ -438,7 +438,7 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
-    await modal.locator('button', { hasText: 'My reports' }).click();
+    await modal.locator('button', { hasText: 'See my past reports' }).click();
     await expect(modal.locator('button', { hasText: '← Back' })).toBeFocused();
   });
 
@@ -453,8 +453,7 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
     await expect(modal).toBeVisible();
-    await modal.locator('.feedback-type-card', { hasText: 'General feedback' }).click();
-    await modal.locator('.feedback-form input[type="text"]').first().fill('Issue #357 focus coverage test');
+    await modal.locator('.feedback-kind-chip', { hasText: 'Something else' }).click();
     await modal.locator('textarea').first().fill('Test feedback for issue #357 focus coverage.');
     await modal.locator('button[type="submit"]').click();
     await expect(modal.locator('.feedback-success button', { hasText: 'Close' })).toBeFocused({ timeout: 10_000 });
