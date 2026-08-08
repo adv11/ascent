@@ -128,6 +128,47 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
         await page.locator('.bottom-nav-item[href="#/onboarding"]').click();
         await expect(page).toHaveURL(/#\/onboarding/);
       });
+
+      // Issue #542 follow-up (real-device report) — .progress-content's and
+      // .settings-content's own `padding` shorthand rules (several
+      // breakpoints, unrelated to the bottom nav) reset padding-bottom back
+      // to their own tuned value, clobbering .app-content's bottom-nav
+      // clearance — the last row on either page silently rendered
+      // underneath the fixed bottom nav on a real phone, no matter how far
+      // the user scrolled. Scrolls each page to its true bottom and asserts
+      // the last content element's box doesn't overlap the nav's box, using
+      // the same overlap check already established below for the sidebar
+      // footer's icon-rail case.
+      test('scrolling to the bottom of dashboard/progress/settings never renders content under the bottom nav', async ({ page }) => {
+        test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
+
+        function boxesOverlap(a, b) {
+          return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+        }
+
+        async function assertLastContentClearsBottomNav(contentSelector) {
+          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          await page.waitForTimeout(300);
+          const navBox = await page.locator('.bottom-nav').boundingBox();
+          const lastChildBox = await page.locator(`${contentSelector} > :last-child`).last().boundingBox();
+          expect(lastChildBox).not.toBeNull();
+          expect(boxesOverlap(lastChildBox, navBox)).toBe(false);
+        }
+
+        await page.goto('/#/signin');
+        await page.click('text=Continue as guest');
+        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+        await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
+        await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
+
+        await assertLastContentClearsBottomNav('.dashboard-content');
+        await page.locator('.bottom-nav-item[href="#/progress"]').click();
+        await expect(page).toHaveURL(/#\/progress/);
+        await assertLastContentClearsBottomNav('.progress-content');
+        await page.locator('.bottom-nav-item[href="#/settings"]').click();
+        await expect(page).toHaveURL(/#\/settings/);
+        await assertLastContentClearsBottomNav('.settings-content');
+      });
     });
 
     test.describe('desktop manual-collapse icon rail (>=1024px)', () => {

@@ -6902,7 +6902,7 @@ html[data-scrolling] .dropdown-menu {
      left/right edge in sync instead of three separately-tuned literals. */
   :root { --dashboard-gutter-x: 16px; }
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 16px max(var(--dashboard-gutter-x), env(safe-area-inset-left)); }
-  .dashboard-content { padding: 18px var(--dashboard-gutter-x) 84px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
+  .dashboard-content { padding: 18px var(--dashboard-gutter-x) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4)) calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
   .landing-nav-links { display: none; }
   /* issue #500 (D4) — nav sheds the section links first (above), then the
      Sign in link at a narrower tier below — Start free + the brand mark +
@@ -7018,7 +7018,7 @@ html[data-scrolling] .dropdown-menu {
   /* --dashboard-gutter-x, see the ≤768px tier's own comment above. */
   :root { --dashboard-gutter-x: 12px; }
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 16px max(var(--dashboard-gutter-x), env(safe-area-inset-left)); }
-  .dashboard-content { padding: 16px var(--dashboard-gutter-x) 88px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
+  .dashboard-content { padding: 16px var(--dashboard-gutter-x) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4)) calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
   /* issue #489 — the identity row (`.roadmap-summary-top`) already wraps
      name/save-state onto their own lines at this width via its own
      `flex-wrap`, and the progress block below it is a single full-width
@@ -7141,7 +7141,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
      misalignment bug. Setting the shared token here fixes both at once. */
   :root { --dashboard-gutter-x: 10px; }
   .dashboard-header { padding: max(14px, env(safe-area-inset-top)) max(var(--dashboard-gutter-x), env(safe-area-inset-right)) 16px max(var(--dashboard-gutter-x), env(safe-area-inset-left)); }
-  .dashboard-content { padding: 14px var(--dashboard-gutter-x) 88px calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
+  .dashboard-content { padding: 14px var(--dashboard-gutter-x) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4)) calc(var(--dashboard-gutter-x) + var(--phase-spine-gutter)); }
   .modal-card { padding: 26px 20px 22px; }
 }
 
@@ -7479,4 +7479,30 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .print-priority-badge.print-priority-P3 { background: #ECFEF4; color: #067436; } /* intentional: fixed print tint+ink, matches --color-p3-bg/-ink (light theme) — issue #462 */
   .print-item-notes { font-size: 12px; color: #333; margin: 2px 0 2px 24px; white-space: pre-wrap; /* intentional: fixed print text color */ }
   .print-resource { font-size: 12px; color: #333; margin: 2px 0 2px 24px; font-style: italic; /* intentional: fixed print text color */ }
+}
+
+/* Real-device report, issue #542 follow-up — the last row of the Progress
+   page (and the bottom of Settings) rendered underneath the fixed bottom
+   nav bar on a real phone, cutting off content no matter how far the user
+   scrolled. `.app-content`'s own `@media (max-width: 899px)` rule above
+   reserves `--bottom-nav-h` + the safe-area inset for exactly this, but
+   `.progress-content`/`.settings-content` each carry their own `padding`
+   shorthand (several breakpoints, all pre-existing and unrelated to the
+   bottom nav) that resets all four sides — including bottom — back to
+   their own tuned value. Both classes sit on the same element as
+   `.app-content` at equal specificity (one class each), so whichever rule
+   is later in the file wins outright for any property they both set; every
+   one of those shorthand rules is physically earlier than `.app-content`'s
+   own 899px rule expects, but still loses because CSS doesn't care about a
+   media query's own position, only the plain source order of the matching
+   rules. Reasserted last, after every other rule touching these two
+   classes' padding, and scoped to padding-bottom only so it never touches
+   whatever top/left/right padding those earlier rules already set
+   correctly. Verified live via a real getBoundingClientRect() check (the
+   page's last content element measured directly against the bottom nav's
+   own top edge), not just eyeballed. */
+@media (max-width: 899px) {
+  .progress-content, .settings-content {
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4));
+  }
 }
