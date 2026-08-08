@@ -6546,14 +6546,18 @@ html[data-scrolling] .dropdown-menu {
    public contact surface, built on .landing-page's page shell/orbs/footer
    and the shared .card/.icon-tile/.eyebrow primitives (design-system.md §4/§5)
    rather than inventing a parallel set of glass-surface rules. */
+/* issue #506 redesign — left-aligned column matching the design reference
+   exactly (avatar/eyebrow/name/tagline/bio and the link-card grid all sit
+   flush against the same left edge of a page-centered column), replacing
+   the earlier centered-hero treatment other landing-shell pages use. */
 .developer-profile-hero {
-  max-width: 640px;
+  max-width: 700px;
   margin: 0 auto;
   padding: var(--space-16) var(--space-6) var(--space-8);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   position: relative;
   z-index: 1;
 }
@@ -6562,13 +6566,14 @@ html[data-scrolling] .dropdown-menu {
   height: 96px;
   display: grid;
   place-items: center;
-  background: var(--color-text);
-  color: var(--color-bg);
+  background: hsl(var(--v3-accent) / 0.14);
+  color: var(--color-accent-700);
   font-weight: 800;
   font-size: var(--text-2xl);
-  border-radius: var(--v3-radius-lg);
-  margin-bottom: var(--space-6);
+  border-radius: 50%;
+  margin-bottom: var(--space-8);
 }
+:root[data-theme='dark'] .developer-profile-avatar { color: hsl(var(--v3-accent)); }
 /* The source photo (public/developer-avatar.webp) is a tight square headshot
    crop, matching this frame's own 1:1 aspect ratio exactly — object-fit:
    cover therefore never needs to crop into the head/hair at any size, it
@@ -6593,48 +6598,93 @@ html[data-scrolling] .dropdown-menu {
 }
 .developer-profile-back:hover { color: var(--color-text); }
 .developer-profile-back:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-.developer-profile-eyebrow { justify-content: center; }
+.developer-profile-eyebrow { margin: 0 0 var(--space-3); }
 .developer-profile-name {
   font-family: var(--font-heading-v3, var(--font-display));
   font-weight: 700;
   font-size: clamp(28px, 4vw, 40px);
   line-height: 1.15;
   letter-spacing: -0.02em;
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-3);
   color: var(--color-text);
 }
 .developer-profile-tagline {
   font-family: var(--font-body-v3, var(--font-body));
   font-size: var(--text-lg);
-  color: var(--color-text-muted);
+  color: var(--color-accent-700);
+  font-weight: 600;
   margin: 0 0 var(--space-6);
 }
+:root[data-theme='dark'] .developer-profile-tagline { color: hsl(var(--v3-accent)); }
 .developer-profile-bio {
   font-size: var(--text-base);
   line-height: var(--leading-loose);
   color: var(--color-text-muted);
-  max-width: 56ch;
+  max-width: 62ch;
   margin: 0;
 }
-.developer-profile-links {
-  max-width: 640px;
+.developer-profile-links-section {
+  max-width: 700px;
   margin: 0 auto;
-  padding: 0 var(--space-6) var(--space-16);
+  /* was `var(--space-10)` — not a token in this file's scale (see the
+     .developer-profile-link-card comment above for the identical bug), which
+     invalidated this whole shorthand and collapsed padding to 0, running the
+     last card row flush against the footer divider (issue #506 follow-up,
+     reported live). */
+  padding: var(--space-8) var(--space-6) var(--space-16);
+}
+.developer-profile-links-eyebrow { margin: 0 0 var(--space-4); }
+.developer-profile-links {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: var(--space-4);
 }
+/* Explicit column counts (not auto-fit) so the grid lands on exactly two
+   columns at 768px, matching this page's design reference and its own
+   "one column at 360px, two at 768px" testing requirement (issue #506) —
+   auto-fit's content-driven wrapping put three columns at 768px instead. */
+@media (min-width: 768px) {
+  .developer-profile-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .developer-profile-links { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 .developer-profile-link-card {
   height: 100%;
+  /* Every card must stay the same height in every row, even one whose label
+     happens to wrap onto a second line (e.g. a long link label at the
+     narrower 3-column tier) — a fixed min-height keeps every row in the
+     grid visually in sync instead of only the cards within one row
+     stretching to match each other (issue #506 follow-up, reported live). */
+  min-height: 92px;
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-5);
+  /* was `padding: var(--space-5)` — that token doesn't exist in this file's
+     scale (--space-1/2/3/4/6/8/12/16/24 only), so the whole declaration was
+     invalid and every link card silently rendered with 0 padding (found via
+     a live getComputedStyle() check, issue #506 follow-up). */
+  padding: var(--space-4) var(--space-5, 1.25rem);
   color: var(--color-text);
   text-decoration: none;
 }
+.developer-profile-link-arrow { color: var(--color-text-muted); flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+.developer-profile-link-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
 .developer-profile-link-label { font-weight: 600; font-size: var(--text-base); }
+.developer-profile-link-description {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ==========================================================================
    Responsive breakpoint scale (issue #36)

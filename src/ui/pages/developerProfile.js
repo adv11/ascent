@@ -91,13 +91,20 @@ function buildLinkCard(link) {
     rel: 'noopener noreferrer'
   }, [
     el('span', { className: 'icon-tile', 'aria-hidden': 'true' }, [createIcon(link.icon, { size: 'md' })]),
-    el('span', { className: 'developer-profile-link-label', text: link.label })
+    el('span', { className: 'developer-profile-link-body' }, [
+      el('span', { className: 'developer-profile-link-label', text: link.label }),
+      link.description ? el('span', { className: 'developer-profile-link-description', text: link.description }) : null
+    ].filter(Boolean)),
+    el('span', { className: 'developer-profile-link-arrow', 'aria-hidden': 'true' }, [createIcon('arrowUpRight', { size: 'sm' })])
   ]);
 }
 
 function buildLinks(profile) {
   const cards = profile.links.map(buildLinkCard).filter(Boolean);
-  return el('section', { className: 'developer-profile-links', 'aria-label': 'Connect' }, cards);
+  return el('section', { className: 'developer-profile-links-section', 'aria-label': 'Connect' }, [
+    el('p', { className: 'eyebrow developer-profile-links-eyebrow' }, ['Elsewhere']),
+    el('div', { className: 'developer-profile-links' }, cards)
+  ]);
 }
 
 // Copyright line follows landing.js's buildFooter() precedent — no

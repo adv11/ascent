@@ -23,11 +23,11 @@ export const DEVELOPER_PROFILE = {
   // bump this if the photo file itself is ever replaced.
   avatarUrl: '/public/developer-avatar.webp?v=1',
   links: [
-    { id: 'github', label: 'GitHub', url: 'https://github.com/adv11', icon: 'github' },
-    { id: 'linkedin', label: 'LinkedIn', url: 'https://linkedin.com/in/adv11', icon: 'linkedin' },
-    { id: 'x', label: 'X (Twitter)', url: 'https://twitter.com/adv2612', icon: 'x' },
-    { id: 'leetcode', label: 'LeetCode', url: 'https://leetcode.com/u/adv01/', icon: 'leetcode' },
-    { id: 'portfolio', label: 'Portfolio', url: 'https://adv-woad.vercel.app/', icon: 'globe' },
-    { id: 'email', label: 'Email', url: 'mailto:adv1491714@gmail.com', icon: 'mail' }
+    { id: 'github', label: 'GitHub', description: 'The Ascent source code and other projects.', url: 'https://github.com/adv11', icon: 'github' },
+    { id: 'linkedin', label: 'LinkedIn', description: 'Work history and professional background.', url: 'https://linkedin.com/in/adv11', icon: 'linkedin' },
+    { id: 'x', label: 'X', description: 'Occasional build logs and updates.', url: 'https://twitter.com/adv2612', icon: 'x' },
+    { id: 'leetcode', label: 'LeetCode', description: 'Practice problems and solutions.', url: 'https://leetcode.com/u/adv01/', icon: 'leetcode' },
+    { id: 'portfolio', label: 'Portfolio', description: 'Everything else, in one place.', url: 'https://adv-woad.vercel.app/', icon: 'globe' },
+    { id: 'email', label: 'Email', description: 'For anything longer than a DM.', url: 'mailto:adv1491714@gmail.com', icon: 'mail' }
   ]
 };
