@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **"Compare roadmaps" restyled to match the responsive-redesign reference (issue #504, E4 of the batch).** `roadmapComparisonModal.js` used to render every row as an undifferentiated flush-left list (a v2 leftover). Now: a four-cell summary strip (done in both / only in yours / only in the other roadmap / total), per-phase groups of 48px rows each with an accent-ramp status dot and a plain-language status ("Done in both", "Added here", "Missing here"), and full-width stacked mode buttons ("Its starter template" / "Another roadmap") instead of a side-by-side chip pair. A disabled mode button now shows a visible reason line underneath it (a custom roadmap has no starter template to compare against; a first roadmap has nothing else started yet) instead of just a dimmed control. `CACHE_VERSION` bumped 117 → 118.
+
 ### Added
 - **"What's New" bell moved back out into its own topbar icon button, beside the avatar (issue #503, E3 of the responsive-redesign batch).** `notificationBell.js` is a new, dedicated component — a dot-badged bell icon in the topbar's icon group, next to search and the avatar, matching the batch's design reference. It briefly lived folded into the avatar dropdown as an interim call ahead of this issue (issue #488); that fold is reverted, though "What's New" also stays reachable via `sidebar.js`'s own account menu on pages with a full sidebar. `changelogDrawer.js` (the itemPanel-shell slide-in drawer, version groups newest-first, coloured dot per item type, bottom sheet below 720px) is unchanged. `CACHE_VERSION` bumped 116 → 117.
 

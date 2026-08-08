@@ -226,5 +226,16 @@
         "description": "The \"build your own roadmap\" info button and the roadmap card's ⋯ menu button are now large enough to tap comfortably."
       }
     ]
+  },
+  {
+    "version": 6,
+    "date": "2026-08-08",
+    "items": [
+      {
+        "type": "improvement",
+        "title": "\"Compare roadmaps\" is easier to scan",
+        "description": "A new summary strip up top shows done-in-both, only-yours, only-theirs, and total topics at a glance, and every row now has a status dot and a plain-language label like \"Added here\" or \"Missing here\"."
+      }
+    ]
   }
 ]

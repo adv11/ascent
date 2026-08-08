@@ -5841,3 +5841,19 @@ reference and live feedback:
    reasons — worth remembering as a general flex-wrap pattern.
 
 `CACHE_VERSION` bumped 116 → 117.
+
+### 2026-08-08 — PR TBD — Compare roadmaps, restyled (issue #504, E4)
+
+`roadmapComparisonModal.js`'s result view no longer renders as a flush-left, undifferentiated
+list of rows (a v2 leftover that had never been touched since issue #285 first shipped it).
+The four-cell summary strip, per-phase row groups, and mode toggle are all the same DOM
+shape as before — only the CSS (`app.css`'s `.comparison-*` rules) and a handful of new
+`.comparison-dot`/`.comparison-mode-reason` elements changed, matching the design reference
+in issue #504: full-width stacked pill buttons for the compare-against mode (replacing a
+side-by-side `.filter-chip` pair), a 2x2 summary grid with hairline dividers, and 48px rows
+each carrying an accent-ramp status dot next to its plain-language label. A disabled mode
+button (a custom roadmap has no starter template; a first-ever roadmap has nothing else
+started to compare against) now renders a visible reason line underneath it instead of just
+looking dimmed. `tests/e2e/roadmapComparison.test.js` updated for the renamed
+`.comparison-mode-btn` class and the "Its starter template" button label. `CACHE_VERSION`
+bumped 117 → 118.
