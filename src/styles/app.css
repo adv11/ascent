@@ -6907,6 +6907,13 @@ html[data-scrolling] .dropdown-menu {
    single-select kind chips (reusing `.filter-chip`'s existing look, same as
    the priority/tag filter rows on the dashboard) plus one textarea. */
 .feedback-kind-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+/* `.feedback-kind-chip` is always paired with `.filter-chip` at the call
+   site (feedbackModal.js), which already sets `color`/`background`/etc. —
+   but scripts/lint-theme.mjs's "every custom button-like class needs its
+   own explicit color" check (issue #116) scans each class token
+   independently, so this needs its own (identical) declaration to satisfy
+   it rather than relying on the sibling class silently covering it. */
+.feedback-kind-chip { color: inherit; }
 .feedback-my-reports-link { align-self: center; }
 
 .feedback-form { display: flex; flex-direction: column; gap: 16px; }
