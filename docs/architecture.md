@@ -5897,4 +5897,18 @@ fixed with a `.dashboard .app-content > .guest-banner` margin matching
 settings.js/progress.js have no equivalent second padding layer for either fix to
 correct against.
 
+A third, related layout bug: the vertical gap between `.dashboard-header`'s own three
+cards (`.roadmap-summary-card`/`.next-up-card`/`.roadmap-filters-card`) was itself
+inconsistent — `.roadmap-filters-card`'s `margin-bottom` was a stray `18px` next to its
+siblings' `16px`, a genuine same-container copy/paste drift. More visibly, the gap
+*before* the first card (guest banner → summary card) and *after* the last one (filters
+card → Daily Todos panel) each stacked two independent spacing values — the banner's own
+`margin-bottom` plus `.dashboard-header`'s `padding-top`, and the filters card's
+`margin-bottom` plus the header's `padding-bottom` — measuring 34px and 38px live against
+the header's internal 16px rhythm. Fixed by zeroing `.guest-banner`'s `margin-bottom` and
+`.roadmap-filters-card`'s `margin-bottom` specifically on the dashboard (letting
+`.dashboard-header`'s own safe-area-aware padding be the sole source of those two gaps,
+rather than retuning that padding itself, which other elements/breakpoints depend on) —
+the four gaps went from 34/16/16/38px to a consistent 18/16/16/20px.
+
 `CACHE_VERSION` bumped 118 → 119.

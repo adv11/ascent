@@ -2606,6 +2606,33 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .dashboard .app-content > .guest-banner {
   margin-left: var(--dashboard-gutter-x);
   margin-right: var(--dashboard-gutter-x);
+  /* Issue #505 follow-up (live visual review) — `.guest-banner`'s own
+     `margin-bottom: var(--space-4)` (16px) used to stack on top of
+     `.dashboard-header`'s `padding-top` (18px, safe-area-aware — see
+     `.claude/rules/ui-styling.md`'s safe-area note, not something to retune
+     here), reading as a visibly larger 34px gap before the first card versus
+     the flat 16px rhythm between the header's own cards. Zeroed here so the
+     header's own padding is the sole source of that one gap, matching the
+     rest of the stack far more closely (18px vs. 16px) without touching the
+     safe-area-critical padding value itself. */
+  margin-bottom: 0;
+}
+
+/* Issue #505 follow-up (live visual review) — the same double-stack shape
+   as `.guest-banner` above, at the opposite end of `.dashboard-header`:
+   `.roadmap-filters-card` is normally the header's last visible child
+   (`.review-tag-group-banner`, the real last DOM child, only ever renders
+   visible content while the REVIEW filter is active — it's still present,
+   just empty/hidden otherwise, which is why a `:last-child` selector can't
+   be used to scope this to "only when nothing follows"), so its own
+   margin-bottom stacks with the header's `padding-bottom` (20px) into a
+   36px gap before `.daily-todo-panel` — visibly larger than the 16px rhythm
+   between the header's own cards. Zeroed unconditionally: in the rare state
+   where `.review-tag-group-banner` *is* visible, its own `margin-top: 8px`
+   still provides a real (if now smaller) gap above it — a reasonable
+   trade-off for a rarely-visible state, not a broken one. */
+.dashboard-header > .roadmap-filters-card {
+  margin-bottom: 0;
 }
 
 .backup-reminder-banner {
@@ -3505,7 +3532,12 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    as `.roadmap-summary-card` above. */
 .roadmap-filters-card {
   max-width: 1160px;
-  margin: 0 auto 18px;
+  /* Issue #505 follow-up (live visual review) — was `18px`, an outlier next
+     to `.roadmap-summary-card`/`.next-up-card`'s identical `16px`
+     margin-bottom despite all three being equal-weight siblings inside
+     `.dashboard-header` — confirmed live via getBoundingClientRect() as a
+     genuinely uneven 16/16/18px vertical rhythm down the card stack. */
+  margin: 0 auto 16px;
   padding: 18px 24px;
 }
 
