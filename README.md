@@ -24,7 +24,7 @@
 
 ## Demo video
 
-https://github.com/user-attachments/assets/50f4314a-e3d6-4ad4-a38f-bdd67076d4ae
+https://github.com/user-attachments/assets/51bd946e-2e67-4db3-9eb4-023e7fac84e3
 
 <p align="center">
   <a href="#what-it-is">What it is</a> ·
