@@ -237,5 +237,51 @@
         "description": "A new summary strip up top shows done-in-both, only-yours, only-theirs, and total topics at a glance, and every row now has a status dot and a plain-language label like \"Added here\" or \"Missing here\"."
       }
     ]
+  },
+  {
+    "version": 7,
+    "date": "2026-08-08",
+    "items": [
+      {
+        "type": "improvement",
+        "title": "Another new look",
+        "description": "Ascent has a refreshed visual design across every page: glass cards, a green accent, and softer depth and motion throughout."
+      },
+      {
+        "type": "improvement",
+        "title": "Modals open as bottom sheets on your phone",
+        "description": "Dialogs and panels now slide up from the bottom of the screen on narrow widths instead of floating in the middle, so they're easier to reach with one hand."
+      },
+      {
+        "type": "feat",
+        "title": "A landing page built for first-time visitors",
+        "description": "Signed-out visitors now see a redesigned homepage that explains what Ascent does before asking for a signup."
+      },
+      {
+        "type": "feat",
+        "title": "Share a progress card image",
+        "description": "The account menu's \"Share progress\" now generates a downloadable card — your roadmap, all your roadmaps, today's todos, or a single phase — in light, dark, or green."
+      },
+      {
+        "type": "improvement",
+        "title": "Feedback moved out of the floating button",
+        "description": "\"Send feedback\" and \"My reports\" now live in the account menu and in Settings, instead of a floating button in the corner of every page."
+      },
+      {
+        "type": "feat",
+        "title": "A public developer profile page",
+        "description": "\"About the developer\" on the landing page now links to a real profile page with background, projects, and contact links."
+      },
+      {
+        "type": "improvement",
+        "title": "Shared roadmap links have a cleaner read-only view",
+        "description": "Opening someone's shared roadmap link now shows a clearer summary and checklist, with a matching light/dark/loading/revoked state for every case."
+      },
+      {
+        "type": "improvement",
+        "title": "Pick a custom icon for your own roadmaps",
+        "description": "A custom or AI-imported roadmap's card icon can now be changed from the ⋯ menu, instead of always being assigned automatically."
+      }
+    ]
   }
 ]

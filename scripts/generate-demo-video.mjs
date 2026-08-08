@@ -159,16 +159,31 @@ const STOPS = [
     },
   },
   {
+    // Issue #487 folded the priority/resources/review filters into a
+    // dedicated "Filter" panel, and issue #477 replaced the P0-P3 chip row
+    // with a custom-select dropdown (`.priority-select-wrap`) — this stop
+    // used to click a `.filter-chip[data-p="P0"]` directly on the page,
+    // which no longer exists anywhere in the DOM. Opening the panel is
+    // enough to show the feature; actually driving the portaled
+    // custom-select listbox here was flaky (its option nodes get replaced
+    // out from under an in-flight click whenever the surrounding filter
+    // state re-renders, per select.js's own "every floating element is a
+    // portal, rebuilt on state change" pattern) — the "Every resource"
+    // chip below already demonstrates a real filter interaction, so this
+    // stop just showcases the panel opening.
     name: 'priority-filter',
     route: 'same',
-    caption: { title: 'Filter by priority', body: 'Zero in on what matters most, right now.' },
-    durationMs: 2800,
-    selector: '.filter-chip[data-p="P0"]',
+    caption: { title: 'Filter by priority, links, and tags', body: 'Zero in on what matters most, right now.' },
+    durationMs: 3200,
+    triggerSelector: '.filter-toggle-btn',
+    selector: '.filter-panel',
     async action(page) {
-      await page.click('.filter-chip[data-p="P0"]');
+      await page.click('.filter-toggle-btn');
+      await page.waitForSelector('.filter-panel.show');
     },
     async after(page) {
-      await page.click('.filter-chip[data-p="ALL"]');
+      await page.click('.filter-panel .filter-chip[data-p="RESOURCES"]');
+      await page.waitForTimeout(200);
     },
   },
   {
@@ -176,12 +191,10 @@ const STOPS = [
     route: 'same',
     caption: { title: 'Every resource, one filter away', body: 'Jump straight to every topic that has a link attached.' },
     durationMs: 2800,
-    selector: '.filter-chip[data-p="RESOURCES"]',
-    async action(page) {
-      await page.click('.filter-chip[data-p="RESOURCES"]');
-    },
+    selector: '.filter-panel .filter-chip[data-p="RESOURCES"].active',
     async after(page) {
-      await page.click('.filter-chip[data-p="ALL"]');
+      await page.click('.filter-panel .filter-chip[data-p="RESOURCES"]');
+      await page.click('.filter-panel [aria-label="Close filter panel"]');
     },
   },
   {
@@ -189,12 +202,21 @@ const STOPS = [
     route: 'same',
     caption: { title: 'Resources and notes, per topic', body: 'Attach links, jot notes, and track time — all in one place.' },
     durationMs: 3600,
-    // The panel doesn't exist until the Edit button is clicked — spotlight
-    // starts on the trigger, then glides to the freshly-opened panel.
-    triggerSelector: '.check-item [data-action="edit"] >> nth=0',
+    // Issue #486 (B1) collapsed the row's always-visible Edit button (and
+    // everything else — Add to today, Mark reviewed, Add a link, Delete)
+    // into one ⋮ overflow menu (`.check-item-overflow-btn`); the item panel
+    // now opens via that menu's "Open" item, not a direct `[data-action="edit"]`
+    // click. The panel doesn't exist until the menu item is clicked —
+    // spotlight starts on the trigger, then glides to the freshly-opened panel.
+    triggerSelector: '.check-item-overflow-btn >> nth=0',
     selector: '.item-panel',
     async action(page) {
-      await page.click('.check-item [data-action="edit"] >> nth=0');
+      await page.click('.check-item-overflow-btn >> nth=0');
+      // .dropdown-menu is portaled straight to document.body on open (see
+      // dropdown.js's own comment on why), never a descendant of
+      // .check-item-overflow — the wrapper class only decorates the
+      // un-portaled trigger.
+      await page.click('.dropdown-menu .dropdown-item:has-text("Open")');
       await page.waitForSelector('.item-panel.show');
     },
     async after(page) {
@@ -219,12 +241,16 @@ const STOPS = [
     },
   },
   {
+    // Issue #490 (B5) moved Daily Todos from the onboarding "all roadmaps"
+    // picker onto the dashboard itself — `.daily-todo-panel` no longer
+    // renders on `/#/onboarding` at all, which used to hang this stop until
+    // its own timeout.
     name: 'daily-todos',
     route: 'crossfade',
     caption: { title: "Plan today's focus", body: "Pull topics into Today's Todos with a rolling deadline." },
     durationMs: 3200,
     async before(page) {
-      await page.goto(`${BASE_URL}/#/onboarding`);
+      await page.goto(`${BASE_URL}/#/app`);
       await page.waitForSelector('.daily-todo-panel');
     },
     selector: '.daily-todo-panel',
@@ -268,13 +294,16 @@ const STOPS = [
     },
   },
   {
+    // Theme lives in the sidebar footer (`.claude/rules/ui-styling.md`'s
+    // topbar-contract note), not the topbar — `.app-topbar .theme-toggle`
+    // never matched anything and hung this stop until timeout.
     name: 'theme-toggle',
     route: 'same',
     caption: { title: 'Beautiful in light or dark', body: 'Switch themes anytime — it remembers your choice.' },
     durationMs: 2800,
-    selector: '.app-topbar .theme-toggle',
+    selector: '.app-sidebar .theme-toggle',
     async action(page) {
-      await page.click('.app-topbar .theme-toggle');
+      await page.click('.app-sidebar .theme-toggle');
     },
   },
   {

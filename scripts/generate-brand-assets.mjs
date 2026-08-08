@@ -43,11 +43,13 @@ async function main() {
     console.log(`wrote public/${file}`);
   }
 
-  // Rebuilt in issue #301 (Phase 5) as a red "poster statement" — the one
-  // pattern design-system.md §2 permits a full-bleed solid accent fill,
-  // matching landing.js's closing CTA banner (--color-accent bg,
-  // --color-ink-on-accent text). Archivo 800 uppercase wordmark, no gradient,
-  // no dark-navy background — those were the pre-v2 Alpenglow/ZeBeyond look.
+  // Rebuilt in issue #542 (pre-publish audit) to match the current v3
+  // "portfolio-synced" glass/green identity (design-system.md) — the red
+  // "poster statement" fill (#EC3013, issue #301 Phase 5) was a leftover
+  // from the retired v2 "Modernist" red-accent system and no longer matches
+  // any surface in the live app. Colors are pulled from the actual computed
+  // dark-theme tokens (`--color-bg`/`--color-accent`/`--color-ink-on-accent`
+  // in `app.css`), not eyeballed, so this stays in sync if those are retuned.
   await page.setViewportSize({ width: 1200, height: 630 });
   await page.setContent(`<!doctype html><html><head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,12 +57,12 @@ async function main() {
     <style>
     html, body { margin: 0; padding: 0; }
     body {
-      width: 1200px; height: 630px; background: #EC3013;
+      width: 1200px; height: 630px; background: #141312;
       display: flex; align-items: center; justify-content: center; gap: 32px;
       font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .name { color: #F3F2F2; font-weight: 800; font-size: 72px; letter-spacing: 0.02em; text-transform: uppercase; }
-    .tagline { color: #F3F2F2; opacity: 0.85; font-weight: 600; font-size: 26px; margin-top: 6px; }
+    .tagline { color: #23F67B; opacity: 0.9; font-weight: 600; font-size: 26px; margin-top: 6px; }
   </style></head><body>
     ${sizedSvg(120)}
     <div>

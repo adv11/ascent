@@ -101,10 +101,10 @@ roadmap in one click.
 - **Installable as a PWA** with offline support.
 
 <p align="center">
-  <img src="docs/screenshots/issue-418/onboarding-light.png" alt="Starter template picker, with Daily Todos and Create your own roadmap" width="49%">
-  <img src="docs/screenshots/issue-418/progress-dark.png" alt="Progress analytics — streaks, activity heatmap, cumulative progress" width="49%">
-  <img src="docs/screenshots/issue-418/ai-import.png" alt="AI-assisted roadmap creation" width="49%">
-  <img src="docs/screenshots/issue-418/sharing.png" alt="Sharing a read-only roadmap link" width="49%">
+  <img src="docs/screenshots/issue-503/all-fixes-desktop.png" alt="The dashboard — active roadmap progress, next-up topics, priority filters" width="49%">
+  <img src="docs/screenshots/issue-483/onboarding-dark.png" alt="Starter template picker, with Create your own roadmap" width="49%">
+  <img src="docs/screenshots/issue-485/progress-stats.png" alt="Progress analytics — streaks, activity heatmap, cumulative progress" width="49%">
+  <img src="docs/screenshots/issue-501/share-modal-green.jpg" alt="Sharing a progress card" width="49%">
 </p>
 
 ## Tech stack
@@ -271,9 +271,9 @@ and press Enter on.
 You don't have to write code to contribute:
 
 - **Found a bug or have an idea?** Open a [GitHub issue](../../issues/new/choose) —
-  no local setup needed. If you're using the deployed app, the in-app feedback
-  widget (floating button, bottom corner) captures a screenshot for you
-  automatically.
+  no local setup needed. If you're using the deployed app, use the in-app feedback
+  form instead (account menu → "Send feedback", or Settings → Support) — "My
+  reports" there lets you track what you've already sent.
 - **Spot unclear or outdated docs?** Docs fixes are just as welcome as code —
   small wording/README PRs are a great first contribution.
 - **Want to write code?** Follow [Getting started](#getting-started) above, then:
