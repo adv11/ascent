@@ -5300,7 +5300,13 @@ html[data-scrolling] .dropdown-menu {
 /* Flush-left, not centered — design-system.md §4's "flush-left everything...
    never center hero copy or button labels" rule (issue #301 follow-up). This
    card was the one remaining centered modal in the app. */
-.tour-welcome-brand { display: flex; justify-content: flex-start; margin-bottom: 12px; }
+/* Issue #507 follow-up (live visual review) — createBrandMark() returns a
+   bare [icon, wordmark] array with no gap of its own; every other call site
+   supplies it via a wrapping `.brand` class (10px gap), but this one used a
+   bespoke `.tour-welcome-brand` div that never set `align-items`/`gap`, so
+   the glyph and "ASCENT" wordmark rendered touching with no space between
+   them. */
+.tour-welcome-brand { display: flex; align-items: center; gap: 10px; justify-content: flex-start; margin-bottom: 12px; }
 .tour-welcome-title { font-size: var(--text-lg); margin: 0 0 8px; color: var(--color-text); }
 .tour-welcome-body { color: var(--color-text-muted); margin: 0 0 20px; }
 .tour-welcome-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
