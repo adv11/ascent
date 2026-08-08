@@ -2212,6 +2212,19 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: var(--space-1);
   display: none;
   flex-direction: column;
+  /* Issue #507 follow-up — the account menu grew a header block + a "Sign
+     out" row + 48px-tall items (this same issue), tall enough on a real
+     Firebase account (10+ items) to exceed the viewport height entirely on
+     a short/laptop screen — `positionMenu()` (dropdown.js) can flip the
+     menu above vs. below the trigger, but has nothing to fall back to once
+     the content itself is taller than the whole viewport. Capping height
+     and scrolling internally, the same way `.custom-select-listbox` and
+     every other tall floating list in this app already does, guarantees
+     the menu box itself is always fully on-screen regardless of item count
+     — verified against tests/e2e/responsive.test.js's "not clipped by the
+     sidebar" boundingBox assertion, which caught the regression live. */
+  max-height: min(480px, calc(100vh - 24px));
+  overflow-y: auto;
   z-index: 210;
 }
 @supports not (backdrop-filter: blur(1px)) {
