@@ -6780,7 +6780,13 @@ html[data-scrolling] .dropdown-menu {
      stretching to match each other (issue #506 follow-up, reported live). */
   min-height: 92px;
   display: flex;
-  align-items: center;
+  /* flex-start, not center — the #542 follow-up above lets a long
+     description wrap onto 2-3 lines instead of being hidden behind an
+     ellipsis, so centering the icon against the card's full (now taller,
+     variable) height left it drifting away from the label it's meant to
+     sit beside. Top-aligning keeps the icon anchored to the label on every
+     card regardless of how many lines its own description wraps to. */
+  align-items: flex-start;
   gap: var(--space-4);
   /* was `padding: var(--space-5)` — that token doesn't exist in this file's
      scale (--space-1/2/3/4/6/8/12/16/24 only), so the whole declaration was
@@ -6799,12 +6805,16 @@ html[data-scrolling] .dropdown-menu {
   flex: 1;
 }
 .developer-profile-link-label { font-weight: 600; font-size: var(--text-base); }
+/* Issue #542 follow-up, found live — `white-space: nowrap` truncated every
+   description to 3-6 visible characters ("The …", "Work …") the moment the
+   card narrowed to its 2/3-column grid width, hiding real, meaningful copy
+   (src/data/developerProfile.js) behind an ellipsis. Cards already reserve
+   room for a wrapped second line (`.developer-profile-link-card`'s own
+   `min-height: 92px` comment), so letting this wrap is a plain fix, not a
+   size increase. */
 .developer-profile-link-description {
   font-size: var(--text-base);
   color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ==========================================================================

@@ -110,6 +110,19 @@ function buildPopover(step, index, total) {
 // closed via Escape, or completed by reaching "Done" on the last step — all
 // three count as "the tour is over" from the caller's point of view.
 export function startTour(steps, { onEnd } = {}) {
+  // Issue #542 follow-up, found live — an auto-start call site (onboarding.js/
+  // dashboard.js both fire this straight out of route render, with no check
+  // for what else is already on screen) can land while a modal the user just
+  // opened (e.g. "Create your own roadmap," "Share this roadmap…") is still
+  // up, stacking the tour's welcome card on top of it instead of one
+  // blocking the other. Deliberately a no-op, not a deferred retry — the
+  // caller's own `onEnd` (which persists tourDone) is never invoked here, so
+  // a genuinely-skipped auto-start still fires normally on the next render
+  // that has no competing overlay open (e.g. after the user closes the
+  // modal and revisits the page), rather than being marked permanently done.
+  if (document.querySelector('.modal-overlay, .panel-overlay')) {
+    return () => {};
+  }
   let ended = false;
   let stepIndex = -1;
   let rafId = null;

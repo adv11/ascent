@@ -5,9 +5,9 @@ the conventions this codebase follows, and how to report a bug or suggest a feat
 
 **Not a developer, or don't want to set anything up?** You can still contribute —
 open a [GitHub issue](../../issues/new/choose) for a bug or idea, or use the in-app
-feedback widget (floating button, bottom corner of the deployed app) which captures
-a screenshot automatically. Docs/wording fixes are welcome as PRs too, and don't
-require running the app locally to write.
+feedback form (deployed app: account menu → "Send feedback", or Settings → Support).
+Docs/wording fixes are welcome as PRs too, and don't require running the app locally
+to write.
 
 ## Local setup
 
@@ -74,7 +74,7 @@ this repo uses.
 
 ## Reporting bugs and requesting features
 
-If you're using the deployed app, use the in-app feedback widget (the floating
-button in the bottom corner) — it captures a screenshot and routes straight to
-this repo's issue tracker. Otherwise, open a
+If you're using the deployed app, use the in-app feedback form (account menu →
+"Send feedback", or Settings → Support) — it routes straight to this repo's issue
+tracker, and "My reports" lets you track what you've already sent. Otherwise, open a
 [GitHub issue](../../issues/new/choose) directly.

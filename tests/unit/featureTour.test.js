@@ -38,6 +38,28 @@ describe('featureTour', () => {
     expect(document.querySelector('.tour-popover')).toBeNull();
   });
 
+  // Issue #542 follow-up — an auto-start call site can fire while a modal
+  // the user just opened is still up; the tour must not stack its welcome
+  // card on top of it, and must not mark the tour done (onEnd unfired) so a
+  // future render with nothing else open can still show it.
+  it('does not start, and does not call onEnd, while a .modal-overlay is open', () => {
+    document.body.appendChild(document.createElement('div')).className = 'modal-overlay';
+    const onEnd = vi.fn();
+    const cleanup = startTour(buildSteps(), { onEnd });
+
+    expect(document.querySelector('.tour-welcome-card')).toBeNull();
+    expect(document.querySelector('.tour-scrim')).toBeNull();
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(() => cleanup()).not.toThrow();
+  });
+
+  it('does not start while a .panel-overlay is open', () => {
+    document.body.appendChild(document.createElement('div')).className = 'panel-overlay';
+    startTour(buildSteps(), { onEnd: vi.fn() });
+
+    expect(document.querySelector('.tour-welcome-card')).toBeNull();
+  });
+
   it('"Get started" transitions into step 1 of N', () => {
     startTour(buildSteps(3), { onEnd: vi.fn() });
     document.querySelector('.tour-welcome-card [data-action="start"]').click();
