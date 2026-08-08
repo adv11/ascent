@@ -366,9 +366,9 @@ export function buildTourSteps() {
       body: 'Open your account menu to share a read-only roadmap link, download a backup, or send feedback and see your past reports.'
     },
     {
-      target: () => document.querySelector('.app-topbar-avatar-btn'),
+      target: () => document.querySelector('.app-topbar-bell'),
       title: 'See what\'s new',
-      body: 'Open your account menu and choose "What\'s New" to see recent updates and new features as they ship.'
+      body: 'Click the bell to see recent updates and new features as they ship.'
     },
     {
       target: () => document.querySelector('.app-sidebar-footer .theme-toggle'),

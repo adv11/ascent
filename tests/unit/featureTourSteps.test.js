@@ -101,6 +101,6 @@ describe('buildTourSteps() (issue #293 — expanded coverage)', () => {
 
     const bellStep = steps.find(s => s.title === 'See what\'s new');
     expect(bellStep.target()).not.toBeNull();
-    expect(bellStep.target().classList.contains('app-topbar-avatar-btn')).toBe(true);
+    expect(bellStep.target().classList.contains('app-topbar-bell')).toBe(true);
   });
 });
