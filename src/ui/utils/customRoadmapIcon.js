@@ -1,3 +1,5 @@
+import { KEYS } from '../../services/localStorageKeys.js';
+
 // Deterministic icon picker for custom/imported roadmap cards (issue #61 follow-up).
 // Every custom roadmap used to render the same generic '✎' regardless of title,
 // so once a user had more than one, the grid was only distinguishable by reading
@@ -21,4 +23,35 @@ export function pickCustomRoadmapIcon(id) {
   }
   const index = Math.abs(hash) % CUSTOM_ROADMAP_ICONS.length;
   return CUSTOM_ROADMAP_ICONS[index];
+}
+
+export { CUSTOM_ROADMAP_ICONS };
+
+// Issue #507 — a real icon picker (decorativeIcon.js's createIconPicker()/
+// openIconPickerModal()) lets a user override the hash-derived default
+// above. Device-local only (KEYS.CUSTOM_ROADMAP_ICON_OVERRIDES) — see that
+// key's own comment for why this doesn't need Firebase sync.
+function readOverrides() {
+  try {
+    const raw = localStorage.getItem(KEYS.CUSTOM_ROADMAP_ICON_OVERRIDES);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getCustomRoadmapIconOverride(id) {
+  return readOverrides()[id] || null;
+}
+
+export function setCustomRoadmapIconOverride(id, iconName) {
+  const overrides = readOverrides();
+  overrides[id] = iconName;
+  localStorage.setItem(KEYS.CUSTOM_ROADMAP_ICON_OVERRIDES, JSON.stringify(overrides));
+}
+
+// The one call site that should actually be rendered — the override if the
+// user picked one, the deterministic hash default otherwise.
+export function resolveCustomRoadmapIcon(id) {
+  return getCustomRoadmapIconOverride(id) || pickCustomRoadmapIcon(id);
 }

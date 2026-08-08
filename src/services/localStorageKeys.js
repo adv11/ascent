@@ -23,6 +23,12 @@ export const KEYS = {
   // Now means the *active* template id (issue #58) — the one currently displayed.
   TEMPLATE_ID: 'ascent-template-id',
   HIDDEN_TEMPLATES: 'ascent-hidden-templates',
+  // { [roadmapId]: iconName } — a user-picked override of a custom roadmap's
+  // otherwise-deterministic icon (customRoadmapIcon.js's pickCustomRoadmapIcon()
+  // hash, issue #507). Device-local only, same precedent as SIDEBAR_COLLAPSED/
+  // DAILY_TODOS_COLLAPSED — a one-off cosmetic preference, not account state
+  // worth a Firebase round trip and a database.rules.json change.
+  CUSTOM_ROADMAP_ICON_OVERRIDES: 'ascent-custom-roadmap-icon-overrides',
   // Array of { id, title, description, createdAt } — one entry per roadmap the
   // user has created manually (issue #4). Each entry's `id` also appears in
   // KEYS.ROADMAPS/startedTemplateIds like any built-in template id.

@@ -1,4 +1,6 @@
 import { svgIcon } from '../utils/svg.js';
+import { el } from '../dom.js';
+import { attachFocusTrap } from './modal.js';
 
 // Decorative, data-driven icon set (issue #136 Phase 2), migrated from
 // Phosphor Icons' Duotone weight to real Lucide source paths in issue #301
@@ -273,6 +275,88 @@ export function createDecorativeIcon(name, { size = 'lg' } = {}) {
   const svg = svgIcon(shapes());
   svg.setAttribute('class', `icon icon-${size}`);
   return svg;
+}
+
+// Issue #507 — a 56px-cell icon grid (design reference), for picking a
+// custom roadmap's icon. `icons` is a name list (customRoadmapIcon.js's
+// CUSTOM_ROADMAP_ICONS, per that module's own "never substitute icons.js
+// chrome glyphs here" rule — the picker only ever draws from whichever
+// name list its caller passes, it has no opinion of its own). Purely a
+// selectable grid — `role="radiogroup"`, one `role="radio"` cell per icon,
+// Arrow-key navigation between cells.
+export function createIconPicker(icons, { value, onSelect } = {}) {
+  const buttons = icons.map(name => {
+    const btn = el('button', {
+      type: 'button',
+      role: 'radio',
+      'aria-checked': String(name === value),
+      className: `icon-picker-cell${name === value ? ' active' : ''}`,
+      'aria-label': name,
+      onClick: () => {
+        buttons.forEach(b => {
+          const isSelected = b === btn;
+          b.classList.toggle('active', isSelected);
+          b.setAttribute('aria-checked', String(isSelected));
+        });
+        onSelect?.(name);
+      }
+    }, [createDecorativeIcon(name, { size: 'md' })]);
+    return btn;
+  });
+
+  function onKeydown(e) {
+    const idx = buttons.indexOf(document.activeElement);
+    if (idx === -1) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      buttons[(idx + 1) % buttons.length].focus();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      buttons[(idx - 1 + buttons.length) % buttons.length].focus();
+    }
+  }
+
+  const grid = el('div', { className: 'icon-picker-grid', role: 'radiogroup', 'aria-label': 'Pick an icon', onKeydown }, buttons);
+  return grid;
+}
+
+// Standalone modal wrapping createIconPicker() above — resolves the chosen
+// icon name, or null on cancel/Escape/outside-click. Same ad hoc
+// modal/attachFocusTrap shape as every other promise-resolving dialog in
+// this app (confirmDialog.js, importBackupModal.js).
+export function openIconPickerModal(icons, currentIcon) {
+  return new Promise(resolve => {
+    let selected = currentIcon;
+
+    function close(result) {
+      detachTrap();
+      overlay.remove();
+      resolve(result);
+    }
+
+    const grid = createIconPicker(icons, { value: currentIcon, onSelect: name => { selected = name; } });
+
+    const card = el('div', { className: 'modal-card icon-picker-card' }, [
+      el('h2', { className: 'modal-title', text: 'Pick an icon' }),
+      grid,
+      el('div', { className: 'panel-footer-right' }, [
+        el('button', { type: 'button', className: 'btn btn-secondary', text: 'Cancel', onClick: () => close(null) }),
+        el('button', { type: 'button', className: 'btn btn-primary', text: 'Save', onClick: () => close(selected) })
+      ])
+    ]);
+
+    const overlay = el('div', {
+      className: 'modal-overlay',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'Pick an icon',
+      onClick: e => { if (e.target === overlay) close(null); }
+    }, [card]);
+
+    const detachTrap = attachFocusTrap(card, { onEscape: () => close(null) });
+    document.body.appendChild(overlay);
+    grid.querySelector('.active')?.focus();
+  });
 }
 
 export function hasDecorativeIcon(name) {

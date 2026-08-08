@@ -37,22 +37,32 @@ export function openBuildYourOwnGuide({ onOpenImport } = {}) {
       className: 'build-guide-intro',
       text: '"Create your own roadmap" builds your starting structure with an AI assistant, then lets you fine-tune it by hand afterward.'
     }),
-    el('h3', { className: 'build-guide-heading', text: '1. Generate your roadmap with an AI assistant' }),
-    el('p', { className: 'build-guide-body' }, [
-      el('strong', { text: '"Create your own roadmap"' }),
-      ' gives you a ready-to-copy prompt for describing your goal to an AI assistant like Claude or ChatGPT. Paste its reply back in and it\'s validated and imported automatically — no need to add topics one at a time.'
+    el('div', { className: 'build-guide-step' }, [
+      el('span', { className: 'build-guide-step-number', 'aria-hidden': 'true', text: '1' }),
+      el('div', { className: 'build-guide-step-content' }, [
+        el('h3', { className: 'build-guide-heading', text: 'Generate your roadmap with an AI assistant' }),
+        el('p', { className: 'build-guide-body' }, [
+          el('strong', { text: '"Create your own roadmap"' }),
+          ' gives you a ready-to-copy prompt for describing your goal to an AI assistant like Claude or ChatGPT. Paste its reply back in and it\'s validated and imported automatically — no need to add topics one at a time.'
+        ])
+      ])
     ]),
-    el('h3', { className: 'build-guide-heading', text: '2. Fine-tune it afterward' }),
-    el('p', { className: 'build-guide-body' }, [
-      'Once your roadmap exists, use ',
-      el('strong', { text: '"+ Add phase"' }),
-      ' and ',
-      el('strong', { text: '"+ Add section"' }),
-      ' to adjust its structure, and ',
-      el('strong', { text: '"Add a custom topic…"' }),
-      ' under any section to add more topics. Click ',
-      el('strong', { text: 'Edit' }),
-      ' on any topic to set its priority and attach resource links. These tools work on any custom roadmap, whenever you want to adjust it.'
+    el('div', { className: 'build-guide-step' }, [
+      el('span', { className: 'build-guide-step-number', 'aria-hidden': 'true', text: '2' }),
+      el('div', { className: 'build-guide-step-content' }, [
+        el('h3', { className: 'build-guide-heading', text: 'Fine-tune it afterward' }),
+        el('p', { className: 'build-guide-body' }, [
+          'Once your roadmap exists, use ',
+          el('strong', { text: '"+ Add phase"' }),
+          ' and ',
+          el('strong', { text: '"+ Add section"' }),
+          ' to adjust its structure, and ',
+          el('strong', { text: '"Add a custom topic…"' }),
+          ' under any section to add more topics. Click ',
+          el('strong', { text: 'Edit' }),
+          ' on any topic to set its priority and attach resource links. These tools work on any custom roadmap, whenever you want to adjust it.'
+        ])
+      ])
     ]),
     el('div', { className: 'panel-footer-right' }, footerButtons)
   ]);

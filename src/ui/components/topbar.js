@@ -107,7 +107,7 @@ export function createTopbar({ breadcrumb, user, store, dailyTodoStore, onDelete
     'aria-label': `Account menu — ${userLabel}`
   }, [createAvatar(user, 'sm')]);
 
-  const { identity: avatarMenu, importInput } = buildAccountMenu({
+  const { identity: avatarMenu } = buildAccountMenu({
     user,
     store,
     dailyTodoStore,
@@ -129,8 +129,7 @@ export function createTopbar({ breadcrumb, user, store, dailyTodoStore, onDelete
 
   const node = el('header', { className: 'app-topbar' }, [
     breadcrumbEl,
-    iconGroup,
-    importInput
+    iconGroup
   ]);
 
   const unbindShortcut = bindCommandPaletteShortcut(openPalette);

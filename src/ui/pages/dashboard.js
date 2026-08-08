@@ -6,7 +6,7 @@ import { createVerificationBanner } from '../components/verificationBanner.js';
 import { createGuestBanner } from '../components/guestBanner.js';
 import { createBackupReminderBanner } from '../components/backupReminderBanner.js';
 import { createProgressDigestBanner } from '../components/progressDigestBanner.js';
-import { maybeShowGuestDataRiskNudge } from '../components/guestDataRiskNudge.js';
+import { createGuestDataRiskNudge } from '../components/guestDataRiskNudge.js';
 import { confirmDialog } from '../components/confirmDialog.js';
 import { readDefaultFilterPreference } from '../utils/defaultFilterPreference.js';
 import { createSidebar } from '../components/sidebar.js';
@@ -2116,6 +2116,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
 
   const verificationBanner = createVerificationBanner(user);
   const guestBanner = createGuestBanner(user);
+  const guestRiskNudge = createGuestDataRiskNudge({ user, store });
   const backupReminderBanner = createBackupReminderBanner({ user, store });
   const progressDigestBanner = activityLogStore ? createProgressDigestBanner({ user, store, activityLogStore }) : null;
 
@@ -2383,6 +2384,7 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
       el('div', { className: 'app-content' }, [
         verificationBanner,
         guestBanner,
+        guestRiskNudge,
         backupReminderBanner,
         progressDigestBanner,
         offlineBanner,
@@ -2456,7 +2458,6 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   render(store.getSnapshot());
   applyScrollToPhaseSignal();
   applyOpenItemSignal();
-  maybeShowGuestDataRiskNudge({ user, store });
 
   // Same-page case for the cross-roadmap search signal above: if the search result
   // belongs to the roadmap that's already active, store.switchRoadmap() is a no-op
