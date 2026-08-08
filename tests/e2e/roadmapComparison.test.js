@@ -23,8 +23,8 @@ test.describe('roadmap comparison view (issue #285)', () => {
 
     await page.locator('button', { hasText: 'Compare roadmaps' }).click();
     await expect(page.locator('.modal-overlay[aria-label="Compare roadmaps"]')).toBeVisible();
-    // "Starter template" is the default mode for a built-in-template roadmap.
-    await expect(page.locator('.comparison-mode-toggle .filter-chip.active')).toContainText('Starter template');
+    // "Its starter template" is the default mode for a built-in-template roadmap.
+    await expect(page.locator('.comparison-mode-toggle .comparison-mode-btn.active')).toContainText('Its starter template');
     await expect(page.locator('.comparison-summary')).toBeVisible({ timeout: 10_000 });
     // At least one row must show as "Done here only" — matched against the
     // freshly-seeded (all-incomplete) template.
@@ -51,7 +51,7 @@ test.describe('roadmap comparison view (issue #285)', () => {
 
     await page.locator('button', { hasText: 'Compare roadmaps' }).click();
     await expect(page.locator('.modal-overlay[aria-label="Compare roadmaps"]')).toBeVisible();
-    await page.locator('.comparison-mode-toggle .filter-chip', { hasText: 'Another roadmap' }).click();
+    await page.locator('.comparison-mode-toggle .comparison-mode-btn', { hasText: 'Another roadmap' }).click();
     await expect(page.locator('.comparison-other-select')).toBeVisible();
     await expect(page.locator('.comparison-summary')).toBeVisible({ timeout: 10_000 });
     // Two unrelated roadmaps share essentially no identical (phase, title)

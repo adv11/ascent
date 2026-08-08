@@ -28,7 +28,25 @@ function statusLabel(status) {
   }
 }
 
-function renderSummaryRow(comparison, labelA, labelB) {
+// Status dot color ramp (design-system.md's accent ramp — no separate
+// red/green semantic hues in this app): filled accent for a fully-matched
+// completion, a muted accent tint for a partial/mismatched one, and a plain
+// neutral ring for "not done anywhere" or an only-in-one-side row.
+function dotClassForRow(kind, status) {
+  if (kind === 'matched') {
+    if (status === 'both-done') return 'comparison-dot-done';
+    if (status === 'neither-done') return 'comparison-dot-neutral';
+    return 'comparison-dot-partial';
+  }
+  return kind === 'added' ? 'comparison-dot-added' : 'comparison-dot-neutral';
+}
+
+// Generic, fixed-length labels ("Only in yours" / "Only in theirs" or "...the
+// template") per the issue's own four-cell spec — not the actual roadmap/
+// template name, which can run long enough (e.g. "Java Backend Engineer
+// template") to wrap several lines and blow out the summary grid's row
+// height, found live while testing this against a real roadmap.
+function renderSummaryRow(comparison, onlyInBLabel) {
   const { summary } = comparison;
   return el('div', { className: 'comparison-summary' }, [
     el('div', { className: 'comparison-summary-item' }, [
@@ -37,11 +55,11 @@ function renderSummaryRow(comparison, labelA, labelB) {
     ]),
     el('div', { className: 'comparison-summary-item' }, [
       el('span', { className: 'comparison-summary-value', text: String(summary.onlyInACount) }),
-      el('span', { className: 'comparison-summary-label', text: `Only in ${labelA}` })
+      el('span', { className: 'comparison-summary-label', text: 'Only in yours' })
     ]),
     el('div', { className: 'comparison-summary-item' }, [
       el('span', { className: 'comparison-summary-value', text: String(summary.onlyInBCount) }),
-      el('span', { className: 'comparison-summary-label', text: `Only in ${labelB}` })
+      el('span', { className: 'comparison-summary-label', text: onlyInBLabel })
     ]),
     el('div', { className: 'comparison-summary-item' }, [
       el('span', { className: 'comparison-summary-value', text: String(summary.totalTopics) }),
@@ -52,13 +70,15 @@ function renderSummaryRow(comparison, labelA, labelB) {
 
 function renderMatchedRow(row) {
   return el('li', { className: 'comparison-row', dataset: { status: row.status } }, [
+    el('span', { className: `comparison-dot ${dotClassForRow('matched', row.status)}` }),
     el('span', { className: 'comparison-row-title', text: row.title }),
     el('span', { className: `comparison-row-status comparison-row-status-${row.status}`, text: statusLabel(row.status) })
   ]);
 }
 
-function renderOnlyRow(row, className, label) {
+function renderOnlyRow(row, className, kind, label) {
   return el('li', { className: `comparison-row ${className}` }, [
+    el('span', { className: `comparison-dot ${dotClassForRow(kind, null)}` }),
     el('span', { className: 'comparison-row-title', text: row.title }),
     el('span', { className: 'comparison-row-status', text: row.done ? `${label} · done` : label })
   ]);
@@ -67,8 +87,8 @@ function renderOnlyRow(row, className, label) {
 function renderPhaseGroup(group) {
   const rows = [
     ...group.matched.map(renderMatchedRow),
-    ...group.onlyInA.map(row => renderOnlyRow(row, 'comparison-row-added', 'Added here')),
-    ...group.onlyInB.map(row => renderOnlyRow(row, 'comparison-row-removed', 'Missing here'))
+    ...group.onlyInA.map(row => renderOnlyRow(row, 'comparison-row-added', 'added', 'Added here')),
+    ...group.onlyInB.map(row => renderOnlyRow(row, 'comparison-row-removed', 'missing', 'Missing here'))
   ];
   if (!rows.length) return null;
   return el('div', { className: 'comparison-phase-group' }, [
@@ -77,13 +97,13 @@ function renderPhaseGroup(group) {
   ]);
 }
 
-function renderComparisonResult(comparison, labelA, labelB) {
+function renderComparisonResult(comparison, onlyInBLabel) {
   const groups = groupComparisonByPhase(comparison).filter(g => g.matched.length + g.onlyInA.length + g.onlyInB.length > 0);
   if (!groups.length) {
     return el('p', { className: 'comparison-empty', text: 'Neither roadmap has any topics to compare yet.' });
   }
   return el('div', { className: 'comparison-result' }, [
-    renderSummaryRow(comparison, labelA, labelB),
+    renderSummaryRow(comparison, onlyInBLabel),
     el('div', { className: 'comparison-phase-groups' }, groups.map(renderPhaseGroup))
   ]);
 }
@@ -117,17 +137,17 @@ export function openRoadmapComparisonModal({ store }) {
 
   const templateModeBtn = el('button', {
     type: 'button',
-    className: `filter-chip ${mode === MODE_TEMPLATE ? 'active' : ''}`,
+    className: `comparison-mode-btn ${mode === MODE_TEMPLATE ? 'active' : ''}`,
     dataset: { mode: MODE_TEMPLATE },
     'aria-pressed': String(mode === MODE_TEMPLATE),
-    text: 'Starter template',
+    text: 'Its starter template',
     onClick: () => { mode = MODE_TEMPLATE; renderAll(); }
   });
   templateModeBtn.disabled = activeIsCustom;
 
   const roadmapModeBtn = el('button', {
     type: 'button',
-    className: `filter-chip ${mode === MODE_ROADMAP ? 'active' : ''}`,
+    className: `comparison-mode-btn ${mode === MODE_ROADMAP ? 'active' : ''}`,
     dataset: { mode: MODE_ROADMAP },
     'aria-pressed': String(mode === MODE_ROADMAP),
     text: 'Another roadmap',
@@ -135,9 +155,17 @@ export function openRoadmapComparisonModal({ store }) {
   });
   roadmapModeBtn.disabled = otherIds.length === 0;
 
+  // A disabled mode chip must say why, not just look dimmed (issue #504) — a
+  // custom roadmap has no starter template, and a first-ever roadmap has
+  // nothing else started yet to compare against.
+  const modeReasons = [];
+  if (activeIsCustom) modeReasons.push('Custom roadmaps have no starter template to compare against.');
+  if (otherIds.length === 0) modeReasons.push('Start a second roadmap to compare it against this one.');
+
   const modeChips = el('div', { className: 'comparison-mode-toggle', role: 'group', 'aria-label': 'Compare against' }, [
     templateModeBtn,
-    roadmapModeBtn
+    roadmapModeBtn,
+    ...modeReasons.map(reason => el('p', { className: 'comparison-mode-reason', text: reason }))
   ]);
 
   const otherSelect = otherIds.length
@@ -162,8 +190,7 @@ export function openRoadmapComparisonModal({ store }) {
       resultSlot.replaceChildren(el('p', { className: 'comparison-loading', text: 'Loading…' }));
       const templateItems = await buildTemplateSeedItems(activeId);
       const comparison = compareRoadmapTopics(snapshot.items, templateItems);
-      const templateName = getTemplate(activeId).name;
-      resultSlot.replaceChildren(renderComparisonResult(comparison, activeLabel, `${templateName} template`));
+      resultSlot.replaceChildren(renderComparisonResult(comparison, 'Only in the template'));
       return;
     }
     if (!selectedOtherId) {
@@ -174,7 +201,7 @@ export function openRoadmapComparisonModal({ store }) {
     try {
       const { items: otherItems } = await store.getRoadmapSnapshotForComparison(selectedOtherId);
       const comparison = compareRoadmapTopics(snapshot.items, otherItems);
-      resultSlot.replaceChildren(renderComparisonResult(comparison, activeLabel, roadmapLabel(selectedOtherId, labelCtx)));
+      resultSlot.replaceChildren(renderComparisonResult(comparison, 'Only in theirs'));
     } catch (error) {
       console.error('Failed to load the other roadmap for comparison', error);
       showToast('Could not load that roadmap. Check your connection and try again.', 'error');
@@ -183,7 +210,7 @@ export function openRoadmapComparisonModal({ store }) {
   }
 
   function renderAll() {
-    modeChips.querySelectorAll('.filter-chip').forEach(btn => {
+    modeChips.querySelectorAll('.comparison-mode-btn').forEach(btn => {
       const active = btn.dataset.mode === mode;
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-pressed', String(active));
@@ -194,7 +221,11 @@ export function openRoadmapComparisonModal({ store }) {
 
   const card = el('div', { className: 'modal-card comparison-modal-card' }, [
     el('h2', { className: 'modal-title', text: 'Compare roadmaps' }),
-    el('p', { className: 'comparison-modal-subtitle', text: `Comparing "${activeLabel}" against:` }),
+    el('p', { className: 'comparison-modal-subtitle' }, [
+      'Comparing ',
+      el('strong', { text: activeLabel }),
+      ' against:'
+    ]),
     modeChips,
     otherSelectSlot,
     resultSlot,
