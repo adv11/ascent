@@ -81,7 +81,7 @@ afterEach(() => {
 describe('createDailyTodoPanel', () => {
   it('renders the empty state with no todos', () => {
     const node = createDailyTodoPanel(createFakeStore());
-    expect(node.querySelector('.daily-todo-empty')).toBeTruthy();
+    expect(node.querySelector('.empty-state')).toBeTruthy();
     node._cleanup();
   });
 
@@ -125,7 +125,7 @@ describe('createDailyTodoPanel', () => {
     ]);
     const node = createDailyTodoPanel(store);
 
-    expect(node.querySelector('.daily-todo-empty')).toBeTruthy();
+    expect(node.querySelector('.empty-state')).toBeTruthy();
     const toggle = node.querySelector('.daily-todo-missed-toggle');
     expect(toggle.textContent).toContain('Missed (1)');
     expect(node.querySelector('.daily-todo-missed-list').hidden).toBe(true);
@@ -469,7 +469,7 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
       const id = store.getSnapshot().todos[0].id;
 
       store.setDone(id, true);
-      expect(node.querySelector('.daily-todo-empty')).toBeFalsy();
+      expect(node.querySelector('.empty-state')).toBeFalsy();
       node._cleanup();
     });
   });

@@ -69,6 +69,10 @@ const ICON_SHAPES = {
     { d: 'm21 21-4.34-4.34' },
     { tag: 'circle', cx: '11', cy: '11', r: '8' }
   ],
+  // lucide: filter — issue #505, the "no topics match those filters" empty state
+  filter: () => [
+    { tag: 'polygon', points: '22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3' }
+  ],
   // lucide: clock
   timer: () => [
     { d: 'M12 6v6l4 2' },

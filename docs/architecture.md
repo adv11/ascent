@@ -5857,3 +5857,58 @@ started to compare against) now renders a visible reason line underneath it inst
 looking dimmed. `tests/e2e/roadmapComparison.test.js` updated for the renamed
 `.comparison-mode-btn` class and the "Its starter template" button label. `CACHE_VERSION`
 bumped 117 → 118.
+
+### 2026-08-08 — Issue #505 (E5) — Weekly digest banner, empty states, feedback entry points
+
+`feedbackModal.js` redesigned onto the responsive-redesign reference's single-screen
+shape: the old two-step type-select grid → per-type multi-field form flow is replaced
+by one screen — three "kind" chips (Something is broken / An idea / Something else,
+reusing `.filter-chip` styling), one shared textarea, and a "Send it" button, with
+"See my past reports" now a link inside that same screen rather than a separate button
+above it. The report's `title` field (still required by the unchanged
+`reportSchema.js`/`feedbackStore.js` backend contract — no schema change) is now
+derived from the textarea's first line instead of a separate input. `createRadioGroup()`
+(`feedbackForm.js`) and its CSS were removed as dead code — nothing else in the app used
+it once Severity/usage-frequency radios were dropped from the redesigned screen.
+
+`dashboard.js`'s single "No matching topics" empty state is now two real cases per the
+same design reference — "No topics match those filters" (Clear all filters, extracted
+into a shared `clearAllFilters()` function) when a filter/tag is active with no search
+term, and `Nothing found for "<query>"` (Search everywhere, opening the topbar's command
+palette) when a search term is present — each naming its own way out rather than one
+generic message. `dailyTodoPanel.js`'s plain-text "Nothing due" status line is now a
+real `createEmptyState()` card. New `filter` icon (`icons.js`, Lucide `filter`) for the
+new filter-empty-state case. The dashboard's weekly progress digest banner
+(`progressDigestBanner.js`) was already on-spec from issue #284 and needed no change.
+
+Two width-alignment bugs were also found and fixed during live browser review (not
+caught by the test suite, which has no layout assertions of this kind): the two new
+dashboard-level empty states inherited `.dashboard-content`'s `--phase-spine-gutter`
+left padding — meant to clear the phase-spine's dot column next to real phase cards —
+with nothing to justify it once there were zero phase cards to show, reading measurably
+inset (521px vs. 487px left edge) relative to `.roadmap-filters-card`/`.daily-todo-panel`
+directly above; fixed with a scoped `.dashboard-content > .empty-state` negative
+margin-left. Separately, `.guest-banner` (the bordered "Saved on this device" card,
+unlike its flush/borderless `.verification-banner`/`.backup-reminder-banner`/
+`.progress-digest-banner` siblings in the same `.app-content` slot) read ~40px wider
+than every card inside `.dashboard-header` below it, since it sits one padding layer up;
+fixed with a `.dashboard .app-content > .guest-banner` margin matching
+`--dashboard-gutter-x`. Both scoped to the dashboard specifically —
+settings.js/progress.js have no equivalent second padding layer for either fix to
+correct against.
+
+A third, related layout bug: the vertical gap between `.dashboard-header`'s own three
+cards (`.roadmap-summary-card`/`.next-up-card`/`.roadmap-filters-card`) was itself
+inconsistent — `.roadmap-filters-card`'s `margin-bottom` was a stray `18px` next to its
+siblings' `16px`, a genuine same-container copy/paste drift. More visibly, the gap
+*before* the first card (guest banner → summary card) and *after* the last one (filters
+card → Daily Todos panel) each stacked two independent spacing values — the banner's own
+`margin-bottom` plus `.dashboard-header`'s `padding-top`, and the filters card's
+`margin-bottom` plus the header's `padding-bottom` — measuring 34px and 38px live against
+the header's internal 16px rhythm. Fixed by zeroing `.guest-banner`'s `margin-bottom` and
+`.roadmap-filters-card`'s `margin-bottom` specifically on the dashboard (letting
+`.dashboard-header`'s own safe-area-aware padding be the sole source of those two gaps,
+rather than retuning that padding itself, which other elements/breakpoints depend on) —
+the four gaps went from 34/16/16/38px to a consistent 18/16/16/20px.
+
+`CACHE_VERSION` bumped 118 → 119.

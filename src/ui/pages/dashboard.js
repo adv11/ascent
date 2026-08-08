@@ -1041,19 +1041,23 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
   const tagFilterContainer = el('div', { className: 'filter-row tag-filter-row' });
   const reviewTagGroupBanner = el('div', { className: 'review-tag-group-banner' });
   const searchInput = el('input', { className: 'search-input', placeholder: 'Search topics…', value: searchQuery });
+  // Issue #505 — pulled out of clearFiltersBtn's onClick so the "No topics
+  // match those filters" empty state's own action button can call the exact
+  // same logic instead of a `.click()` proxy.
+  function clearAllFilters() {
+    activeFilter = 'ALL';
+    searchQuery = '';
+    tagFilter = null;
+    searchInput.value = '';
+    persistUi();
+    render(store.getSnapshot());
+  }
   const clearFiltersBtn = el('button', {
     type: 'button',
     className: 'btn btn-ghost btn-sm clear-filters-btn',
     text: 'Clear all filters',
     hidden: true,
-    onClick: () => {
-      activeFilter = 'ALL';
-      searchQuery = '';
-      tagFilter = null;
-      searchInput.value = '';
-      persistUi();
-      render(store.getSnapshot());
-    }
+    onClick: clearAllFilters
   });
   const content = el('main', { className: 'dashboard-content', id: 'main-content', tabindex: '-1' });
   // Issue #492 — the vertical progress spine down the phase list's left
@@ -1858,7 +1862,24 @@ export function renderDashboard(app, { user, store, dailyTodoStore, activityLogS
     });
 
     if (!visibleCount) {
-      content.append(createEmptyState({ icon: 'search', title: 'No matching topics. Try another filter or search term.' }));
+      // Issue #505 — two distinct real cases (design reference:
+      // "No topics match those filters" / "Nothing found for '<query>'"),
+      // not one generic message — each names its own way out.
+      content.append(searchQuery
+        ? createEmptyState({
+          icon: 'search',
+          title: `Nothing found for "${searchQuery}".`,
+          message: 'Check the spelling, or search across all your roadmaps instead.',
+          actionText: 'Search everywhere',
+          onAction: () => app.querySelector('.app-topbar-command-btn')?.click()
+        })
+        : createEmptyState({
+          icon: 'filter',
+          title: 'No topics match those filters.',
+          message: 'Nothing in this roadmap is both matching every filter you picked.',
+          actionText: 'Clear all filters',
+          onAction: clearAllFilters
+        }));
     }
     content.append(phaseSpine);
     updatePhaseSpine();

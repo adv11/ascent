@@ -12,6 +12,7 @@ import { KEYS } from '../../services/localStorageKeys.js';
 import { remindersEnabled, enableReminders, disableReminders } from '../../services/reminderScheduler.js';
 import { computeElapsedSeconds, formatTimeSpent } from '../../core/time/timeTracking.js';
 import { createFeatureBadge } from './featureBadge.js';
+import { createEmptyState } from './emptyState.js';
 
 const CUSTOM_VALUE = 'custom';
 const DEFAULT_PRESET_MS = DURATION_PRESETS.find(p => p.label === '24 hours')?.ms || DURATION_PRESETS[0].ms;
@@ -429,7 +430,17 @@ export function createDailyTodoPanel(store, roadmapStore) {
     const displayList = [...active, ...done];
     activeList.replaceChildren();
     if (!displayList.length) {
-      activeList.append(el('p', { className: 'daily-todo-empty', text: 'Nothing due in the next while — add one above.' }));
+      // Issue #505 — a real, action-oriented empty state (not a bare status
+      // line) matching the design reference's "Nothing planned for today"
+      // case; the action focuses the add-a-todo input right above it rather
+      // than opening a separate modal, since that field is already on screen.
+      activeList.append(createEmptyState({
+        icon: 'timer',
+        title: 'Nothing planned for today.',
+        message: 'Add something small. One topic is enough to keep a streak alive.',
+        actionText: 'Add a todo',
+        onAction: () => titleInput.focus()
+      }));
     } else {
       displayList.forEach(todo => activeList.append(renderRow(todo, now)));
     }
