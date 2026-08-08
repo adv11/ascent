@@ -83,11 +83,11 @@ export function openAddToDailyTodoModal({ topicTitle }) {
 
     const form = el('form', { className: 'auth-form', onSubmit: handleSubmit }, [
       el('label', { className: 'field' }, [
-        el('span', { className: 'field-label', text: 'Todo title' }),
+        el('span', { className: 'field-label', text: 'What are you calling it?' }),
         titleInput
       ]),
       el('label', { className: 'field' }, [
-        el('span', { className: 'field-label', text: 'Due in' }),
+        el('span', { className: 'field-label', text: 'How long have you got?' }),
         durationSelect
       ]),
       customHoursInput,

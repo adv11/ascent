@@ -16,7 +16,8 @@ import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { showToast } from '../components/toast.js';
 import { TEMPLATES } from '../../data/templates/index.js';
 import { MAX_FAVORITE_ROADMAPS } from '../../core/roadmap/limits.js';
-import { pickCustomRoadmapIcon } from '../utils/customRoadmapIcon.js';
+import { resolveCustomRoadmapIcon, setCustomRoadmapIconOverride, CUSTOM_ROADMAP_ICONS } from '../utils/customRoadmapIcon.js';
+import { openIconPickerModal } from '../components/decorativeIcon.js';
 import { createIcon } from '../components/icons.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
 
@@ -504,9 +505,19 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
       className: `template-card${isCurrent ? ' template-card-current' : ''}${isStarted && !isCurrent ? ' template-card-started' : ''}`,
       onClick: e => { if (e.target === cardEl) pickCustomRoadmap(roadmap, cardEl); }
     }, [
-      buildCardHeader(pickCustomRoadmapIcon(roadmap.id), roadmap.id, badgeEl),
+      buildCardHeader(resolveCustomRoadmapIcon(roadmap.id), roadmap.id, badgeEl),
       buildCardOverflowMenu(roadmap.title, [
         buildFavoriteMenuAction(roadmap.id, roadmap.title),
+        {
+          text: 'Change icon',
+          onClick: async () => {
+            const chosen = await openIconPickerModal(CUSTOM_ROADMAP_ICONS, resolveCustomRoadmapIcon(roadmap.id));
+            if (chosen) {
+              setCustomRoadmapIconOverride(roadmap.id, chosen);
+              renderVisibleGrid();
+            }
+          }
+        },
         { text: 'Delete', danger: true, onClick: () => deleteCustomCard(roadmap, cardEl) }
       ]),
       pickBtn,

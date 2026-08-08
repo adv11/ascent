@@ -78,7 +78,7 @@ function buildPopover(step, index, total) {
     'aria-modal': 'true',
     'aria-label': step.title
   }, [
-    el('p', { className: 'tour-popover-progress', 'aria-live': 'polite', text: `Step ${index + 1} of ${total}` }),
+    el('p', { className: 'tour-popover-progress eyebrow', 'aria-live': 'polite', text: `Step ${index + 1} of ${total}` }),
     el('h3', { className: 'tour-popover-title', text: step.title }),
     el('p', { className: 'tour-popover-body', text: step.body }),
     el('div', { className: 'tour-popover-actions' }, [

@@ -1,6 +1,77 @@
 import { el } from '../dom.js';
 import { attachFocusTrap } from './modal.js';
+import { createIcon } from './icons.js';
 import { diffBackupItems } from '../../core/roadmap/backupValidator.js';
+
+// Issue #507 — the front door to restoring a backup: a drag-and-drop zone
+// (design reference) shown before the diff-summary/merge-or-overwrite step
+// below, rather than starting from a bare native file-picker click with no
+// modal of its own. Resolves the chosen File, or null on cancel/Escape/
+// outside-click — importBackupFromFile() (backupActions.js) still owns all
+// the actual read/validate/diff/restore logic; this only replaces how the
+// file is initially picked.
+export function openImportBackupDropZoneModal() {
+  return new Promise(resolve => {
+    function close(file) {
+      detachTrap();
+      overlay.remove();
+      resolve(file);
+    }
+
+    const fileInput = el('input', {
+      type: 'file',
+      accept: '.json,application/json',
+      hidden: true,
+      onChange: () => {
+        const file = fileInput.files?.[0];
+        if (file) close(file);
+      }
+    });
+
+    const dropZone = el('div', {
+      className: 'import-backup-dropzone',
+      tabindex: '0',
+      role: 'button',
+      'aria-label': 'Drop your backup file here, or choose one from your device',
+      onClick: () => fileInput.click(),
+      onKeydown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } },
+      onDragover: e => { e.preventDefault(); dropZone.classList.add('drag-over'); },
+      onDragleave: () => dropZone.classList.remove('drag-over'),
+      onDrop: e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) close(file);
+      }
+    }, [
+      createIcon('upload', { size: 'md' }),
+      el('p', { className: 'import-backup-dropzone-title', text: 'Drop your backup file here' }),
+      el('p', { className: 'import-backup-dropzone-subtitle', text: 'or choose one from your device' }),
+      fileInput
+    ]);
+
+    const cancelBtn = el('button', { type: 'button', className: 'btn btn-secondary btn-block', text: 'Cancel', onClick: () => close(null) });
+
+    const card = el('div', { className: 'modal-card' }, [
+      el('h2', { className: 'modal-title', text: 'Restore from a backup' }),
+      el('p', { className: 'confirm-dialog-body', text: 'This replaces everything you have now with what is in the file. Download a backup of your current progress first if you might want it back.' }),
+      dropZone,
+      cancelBtn
+    ]);
+
+    const overlay = el('div', {
+      className: 'modal-overlay',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'Restore from a backup',
+      onClick: e => { if (e.target === overlay) close(null); }
+    }, [card]);
+
+    const detachTrap = attachFocusTrap(card, { onEscape: () => close(null) });
+    document.body.appendChild(overlay);
+    dropZone.focus();
+  });
+}
 
 // "Topic" is this app's user-facing word for a roadmap item everywhere else
 // (itemPanel.js's "Edit topic"/"Delete topic", dashboard.js's "Add a custom

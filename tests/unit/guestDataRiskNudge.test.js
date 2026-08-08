@@ -16,50 +16,44 @@ beforeEach(() => {
 });
 
 async function freshNudge(opts) {
-  const { maybeShowGuestDataRiskNudge } = await import('../../src/ui/components/guestDataRiskNudge.js');
-  return maybeShowGuestDataRiskNudge(opts);
+  const { createGuestDataRiskNudge } = await import('../../src/ui/components/guestDataRiskNudge.js');
+  return createGuestDataRiskNudge(opts);
 }
 
-describe('maybeShowGuestDataRiskNudge', () => {
+describe('createGuestDataRiskNudge', () => {
   it('never shows for a non-anonymous account', async () => {
-    await freshNudge({ user: { isAnonymous: false, uid: 'u1' }, store: fakeStore(COMPLETED_THRESHOLD) });
-    expect(document.querySelector('.modal-overlay')).toBeNull();
+    const banner = await freshNudge({ user: { isAnonymous: false, uid: 'u1' }, store: fakeStore(COMPLETED_THRESHOLD) });
+    expect(banner).toBeNull();
   });
 
   it('never shows before the completed-item threshold', async () => {
-    await freshNudge({ user: { isAnonymous: true, uid: 'guest-1' }, store: fakeStore(COMPLETED_THRESHOLD - 1) });
-    expect(document.querySelector('.modal-overlay')).toBeNull();
+    const banner = await freshNudge({ user: { isAnonymous: true, uid: 'guest-1' }, store: fakeStore(COMPLETED_THRESHOLD - 1) });
+    expect(banner).toBeNull();
   });
 
-  it('shows a confirmDialog for an anonymous account past the threshold and marks it shown', async () => {
-    const promise = freshNudge({ user: { isAnonymous: true, uid: 'guest-2' }, store: fakeStore(COMPLETED_THRESHOLD) });
-    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+  it('returns a banner node for an anonymous account past the threshold and marks it shown', async () => {
+    const banner = await freshNudge({ user: { isAnonymous: true, uid: 'guest-2' }, store: fakeStore(COMPLETED_THRESHOLD) });
+    expect(banner).not.toBeNull();
+    expect(banner.className).toBe('guest-risk-nudge');
     expect(localStorage.getItem(guestRiskNudgeShownKey('guest-2'))).toBe('1');
-
-    document.querySelector('[data-action="cancel"]').click();
-    await promise;
   });
 
-  it('navigates to /signup when the user confirms', async () => {
+  it('navigates to /signup when "Create an account" is clicked', async () => {
     const { navigate } = await import('../../src/ui/router.js');
-    const promise = freshNudge({ user: { isAnonymous: true, uid: 'guest-3' }, store: fakeStore(COMPLETED_THRESHOLD) });
-    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
+    const banner = await freshNudge({ user: { isAnonymous: true, uid: 'guest-3' }, store: fakeStore(COMPLETED_THRESHOLD) });
+    document.body.append(banner);
 
-    document.querySelector('[data-action="confirm"]').click();
-    await promise;
+    banner.querySelector('.btn-primary').click();
 
     expect(navigate).toHaveBeenCalledWith('/signup');
   });
 
   it('does not fire again on a second call once already shown', async () => {
     const uid = 'guest-4';
-    const firstPromise = freshNudge({ user: { isAnonymous: true, uid }, store: fakeStore(COMPLETED_THRESHOLD) });
-    await vi.waitFor(() => expect(document.querySelector('.modal-overlay')).not.toBeNull());
-    document.querySelector('[data-action="cancel"]').click();
-    await firstPromise;
-    document.body.innerHTML = '';
+    const firstBanner = await freshNudge({ user: { isAnonymous: true, uid }, store: fakeStore(COMPLETED_THRESHOLD) });
+    expect(firstBanner).not.toBeNull();
 
-    await freshNudge({ user: { isAnonymous: true, uid }, store: fakeStore(COMPLETED_THRESHOLD + 5) });
-    expect(document.querySelector('.modal-overlay')).toBeNull();
+    const secondBanner = await freshNudge({ user: { isAnonymous: true, uid }, store: fakeStore(COMPLETED_THRESHOLD + 5) });
+    expect(secondBanner).toBeNull();
   });
 });

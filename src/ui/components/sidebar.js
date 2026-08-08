@@ -13,6 +13,7 @@ import { triggerRoadmapPrint } from '../utils/printRoadmap.js';
 import { openMyReports } from './myReports.js';
 import { openFeedbackModal } from './feedbackModal.js';
 import { openShareRoadmapModal } from './shareRoadmapModal.js';
+import { openImportBackupDropZoneModal } from './importBackupModal.js';
 
 // Issue #6 Phase 2.1. Nav list was originally just Dashboard + My Roadmaps —
 // the original spec also listed Resources/Settings, but neither page existed
@@ -46,52 +47,60 @@ function readCollapsed() {
 // the sidebar isn't rendered below 900px and the topbar avatar is the only
 // remaining account-menu entry point at that width.
 export function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour, onOpenChangelog, align = 'start' }) {
-  const importInput = el('input', {
-    type: 'file',
-    accept: '.json,application/json',
-    hidden: true,
-    onChange: () => {
-      const file = importInput.files?.[0];
-      importInput.value = '';
-      if (file) importBackupFromFile(store, file);
-    }
-  });
-
   const dropdownItems = [
-    { text: 'Settings', onClick: () => navigate('/settings') }
+    { text: 'Settings', icon: createIcon('settings', { size: 'sm' }), onClick: () => navigate('/settings') }
   ];
-  if (onOpenChangelog) dropdownItems.push({ text: "What's New", onClick: onOpenChangelog });
+  if (onOpenChangelog) dropdownItems.push({ text: "What's New", icon: createIcon('bell', { size: 'sm' }), onClick: onOpenChangelog });
   // Issue #17 — only offered where the tour's spotlight targets actually
   // exist (dashboard.js is the only caller that passes this), never on
   // Progress/Settings/onboarding's own sidebar instance, where every
   // querySelector target would resolve to null and the tour would end
   // immediately with no explanation.
-  if (onStartTour) dropdownItems.push({ text: 'Take a tour', onClick: onStartTour });
+  if (onStartTour) dropdownItems.push({ text: 'Take a tour', icon: createIcon('sparkle', { size: 'sm' }), onClick: onStartTour });
   dropdownItems.push(
     // Issue #498 — replaces feedbackWidget.js's floating trigger, which
     // used to be the only way to reach the feedback form.
-    { text: 'Send feedback', onClick: () => openFeedbackModal({ user }) },
-    { text: 'My reports', onClick: () => openMyReports({ user }) },
+    { text: 'Send feedback', icon: createIcon('note', { size: 'sm' }), onClick: () => openFeedbackModal({ user }) },
+    { text: 'My reports', icon: createIcon('note', { size: 'sm' }), onClick: () => openMyReports({ user }) },
     // Issue #414 — the app-wide developer/creator profile, visible to every
     // signed-in identity (never gated behind !user.isAnonymous, matching
     // "My reports"/backup export just above and below).
-    { text: 'About the developer', onClick: () => navigate('/creator') },
-    { text: 'Share this roadmap…', onClick: () => openShareRoadmapModal({ user, store }) },
-    { text: 'Download backup (JSON)', onClick: () => exportBackupJson(store) },
-    { text: 'Export CSV', onClick: () => exportBackupCsv(store) },
-    { text: 'Export as Markdown', onClick: () => exportBackupMarkdown(store) },
-    { text: 'Import backup…', onClick: () => importInput.click() },
-    { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
+    { text: 'About the developer', icon: createIcon('info', { size: 'sm' }), onClick: () => navigate('/creator') },
+    { text: 'Share this roadmap…', icon: createIcon('share', { size: 'sm' }), onClick: () => openShareRoadmapModal({ user, store }) },
+    { text: 'Download backup (JSON)', icon: createIcon('save', { size: 'sm' }), onClick: () => exportBackupJson(store) },
+    { text: 'Export CSV', icon: createIcon('upload', { size: 'sm' }), onClick: () => exportBackupCsv(store) },
+    { text: 'Export as Markdown', icon: createIcon('note', { size: 'sm' }), onClick: () => exportBackupMarkdown(store) },
+    {
+      text: 'Import backup…',
+      icon: createIcon('upload', { size: 'sm' }),
+      onClick: async () => {
+        const file = await openImportBackupDropZoneModal();
+        if (file) importBackupFromFile(store, file);
+      }
+    },
+    { text: 'Print roadmap…', icon: createIcon('note', { size: 'sm' }), onClick: () => triggerRoadmapPrint(store) }
   );
   if (dailyTodoStore) {
-    dropdownItems.push({ text: 'Export to calendar (.ics)', onClick: () => exportTodosIcs(dailyTodoStore) });
+    dropdownItems.push({ text: 'Export to calendar (.ics)', icon: createIcon('timer', { size: 'sm' }), onClick: () => exportTodosIcs(dailyTodoStore) });
   }
+  // Issue #507 — the account-menu design reference includes "Sign out" as a
+  // menu row, alongside the sidebar footer's own always-visible sign-out
+  // icon button (unchanged, still the primary affordance below >=900px's
+  // sidebar). This is a second, harmless way to reach the same action —
+  // same "duplicate entry point is fine" precedent the topbar avatar's
+  // "What's New" item already established for the changelog drawer.
+  dropdownItems.push({ text: 'Sign out', icon: createIcon('signOut', { size: 'sm' }), onClick: () => confirmAndSignOut(user, store, dailyTodoStore) });
   if (!user.isAnonymous && onDeleteAccount) {
-    dropdownItems.push({ text: 'Delete account', danger: true, onClick: onDeleteAccount });
+    dropdownItems.push({ text: 'Delete account', danger: true, icon: createIcon('trash', { size: 'sm' }), onClick: onDeleteAccount });
   }
 
-  const identity = createDropdown(identityTrigger, dropdownItems, { align });
-  return { identity, importInput };
+  const header = {
+    title: user.isAnonymous ? 'Guest session' : (user.displayName || user.email || 'Signed in'),
+    subtitle: user.isAnonymous ? 'Saved on this device' : 'Signed in · synced'
+  };
+
+  const identity = createDropdown(identityTrigger, dropdownItems, { align, header });
+  return { identity };
 }
 
 // Returns the sidebar node. Renders only at >=900px (app.css) — below that,
@@ -144,7 +153,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
     guestRiskIndicator
   ]);
 
-  const { identity, importInput } = buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour });
+  const { identity } = buildAccountMenu({ user, store, dailyTodoStore, identityTrigger, onDeleteAccount, onStartTour });
 
   // Issue #488 — theme now moves here (and to Settings' own theme select)
   // rather than living as a topbar icon button.
@@ -152,7 +161,6 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
 
   const footer = el('div', { className: 'app-sidebar-footer' }, [
     identity,
-    importInput,
     themeToggleBtn,
     el('button', {
       type: 'button',

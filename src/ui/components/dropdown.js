@@ -7,24 +7,38 @@ import { el } from '../dom.js';
 // per issue #6 Phase 3's dropdown spec, built early in Phase 2 since the
 // topbar user menu needs it now.
 //
-// items: [{ text, onClick, danger }]
+// items: [{ text, onClick, danger, icon?, badge? }] — `icon` is a createIcon()
+// node (issue #507's account-menu design puts a glyph on every row), `badge`
+// an already-built node (e.g. featureBadge.js's "New" pill) shown flush right.
+// header: optional { title, subtitle } rendered above the item list (the
+// design's email + "Signed in · synced" identity block) — purely
+// presentational, never itself a menu item.
 // Returns the wrapping node; caller must call node._cleanup() on teardown.
-export function createDropdown(trigger, items, { align = 'end' } = {}) {
+export function createDropdown(trigger, items, { align = 'end', header = null } = {}) {
   const menu = el('div', {
     className: `dropdown-menu dropdown-${align}`,
     role: 'menu'
   });
+  if (header) {
+    menu.append(el('div', { className: 'dropdown-header' }, [
+      el('span', { className: 'dropdown-header-title', text: header.title }),
+      header.subtitle ? el('span', { className: 'dropdown-header-subtitle', text: header.subtitle }) : null
+    ].filter(Boolean)));
+  }
   const itemEls = items.map(item => {
     const btn = el('button', {
       type: 'button',
       role: 'menuitem',
       className: `dropdown-item${item.danger ? ' dropdown-item-danger' : ''}`,
-      text: item.text,
       onClick: () => {
         close();
         item.onClick?.();
       }
-    });
+    }, [
+      item.icon ? el('span', { className: 'dropdown-item-icon', 'aria-hidden': 'true' }, [item.icon]) : null,
+      el('span', { className: 'dropdown-item-text', text: item.text }),
+      item.badge ? el('span', { className: 'dropdown-item-badge' }, [item.badge]) : null
+    ].filter(Boolean));
     menu.append(btn);
     return btn;
   });

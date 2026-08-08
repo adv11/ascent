@@ -5912,3 +5912,56 @@ rather than retuning that padding itself, which other elements/breakpoints depen
 the four gaps went from 34/16/16/38px to a consistent 18/16/16/20px.
 
 `CACHE_VERSION` bumped 118 → 119.
+
+### 2026-08-08 — PR TBD — Conditional states: tour, menus, nudges, guides, loading (issue #507, E7 — final issue in the responsive-redesign batch)
+
+Twelve components that only render under a condition, previously undesigned. No new
+files — every change is to an existing component/page:
+
+- `dropdown.js` gained per-item icons, a right-aligned badge slot, and an optional
+  identity header (`{ title, subtitle }`), plus 48px rows reading `--tap-min`.
+  `sidebar.js`'s `buildAccountMenu()` now passes an icon on every item and adds a "Sign
+  out" row — a second, harmless entry point alongside the sidebar footer's own button
+  (same precedent as the topbar avatar's duplicate "What's New" entry).
+- `guestDataRiskNudge.js` changed shape from a one-off `confirmDialog()` popup
+  (`maybeShowGuestDataRiskNudge()`) to a dismissible banner
+  (`createGuestDataRiskNudge()`, `.guest-risk-nudge`) rendered in `dashboard.js`
+  alongside `backupReminderBanner.js`/`progressDigestBanner.js` — same once-ever-per-uid
+  guard, same `shouldShowGuestRiskNudge`/`markGuestRiskNudgeShown` functions, different
+  presentation. This is the one behavioral (not just visual) change in this pass: the
+  design reference groups all three as one "nudge" family, and a warning about
+  local-only data at risk reads wrong sharing a modal shape with a routine backup
+  reminder. It sits on the neutral surface with a border rather than the other two
+  banners' accent tint, so it never reads as a success/informational message.
+- `decorativeIcon.js` gained a real icon picker (`createIconPicker()` — a 56px-cell
+  `role="radiogroup"` grid — and `openIconPickerModal()`, a promise-resolving modal
+  wrapper). `onboarding.js`'s custom-roadmap card overflow menu gained a "Change icon"
+  action; `customRoadmapIcon.js`'s previously fixed hash-derived icon
+  (`pickCustomRoadmapIcon()`) is now only the fallback — `resolveCustomRoadmapIcon()`
+  checks a new device-local override first (`KEYS.CUSTOM_ROADMAP_ICON_OVERRIDES`, same
+  "device-level, not worth a Firebase round trip" precedent as `SIDEBAR_COLLAPSED`).
+- `importBackupModal.js` gained a drag-and-drop front door
+  (`openImportBackupDropZoneModal()`) ahead of the existing merge/overwrite diff screen
+  — "Import backup…" now opens a real modal with a drop zone instead of triggering a
+  bare native file-picker click. The now-dead hidden `<input type="file">`
+  `buildAccountMenu()` used to build and return (`importInput`) was removed from its
+  return value and both call sites (`sidebar.js`, `topbar.js`).
+- `featureTour.js`'s "Step N of M" label is now a visible `.eyebrow`-styled kicker
+  (was screen-reader-only) and the spotlight ring gained a 4px accent-tinted halo
+  between its border and the dim scrim, both purely additive to the same box-shadow
+  stack.
+- `dailyTodoGuide.js`/`buildYourOwnGuide.js` gained numbered step badges
+  (`.build-guide-step`/`.build-guide-step-number`) around their existing headings/body
+  copy — no copy changes beyond dropping the "1. "/"2. " text prefixes the badges now
+  carry visually.
+- `skeleton.js`'s `.skeleton` shimmer changed from a flat `--color-neutral-200` fill +
+  opacity pulse to a real sweep between `--color-surface` and `--color-divider` only —
+  per the design reference's "never a tinted step" rule.
+- `addToDailyTodoModal.js`'s field labels changed to plain questions ("What are you
+  calling it?" / "How long have you got?") — no behavioral change.
+- `myReports.js`, `confetti.js`, and `tooltip.js` were already on-spec (type icon +
+  date + status pill + severity pill hidden when absent + expandable body; deterministic
+  seeded confetti scatter, no randomness to begin with; pointer-and-focus tooltip, never
+  the sole carrier of meaning at any existing call site) and needed no change.
+
+`CACHE_VERSION` bumped 119 → 120.

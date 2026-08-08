@@ -2212,15 +2212,54 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   padding: var(--space-1);
   display: none;
   flex-direction: column;
+  /* Issue #507 follow-up — the account menu grew a header block + a "Sign
+     out" row + 48px-tall items (this same issue), tall enough on a real
+     Firebase account (10+ items) to exceed the viewport height entirely on
+     a short/laptop screen — `positionMenu()` (dropdown.js) can flip the
+     menu above vs. below the trigger, but has nothing to fall back to once
+     the content itself is taller than the whole viewport. Capping height
+     and scrolling internally, the same way `.custom-select-listbox` and
+     every other tall floating list in this app already does, guarantees
+     the menu box itself is always fully on-screen regardless of item count
+     — verified against tests/e2e/responsive.test.js's "not clipped by the
+     sidebar" boundingBox assertion, which caught the regression live. */
+  max-height: min(480px, calc(100vh - 24px));
+  overflow-y: auto;
   z-index: 210;
 }
 @supports not (backdrop-filter: blur(1px)) {
   .dropdown-menu { background: var(--color-surface-raised); }
 }
 .dropdown-menu.open { display: flex; }
+/* Issue #507 — account-menu identity block (email + "Signed in · synced"),
+   shown above the item list only when a header is passed. Not a menu item
+   itself (no role="menuitem", never clickable). */
+.dropdown-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
+}
+.dropdown-header-title {
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dropdown-header-subtitle { font-size: var(--text-base); color: var(--color-text-muted); }
+/* Issue #507 — 48px rows per the account-menu design reference, matching
+   this app's own --tap-min touch-target floor rather than inventing a
+   separate row height. */
 .dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   width: 100%;
+  min-height: var(--tap-min, 48px);
   text-align: left;
   padding: var(--space-2) var(--space-3);
   border: none;
@@ -2233,6 +2272,10 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .dropdown-item:hover, .dropdown-item:focus-visible { background: hsl(var(--v3-accent) / 0.1); outline: none; }
 .dropdown-item-danger { color: var(--color-danger); }
+.dropdown-item-icon { display: inline-flex; flex-shrink: 0; color: var(--color-text-muted); }
+.dropdown-item-danger .dropdown-item-icon { color: var(--color-danger); }
+.dropdown-item-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dropdown-item-badge { flex-shrink: 0; }
 
 /* Custom-styled listbox replacing a bare <select> (issue #136 Phase 3,
    src/ui/components/select.js) — same position: fixed + getBoundingClientRect()
@@ -2603,7 +2646,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    look, which is what makes the width mismatch read as a bug here and not
    there. Also scoped to `.dashboard` — settings.js/progress.js have no
    equivalent second gutter layer for this to correct against. */
-.dashboard .app-content > .guest-banner {
+.dashboard .app-content > .guest-banner,
+.dashboard .app-content > .guest-risk-nudge {
   margin-left: var(--dashboard-gutter-x);
   margin-right: var(--dashboard-gutter-x);
   /* Issue #505 follow-up (live visual review) — `.guest-banner`'s own
@@ -2634,6 +2678,28 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .dashboard-header > .roadmap-filters-card {
   margin-bottom: 0;
 }
+
+/* Issue #507 — the "at-risk" nudge in a warning about local-only data being
+   lost, not good news, so it deliberately does NOT share the accent-tint
+   background below (.backup-reminder-banner/.progress-digest-banner) — a
+   neutral surface + border reads as "pay attention," never as a success
+   banner. Same dismissible-banner shape otherwise (icon, message, actions). */
+.guest-risk-nudge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--v3-radius-md);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+.guest-risk-nudge-icon { display: inline-flex; color: var(--color-danger); }
+.guest-risk-nudge-msg { flex: 1; min-width: min(220px, 100%); font-weight: 500; }
 
 .backup-reminder-banner {
   display: flex;
@@ -2754,8 +2820,52 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .build-guide-card { max-width: 520px; display: grid; gap: 4px; }
 .build-guide-intro { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.6; margin-bottom: 8px; }
 .build-guide-heading { font-size: var(--text-base); font-weight: 800; color: var(--color-text); margin-top: 12px; }
+/* Issue #507 — the numbered 1/2/3 step badge from the "How it works"-style
+   guide cards (dailyTodoGuide.js/buildYourOwnGuide.js) in the design
+   reference. A plain flex row, not a grid, so a step whose body wraps to
+   multiple lines still keeps the badge aligned to the first line. */
+.build-guide-step { display: flex; gap: 12px; margin-top: 12px; align-items: flex-start; }
+.build-guide-step-number {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--v3-accent) / 0.15);
+  color: var(--color-accent-700);
+  font-weight: 700;
+  font-size: var(--text-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.build-guide-step-content { flex: 1; min-width: 0; }
+.build-guide-step .build-guide-heading { margin-top: 0; }
 .build-guide-body { font-size: var(--text-base); color: var(--color-text); line-height: 1.6; }
 .build-guide-note { font-size: 12px; color: var(--color-text-muted); font-style: italic; margin-top: 12px; }
+
+/* Issue #507 — custom-roadmap icon picker: a 56px-cell grid (design
+   reference), one cell per decorativeIcon.js name in the caller's list. */
+.icon-picker-card { max-width: 420px; }
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 56px);
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+.icon-picker-cell {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--v3-radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.icon-picker-cell:hover, .icon-picker-cell:focus-visible { border-color: hsl(var(--v3-accent) / 0.5); color: var(--color-text); outline: none; }
+.icon-picker-cell.active { border-color: hsl(var(--v3-accent)); background: hsl(var(--v3-accent) / 0.12); color: var(--color-accent-700); }
 
 .confirm-dialog-card { max-width: 440px; }
 .confirm-dialog-body { font-size: var(--text-base); color: var(--color-text-muted); line-height: 1.6; }
@@ -5052,13 +5162,18 @@ html[data-scrolling] .dropdown-menu {
    anywhere" violation and, now moot, a redundant one — its three color stops
    had all converged on the same `--color-surface-raised` value during an
    earlier token migration, so it hadn't even been visibly shimmering). */
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* Issue #507 — a real shimmer sweeping between --color-surface and
+   --color-divider only (design reference), replacing the old flat
+   --color-neutral-200 fill + opacity-pulse — a loading placeholder is never
+   a tinted/accent step, only these two neutral tokens. */
+@keyframes skeleton-shimmer {
+  0% { background-position: -150% 0; }
+  100% { background-position: 150% 0; }
 }
 .skeleton {
-  background: var(--color-neutral-200);
-  animation: skeleton-pulse 1.4s ease infinite;
+  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-divider) 50%, var(--color-surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
   border-radius: var(--radius-md);
 }
 .skeleton-text { height: 14px; }
@@ -5121,8 +5236,11 @@ html[data-scrolling] .dropdown-menu {
      the viewport, leaving this element's own box as a "cutout" over the
      highlighted target. Not clip-path'ing a separate overlay, per the
      issue's own spec — cheaper to keep in sync on resize/scroll, since
-     repositioning is just two style writes rather than a recomputed path. */
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* intentional: theme-agnostic dim layer, same reasoning as .modal-overlay's own scrim; design-system.md §7 specifies "ink scrim at 50%" exactly (issue #301 follow-up — was 0.6) */
+     repositioning is just two style writes rather than a recomputed path.
+     Issue #507 — a 4px accent-100 halo (design reference) sits between the
+     ring border and the dim layer, in the same box-shadow stack rather than
+     a second element, so it tracks the ring's position/resize for free. */
+  box-shadow: 0 0 0 4px hsl(var(--v3-accent) / 0.2), 0 0 0 9999px rgba(0, 0, 0, 0.5); /* intentional: theme-agnostic dim layer, same reasoning as .modal-overlay's own scrim; design-system.md §7 specifies "ink scrim at 50%" exactly (issue #301 follow-up — was 0.6) */
   pointer-events: none;
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -5149,15 +5267,12 @@ html[data-scrolling] .dropdown-menu {
 @supports not (backdrop-filter: blur(1px)) {
   .tour-popover { background: var(--color-surface-raised); }
 }
-.tour-popover-progress {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-.tour-popover-title { font-size: var(--text-base); margin: 0 0 6px; color: var(--color-text); }
+/* Issue #507 — the design reference shows "STEP N OF M" as a visible
+   eyebrow-style kicker above the step title, not a screen-reader-only
+   label; the popover's own aria-live="polite" already announces step
+   changes to assistive tech, so making this visible loses nothing. */
+.tour-popover-progress { margin: 0 0 6px; }
+.tour-popover-title { font-size: var(--text-base); font-weight: 700; margin: 0 0 6px; color: var(--color-text); }
 .tour-popover-body { font-size: var(--text-base); color: var(--color-text-muted); margin: 0 0 16px; }
 .tour-popover-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .tour-popover-actions-right { display: flex; gap: 8px; }
@@ -5185,7 +5300,13 @@ html[data-scrolling] .dropdown-menu {
 /* Flush-left, not centered — design-system.md §4's "flush-left everything...
    never center hero copy or button labels" rule (issue #301 follow-up). This
    card was the one remaining centered modal in the app. */
-.tour-welcome-brand { display: flex; justify-content: flex-start; margin-bottom: 12px; }
+/* Issue #507 follow-up (live visual review) — createBrandMark() returns a
+   bare [icon, wordmark] array with no gap of its own; every other call site
+   supplies it via a wrapping `.brand` class (10px gap), but this one used a
+   bespoke `.tour-welcome-brand` div that never set `align-items`/`gap`, so
+   the glyph and "ASCENT" wordmark rendered touching with no space between
+   them. */
+.tour-welcome-brand { display: flex; align-items: center; gap: 10px; justify-content: flex-start; margin-bottom: 12px; }
 .tour-welcome-title { font-size: var(--text-lg); margin: 0 0 8px; color: var(--color-text); }
 .tour-welcome-body { color: var(--color-text-muted); margin: 0 0 20px; }
 .tour-welcome-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }

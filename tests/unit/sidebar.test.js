@@ -98,7 +98,7 @@ describe('createSidebar — account identity', () => {
     node.querySelector('.app-sidebar-identity').click();
     expect(document.querySelector('.dropdown-item-danger')).toBeNull();
     const itemText = Array.from(document.querySelectorAll('.dropdown-item')).map(el => el.textContent);
-    expect(itemText).toEqual(['Settings', 'Send feedback', 'My reports', 'About the developer', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Export as Markdown', 'Import backup…', 'Print roadmap…']);
+    expect(itemText).toEqual(['Settings', 'Send feedback', 'My reports', 'About the developer', 'Share this roadmap…', 'Download backup (JSON)', 'Export CSV', 'Export as Markdown', 'Import backup…', 'Print roadmap…', 'Sign out']);
   });
 
   // Issue #414 — "About the developer" account-menu item.
