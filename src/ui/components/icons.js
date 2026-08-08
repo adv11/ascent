@@ -223,6 +223,12 @@ const ICON_SHAPES = {
     { tag: 'rect', width: '18', height: '11', x: '3', y: '11', rx: '2', ry: '2' },
     { d: 'M7 11V7a5 5 0 0 1 10 0v4' }
   ],
+  // lucide: arrow-up-right — the "opens externally" affordance on the
+  // developer profile page's link cards (issue #506).
+  arrowUpRight: () => [
+    { d: 'M7 7h10v10' },
+    { d: 'M7 17 17 7' }
+  ],
   // Brand marks (issue #414, developer profile page §5 rule) — fill: currentColor,
   // no stroke, per design-system.md §5's "brand marks use fill, everything else
   // uses stroke-2" split. Never apply this fill treatment to a non-brand-mark icon.
