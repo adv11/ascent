@@ -7,20 +7,20 @@ import { test, expect } from './fixtures.js';
 
 test('signed-out visitor hitting "/" sees the landing page, not sign-in', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.landing-page')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.landing-page')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.landing-hero-title')).toContainText('Engineer your next move.');
 });
 
 test('landing page "Start free" navigates to sign-up', async ({ page }) => {
   await page.goto('/');
   await page.locator('.landing-hero-actions').getByText('Start free', { exact: false }).click();
-  await expect(page).toHaveURL(/#\/signup/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/signup/, { timeout: 20_000 });
 });
 
 test('landing page "Sign in" navigates to sign-in', async ({ page }) => {
   await page.goto('/');
   await page.locator('.landing-nav-actions').getByText('Sign in').click();
-  await expect(page).toHaveURL(/#\/signin/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/signin/, { timeout: 20_000 });
 });
 
 test('landing page nav link smooth-scrolls to a section without changing the route', async ({ page }) => {

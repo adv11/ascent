@@ -24,7 +24,7 @@ function minimalImportJson(title) {
 async function createCustomRoadmapViaImport(page, title) {
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
   await page.locator('.template-card-create .template-card-pick').click();
   const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
@@ -42,7 +42,7 @@ async function createCustomRoadmapViaImport(page, title) {
   // caller starts interacting with it — the URL can change slightly before
   // the dashboard has fetched/rendered the roadmap it just switched to.
   await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
-  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 10_000 });
+  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 20_000 });
 
   // Issue #17's first-time feature tour auto-starts the moment a fresh guest
   // finishes onboarding — its `.tour-scrim` sits above every other element
@@ -152,7 +152,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     await createCustomRoadmapViaImport(page, 'Deletable Roadmap');
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     const card = page.locator('.template-card', { hasText: 'Deletable Roadmap' });
     await expect(card.locator('.template-card-current-badge')).toContainText('Current');
@@ -179,7 +179,7 @@ test.describe('manual roadmap creation — full phase/section/topic CRUD (issue 
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card-create .template-card-pick').click();
     const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');

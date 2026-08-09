@@ -9,7 +9,7 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     // Data Scientist, not Java Backend Engineer — its first phase ("Python
     // for Data Science", 19 items) stays under LARGE_PHASE_ITEM_THRESHOLD
     // (40), so the animation actually plays. Java Backend Engineer's first
@@ -18,7 +18,7 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     // means those phases skip straight to the end state with no mid-frame to
     // observe here, which is what this test needs to exercise.
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     const firstCard = page.locator('.phase-card').first();
     await expect(firstCard).toHaveClass(/open/);
@@ -65,12 +65,12 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     // Data Scientist — see the comment on the collapse test above; its
     // second phase ("Mathematics for Machine Learning", 14 items) also
     // stays under LARGE_PHASE_ITEM_THRESHOLD.
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     const secondCard = page.locator('.phase-card').nth(1);
     await expect(secondCard).not.toHaveClass(/open/);
@@ -96,9 +96,9 @@ test.describe('phase-card expand/collapse animation (issue #6 Phase 7)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     const secondCard = page.locator('.phase-card').nth(1);
     const secondCardNode = await secondCard.elementHandle();

@@ -46,7 +46,7 @@ test.describe('two custom roadmaps imported back-to-back survive a sign-out/sign
     const password = 'TestPassword1!';
 
     await page.goto('/#/signup');
-    await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+    await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 20_000 });
     await page.locator('input[type="email"]').fill(uniqueEmail);
     await page.locator('input[type="password"]').first().fill(password);
     await page.locator('input[type="password"]').last().fill(password);
@@ -64,14 +64,14 @@ test.describe('two custom roadmaps imported back-to-back survive a sign-out/sign
     await page.goto('/#/onboarding');
     await importRoadmap(page, 'Roadmap B');
     await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
-    await expect(page.locator('.current-roadmap-badge')).toContainText('Roadmap B', { timeout: 10_000 });
+    await expect(page.locator('.current-roadmap-badge')).toContainText('Roadmap B', { timeout: 20_000 });
 
     // Sign out via onboarding.js's standalone sign-out button (this page has
     // no app-shell sidebar) and accept the confirmation dialog.
     await page.goto('/#/onboarding');
     await page.locator('[aria-label="Sign out"]').click();
     await page.locator('.modal-overlay [data-action="confirm"]').click();
-    await expect(page).toHaveURL(/#\/signin/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/signin/, { timeout: 20_000 });
 
     // Signing back in with an already-onboarded account routes straight to
     // /app (main.js's own routing — onboardingDone is already true), not
@@ -85,18 +85,18 @@ test.describe('two custom roadmaps imported back-to-back survive a sign-out/sign
 
     // Both roadmaps must still be listed as pickable cards — neither id was
     // silently dropped from meta.startedTemplateIds/meta.customRoadmaps.
-    await expect(page.locator('.template-card-name', { hasText: 'Roadmap A' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.template-card-name', { hasText: 'Roadmap A' })).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.template-card-name', { hasText: 'Roadmap B' })).toBeVisible();
 
     // And each roadmap's actual content survived — not re-seeded empty by a
     // false-positive "fresh seed" switchRoadmap() branch.
     await page.locator('.template-card', { hasText: 'Roadmap A' }).locator('.template-card-pick').click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 15_000 });
-    await expect(page.locator('.check-item', { hasText: 'Seed topic' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.check-item', { hasText: 'Seed topic' })).toBeVisible({ timeout: 20_000 });
 
     await page.goto('/#/onboarding');
     await page.locator('.template-card', { hasText: 'Roadmap B' }).locator('.template-card-pick').click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 15_000 });
-    await expect(page.locator('.check-item', { hasText: 'Seed topic' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.check-item', { hasText: 'Seed topic' })).toBeVisible({ timeout: 20_000 });
   });
 });

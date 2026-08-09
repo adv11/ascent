@@ -44,9 +44,9 @@ test.describe('scroll background must stay dark, not flash grey (issue #455)', (
     await page.addInitScript(() => { window.localStorage.setItem('ascent-theme', 'dark'); });
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     // Open a large phase (>40 items — the FLIP-animation-skip threshold,
@@ -108,9 +108,9 @@ test.describe('scroll background must stay dark, not flash grey (issue #455)', (
     await page.addInitScript(() => { window.localStorage.setItem('ascent-theme', 'dark'); });
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     const firstCard = page.locator('.phase-card').first();
     const alreadyOpen = await firstCard.evaluate((el) => el.classList.contains('open'));

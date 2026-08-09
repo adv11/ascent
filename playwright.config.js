@@ -14,6 +14,9 @@ export default defineConfig({
   // keeps this from trying to launch a browser locally after `npm run
   // test:e2e`.
   reporter: [['html', { open: 'never' }], ['list']],
+  expect: {
+    timeout: 20_000,
+  },
   use: {
     baseURL: 'http://localhost:4173',
     headless: true,

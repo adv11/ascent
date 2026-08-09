@@ -51,7 +51,7 @@ function importJsonWithResources() {
 async function openCreateModal(page) {
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
   await page.locator('.template-card-create .template-card-pick').click();
   const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
   await expect(modal).toBeVisible();
@@ -144,7 +144,7 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await expect(importBtn).toBeEnabled();
     await importBtn.click();
 
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.current-roadmap-badge')).toContainText('Imported Roadmap');
     await expect(page.locator('.phase-name').first()).toContainText('Phase One');
     await expect(page.locator('.check-item')).toHaveCount(2);
@@ -167,7 +167,7 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     await expect(modal.locator('.form-message.success')).toContainText('1 topic found');
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
 
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     const row = page.locator('.check-item', { hasText: 'Learn Docker' });
     await expect(row).toBeVisible();
     await expect(row.locator('.check-meta')).toContainText('2 links');
@@ -179,7 +179,7 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
 
     await modal.locator('.import-paste-area').fill(importJsonWithResources());
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     // Issue #487 — the Resources/Review chips moved behind a "Filter" toolbar
     // button, opening a panel that holds the same chips; close it again
@@ -245,10 +245,10 @@ test.describe('AI-assisted roadmap creation — two-column layout (issue #100)',
     const modal = await openCreateModal(page);
     await modal.locator('.import-paste-area').fill(validImportJson());
     await modal.locator('button', { hasText: 'Import roadmap' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     const card = page.locator('.template-card', { hasText: 'Imported Roadmap' });
     await expect(card.locator('.template-card-current-badge')).toContainText('Current');

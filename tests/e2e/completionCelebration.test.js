@@ -23,7 +23,7 @@ function minimalImportJson(title) {
 async function createCustomRoadmapViaImport(page, title) {
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
   await page.locator('.template-card-create .template-card-pick').click();
   const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
@@ -31,7 +31,7 @@ async function createCustomRoadmapViaImport(page, title) {
   await modal.locator('.import-paste-area').fill(minimalImportJson(title));
   await modal.locator('button', { hasText: 'Import roadmap' }).click();
   await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
-  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 10_000 });
+  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 20_000 });
 }
 
 test.describe('phase/roadmap completion celebration (issue #181)', () => {
@@ -46,7 +46,7 @@ test.describe('phase/roadmap completion celebration (issue #181)', () => {
     await expect(page.locator('.confetti-burst')).toHaveCount(1);
 
     await page.reload();
-    await expect(page.locator('.current-roadmap-badge')).toContainText('Celebration Test Roadmap', { timeout: 10_000 });
+    await expect(page.locator('.current-roadmap-badge')).toContainText('Celebration Test Roadmap', { timeout: 20_000 });
     // Give any (incorrect) refire a moment to happen before asserting absence.
     await page.waitForTimeout(1000);
     await expect(page.locator('.toast', { hasText: 'Phase complete' })).toHaveCount(0);

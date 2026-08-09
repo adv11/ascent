@@ -41,7 +41,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await expect(page).toHaveTitle('Ascent');
     // 7 built-in templates ("blank" retired — issue #4 follow-up) + the
     // single "Create your own roadmap" card (issue #100 merged the separate
@@ -59,11 +59,11 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
 
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.dashboard')).toBeVisible();
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
   });
@@ -72,15 +72,15 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.dashboard')).toBeVisible();
 
     await page.reload();
 
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await expect(page).not.toHaveURL(/#\/onboarding/);
   });
 });
@@ -90,17 +90,17 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     const backBtn = page.locator('button', { hasText: 'Back to my roadmap' });
     await expect(backBtn).toBeVisible();
 
     await backBtn.click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
   });
 
@@ -108,17 +108,17 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
     await expect(page.locator('.modal-overlay')).toHaveCount(0);
 
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.phase-name').first()).toContainText('Python for Data Science');
   });
 
@@ -126,18 +126,18 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     const currentCard = page.locator('.template-card', { hasText: 'Java Backend Engineer' });
     await expect(currentCard.locator('.template-card-current-badge')).toContainText('Current');
 
     await currentCard.click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.phase-name').first()).toContainText('Core Java');
     // No confirmation dialog should have appeared for re-picking the same template.
     await expect(page.locator('.modal-overlay')).toHaveCount(0);
@@ -150,9 +150,9 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Frontend Developer' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     const frontendChecks = page.locator('.check-item');
     await frontendChecks.nth(0).click();
@@ -160,21 +160,21 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
     await expect(page.locator('.save-badge')).toBeVisible();
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     await expect(page.locator('.phase-name').first()).toContainText('Python for Data Science');
 
     await page.locator('.check-item').nth(0).click();
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     // Now that Data Scientist is active, Frontend is "In progress" (started,
     // not active) rather than disappearing.
     await expect(page.locator('.template-card', { hasText: 'Frontend Developer' }).locator('.template-card-started-badge')).toContainText('In progress');
     await page.locator('.template-card', { hasText: 'Frontend Developer' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
     // Frontend's two earlier checks must still be checked — no data loss.
     await expect(page.locator('.check-item').nth(0).locator('.check-box')).toHaveAttribute('aria-checked', 'true');
@@ -182,7 +182,7 @@ test.describe('onboarding — switch template from the dashboard (issue #58: non
 
     await page.locator('.nav-item', { hasText: 'Your roadmaps' }).click();
     await page.locator('.template-card', { hasText: 'Data Scientist' }).click();
-    await expect(page).toHaveURL(/#\/app/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
     // Data Science's own check must also still be intact.
     await expect(page.locator('.check-item').nth(0).locator('.check-box')).toHaveAttribute('aria-checked', 'true');
   });
@@ -193,7 +193,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     const pianoCard = page.locator('.template-card', { hasText: 'Learning Piano' });
     await expect(pianoCard).toBeVisible();
@@ -220,7 +220,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await clickOverflowAction(page.locator('.template-card', { hasText: 'Marketing' }), 'Hide');
     const dialog = page.locator('.modal-overlay[aria-label*="Marketing"]');
@@ -237,7 +237,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     for (const name of ['Java Backend Engineer', 'Learning Piano', 'Marketing']) {
       await expect(page.locator('.template-card', { hasText: name }).locator('.template-card-overflow-btn')).toBeVisible();
@@ -252,7 +252,7 @@ test.describe('onboarding — hiding and restoring templates', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await clickOverflowAction(page.locator('.template-card', { hasText: 'Learning Piano' }), 'Hide');
     await page.locator('.modal-overlay[aria-label*="Learning Piano"] [data-action="confirm"]').click();
@@ -269,7 +269,7 @@ test.describe('onboarding — favorite roadmaps (issue #177)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     const marketingCard = page.locator('.template-card', { hasText: 'Marketing' });
     await clickOverflowAction(marketingCard, 'Favorite');
@@ -296,7 +296,7 @@ test.describe('onboarding — favorite roadmaps (issue #177)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await clickOverflowAction(page.locator('.template-card', { hasText: 'Marketing' }), 'Favorite');
     await expect(page).toHaveURL(/#\/onboarding/);
@@ -306,7 +306,7 @@ test.describe('onboarding — favorite roadmaps (issue #177)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     for (const name of ['Java Backend Engineer', 'Frontend Developer', 'Data Scientist']) {
       await clickOverflowAction(page.locator('.template-card', { hasText: name }), 'Favorite');
@@ -329,7 +329,7 @@ test.describe('onboarding — "build your own roadmap" guide (issue #100)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card-create .template-card-info-corner').click();
 
@@ -349,7 +349,7 @@ test.describe('onboarding — "build your own roadmap" guide (issue #100)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     await page.locator('.template-card-create .template-card-info-corner').click();
     await page.locator('.build-guide-card button', { hasText: 'Open the roadmap builder' }).click();

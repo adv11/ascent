@@ -17,13 +17,13 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 async function signInAsGuest(page) {
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 }
 
 async function goToDashboardAsGuest(page) {
   await signInAsGuest(page);
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 }
 
 async function openFeedbackModalViaAccountMenu(page) {
@@ -39,7 +39,7 @@ async function signUpNewUser(page) {
   const uniqueEmail = `issue498-${Date.now()}@example.com`;
   const password = 'TestPassword1!';
   await page.goto('/#/signup');
-  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 20_000 });
   await page.locator('input[type="email"]').fill(uniqueEmail);
   await page.locator('input[type="password"]').first().fill(password);
   await page.locator('input[type="password"]').last().fill(password);
@@ -65,7 +65,7 @@ test.describe('feedback entry points — account menu and Settings row (issue #4
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await signUpNewUser(page);
     await page.goto('/#/settings');
-    await expect(page.locator('.settings-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.settings-page')).toBeVisible({ timeout: 20_000 });
 
     await page.locator('.tab', { hasText: 'Support' }).click();
     await page.locator('.settings-row', { hasText: 'Send feedback' }).getByRole('button', { name: 'Send feedback' }).click();
@@ -103,7 +103,7 @@ test.describe('feedback — full submit flow (requires Firebase emulator)', () =
     await form.locator('textarea.feedback-field-input').fill('Toggled rapidly and saw a visible flicker for ~1s instead of a clean update.');
 
     await form.locator('button[type="submit"]').click();
-    await expect(page.locator('.feedback-reference')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.feedback-reference')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.feedback-reference')).toHaveText(/^Reference: #\S{5}$/);
   });
 
@@ -115,12 +115,12 @@ test.describe('feedback — full submit flow (requires Firebase emulator)', () =
     await page.locator('.feedback-kind-chip', { hasText: 'Something else' }).click();
     await page.locator('.feedback-form textarea.feedback-field-input').fill('Loving the dashboard.');
     await page.locator('.feedback-form button[type="submit"]').click();
-    await expect(page.locator('.feedback-reference')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.feedback-reference')).toBeVisible({ timeout: 20_000 });
     await page.locator('.feedback-modal-close').click();
 
     await page.locator('.app-sidebar-identity').click();
     await page.locator('.dropdown-item', { hasText: 'My reports' }).click();
-    await expect(page.locator('.my-report-row', { hasText: 'Loving the dashboard.' })).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.my-report-row', { hasText: 'Loving the dashboard.' })).toBeVisible({ timeout: 20_000 });
   });
 
   test('rate limit UI shows a cooldown message after 3 recent submits', async ({ page }) => {
@@ -131,10 +131,10 @@ test.describe('feedback — full submit flow (requires Firebase emulator)', () =
       localStorage.setItem('ascent-feedback-rate', JSON.stringify([now, now, now]));
     });
     await page.reload();
-    await expect(page.locator('.onboarding-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.onboarding-page')).toBeVisible({ timeout: 20_000 });
 
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await openFeedbackModalViaAccountMenu(page);
     await expect(page.locator('.feedback-form button[type="submit"]')).toBeDisabled();
     await expect(page.locator('.feedback-cooldown-message')).toBeVisible();

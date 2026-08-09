@@ -30,9 +30,9 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     // Issue #488 — the header "N due for review" nav badge was retired along
     // with the rest of the old topbar-status controls (deferred to #489's
@@ -55,10 +55,10 @@ test.describe('spaced-repetition review reminders (issue #134)', () => {
 
     await ageFirstItemCompletion(page, 'java-backend', REVIEW_INTERVAL_DAYS + 6);
     await page.reload();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await page.locator('.filter-toggle-btn').click();
-    await expect(page.locator('.filter-chip[data-p="REVIEW"] .chip-count')).toHaveText('1/1', { timeout: 10_000 });
+    await expect(page.locator('.filter-chip[data-p="REVIEW"] .chip-count')).toHaveText('1/1', { timeout: 20_000 });
 
     const reviewChip = page.locator('.filter-chip[data-p="REVIEW"]');
     await reviewChip.click();

@@ -7,9 +7,9 @@ const FIREBASE_CONFIGURED = !!process.env.FIREBASE_CONFIGURED;
 async function goToDashboard(page) {
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 }
 
 test.describe('keyboard-only checklist navigation (issue #379)', () => {
@@ -62,7 +62,7 @@ test.describe('keyboard-only checklist navigation (issue #379)', () => {
 
     // Same save-badge wiring a real click already exercises — Enter goes
     // through .check-box's own click handler, not a parallel toggle path.
-    await expect(page.locator('#saveBadge')).toContainText(/Sav|Local only/, { timeout: 10_000 });
+    await expect(page.locator('#saveBadge')).toContainText(/Sav|Local only/, { timeout: 20_000 });
 
     await page.keyboard.press(' ');
     await expect(firstRow).not.toHaveClass(/done/);

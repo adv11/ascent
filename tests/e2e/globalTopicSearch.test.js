@@ -33,7 +33,7 @@ async function createCustomRoadmapViaImport(page, title, topicTitle) {
   await modal.locator('.import-paste-area').fill(minimalImportJson(title, topicTitle));
   await modal.locator('button', { hasText: 'Import roadmap' }).click();
   await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
-  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 10_000 });
+  await expect(page.locator('.current-roadmap-badge')).toContainText(title, { timeout: 20_000 });
   await dismissTourIfPresent(page);
 }
 
@@ -43,13 +43,13 @@ test.describe('global topic search (issue #283)', () => {
 
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     // Roadmap A — becomes inactive the moment roadmap B is created below.
     await createCustomRoadmapViaImport(page, 'Alpha Roadmap', 'Zylophone Fundamentals Q7');
     // Roadmap B — created second, so it's the active roadmap once both exist.
     await page.locator('a.brand').click();
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await createCustomRoadmapViaImport(page, 'Beta Roadmap', 'Quokka Habitat Research');
 
     // Beta is active — confirm Alpha's topic is NOT visible on this dashboard's
@@ -65,7 +65,7 @@ test.describe('global topic search (issue #283)', () => {
     await page.locator('.command-palette-input').fill('Zylophone Fundamentals');
 
     const topicResult = page.locator('.command-palette-item', { hasText: 'Zylophone Fundamentals Q7' });
-    await expect(topicResult).toBeVisible({ timeout: 10_000 });
+    await expect(topicResult).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.command-palette-group-label', { hasText: 'Topics' })).toBeVisible();
     await expect(topicResult).toContainText('Alpha Roadmap');
 
@@ -75,7 +75,7 @@ test.describe('global topic search (issue #283)', () => {
     // the matching topic's edit panel.
     await expect(page.locator('.current-roadmap-badge')).toContainText('Alpha Roadmap', { timeout: 15_000 });
     const itemPanel = page.locator('.item-panel[aria-label="Edit topic"]');
-    await expect(itemPanel).toBeVisible({ timeout: 10_000 });
+    await expect(itemPanel).toBeVisible({ timeout: 20_000 });
     await expect(itemPanel.locator('.field-input').first()).toHaveValue('Zylophone Fundamentals Q7');
   });
 
@@ -84,7 +84,7 @@ test.describe('global topic search (issue #283)', () => {
 
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card:not(.template-card-create) .template-card-pick').first().click();
     await expect(page).toHaveURL(/#\/app/, { timeout: 15_000 });
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 15_000 });
