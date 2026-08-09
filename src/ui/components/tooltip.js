@@ -89,5 +89,14 @@ export function attachTooltip(triggerEl, text) {
   triggerEl.addEventListener('mouseleave', hide);
   triggerEl.addEventListener('blur', hide);
 
+  function cleanup() {
+    triggerEl.removeEventListener('mouseenter', show);
+    triggerEl.removeEventListener('focus', show);
+    triggerEl.removeEventListener('mouseleave', hide);
+    triggerEl.removeEventListener('blur', hide);
+    bubble.remove();
+  }
+
+  triggerEl._tooltipCleanup = cleanup;
   return bubble;
 }

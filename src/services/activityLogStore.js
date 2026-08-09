@@ -221,17 +221,66 @@ export function createActivityLogStore() {
     notify({ saveState: 'saved' });
   }
 
+  let saveRetryTimer = null;
+  let saveRetryAttempt = 0;
+  let freezesRetryTimer = null;
+  let freezesRetryAttempt = 0;
+  const SAVE_RETRY_BASE_MS = 2000;
+  const SAVE_RETRY_MAX_MS = 30000;
+
+  function clearSaveRetry() {
+    clearTimeout(saveRetryTimer);
+    saveRetryTimer = null;
+    saveRetryAttempt = 0;
+  }
+
+  function clearFreezesRetry() {
+    clearTimeout(freezesRetryTimer);
+    freezesRetryTimer = null;
+    freezesRetryAttempt = 0;
+  }
+
+  function attemptFlushWithRetry() {
+    flush().then(() => {
+      clearSaveRetry();
+    }).catch(error => {
+      console.error('Activity log save failed', error);
+      scheduleSaveRetry(error);
+    });
+  }
+
+  function scheduleSaveRetry(error) {
+    clearTimeout(saveRetryTimer);
+    saveRetryAttempt += 1;
+    const delayMs = Math.min(SAVE_RETRY_BASE_MS * 2 ** (saveRetryAttempt - 1), SAVE_RETRY_MAX_MS);
+    notify({ saveState: 'error', error, retryAttempt: saveRetryAttempt, retryInMs: delayMs });
+    saveRetryTimer = setTimeout(attemptFlushWithRetry, delayMs);
+  }
+
+  function attemptFlushFreezesWithRetry() {
+    flushFreezes().then(() => {
+      clearFreezesRetry();
+    }).catch(error => {
+      console.error('Streak freezes save failed', error);
+      scheduleFreezesRetry(error);
+    });
+  }
+
+  function scheduleFreezesRetry(error) {
+    clearTimeout(freezesRetryTimer);
+    freezesRetryAttempt += 1;
+    const delayMs = Math.min(SAVE_RETRY_BASE_MS * 2 ** (freezesRetryAttempt - 1), SAVE_RETRY_MAX_MS);
+    notify({ saveState: 'error', error, retryAttempt: freezesRetryAttempt, retryInMs: delayMs });
+    freezesRetryTimer = setTimeout(attemptFlushFreezesWithRetry, delayMs);
+  }
+
   function queueSave() {
     dirty = true;
     persistLocal();
     notify({ saveState: 'saving' });
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      flush().catch(error => {
-        console.error('Activity log save failed', error);
-        notify({ saveState: 'error', error });
-      });
-    }, 500);
+    clearSaveRetry();
+    saveTimer = setTimeout(attemptFlushWithRetry, 500);
   }
 
   function queueSaveFreezes() {
@@ -239,12 +288,8 @@ export function createActivityLogStore() {
     persistLocalFreezes();
     notify({ saveState: 'saving' });
     clearTimeout(freezesSaveTimer);
-    freezesSaveTimer = setTimeout(() => {
-      flushFreezes().catch(error => {
-        console.error('Streak freezes save failed', error);
-        notify({ saveState: 'error', error });
-      });
-    }, 500);
+    clearFreezesRetry();
+    freezesSaveTimer = setTimeout(attemptFlushFreezesWithRetry, 500);
   }
 
   // Loads streakFreezes' local fallback, runs the grant/auto-apply pure
@@ -278,8 +323,10 @@ export function createActivityLogStore() {
     if (uid === null || uid === nextUid) return;
     clearTimeout(saveTimer);
     saveTimer = null;
+    clearSaveRetry();
     clearTimeout(freezesSaveTimer);
     freezesSaveTimer = null;
+    clearFreezesRetry();
     clearLocal();
     entries = {};
     dirty = false;

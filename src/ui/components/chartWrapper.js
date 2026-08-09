@@ -203,11 +203,6 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
 // neutral bucket).
 const BUCKET_TOKENS = { high: '--v3-accent', medium: '--color-text-faint', low: '--color-border-strong' };
 const BUCKET_FALLBACKS = { high: '#0CB656', medium: '#9c9184', low: '#d3ccc0' };
-export const BUCKET_LEGEND = [
-  { bucket: 'high', label: 'High' },
-  { bucket: 'medium', label: 'Medium' },
-  { bucket: 'low', label: 'Low' }
-];
 
 // The "high" bucket reads an HSL-components --v3-* token (needs hsl(...)
 // wrapping); medium/low read plain --color-* tokens (already full color
@@ -297,14 +292,3 @@ export async function createBucketedBarChart(canvas, { labels, values, bucketOf 
   return chart;
 }
 
-// createChartLegend([{ bucket, label }]) — the reference's "dot + label" row below a
-// bucketed bar chart. Defaults to BUCKET_LEGEND (high/medium/low) when called with no
-// argument; pass a custom list for a chart with different bucket semantics.
-export function createChartLegend(items = BUCKET_LEGEND) {
-  return el('div', { className: 'chart-legend' }, items.map(({ bucket, label }) =>
-    el('span', { className: 'chart-legend-item' }, [
-      el('span', { className: `chart-legend-dot chart-legend-dot-${bucket}` }),
-      label
-    ])
-  ));
-}

@@ -358,7 +358,3 @@ export function openIconPickerModal(icons, currentIcon) {
     grid.querySelector('.active')?.focus();
   });
 }
-
-export function hasDecorativeIcon(name) {
-  return name in DECORATIVE_ICON_SHAPES;
-}
