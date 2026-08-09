@@ -2166,8 +2166,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits_clampdurationms",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 121,
+      "community_name": "Screenshot Capture Test",
       "norm_label": "clampdurationms()"
     },
     {
@@ -2265,8 +2265,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "reportschema.js"
     },
     {
@@ -2276,8 +2276,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_report_types",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "report_types"
     },
     {
@@ -2287,8 +2287,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_severities",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "severities"
     },
     {
@@ -2298,8 +2298,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_usage_frequencies",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "usage_frequencies"
     },
     {
@@ -2309,8 +2309,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_isnonemptystring",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "isnonemptystring()"
     },
     {
@@ -2320,8 +2320,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_validatebugreport",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "validatebugreport()"
     },
     {
@@ -2331,8 +2331,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_validatefeaturerequest",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "validatefeaturerequest()"
     },
     {
@@ -2342,8 +2342,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_validategeneralfeedback",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "validategeneralfeedback()"
     },
     {
@@ -2353,8 +2353,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_validatereport",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "validatereport()"
     },
     {
@@ -2364,8 +2364,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_bugtypefields",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "bugtypefields()"
     },
     {
@@ -2375,8 +2375,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_featuretypefields",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "featuretypefields()"
     },
     {
@@ -2386,8 +2386,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_feedbacktypefields",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "feedbacktypefields()"
     },
     {
@@ -2397,8 +2397,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_typespecificfields",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "typespecificfields()"
     },
     {
@@ -2408,8 +2408,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_core_feedback_reportschema_buildreportpayload",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "buildreportpayload()"
     },
     {
@@ -2606,8 +2606,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "src_core_roadmap_backupvalidator_diffbackupitems",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 37,
+      "community_name": "Theme Service",
       "norm_label": "diffbackupitems()"
     },
     {
@@ -3200,8 +3200,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "reviewschedule.js"
     },
     {
@@ -3211,8 +3211,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_isreviewdue",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "isreviewdue()"
     },
     {
@@ -3222,8 +3222,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_getreviewdueitems",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "getreviewdueitems()"
     },
     {
@@ -3233,8 +3233,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_groupreviewdueitemsbytag",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "groupreviewdueitemsbytag()"
     },
     {
@@ -3421,7 +3421,7 @@
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema",
       "community": 174,
-      "community_name": "isValidUrl",
+      "community_name": "shareSchema.js",
       "norm_label": "shareschema.js"
     },
     {
@@ -3432,7 +3432,7 @@
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema_toshareitem",
       "community": 174,
-      "community_name": "isValidUrl",
+      "community_name": "shareSchema.js",
       "norm_label": "toshareitem()"
     },
     {
@@ -3443,7 +3443,7 @@
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema_buildroadmapsharesnapshot",
       "community": 174,
-      "community_name": "isValidUrl",
+      "community_name": "shareSchema.js",
       "norm_label": "buildroadmapsharesnapshot()"
     },
     {
@@ -3552,8 +3552,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_developerprofile",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "developerprofile.js"
     },
     {
@@ -3563,8 +3563,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_data_developerprofile_developer_profile",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "developer_profile"
     },
     {
@@ -3618,8 +3618,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_roadmap",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "roadmap.js"
     },
     {
@@ -3915,8 +3915,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_data_templates_java_backend",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "java-backend.js"
     },
     {
@@ -3926,8 +3926,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_resource_library",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "resource_library"
     },
     {
@@ -3937,8 +3937,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_topic_resources",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "topic_resources"
     },
     {
@@ -3948,8 +3948,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_phases",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "phases"
     },
     {
@@ -3959,8 +3959,8 @@
       "source_location": "L521",
       "_origin": "ast",
       "id": "src_data_templates_java_backend_buildseeditems",
-      "community": 26,
-      "community_name": "Guide & Changelog Drawer Components",
+      "community": 27,
+      "community_name": "Root Docs (CLAUDE.md/AGENTS.md/ADR-001/ADR-007)",
       "norm_label": "buildseeditems()"
     },
     {
@@ -4234,8 +4234,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_accountguards",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "accountguards.js"
     },
     {
@@ -4245,8 +4245,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_accountguards_assertaccountdeletable",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "assertaccountdeletable()"
     },
     {
@@ -4256,8 +4256,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_services_accountguards_asserthaspasswordcredential",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "asserthaspasswordcredential()"
     },
     {
@@ -4267,8 +4267,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_activitylogstore",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "activitylogstore.js"
     },
     {
@@ -4278,8 +4278,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_activitylogstore_stablestringify",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "stablestringify()"
     },
     {
@@ -4289,8 +4289,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_services_activitylogstore_pruneoldentries",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "pruneoldentries()"
     },
     {
@@ -4300,8 +4300,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_services_activitylogstore_resolvelocalentries",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "resolvelocalentries()"
     },
     {
@@ -4311,8 +4311,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_services_activitylogstore_applyentrypruning",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "applyentrypruning()"
     },
     {
@@ -4322,8 +4322,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_services_activitylogstore_readlocallog",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "readlocallog()"
     },
     {
@@ -4333,8 +4333,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_services_activitylogstore_default_streak_freezes",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "default_streak_freezes"
     },
     {
@@ -4344,8 +4344,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_services_activitylogstore_readlocalstreakfreezes",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "readlocalstreakfreezes()"
     },
     {
@@ -4355,8 +4355,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_services_activitylogstore_createactivitylogstore",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "createactivitylogstore()"
     },
     {
@@ -4366,8 +4366,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_activitylogstore_js_docref_adr_0009",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "adr-0009"
     },
     {
@@ -4399,8 +4399,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "celebrationshownstore.js"
     },
     {
@@ -4410,8 +4410,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_read",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "read()"
     },
     {
@@ -4421,8 +4421,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_write",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "write()"
     },
     {
@@ -4432,8 +4432,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_hasshownroadmapcelebration",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "hasshownroadmapcelebration()"
     },
     {
@@ -4443,8 +4443,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_hasshownphasecelebration",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "hasshownphasecelebration()"
     },
     {
@@ -4454,8 +4454,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_markroadmapcelebrationshown",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "markroadmapcelebrationshown()"
     },
     {
@@ -4465,8 +4465,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_celebrationshownstore_markphasecelebrationshown",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "markphasecelebrationshown()"
     },
     {
@@ -4509,8 +4509,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_dailytodostore",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "dailytodostore.js"
     },
     {
@@ -4520,8 +4520,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_dailytodostore_stablestringify",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "stablestringify()"
     },
     {
@@ -4531,8 +4531,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_dailytodostore_genid",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "genid()"
     },
     {
@@ -4542,8 +4542,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_dailytodostore_readlocaltodos",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "readlocaltodos()"
     },
     {
@@ -4553,8 +4553,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_services_dailytodostore_createdailytodostore",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "createdailytodostore()"
     },
     {
@@ -4619,8 +4619,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_feedbackratelimit",
-      "community": 35,
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "feedbackratelimit.js"
     },
     {
@@ -4630,8 +4630,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_services_feedbackratelimit_getsubmitlog",
-      "community": 35,
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "getsubmitlog()"
     },
     {
@@ -4641,8 +4641,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_services_feedbackratelimit_cansubmit",
-      "community": 35,
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "cansubmit()"
     },
     {
@@ -4652,8 +4652,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_feedbackratelimit_msuntilnextsubmit",
-      "community": 35,
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "msuntilnextsubmit()"
     },
     {
@@ -4663,8 +4663,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_services_feedbackratelimit_recordsubmit",
-      "community": 35,
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "recordsubmit()"
     },
     {
@@ -4674,8 +4674,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_feedbackstore",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "feedbackstore.js"
     },
     {
@@ -4685,8 +4685,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_services_feedbackstore_submitreport",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "submitreport()"
     },
     {
@@ -4697,7 +4697,7 @@
       "_origin": "ast",
       "id": "src_services_feedbackstore_listenmyreports",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "listenmyreports()"
     },
     {
@@ -4729,8 +4729,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_firebase",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "firebase.js"
     },
     {
@@ -4740,8 +4740,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_firebase_app",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "app"
     },
     {
@@ -4751,8 +4751,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_services_firebase_auth",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "auth"
     },
     {
@@ -4762,8 +4762,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_services_firebase_database",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "database"
     },
     {
@@ -4773,8 +4773,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_services_firebase_authapi",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "authapi"
     },
     {
@@ -4828,8 +4828,8 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_backupfirstseenatkey",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "backupfirstseenatkey()"
     },
     {
@@ -4839,8 +4839,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_lastbackupatkey",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "lastbackupatkey()"
     },
     {
@@ -4850,8 +4850,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_backupreminderdismissedatkey",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "backupreminderdismissedatkey()"
     },
     {
@@ -4861,8 +4861,8 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_guestrisknudgeshownkey",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "guestrisknudgeshownkey()"
     },
     {
@@ -4872,8 +4872,8 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "src_services_localstoragekeys_celebrationshownkey",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "celebrationshownkey()"
     },
     {
@@ -4927,8 +4927,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_pwainstall",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "pwainstall.js"
     },
     {
@@ -4938,8 +4938,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_pwainstall_listeners",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "listeners"
     },
     {
@@ -4982,8 +4982,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_services_pwainstall_dismissinstallprompt",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "dismissinstallprompt()"
     },
     {
@@ -5169,8 +5169,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_services_roadmapstore_readlocalroadmaps",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "readlocalroadmaps()"
     },
     {
@@ -5191,8 +5191,8 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "src_services_roadmapstore_genid",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "genid()"
     },
     {
@@ -5400,8 +5400,8 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "src_services_roadmapstore_stale",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "stale"
     },
     {
@@ -5411,8 +5411,8 @@
       "source_location": "L308",
       "_origin": "ast",
       "id": "src_services_roadmapstore_freshstatefornewuid",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "freshstatefornewuid()"
     },
     {
@@ -5422,8 +5422,8 @@
       "source_location": "L330",
       "_origin": "ast",
       "id": "src_services_roadmapstore_readonboardinglocalfallback",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "readonboardinglocalfallback()"
     },
     {
@@ -5488,8 +5488,8 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "src_services_roadmapstore_newshapeonboardingstate",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "newshapeonboardingstate()"
     },
     {
@@ -5510,8 +5510,8 @@
       "source_location": "L452",
       "_origin": "ast",
       "id": "src_services_roadmapstore_resolveonboardingstate",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "resolveonboardingstate()"
     },
     {
@@ -5521,8 +5521,8 @@
       "source_location": "L465",
       "_origin": "ast",
       "id": "src_services_roadmapstore_fetchstoredblankroadmap",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "fetchstoredblankroadmap()"
     },
     {
@@ -5543,8 +5543,8 @@
       "source_location": "L498",
       "_origin": "ast",
       "id": "src_services_roadmapstore_persistblankmigrationtofirebase",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "persistblankmigrationtofirebase()"
     },
     {
@@ -5554,8 +5554,8 @@
       "source_location": "L519",
       "_origin": "ast",
       "id": "src_services_roadmapstore_migratelegacyblanktemplateifneeded",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "migratelegacyblanktemplateifneeded()"
     },
     {
@@ -5565,8 +5565,8 @@
       "source_location": "L552",
       "_origin": "ast",
       "id": "src_services_roadmapstore_determineonboardingandactiveroadmap",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "determineonboardingandactiveroadmap()"
     },
     {
@@ -5653,8 +5653,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_sharestore",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "sharestore.js"
     },
     {
@@ -5664,8 +5664,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_services_sharestore_shareidsmutationqueue",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "shareidsmutationqueue"
     },
     {
@@ -5675,8 +5675,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_services_sharestore_serializeshareidsmutation",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "serializeshareidsmutation()"
     },
     {
@@ -5686,8 +5686,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_sharestore_getshareids",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "getshareids()"
     },
     {
@@ -5697,8 +5697,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_services_sharestore_publishroadmapshare",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "publishroadmapshare()"
     },
     {
@@ -5708,8 +5708,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_services_sharestore_revokeroadmapshare",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "revokeroadmapshare()"
     },
     {
@@ -5719,8 +5719,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_services_sharestore_listmyshares",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "listmyshares()"
     },
     {
@@ -5730,8 +5730,8 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_services_sharestore_getsharedroadmap",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "getsharedroadmap()"
     },
     {
@@ -5741,8 +5741,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_storage_firebaseadapter",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "firebaseadapter.js"
     },
     {
@@ -6335,8 +6335,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_storage_adapterfactory",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "adapterfactory.js"
     },
     {
@@ -6346,8 +6346,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_services_storage_adapterfactory_getstorageadapter",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "getstorageadapter()"
     },
     {
@@ -6357,8 +6357,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_storage_withtimeout",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "withtimeout.js"
     },
     {
@@ -6368,8 +6368,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_services_storage_withtimeout_withtimeout",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "withtimeout()"
     },
     {
@@ -6489,8 +6489,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_theme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "theme.js"
     },
     {
@@ -6500,8 +6500,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_services_theme_media",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "media"
     },
     {
@@ -6511,8 +6511,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_services_theme_subscribers",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "subscribers"
     },
     {
@@ -6522,8 +6522,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_services_theme_systemtheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "systemtheme()"
     },
     {
@@ -6533,8 +6533,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_theme_apply",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "apply()"
     },
     {
@@ -6544,8 +6544,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_services_theme_gettheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "gettheme()"
     },
     {
@@ -6555,8 +6555,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_services_theme_hasexplicitpreference",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "hasexplicitpreference()"
     },
     {
@@ -6566,8 +6566,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_services_theme_settheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "settheme()"
     },
     {
@@ -6577,8 +6577,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_services_theme_toggletheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "toggletheme()"
     },
     {
@@ -6588,8 +6588,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_theme_onthemechange",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "onthemechange()"
     },
     {
@@ -6599,8 +6599,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_services_theme_inittheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "inittheme()"
     },
     {
@@ -6621,8 +6621,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_uipreferences",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "uipreferences.js"
     },
     {
@@ -6632,8 +6632,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_services_uipreferences_text_sizes",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "text_sizes"
     },
     {
@@ -6643,8 +6643,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_services_uipreferences_textsizesubscribers",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "textsizesubscribers"
     },
     {
@@ -6654,8 +6654,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_services_uipreferences_animationsoffsubscribers",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "animationsoffsubscribers"
     },
     {
@@ -6665,8 +6665,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_services_uipreferences_gettextsize",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "gettextsize()"
     },
     {
@@ -6687,8 +6687,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_services_uipreferences_ontextsizechange",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "ontextsizechange()"
     },
     {
@@ -6720,8 +6720,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_services_uipreferences_onanimationsoffchange",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "onanimationsoffchange()"
     },
     {
@@ -6753,8 +6753,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "authmarketingpanel.js"
     },
     {
@@ -6764,8 +6764,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_iconsvg",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "iconsvg()"
     },
     {
@@ -6775,8 +6775,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_icons",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "icons"
     },
     {
@@ -6786,8 +6786,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_value_props",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "value_props"
     },
     {
@@ -6797,8 +6797,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_createauthmarketingpanel",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "createauthmarketingpanel()"
     },
     {
@@ -6808,8 +6808,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_authshell",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "authshell.js"
     },
     {
@@ -6819,8 +6819,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_authshell_authshell",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "authshell()"
     },
     {
@@ -6830,8 +6830,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_avatar",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "avatar.js"
     },
     {
@@ -6841,8 +6841,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_ui_components_avatar_initialsfor",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "initialsfor()"
     },
     {
@@ -6852,8 +6852,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_avatar_createavatar",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "createavatar()"
     },
     {
@@ -6863,8 +6863,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_backupreminderbanner",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "backupreminderbanner.js"
     },
     {
@@ -6874,8 +6874,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_backupreminderbanner_createbackupreminderbanner",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "createbackupreminderbanner()"
     },
     {
@@ -6918,8 +6918,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_brand",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "brand.js"
     },
     {
@@ -6929,8 +6929,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_ui_components_brand_brandglyph",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "brandglyph()"
     },
     {
@@ -6940,8 +6940,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_components_brand_createbrandicon",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "createbrandicon()"
     },
     {
@@ -6951,8 +6951,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_ui_components_brand_createbrandwordmark",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "createbrandwordmark()"
     },
     {
@@ -6962,8 +6962,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_ui_components_brand_createbrandmark",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "createbrandmark()"
     },
     {
@@ -6974,7 +6974,7 @@
       "_origin": "ast",
       "id": "src_ui_components_buildyourownguide",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "buildyourownguide.js"
     },
     {
@@ -6985,7 +6985,7 @@
       "_origin": "ast",
       "id": "src_ui_components_buildyourownguide_openbuildyourownguide",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "openbuildyourownguide()"
     },
     {
@@ -6996,7 +6996,7 @@
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "changelogdrawer.js"
     },
     {
@@ -7007,7 +7007,7 @@
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_type_labels",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "type_labels"
     },
     {
@@ -7018,7 +7018,7 @@
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_renderentryitem",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "renderentryitem()"
     },
     {
@@ -7029,7 +7029,7 @@
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_renderversiongroup",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "renderversiongroup()"
     },
     {
@@ -7040,7 +7040,7 @@
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_openchangelogdrawer",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "openchangelogdrawer()"
     },
     {
@@ -7165,21 +7165,10 @@
       "norm_label": "bucket_fallbacks"
     },
     {
-      "label": "BUCKET_LEGEND",
-      "file_type": "code",
-      "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L206",
-      "_origin": "ast",
-      "id": "src_ui_components_chartwrapper_bucket_legend",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
-      "norm_label": "bucket_legend"
-    },
-    {
       "label": "bucketColor()",
       "file_type": "code",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L216",
+      "source_location": "L211",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_bucketcolor",
       "community": 65,
@@ -7190,7 +7179,7 @@
       "label": "defaultBucketOf()",
       "file_type": "code",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L225",
+      "source_location": "L220",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_defaultbucketof",
       "community": 65,
@@ -7201,7 +7190,7 @@
       "label": "positionTooltip()",
       "file_type": "code",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L232",
+      "source_location": "L227",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_positiontooltip",
       "community": 65,
@@ -7212,23 +7201,12 @@
       "label": "createBucketedBarChart()",
       "file_type": "code",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L260",
+      "source_location": "L255",
       "_origin": "ast",
       "id": "src_ui_components_chartwrapper_createbucketedbarchart",
       "community": 65,
       "community_name": "Issue Tracker Sync Workflow",
       "norm_label": "createbucketedbarchart()"
-    },
-    {
-      "label": "createChartLegend()",
-      "file_type": "code",
-      "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L303",
-      "_origin": "ast",
-      "id": "src_ui_components_chartwrapper_createchartlegend",
-      "community": 65,
-      "community_name": "Issue Tracker Sync Workflow",
-      "norm_label": "createchartlegend()"
     },
     {
       "label": "ADR-0002",
@@ -7314,8 +7292,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_confirmdialog",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "confirmdialog.js"
     },
     {
@@ -7325,8 +7303,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_components_confirmdialog_confirmdialog",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "confirmdialog()"
     },
     {
@@ -7336,8 +7314,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "dailytodoguide.js"
     },
     {
@@ -7347,8 +7325,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide_opendailytodoguide",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "opendailytodoguide()"
     },
     {
@@ -7403,7 +7381,7 @@
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "decorativeicon.js"
     },
     {
@@ -7414,7 +7392,7 @@
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_decorative_icon_shapes",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "decorative_icon_shapes"
     },
     {
@@ -7425,7 +7403,7 @@
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_valid_sizes",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "valid_sizes"
     },
     {
@@ -7436,7 +7414,7 @@
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_createdecorativeicon",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "createdecorativeicon()"
     },
     {
@@ -7447,7 +7425,7 @@
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_createiconpicker",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "createiconpicker()"
     },
     {
@@ -7458,19 +7436,8 @@
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_openiconpickermodal",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "openiconpickermodal()"
-    },
-    {
-      "label": "hasDecorativeIcon()",
-      "file_type": "code",
-      "source_file": "src/ui/components/decorativeIcon.js",
-      "source_location": "L362",
-      "_origin": "ast",
-      "id": "src_ui_components_decorativeicon_hasdecorativeicon",
-      "community": 139,
-      "community_name": "dom.js",
-      "norm_label": "hasdecorativeicon()"
     },
     {
       "label": "deleteAccountModal.js",
@@ -7479,8 +7446,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_deleteaccountmodal",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "deleteaccountmodal.js"
     },
     {
@@ -7523,8 +7490,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_emptystate",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "emptystate.js"
     },
     {
@@ -7534,8 +7501,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_emptystate_createemptystate",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "createemptystate()"
     },
     {
@@ -7567,8 +7534,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_featuretour",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "featuretour.js"
     },
     {
@@ -7578,8 +7545,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_ui_components_featuretour_computeplacement",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "computeplacement()"
     },
     {
@@ -7589,8 +7556,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_ui_components_featuretour_buildwelcomeoverlay",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildwelcomeoverlay()"
     },
     {
@@ -7600,8 +7567,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_ui_components_featuretour_buildpopover",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildpopover()"
     },
     {
@@ -7611,8 +7578,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_ui_components_featuretour_starttour",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "starttour()"
     },
     {
@@ -7743,8 +7710,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_ui_components_feedbackmodal_openfeedbackmodal",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "openfeedbackmodal()"
     },
     {
@@ -7776,8 +7743,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_guestdatarisknudge",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "guestdatarisknudge.js"
     },
     {
@@ -7787,8 +7754,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_guestdatarisknudge_createguestdatarisknudge",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "createguestdatarisknudge()"
     },
     {
@@ -7919,8 +7886,8 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "src_ui_components_icons_createicon",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "createicon()"
     },
     {
@@ -7931,7 +7898,7 @@
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "importbackupmodal.js"
     },
     {
@@ -7941,8 +7908,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_openimportbackupdropzonemodal",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "openimportbackupdropzonemodal()"
     },
     {
@@ -7953,7 +7920,7 @@
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_summarysentence",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "summarysentence()"
     },
     {
@@ -7964,7 +7931,7 @@
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_mergebuttonlabel",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "mergebuttonlabel()"
     },
     {
@@ -7975,7 +7942,7 @@
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_openimportbackupmodal",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "openimportbackupmodal()"
     },
     {
@@ -8150,8 +8117,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_itempanel",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "itempanel.js"
     },
     {
@@ -8161,8 +8128,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_ui_components_itempanel_link_check_status",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "link_check_status"
     },
     {
@@ -8172,8 +8139,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_ui_components_itempanel_link_check_messages",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "link_check_messages"
     },
     {
@@ -8183,8 +8150,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_ui_components_itempanel_checkresourcelink",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "checkresourcelink()"
     },
     {
@@ -8194,8 +8161,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_ui_components_itempanel_openitempanel",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "openitempanel()"
     },
     {
@@ -8206,7 +8173,7 @@
       "_origin": "ast",
       "id": "src_ui_components_modal",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "modal.js"
     },
     {
@@ -8217,7 +8184,7 @@
       "_origin": "ast",
       "id": "src_ui_components_modal_attachfocustrap",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "attachfocustrap()"
     },
     {
@@ -8227,8 +8194,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_modal_openmodal",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "openmodal()"
     },
     {
@@ -8239,7 +8206,7 @@
       "_origin": "ast",
       "id": "src_ui_components_myreports",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "myreports.js"
     },
     {
@@ -8250,7 +8217,7 @@
       "_origin": "ast",
       "id": "src_ui_components_myreports_type_icon",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "type_icon"
     },
     {
@@ -8261,7 +8228,7 @@
       "_origin": "ast",
       "id": "src_ui_components_myreports_status_label",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "status_label"
     },
     {
@@ -8272,7 +8239,7 @@
       "_origin": "ast",
       "id": "src_ui_components_myreports_formatdate",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "formatdate()"
     },
     {
@@ -8283,7 +8250,7 @@
       "_origin": "ast",
       "id": "src_ui_components_myreports_buildreportrow",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "buildreportrow()"
     },
     {
@@ -8294,7 +8261,7 @@
       "_origin": "ast",
       "id": "src_ui_components_myreports_buildmyreportsview",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "buildmyreportsview()"
     },
     {
@@ -8304,8 +8271,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_ui_components_myreports_openmyreports",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "openmyreports()"
     },
     {
@@ -8315,8 +8282,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_notificationbadge",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "notificationbadge.js"
     },
     {
@@ -8326,8 +8293,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_notificationbadge_createnotificationbadge",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "createnotificationbadge()"
     },
     {
@@ -8348,8 +8315,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_notificationbell_createnotificationbell",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "createnotificationbell()"
     },
     {
@@ -8381,8 +8348,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_progressring",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "progressring.js"
     },
     {
@@ -8392,8 +8359,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_components_progressring_createprogressring",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "createprogressring()"
     },
     {
@@ -8502,8 +8469,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "src_ui_components_roadmapcomparisonmodal_openroadmapcomparisonmodal",
-      "community": 152,
-      "community_name": "roadmapComparisonModal.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "openroadmapcomparisonmodal()"
     },
     {
@@ -8513,8 +8480,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_select",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "select.js"
     },
     {
@@ -8975,8 +8942,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_sidebar",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "sidebar.js"
     },
     {
@@ -8986,8 +8953,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_nav_items",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "nav_items"
     },
     {
@@ -8997,8 +8964,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_readcollapsed",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "readcollapsed()"
     },
     {
@@ -9019,8 +8986,8 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_createsidebar",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "createsidebar()"
     },
     {
@@ -9085,8 +9052,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "themetoggle.js"
     },
     {
@@ -9096,8 +9063,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_icon_names",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "icon_names"
     },
     {
@@ -9107,8 +9074,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_arialabel",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "arialabel()"
     },
     {
@@ -9118,8 +9085,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_createthemetoggle",
-      "community": 138,
-      "community_name": "themeToggle.js",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "createthemetoggle()"
     },
     {
@@ -9129,8 +9096,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_toast",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "toast.js"
     },
     {
@@ -9140,8 +9107,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_ui_components_toast_ensureroot",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "ensureroot()"
     },
     {
@@ -9151,8 +9118,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_components_toast_showtoast",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "showtoast()"
     },
     {
@@ -9162,8 +9129,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_tooltip",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "tooltip.js"
     },
     {
@@ -9173,8 +9140,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_tooltip_overlapsvisiblesectionlabel",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "overlapsvisiblesectionlabel()"
     },
     {
@@ -9184,8 +9151,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_ui_components_tooltip_attachtooltip",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "attachtooltip()"
     },
     {
@@ -9239,8 +9206,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_ui_components_topbar_createtopbar",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "createtopbar()"
     },
     {
@@ -9250,8 +9217,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_verificationbanner",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "verificationbanner.js"
     },
     {
@@ -9261,8 +9228,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_verificationbanner_createverificationbanner",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "createverificationbanner()"
     },
     {
@@ -9272,8 +9239,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_dom",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "dom.js"
     },
     {
@@ -9283,8 +9250,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_dom_escapehtml",
-      "community": 4,
-      "community_name": "Import Validation & Corruption Detection",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "escapehtml()"
     },
     {
@@ -9294,8 +9261,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_dom_el",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "el()"
     },
     {
@@ -9305,8 +9272,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_dom_clear",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "clear()"
     },
     {
@@ -9316,8 +9283,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_dom_debounce",
-      "community": 4,
-      "community_name": "Import Validation & Corruption Detection",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "debounce()"
     },
     {
@@ -9327,8 +9294,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_ui_dom_isvalidurl",
-      "community": 174,
-      "community_name": "isValidUrl",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "isvalidurl()"
     },
     {
@@ -9349,8 +9316,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderinlineresources",
-      "community": 174,
-      "community_name": "isValidUrl",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "renderinlineresources()"
     },
     {
@@ -9360,8 +9327,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_groupitems",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "groupitems()"
     },
     {
@@ -9382,8 +9349,8 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_matchesactivefilter",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "matchesactivefilter()"
     },
     {
@@ -9393,8 +9360,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_filteritems",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "filteritems()"
     },
     {
@@ -9415,8 +9382,8 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_prioritycounts",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "prioritycounts()"
     },
     {
@@ -9448,8 +9415,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderpriorityfilterselect",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "renderpriorityfilterselect()"
     },
     {
@@ -9459,8 +9426,8 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderfilterchips",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "renderfilterchips()"
     },
     {
@@ -9503,8 +9470,8 @@
       "source_location": "L632",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_buildsectionrows",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "buildsectionrows()"
     },
     {
@@ -9657,8 +9624,8 @@
       "source_location": "L882",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderphasecard",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "renderphasecard()"
     },
     {
@@ -9668,8 +9635,8 @@
       "source_location": "L953",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderdashboard",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "renderdashboard()"
     },
     {
@@ -9679,8 +9646,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "developerprofile.js"
     },
     {
@@ -9690,8 +9657,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_isvalidprofilelinkurl",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "isvalidprofilelinkurl()"
     },
     {
@@ -9701,8 +9668,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_initialsfromname",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "initialsfromname()"
     },
     {
@@ -9712,8 +9679,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildbacklink",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildbacklink()"
     },
     {
@@ -9723,8 +9690,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildheader",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildheader()"
     },
     {
@@ -9734,8 +9701,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildavatar",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildavatar()"
     },
     {
@@ -9745,8 +9712,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildhero",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildhero()"
     },
     {
@@ -9756,8 +9723,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildlinkcard",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildlinkcard()"
     },
     {
@@ -9767,8 +9734,8 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildlinks",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildlinks()"
     },
     {
@@ -9778,8 +9745,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildfooter",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildfooter()"
     },
     {
@@ -9789,8 +9756,8 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_renderdeveloperprofile",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "renderdeveloperprofile()"
     },
     {
@@ -9811,8 +9778,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_pages_landing_iconsvg",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "iconsvg()"
     },
     {
@@ -10427,8 +10394,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildtogglerow",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buildtogglerow()"
     },
     {
@@ -10460,8 +10427,8 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildchangenameform",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buildchangenameform()"
     },
     {
@@ -10471,8 +10438,8 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildprofilesection",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "buildprofilesection()"
     },
     {
@@ -10504,8 +10471,8 @@
       "source_location": "L434",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildsupportsection",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "buildsupportsection()"
     },
     {
@@ -10966,8 +10933,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "backupreminder.js"
     },
     {
@@ -10977,8 +10944,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_readtimestamp",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "readtimestamp()"
     },
     {
@@ -10988,8 +10955,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_ensurebackupfirstseenat",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "ensurebackupfirstseenat()"
     },
     {
@@ -10999,8 +10966,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_markbackuptaken",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "markbackuptaken()"
     },
     {
@@ -11010,8 +10977,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_dismissbackupreminder",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "dismissbackupreminder()"
     },
     {
@@ -11021,8 +10988,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_ui_utils_backupreminder_shouldshowbackupreminder",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "shouldshowbackupreminder()"
     },
     {
@@ -11087,8 +11054,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "customroadmapicon.js"
     },
     {
@@ -11098,8 +11065,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_custom_roadmap_icons",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "custom_roadmap_icons"
     },
     {
@@ -11109,8 +11076,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_pickcustomroadmapicon",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "pickcustomroadmapicon()"
     },
     {
@@ -11120,8 +11087,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_readoverrides",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "readoverrides()"
     },
     {
@@ -11131,8 +11098,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_getcustomroadmapiconoverride",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "getcustomroadmapiconoverride()"
     },
     {
@@ -11142,8 +11109,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_setcustomroadmapiconoverride",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "setcustomroadmapiconoverride()"
     },
     {
@@ -11153,8 +11120,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_ui_utils_customroadmapicon_resolvecustomroadmapicon",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "resolvecustomroadmapicon()"
     },
     {
@@ -11230,8 +11197,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_utils_defaultfilterpreference_readdefaultfilterpreference",
-      "community": 33,
-      "community_name": "Confirm Dialog & Sign-out Utils",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "readdefaultfilterpreference()"
     },
     {
@@ -11285,8 +11252,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_guestdatarisk",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "guestdatarisk.js"
     },
     {
@@ -11296,8 +11263,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_ui_utils_guestdatarisk_shouldshowguestrisknudge",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "shouldshowguestrisknudge()"
     },
     {
@@ -11307,8 +11274,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_ui_utils_guestdatarisk_markguestrisknudgeshown",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "markguestrisknudgeshown()"
     },
     {
@@ -11318,8 +11285,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "linkdetector.js"
     },
     {
@@ -11329,8 +11296,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector_link_types",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "link_types"
     },
     {
@@ -11340,8 +11307,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector_link_type_meta",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "link_type_meta"
     },
     {
@@ -11351,8 +11318,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_ui_utils_linkdetector_detectlinktype",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "detectlinktype()"
     },
     {
@@ -11395,8 +11362,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "printroadmap.js"
     },
     {
@@ -11406,8 +11373,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_printsiteurl",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "printsiteurl()"
     },
     {
@@ -11417,8 +11384,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_resolveroadmaptitle",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "resolveroadmaptitle()"
     },
     {
@@ -11428,8 +11395,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_buildprintheaderrow",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildprintheaderrow()"
     },
     {
@@ -11439,8 +11406,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_buildprintfooterrow",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildprintfooterrow()"
     },
     {
@@ -11450,8 +11417,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_buildprintnode",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildprintnode()"
     },
     {
@@ -11461,8 +11428,8 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_buildprintwatermark",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildprintwatermark()"
     },
     {
@@ -11472,8 +11439,8 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_renderprintitem",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "renderprintitem()"
     },
     {
@@ -11483,8 +11450,8 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_mountprintsnapshot",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "mountprintsnapshot()"
     },
     {
@@ -11494,8 +11461,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_attachprintcleanup",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "attachprintcleanup()"
     },
     {
@@ -11505,8 +11472,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_printsnapshot",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "printsnapshot()"
     },
     {
@@ -11527,8 +11494,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_prioritylabels",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "prioritylabels.js"
     },
     {
@@ -11538,8 +11505,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_ui_utils_prioritylabels_priority_labels",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "priority_labels"
     },
     {
@@ -11549,8 +11516,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_utils_prioritylabels_prioritylabel",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "prioritylabel()"
     },
     {
@@ -11637,8 +11604,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_signout",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "signout.js"
     },
     {
@@ -11648,8 +11615,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_ui_utils_signout_flushdirtystores",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "flushdirtystores()"
     },
     {
@@ -11659,8 +11626,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_ui_utils_signout_confirmsignoutdespitefailedflush",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "confirmsignoutdespitefailedflush()"
     },
     {
@@ -11670,8 +11637,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_ui_utils_signout_confirmandsignout",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "confirmandsignout()"
     },
     {
@@ -11681,8 +11648,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_svg",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "svg.js"
     },
     {
@@ -11692,8 +11659,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_ui_utils_svg_svgel",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "svgel()"
     },
     {
@@ -11703,8 +11670,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_ui_utils_svg_svgicon",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "svgicon()"
     },
     {
@@ -11714,8 +11681,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_utils_countup",
-      "community": 177,
-      "community_name": "animateCountUp",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "countup.js"
     },
     {
@@ -11725,8 +11692,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_utils_countup_animatecountup",
-      "community": 177,
-      "community_name": "animateCountUp",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "animatecountup()"
     },
     {
@@ -12605,8 +12572,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_integration_activitylogstore_test",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "activitylogstore.test.js"
     },
     {
@@ -12616,8 +12583,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_integration_dailytodostore_test",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "dailytodostore.test.js"
     },
     {
@@ -12847,8 +12814,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_accountguards_test",
-      "community": 48,
-      "community_name": "CI Workflow Jobs",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "accountguards.test.js"
     },
     {
@@ -12968,8 +12935,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_unit_analytics_projection_test_items",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "items()"
     },
     {
@@ -13034,8 +13001,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_avatar_test",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "avatar.test.js"
     },
     {
@@ -13122,8 +13089,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_backupreminder_test",
-      "community": 163,
-      "community_name": "backupReminderBanner.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "backupreminder.test.js"
     },
     {
@@ -13232,8 +13199,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_brand_test",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "brand.test.js"
     },
     {
@@ -13287,8 +13254,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_celebrationshownstore_test",
-      "community": 171,
-      "community_name": "celebrationShownStore.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "celebrationshownstore.test.js"
     },
     {
@@ -13310,7 +13277,7 @@
       "_origin": "ast",
       "id": "tests_unit_changelogdrawer_test",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "changelogdrawer.test.js"
     },
     {
@@ -13321,7 +13288,7 @@
       "_origin": "ast",
       "id": "tests_unit_changelogdrawer_test_entries",
       "community": 139,
-      "community_name": "dom.js",
+      "community_name": "attachFocusTrap",
       "norm_label": "entries"
     },
     {
@@ -13485,8 +13452,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_confirmdialog_test",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "confirmdialog.test.js"
     },
     {
@@ -13496,8 +13463,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_confirmdialog_test_clickdialogaction",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "clickdialogaction()"
     },
     {
@@ -13507,8 +13474,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_countup_test",
-      "community": 177,
-      "community_name": "animateCountUp",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "countup.test.js"
     },
     {
@@ -13573,8 +13540,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_customroadmapicon_test",
-      "community": 178,
-      "community_name": "customRoadmapIcon.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "customroadmapicon.test.js"
     },
     {
@@ -13595,8 +13562,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodoguide_test",
-      "community": 160,
-      "community_name": "dailyTodoPanel.js",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "dailytodoguide.test.js"
     },
     {
@@ -13672,8 +13639,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "dashboard.test.js"
     },
     {
@@ -13683,8 +13650,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_build",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "build()"
     },
     {
@@ -13694,8 +13661,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_mount",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "mount()"
     },
     {
@@ -13705,8 +13672,8 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_format",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "format()"
     },
     {
@@ -13716,8 +13683,8 @@
       "source_location": "L316",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_buildwrapper",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "buildwrapper()"
     },
     {
@@ -13727,8 +13694,8 @@
       "source_location": "L393",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_buildwrapperwithtaggedrows",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "buildwrapperwithtaggedrows()"
     },
     {
@@ -13738,8 +13705,8 @@
       "source_location": "L410",
       "_origin": "ast",
       "id": "tests_unit_dashboard_test_mountedrowids",
-      "community": 175,
-      "community_name": "dashboard.test.js",
+      "community": 7,
+      "community_name": "Review Scheduling & Celebration State",
       "norm_label": "mountedrowids()"
     },
     {
@@ -13793,8 +13760,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_developerprofile_test",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "developerprofile.test.js"
     },
     {
@@ -13804,8 +13771,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_developerprofile_test_setup",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "setup()"
     },
     {
@@ -13815,8 +13782,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dom_test",
-      "community": 4,
-      "community_name": "Import Validation & Corruption Detection",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "dom.test.js"
     },
     {
@@ -13848,8 +13815,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_emptystate_test",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "emptystate.test.js"
     },
     {
@@ -13892,8 +13859,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_featuretour_test",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "featuretour.test.js"
     },
     {
@@ -13903,8 +13870,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_featuretour_test_buildsteps",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "buildsteps()"
     },
     {
@@ -13914,8 +13881,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_unit_featuretour_test_mockmatchmedia",
-      "community": 119,
-      "community_name": "Feedback Widget Tests",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "mockmatchmedia()"
     },
     {
@@ -13925,8 +13892,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "featuretoursteps.test.js"
     },
     {
@@ -13936,8 +13903,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test_fakestore",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "fakestore()"
     },
     {
@@ -13947,8 +13914,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_unit_featuretoursteps_test_mountfreshdashboardchrome",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 28,
+      "community_name": "CSP/SRI Security ADRs",
       "norm_label": "mountfreshdashboardchrome()"
     },
     {
@@ -13958,8 +13925,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_feedbackmodal_test",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "feedbackmodal.test.js"
     },
     {
@@ -13969,8 +13936,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_feedbackmodal_test_submitreport",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "submitreport"
     },
     {
@@ -13980,8 +13947,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_feedbackmodal_test_listenmyreports",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "listenmyreports"
     },
     {
@@ -13991,8 +13958,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_unit_feedbackmodal_test_user",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "user"
     },
     {
@@ -14002,8 +13969,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_unit_feedbackmodal_test_clickkind",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "clickkind()"
     },
     {
@@ -14013,8 +13980,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "tests_unit_feedbackmodal_test_bodytextarea",
-      "community": 28,
-      "community_name": "CSP/SRI Security ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "bodytextarea()"
     },
     {
@@ -14024,8 +13991,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_feedbackratelimit_test",
-      "community": 35,
-      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "feedbackratelimit.test.js"
     },
     {
@@ -14200,8 +14167,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisk_test",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "guestdatarisk.test.js"
     },
     {
@@ -14211,8 +14178,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisknudge_test",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "guestdatarisknudge.test.js"
     },
     {
@@ -14222,8 +14189,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisknudge_test_fakestore",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "fakestore()"
     },
     {
@@ -14233,8 +14200,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_unit_guestdatarisknudge_test_freshnudge",
-      "community": 169,
-      "community_name": "guestDataRisk.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "freshnudge()"
     },
     {
@@ -14442,8 +14409,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_itempanel_test",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "itempanel.test.js"
     },
     {
@@ -14453,8 +14420,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_itempanel_test_baseitem",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "baseitem"
     },
     {
@@ -14464,8 +14431,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_unit_itempanel_test_getpanel",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "getpanel()"
     },
     {
@@ -14475,8 +14442,8 @@
       "source_location": "L328",
       "_origin": "ast",
       "id": "tests_unit_itempanel_test_panelwithoneresource",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "panelwithoneresource()"
     },
     {
@@ -14519,8 +14486,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_linkdetector_test",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "linkdetector.test.js"
     },
     {
@@ -14706,8 +14673,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_modal_test",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "modal.test.js"
     },
     {
@@ -14717,8 +14684,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_modal_test_makecontent",
-      "community": 14,
-      "community_name": "Share Card Canvas Rendering",
+      "community": 139,
+      "community_name": "attachFocusTrap",
       "norm_label": "makecontent()"
     },
     {
@@ -14772,8 +14739,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_notificationbadge_test",
-      "community": 9,
-      "community_name": "Brand & Auth Marketing Panel",
+      "community": 35,
+      "community_name": "Hosting/Anonymous-User/Feedback ADRs",
       "norm_label": "notificationbadge.test.js"
     },
     {
@@ -14805,8 +14772,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_unit_onboarding_test_setup",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "setup()"
     },
     {
@@ -14937,8 +14904,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_prioritylabels_test",
-      "community": 156,
-      "community_name": "priorityLabel",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "prioritylabels.test.js"
     },
     {
@@ -15069,8 +15036,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_progressring_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "progressring.test.js"
     },
     {
@@ -15146,8 +15113,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reportschema_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "reportschema.test.js"
     },
     {
@@ -15157,8 +15124,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reviewschedule_test",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "reviewschedule.test.js"
     },
     {
@@ -15168,8 +15135,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_unit_reviewschedule_test_makeitem",
-      "community": 173,
-      "community_name": "reviewSchedule.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "makeitem()"
     },
     {
@@ -15212,8 +15179,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_roadmapstoreonboardinghelpers_test",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "roadmapstoreonboardinghelpers.test.js"
     },
     {
@@ -15223,8 +15190,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_unit_roadmapstoreonboardinghelpers_test_makeadapter",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "makeadapter()"
     },
     {
@@ -15234,8 +15201,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_unit_roadmapstoreonboardinghelpers_test_notstale",
-      "community": 10,
-      "community_name": "Auth & Account Guards",
+      "community": 2,
+      "community_name": "Roadmap Templates Registry",
       "norm_label": "notstale()"
     },
     {
@@ -15322,8 +15289,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "scrollreveal.test.js"
     },
     {
@@ -15333,8 +15300,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockintersectionobserver",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "mockintersectionobserver"
     },
     {
@@ -15344,8 +15311,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockintersectionobserver_constructor",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": ".constructor()"
     },
     {
@@ -15355,8 +15322,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockintersectionobserver_observe",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": ".observe()"
     },
     {
@@ -15366,8 +15333,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockintersectionobserver_unobserve",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": ".unobserve()"
     },
     {
@@ -15377,8 +15344,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockintersectionobserver_disconnect",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": ".disconnect()"
     },
     {
@@ -15388,8 +15355,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockmatchmedia",
-      "community": 147,
-      "community_name": "MockIntersectionObserver",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "mockmatchmedia()"
     },
     {
@@ -15675,7 +15642,7 @@
       "_origin": "ast",
       "id": "tests_unit_shareschema_test",
       "community": 174,
-      "community_name": "isValidUrl",
+      "community_name": "shareSchema.js",
       "norm_label": "shareschema.test.js"
     },
     {
@@ -15686,7 +15653,7 @@
       "_origin": "ast",
       "id": "tests_unit_shareschema_test_snapshot",
       "community": 174,
-      "community_name": "isValidUrl",
+      "community_name": "shareSchema.js",
       "norm_label": "snapshot()"
     },
     {
@@ -15751,8 +15718,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "sharedroadmapview.test.js"
     },
     {
@@ -15762,8 +15729,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test_getsharedroadmap",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "getsharedroadmap"
     },
     {
@@ -15773,8 +15740,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test_setup",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "setup()"
     },
     {
@@ -15784,8 +15751,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_unit_sharedroadmapview_test_flush",
-      "community": 167,
-      "community_name": "roadmapStore.test.js",
+      "community": 10,
+      "community_name": "Auth & Account Guards",
       "norm_label": "flush()"
     },
     {
@@ -15905,8 +15872,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_signup_test",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "signup.test.js"
     },
     {
@@ -15916,8 +15883,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_unit_signup_test_fillpasswordfields",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "fillpasswordfields()"
     },
     {
@@ -15927,8 +15894,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_unit_signup_test_setup",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "setup()"
     },
     {
@@ -16081,8 +16048,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_svg_test",
-      "community": 25,
-      "community_name": "Reminder Scheduling",
+      "community": 0,
+      "community_name": "Analytics Engine",
       "norm_label": "svg.test.js"
     },
     {
@@ -16147,8 +16114,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_theme_test",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "theme.test.js"
     },
     {
@@ -16158,8 +16125,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tests_unit_theme_test_freshtheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "freshtheme()"
     },
     {
@@ -16202,8 +16169,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_themetoggle_test",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "themetoggle.test.js"
     },
     {
@@ -16213,8 +16180,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_themetoggle_test_freshtoggle",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "freshtoggle()"
     },
     {
@@ -16224,8 +16191,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_unit_themetoggle_test_freshtheme",
-      "community": 15,
-      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "freshtheme()"
     },
     {
@@ -16246,8 +16213,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_toast_test",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "toast.test.js"
     },
     {
@@ -16257,8 +16224,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "tests_unit_toast_test_freshshowtoast",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "freshshowtoast()"
     },
     {
@@ -16268,8 +16235,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_tooltip_test",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 161,
+      "community_name": "dashboard.js",
       "norm_label": "tooltip.test.js"
     },
     {
@@ -16279,8 +16246,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_topbar_test",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "topbar.test.js"
     },
     {
@@ -16290,8 +16257,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_unit_topbar_test_fakestore",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "fakestore()"
     },
     {
@@ -16301,8 +16268,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_unit_topbar_test_baseprops",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 48,
+      "community_name": "CI Workflow Jobs",
       "norm_label": "baseprops()"
     },
     {
@@ -16378,8 +16345,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_uipreferences_test",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "uipreferences.test.js"
     },
     {
@@ -16389,8 +16356,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_uipreferences_test_freshprefs",
-      "community": 172,
-      "community_name": "uiPreferences.js",
+      "community": 33,
+      "community_name": "Confirm Dialog & Sign-out Utils",
       "norm_label": "freshprefs()"
     },
     {
@@ -16444,8 +16411,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_withtimeout_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 25,
+      "community_name": "Reminder Scheduling",
       "norm_label": "withtimeout.test.js"
     },
     {
@@ -17126,8 +17093,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_services_firebase_firebaseclock",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 11,
+      "community_name": "Changelog & Feature Badges",
       "norm_label": "firebaseclock"
     },
     {
@@ -19673,9 +19640,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 36,
+      "community": 162,
       "norm_label": "pr template",
-      "community_name": "Issue Templates & Docs Index",
+      "community_name": "CLAUDE.md (root agent instructions)",
       "id": "github_pull_request_template"
     },
     {
@@ -19687,9 +19654,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 26,
       "norm_label": "ci \u2014 pr quality gate workflow",
-      "community_name": "Product Rename Migration",
+      "community_name": "Guide & Changelog Drawer Components",
       "id": "github_workflows_ci"
     },
     {
@@ -19701,9 +19668,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 26,
       "norm_label": "ci lint job (eslint, theme lint, icon lint)",
-      "community_name": "Product Rename Migration",
+      "community_name": "Guide & Changelog Drawer Components",
       "id": "github_workflows_ci_lint_job"
     },
     {
@@ -19715,9 +19682,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 26,
       "norm_label": "ci security scan job (gitleaks, firebase.config.js check)",
-      "community_name": "Product Rename Migration",
+      "community_name": "Guide & Changelog Drawer Components",
       "id": "github_workflows_ci_security_job"
     },
     {
@@ -19729,9 +19696,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 26,
       "norm_label": "ci vitest unit/integration test job",
-      "community_name": "Product Rename Migration",
+      "community_name": "Guide & Changelog Drawer Components",
       "id": "github_workflows_ci_test_unit_job"
     },
     {
@@ -19743,9 +19710,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 26,
       "norm_label": "ci playwright e2e test job (firebase emulator)",
-      "community_name": "Product Rename Migration",
+      "community_name": "Guide & Changelog Drawer Components",
       "id": "github_workflows_ci_test_e2e_job"
     },
     {
@@ -19757,9 +19724,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 26,
       "norm_label": "ci lighthouse performance budget job",
-      "community_name": "Product Rename Migration",
+      "community_name": "Guide & Changelog Drawer Components",
       "id": "github_workflows_ci_lighthouse_job"
     },
     {
@@ -19771,9 +19738,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 44,
+      "community": 162,
       "norm_label": "ci pr-checklist job (doc-sync enforcement)",
-      "community_name": "Product Rename Migration",
+      "community_name": "CLAUDE.md (root agent instructions)",
       "id": "github_workflows_ci_pr_checklist_job"
     },
     {
@@ -19799,9 +19766,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 162,
+      "community": 36,
       "norm_label": "issue label check workflow",
-      "community_name": "CLAUDE.md (root agent instructions)",
+      "community_name": "Issue Templates & Docs Index",
       "id": "github_workflows_issues_label_check"
     },
     {
@@ -20065,9 +20032,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 44,
       "norm_label": "adr-005: anonymous firebase auth user lifecycle",
-      "community_name": "Changelog & Feature Badges",
+      "community_name": "Product Rename Migration",
       "id": "docs_adr_adr_005_anonymous_user_lifecycle"
     },
     {
@@ -20079,9 +20046,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 44,
       "norm_label": "delete anonymous auth user + data on unlinked sign-out",
-      "community_name": "Changelog & Feature Badges",
+      "community_name": "Product Rename Migration",
       "id": "docs_adr_adr_005_delete_on_unlinked_exit"
     },
     {
@@ -20275,9 +20242,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 10,
       "norm_label": "adr-009: progress analytics data model (completedat vs activitylog)",
-      "community_name": "Import Validation & Corruption Detection",
+      "community_name": "Auth & Account Guards",
       "id": "docs_adr_adr_009_analytics_data_model"
     },
     {
@@ -20289,9 +20256,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 10,
       "norm_label": "activitylog day-count map vs item.completedat distinction",
-      "community_name": "Import Validation & Corruption Detection",
+      "community_name": "Auth & Account Guards",
       "id": "docs_adr_adr_009_activitylog_vs_completedat"
     },
     {
@@ -20303,9 +20270,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 10,
       "norm_label": "oncompletiontoggle(delta) dependency-injected hook",
-      "community_name": "Import Validation & Corruption Detection",
+      "community_name": "Auth & Account Guards",
       "id": "docs_adr_adr_009_oncompletiontoggle_hook"
     },
     {
@@ -20331,9 +20298,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 44,
       "norm_label": "adr-010: in-app feedback storage (firebase write-only reports/)",
-      "community_name": "Changelog & Feature Badges",
+      "community_name": "Product Rename Migration",
       "id": "docs_adr_adr_010_feedback_storage"
     },
     {
@@ -20345,9 +20312,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 44,
       "norm_label": "reports/{reportid} write-only, creation-only firebase path",
-      "community_name": "Changelog & Feature Badges",
+      "community_name": "Product Rename Migration",
       "id": "docs_adr_adr_010_reports_write_only_path"
     },
     {
@@ -20359,9 +20326,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 44,
       "norm_label": "client-side feedback rate limiting (localstorage timestamp log)",
-      "community_name": "Changelog & Feature Badges",
+      "community_name": "Product Rename Migration",
       "id": "docs_adr_adr_010_client_side_rate_limiting"
     },
     {
@@ -20527,9 +20494,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 44,
       "norm_label": "firebase/database.rules.json",
-      "community_name": "Changelog & Feature Badges",
+      "community_name": "Product Rename Migration",
       "id": "firebase_database_rules"
     },
     {
@@ -20821,9 +20788,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 21,
+      "community": 36,
       "norm_label": "reviewschedule.js \u2014 spaced-repetition review reminders",
-      "community_name": "Public API Docs",
+      "community_name": "Issue Templates & Docs Index",
       "id": "docs_api_reviewschedule"
     },
     {
@@ -31872,7 +31839,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/services/activityLogStore.js",
-      "source_location": "L389",
+      "source_location": "L436",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_services_activitylogstore_createactivitylogstore",
@@ -41399,17 +41366,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L206",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_ui_components_chartwrapper",
-      "target": "src_ui_components_chartwrapper_bucket_legend",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/ui/components/chartWrapper.js",
       "source_location": "L204",
       "weight": 1.0,
       "_origin": "ast",
@@ -41421,7 +41377,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L216",
+      "source_location": "L211",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper",
@@ -41443,22 +41399,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L260",
+      "source_location": "L255",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper",
       "target": "src_ui_components_chartwrapper_createbucketedbarchart",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L303",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_ui_components_chartwrapper",
-      "target": "src_ui_components_chartwrapper_createchartlegend",
       "confidence_score": 1.0
     },
     {
@@ -41498,7 +41443,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L225",
+      "source_location": "L220",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper",
@@ -41531,7 +41476,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L232",
+      "source_location": "L227",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper",
@@ -41591,7 +41536,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L261",
+      "source_location": "L256",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_createbucketedbarchart",
@@ -41627,7 +41572,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L218",
+      "source_location": "L213",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_bucketcolor",
@@ -41675,7 +41620,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L217",
+      "source_location": "L212",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_bucketcolor",
@@ -41723,7 +41668,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L264",
+      "source_location": "L259",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_createbucketedbarchart",
@@ -41783,7 +41728,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L263",
+      "source_location": "L258",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_createbucketedbarchart",
@@ -41795,7 +41740,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L262",
+      "source_location": "L257",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_createbucketedbarchart",
@@ -41807,7 +41752,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L280",
+      "source_location": "L275",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_createbucketedbarchart",
@@ -41819,7 +41764,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L241",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_positiontooltip",
@@ -41832,22 +41777,10 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L266",
+      "source_location": "L261",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_ui_components_chartwrapper_createbucketedbarchart",
-      "target": "src_ui_dom_el"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/ui/components/chartWrapper.js",
-      "source_location": "L304",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_ui_components_chartwrapper_createchartlegend",
       "target": "src_ui_dom_el"
     },
     {
@@ -42964,17 +42897,6 @@
       "_origin": "ast",
       "source": "src_ui_components_decorativeicon",
       "target": "src_ui_components_decorativeicon_decorative_icon_shapes",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/ui/components/decorativeIcon.js",
-      "source_location": "L362",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_ui_components_decorativeicon",
-      "target": "src_ui_components_decorativeicon_hasdecorativeicon",
       "confidence_score": 1.0
     },
     {
@@ -67082,5 +67004,5 @@
       "source_file": "docs/monetization-decision.md"
     }
   ],
-  "built_at_commit": "62a51bcc2985d530fda42a568905cb44dadce412"
+  "built_at_commit": "da98947a405c8d7d17efb809eb8d39cb9aa2cce7"
 }
