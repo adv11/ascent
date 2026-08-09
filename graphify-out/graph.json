@@ -2145,7 +2145,7 @@
       "_origin": "ast",
       "id": "src_core_dailytodo_limits",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "limits.js"
     },
     {
@@ -2156,7 +2156,7 @@
       "_origin": "ast",
       "id": "src_core_dailytodo_limits_duration_presets",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "duration_presets"
     },
     {
@@ -2166,7 +2166,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_core_dailytodo_limits_clampdurationms",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "clampdurationms()"
     },
@@ -2177,8 +2177,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_dailytodo_reminderscheduling",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "reminderscheduling.js"
     },
     {
@@ -2188,8 +2188,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_core_dailytodo_reminderscheduling_computereminderfireat",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "computereminderfireat()"
     },
     {
@@ -2199,8 +2199,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_core_dailytodo_reminderscheduling_shouldschedulereminder",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "shouldschedulereminder()"
     },
     {
@@ -2606,8 +2606,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "src_core_roadmap_backupvalidator_diffbackupitems",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "diffbackupitems()"
     },
     {
@@ -3200,8 +3200,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "reviewschedule.js"
     },
     {
@@ -3211,8 +3211,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_isreviewdue",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "isreviewdue()"
     },
     {
@@ -3222,8 +3222,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_getreviewdueitems",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "getreviewdueitems()"
     },
     {
@@ -3233,8 +3233,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_core_roadmap_reviewschedule_groupreviewdueitemsbytag",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "groupreviewdueitemsbytag()"
     },
     {
@@ -3420,8 +3420,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 174,
+      "community_name": "isValidUrl",
       "norm_label": "shareschema.js"
     },
     {
@@ -3431,8 +3431,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema_toshareitem",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 174,
+      "community_name": "isValidUrl",
       "norm_label": "toshareitem()"
     },
     {
@@ -3442,8 +3442,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_core_roadmap_shareschema_buildroadmapsharesnapshot",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 174,
+      "community_name": "isValidUrl",
       "norm_label": "buildroadmapsharesnapshot()"
     },
     {
@@ -3453,7 +3453,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_core_time_timetracking",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "timetracking.js"
     },
@@ -3464,7 +3464,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_core_time_timetracking_computeelapsedseconds",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "computeelapsedseconds()"
     },
@@ -3475,7 +3475,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_core_time_timetracking_accumulateelapsed",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "accumulateelapsed()"
     },
@@ -3486,7 +3486,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_core_time_timetracking_formattimespent",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "formattimespent()"
     },
@@ -4377,8 +4377,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_authcleanup",
-      "community": 176,
-      "community_name": "authCleanup.js",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "authcleanup.js"
     },
     {
@@ -4388,8 +4388,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_services_authcleanup_signoutwithcleanup",
-      "community": 176,
-      "community_name": "authCleanup.js",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "signoutwithcleanup()"
     },
     {
@@ -4509,7 +4509,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_dailytodostore",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodostore.js"
     },
@@ -4520,7 +4520,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_services_dailytodostore_stablestringify",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "stablestringify()"
     },
@@ -4531,7 +4531,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_services_dailytodostore_genid",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "genid()"
     },
@@ -4542,7 +4542,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_dailytodostore_readlocaltodos",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "readlocaltodos()"
     },
@@ -4729,8 +4729,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_firebase",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "firebase.js"
     },
     {
@@ -4740,8 +4740,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_firebase_app",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "app"
     },
     {
@@ -4751,8 +4751,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_services_firebase_auth",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "auth"
     },
     {
@@ -4773,8 +4773,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_services_firebase_authapi",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "authapi"
     },
     {
@@ -4993,8 +4993,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_services_reminderscheduler",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "reminderscheduler.js"
     },
     {
@@ -5004,8 +5004,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_timers",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "timers"
     },
     {
@@ -5015,8 +5015,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_remindersenabled",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "remindersenabled()"
     },
     {
@@ -5026,8 +5026,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_enablereminders",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "enablereminders()"
     },
     {
@@ -5037,8 +5037,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_disablereminders",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "disablereminders()"
     },
     {
@@ -5048,8 +5048,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_clearalltimers",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "clearalltimers()"
     },
     {
@@ -5059,8 +5059,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_canceltimer",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "canceltimer()"
     },
     {
@@ -5070,8 +5070,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_firenotification",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "firenotification()"
     },
     {
@@ -5081,8 +5081,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_scheduletimer",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "scheduletimer()"
     },
     {
@@ -5092,8 +5092,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_services_reminderscheduler_initreminderscheduler",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "initreminderscheduler()"
     },
     {
@@ -6588,8 +6588,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_services_theme_onthemechange",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "onthemechange()"
     },
     {
@@ -6732,7 +6732,7 @@
       "_origin": "ast",
       "id": "src_ui_components_addtodailytodomodal",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "addtodailytodomodal.js"
     },
     {
@@ -6743,7 +6743,7 @@
       "_origin": "ast",
       "id": "src_ui_components_addtodailytodomodal_openaddtodailytodomodal",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "openaddtodailytodomodal()"
     },
     {
@@ -6797,8 +6797,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_ui_components_authmarketingpanel_createauthmarketingpanel",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "createauthmarketingpanel()"
     },
     {
@@ -6808,8 +6808,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_authshell",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "authshell.js"
     },
     {
@@ -6819,8 +6819,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_authshell_authshell",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "authshell()"
     },
     {
@@ -6830,8 +6830,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_avatar",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "avatar.js"
     },
     {
@@ -6841,8 +6841,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_ui_components_avatar_initialsfor",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "initialsfor()"
     },
     {
@@ -6852,8 +6852,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_ui_components_avatar_createavatar",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "createavatar()"
     },
     {
@@ -6995,8 +6995,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "changelogdrawer.js"
     },
     {
@@ -7006,8 +7006,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_type_labels",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "type_labels"
     },
     {
@@ -7017,8 +7017,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_renderentryitem",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "renderentryitem()"
     },
     {
@@ -7028,8 +7028,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_renderversiongroup",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "renderversiongroup()"
     },
     {
@@ -7039,8 +7039,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_ui_components_changelogdrawer_openchangelogdrawer",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "openchangelogdrawer()"
     },
     {
@@ -7325,8 +7325,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_ui_components_confirmdialog_confirmdialog",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "confirmdialog()"
     },
     {
@@ -7337,7 +7337,7 @@
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodoguide.js"
     },
     {
@@ -7348,7 +7348,7 @@
       "_origin": "ast",
       "id": "src_ui_components_dailytodoguide_opendailytodoguide",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "opendailytodoguide()"
     },
     {
@@ -7358,7 +7358,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodopanel.js"
     },
@@ -7369,7 +7369,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel_buildrowmeta",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "buildrowmeta()"
     },
@@ -7380,7 +7380,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel_resolveroadmapname",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "resolveroadmapname()"
     },
@@ -7391,8 +7391,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_ui_components_dailytodopanel_createdailytodopanel",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "createdailytodopanel()"
     },
     {
@@ -7402,8 +7402,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "decorativeicon.js"
     },
     {
@@ -7413,8 +7413,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_decorative_icon_shapes",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "decorative_icon_shapes"
     },
     {
@@ -7424,8 +7424,8 @@
       "source_location": "L267",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_valid_sizes",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "valid_sizes"
     },
     {
@@ -7435,8 +7435,8 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_createdecorativeicon",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "createdecorativeicon()"
     },
     {
@@ -7446,8 +7446,8 @@
       "source_location": "L287",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_createiconpicker",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "createiconpicker()"
     },
     {
@@ -7457,8 +7457,8 @@
       "source_location": "L327",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_openiconpickermodal",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "openiconpickermodal()"
     },
     {
@@ -7468,8 +7468,8 @@
       "source_location": "L362",
       "_origin": "ast",
       "id": "src_ui_components_decorativeicon_hasdecorativeicon",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "hasdecorativeicon()"
     },
     {
@@ -7501,8 +7501,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_dropdown",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "dropdown.js"
     },
     {
@@ -7512,8 +7512,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_ui_components_dropdown_createdropdown",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "createdropdown()"
     },
     {
@@ -7523,8 +7523,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_emptystate",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "emptystate.js"
     },
     {
@@ -7534,8 +7534,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_emptystate_createemptystate",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "createemptystate()"
     },
     {
@@ -7743,8 +7743,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_ui_components_feedbackmodal_openfeedbackmodal",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "openfeedbackmodal()"
     },
     {
@@ -7776,8 +7776,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_guestdatarisknudge",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "guestdatarisknudge.js"
     },
     {
@@ -7787,8 +7787,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_guestdatarisknudge_createguestdatarisknudge",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "createguestdatarisknudge()"
     },
     {
@@ -7886,8 +7886,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_icons",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "icons.js"
     },
     {
@@ -7897,8 +7897,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_ui_components_icons_icon_shapes",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "icon_shapes"
     },
     {
@@ -7908,8 +7908,8 @@
       "source_location": "L282",
       "_origin": "ast",
       "id": "src_ui_components_icons_valid_sizes",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "valid_sizes"
     },
     {
@@ -7919,8 +7919,8 @@
       "source_location": "L292",
       "_origin": "ast",
       "id": "src_ui_components_icons_createicon",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "createicon()"
     },
     {
@@ -7930,8 +7930,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "importbackupmodal.js"
     },
     {
@@ -7941,8 +7941,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_openimportbackupdropzonemodal",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "openimportbackupdropzonemodal()"
     },
     {
@@ -7952,8 +7952,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_summarysentence",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "summarysentence()"
     },
     {
@@ -7963,8 +7963,8 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_mergebuttonlabel",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "mergebuttonlabel()"
     },
     {
@@ -7974,8 +7974,8 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "src_ui_components_importbackupmodal_openimportbackupmodal",
-      "community": 18,
-      "community_name": "Command Palette & Router",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "openimportbackupmodal()"
     },
     {
@@ -8304,8 +8304,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_ui_components_myreports_openmyreports",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "openmyreports()"
     },
     {
@@ -8315,8 +8315,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_notificationbadge",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "notificationbadge.js"
     },
     {
@@ -8326,8 +8326,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_notificationbadge_createnotificationbadge",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "createnotificationbadge()"
     },
     {
@@ -8348,8 +8348,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_components_notificationbell_createnotificationbell",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "createnotificationbell()"
     },
     {
@@ -8514,7 +8514,7 @@
       "_origin": "ast",
       "id": "src_ui_components_select",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "select.js"
     },
     {
@@ -8525,7 +8525,7 @@
       "_origin": "ast",
       "id": "src_ui_components_select_createselect",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "createselect()"
     },
     {
@@ -8909,8 +8909,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "shareroadmapmodal.js"
     },
     {
@@ -8920,8 +8920,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_activeroadmaptitle",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "activeroadmaptitle()"
     },
     {
@@ -8931,8 +8931,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_shareurl",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "shareurl()"
     },
     {
@@ -8942,8 +8942,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_copytoclipboard",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "copytoclipboard()"
     },
     {
@@ -8953,8 +8953,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_rendersharerow",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "rendersharerow()"
     },
     {
@@ -8964,8 +8964,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_ui_components_shareroadmapmodal_openshareroadmapmodal",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "openshareroadmapmodal()"
     },
     {
@@ -9008,8 +9008,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_ui_components_sidebar_buildaccountmenu",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "buildaccountmenu()"
     },
     {
@@ -9085,8 +9085,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "themetoggle.js"
     },
     {
@@ -9096,8 +9096,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_icon_names",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "icon_names"
     },
     {
@@ -9107,8 +9107,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_arialabel",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "arialabel()"
     },
     {
@@ -9118,8 +9118,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_ui_components_themetoggle_createthemetoggle",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 138,
+      "community_name": "themeToggle.js",
       "norm_label": "createthemetoggle()"
     },
     {
@@ -9239,8 +9239,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_ui_components_topbar_createtopbar",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "createtopbar()"
     },
     {
@@ -9294,8 +9294,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_ui_dom_el",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "el()"
     },
     {
@@ -9327,8 +9327,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_ui_dom_isvalidurl",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 174,
+      "community_name": "isValidUrl",
       "norm_label": "isvalidurl()"
     },
     {
@@ -9350,7 +9350,7 @@
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderinlineresources",
       "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community_name": "isValidUrl",
       "norm_label": "renderinlineresources()"
     },
     {
@@ -9360,8 +9360,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_groupitems",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "groupitems()"
     },
     {
@@ -9382,8 +9382,8 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_matchesactivefilter",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "matchesactivefilter()"
     },
     {
@@ -9393,8 +9393,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_filteritems",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "filteritems()"
     },
     {
@@ -9415,8 +9415,8 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_prioritycounts",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "prioritycounts()"
     },
     {
@@ -9448,8 +9448,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderpriorityfilterselect",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "renderpriorityfilterselect()"
     },
     {
@@ -9503,8 +9503,8 @@
       "source_location": "L632",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_buildsectionrows",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "buildsectionrows()"
     },
     {
@@ -9657,8 +9657,8 @@
       "source_location": "L882",
       "_origin": "ast",
       "id": "src_ui_pages_dashboard_renderphasecard",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "renderphasecard()"
     },
     {
@@ -9712,8 +9712,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_ui_pages_developerprofile_buildbacklink",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 15,
+      "community_name": "Component Library (avatar/empty state/skeleton/sidebar)",
       "norm_label": "buildbacklink()"
     },
     {
@@ -9965,8 +9965,8 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "src_ui_pages_landing_buildtemplatestrip",
-      "community": 174,
-      "community_name": "decorativeIcon.js",
+      "community": 20,
+      "community_name": "LocalStorage Keys & Filter Preferences",
       "norm_label": "buildtemplatestrip()"
     },
     {
@@ -10097,8 +10097,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "onboarding.js"
     },
     {
@@ -10108,8 +10108,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildimportresulttoast",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "buildimportresulttoast()"
     },
     {
@@ -10119,8 +10119,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildpickingoverlay",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "buildpickingoverlay()"
     },
     {
@@ -10130,8 +10130,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_ui_pages_onboarding_buildonboardingtoursteps",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "buildonboardingtoursteps()"
     },
     {
@@ -10427,8 +10427,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildtogglerow",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "buildtogglerow()"
     },
     {
@@ -10460,8 +10460,8 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildchangenameform",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "buildchangenameform()"
     },
     {
@@ -10471,8 +10471,8 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildprofilesection",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "buildprofilesection()"
     },
     {
@@ -10504,8 +10504,8 @@
       "source_location": "L434",
       "_origin": "ast",
       "id": "src_ui_pages_settings_buildsupportsection",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "buildsupportsection()"
     },
     {
@@ -10834,8 +10834,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_ui_router_navigate",
-      "community": 32,
-      "community_name": "App Bootstrap (main.js)",
+      "community": 141,
+      "community_name": "topbar.js",
       "norm_label": "navigate()"
     },
     {
@@ -11164,7 +11164,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodo.js"
     },
@@ -11175,7 +11175,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_isexpired",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "isexpired()"
     },
@@ -11186,7 +11186,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_remainingms",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "remainingms()"
     },
@@ -11197,7 +11197,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_formatremaining",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "formatremaining()"
     },
@@ -11208,7 +11208,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_ui_utils_dailytodo_remainingband",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "remainingband()"
     },
@@ -11516,8 +11516,8 @@
       "source_location": "L211",
       "_origin": "ast",
       "id": "src_ui_utils_printroadmap_triggerroadmapprint",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "triggerroadmapprint()"
     },
     {
@@ -11527,8 +11527,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_prioritylabels",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "prioritylabels.js"
     },
     {
@@ -11538,8 +11538,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_ui_utils_prioritylabels_priority_labels",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "priority_labels"
     },
     {
@@ -11549,8 +11549,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_ui_utils_prioritylabels_prioritylabel",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "prioritylabel()"
     },
     {
@@ -11637,8 +11637,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_ui_utils_signout",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "signout.js"
     },
     {
@@ -11659,8 +11659,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_ui_utils_signout_confirmsignoutdespitefailedflush",
-      "community": 139,
-      "community_name": "dom.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "confirmsignoutdespitefailedflush()"
     },
     {
@@ -11714,8 +11714,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_utils_countup",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 177,
+      "community_name": "animateCountUp",
       "norm_label": "countup.js"
     },
     {
@@ -11725,8 +11725,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_utils_countup_animatecountup",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 177,
+      "community_name": "animateCountUp",
       "norm_label": "animatecountup()"
     },
     {
@@ -11824,8 +11824,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_e2e_accessibility_test",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 176,
+      "community_name": "accessibility.test.js",
       "norm_label": "accessibility.test.js"
     },
     {
@@ -11835,8 +11835,8 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "tests_e2e_accessibility_test_contrast_false_positive_selectors",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 176,
+      "community_name": "accessibility.test.js",
       "norm_label": "contrast_false_positive_selectors"
     },
     {
@@ -11846,8 +11846,8 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "tests_e2e_accessibility_test_seriousorcritical",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 176,
+      "community_name": "accessibility.test.js",
       "norm_label": "seriousorcritical()"
     },
     {
@@ -11857,8 +11857,8 @@
       "source_location": "L185",
       "_origin": "ast",
       "id": "tests_e2e_accessibility_test_runaxe",
-      "community": 77,
-      "community_name": "Shared Roadmap View Tests",
+      "community": 176,
+      "community_name": "accessibility.test.js",
       "norm_label": "runaxe()"
     },
     {
@@ -12412,6 +12412,17 @@
       "norm_label": "waitforrailfooterlayout()"
     },
     {
+      "label": "assertLastContentClearsBottomNav()",
+      "file_type": "code",
+      "source_file": "tests/e2e/responsive.test.js",
+      "source_location": "L149",
+      "_origin": "ast",
+      "id": "tests_e2e_responsive_test_assertlastcontentclearsbottomnav",
+      "community": 151,
+      "community_name": "responsive.test.js",
+      "norm_label": "assertlastcontentclearsbottomnav()"
+    },
+    {
       "label": "reviewReminders.test.js",
       "file_type": "code",
       "source_file": "tests/e2e/reviewReminders.test.js",
@@ -12848,7 +12859,7 @@
       "_origin": "ast",
       "id": "tests_unit_addtodailytodomodal_test",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "addtodailytodomodal.test.js"
     },
     {
@@ -12957,8 +12968,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_unit_analytics_projection_test_items",
-      "community": 7,
-      "community_name": "Review Scheduling & Celebration State",
+      "community": 175,
+      "community_name": "dashboard.test.js",
       "norm_label": "items()"
     },
     {
@@ -13012,8 +13023,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_authcleanup_test",
-      "community": 176,
-      "community_name": "authCleanup.js",
+      "community": 5,
+      "community_name": "Feedback Metadata & Rate Limiting",
       "norm_label": "authcleanup.test.js"
     },
     {
@@ -13023,8 +13034,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_avatar_test",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 61,
+      "community_name": "Tabs Component",
       "norm_label": "avatar.test.js"
     },
     {
@@ -13298,8 +13309,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_changelogdrawer_test",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "changelogdrawer.test.js"
     },
     {
@@ -13309,8 +13320,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_changelogdrawer_test_entries",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 139,
+      "community_name": "dom.js",
       "norm_label": "entries"
     },
     {
@@ -13496,8 +13507,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_countup_test",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 177,
+      "community_name": "animateCountUp",
       "norm_label": "countup.test.js"
     },
     {
@@ -13573,7 +13584,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dailytodo_test",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodo.test.js"
     },
@@ -13585,7 +13596,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodoguide_test",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodoguide.test.js"
     },
     {
@@ -13596,7 +13607,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "dailytodopanel.test.js"
     },
     {
@@ -13607,7 +13618,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_createfakestore",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "createfakestore()"
     },
     {
@@ -13618,7 +13629,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_clickrowdelete",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "clickrowdelete()"
     },
     {
@@ -13629,7 +13640,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_createfakeroadmapstore",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "createfakeroadmapstore()"
     },
     {
@@ -13640,7 +13651,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_linkedtodo",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "linkedtodo()"
     },
     {
@@ -13651,7 +13662,7 @@
       "_origin": "ast",
       "id": "tests_unit_dailytodopanel_test_flushmicrotasks",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "flushmicrotasks()"
     },
     {
@@ -13815,8 +13826,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_dropdown_test",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "dropdown.test.js"
     },
     {
@@ -13826,8 +13837,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_dropdown_test_trigger",
-      "community": 61,
-      "community_name": "Tabs Component",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "trigger()"
     },
     {
@@ -13837,8 +13848,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_emptystate_test",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "emptystate.test.js"
     },
     {
@@ -14255,8 +14266,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_icons_test",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "icons.test.js"
     },
     {
@@ -14266,8 +14277,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_icons_test_icon_names",
-      "community": 173,
-      "community_name": "icons.js",
+      "community": 32,
+      "community_name": "App Bootstrap (main.js)",
       "norm_label": "icon_names"
     },
     {
@@ -14761,8 +14772,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_notificationbadge_test",
-      "community": 1,
-      "community_name": "Backup/Export Schema + ICS Export",
+      "community": 9,
+      "community_name": "Brand & Auth Marketing Panel",
       "norm_label": "notificationbadge.test.js"
     },
     {
@@ -14794,8 +14805,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_unit_onboarding_test_setup",
-      "community": 141,
-      "community_name": "topbar.js",
+      "community": 18,
+      "community_name": "Command Palette & Router",
       "norm_label": "setup()"
     },
     {
@@ -14926,8 +14937,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_prioritylabels_test",
-      "community": 181,
-      "community_name": "itemPanel.js",
+      "community": 156,
+      "community_name": "priorityLabel",
       "norm_label": "prioritylabels.test.js"
     },
     {
@@ -15091,8 +15102,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduler_test",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "reminderscheduler.test.js"
     },
     {
@@ -15102,8 +15113,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduler_test_makestore",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "makestore()"
     },
     {
@@ -15113,8 +15124,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduling_test",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "reminderscheduling.test.js"
     },
     {
@@ -15124,8 +15135,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "tests_unit_reminderscheduling_test_maketodo",
-      "community": 138,
-      "community_name": "reminderScheduler.js",
+      "community": 160,
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "maketodo()"
     },
     {
@@ -15146,8 +15157,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_reviewschedule_test",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "reviewschedule.test.js"
     },
     {
@@ -15157,8 +15168,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "tests_unit_reviewschedule_test_makeitem",
-      "community": 161,
-      "community_name": "dashboard.js",
+      "community": 173,
+      "community_name": "reviewSchedule.js",
       "norm_label": "makeitem()"
     },
     {
@@ -15311,8 +15322,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 147,
+      "community_name": "MockIntersectionObserver",
       "norm_label": "scrollreveal.test.js"
     },
     {
@@ -15377,8 +15388,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_unit_scrollreveal_test_mockmatchmedia",
-      "community": 20,
-      "community_name": "LocalStorage Keys & Filter Preferences",
+      "community": 147,
+      "community_name": "MockIntersectionObserver",
       "norm_label": "mockmatchmedia()"
     },
     {
@@ -15389,7 +15400,7 @@
       "_origin": "ast",
       "id": "tests_unit_select_test",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "select.test.js"
     },
     {
@@ -15400,7 +15411,7 @@
       "_origin": "ast",
       "id": "tests_unit_select_test_options",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "options"
     },
     {
@@ -15411,7 +15422,7 @@
       "_origin": "ast",
       "id": "tests_unit_select_test_mount",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "mount()"
     },
     {
@@ -15422,7 +15433,7 @@
       "_origin": "ast",
       "id": "tests_unit_select_test_trigger",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "trigger()"
     },
     {
@@ -15433,7 +15444,7 @@
       "_origin": "ast",
       "id": "tests_unit_select_test_fire",
       "community": 160,
-      "community_name": "createSelect",
+      "community_name": "dailyTodoPanel.js",
       "norm_label": "fire()"
     },
     {
@@ -15663,8 +15674,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_shareschema_test",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 174,
+      "community_name": "isValidUrl",
       "norm_label": "shareschema.test.js"
     },
     {
@@ -15674,8 +15685,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_unit_shareschema_test_snapshot",
-      "community": 3,
-      "community_name": "Feedback Report Schema + Share Schema",
+      "community": 174,
+      "community_name": "isValidUrl",
       "norm_label": "snapshot()"
     },
     {
@@ -15894,8 +15905,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_signup_test",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "signup.test.js"
     },
     {
@@ -15905,8 +15916,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_unit_signup_test_fillpasswordfields",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "fillpasswordfields()"
     },
     {
@@ -15916,8 +15927,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_unit_signup_test_setup",
-      "community": 5,
-      "community_name": "Feedback Metadata & Rate Limiting",
+      "community": 1,
+      "community_name": "Backup/Export Schema + ICS Export",
       "norm_label": "setup()"
     },
     {
@@ -16224,7 +16235,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_unit_timetracking_test",
-      "community": 156,
+      "community": 160,
       "community_name": "dailyTodoPanel.js",
       "norm_label": "timetracking.test.js"
     },
@@ -60770,7 +60781,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/e2e/responsive.test.js",
-      "source_location": "L90",
+      "source_location": "L149",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "tests_e2e_responsive_test",
+      "target": "tests_e2e_responsive_test_assertlastcontentclearsbottomnav",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/e2e/responsive.test.js",
+      "source_location": "L145",
       "weight": 1.0,
       "_origin": "ast",
       "source": "tests_e2e_responsive_test",
@@ -60797,6 +60819,18 @@
       "_origin": "ast",
       "source": "tests_e2e_responsive_test",
       "target": "tests_e2e_responsive_test_waitforrailfooterlayout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/e2e/responsive.test.js",
+      "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "tests_e2e_responsive_test_assertlastcontentclearsbottomnav",
+      "target": "tests_e2e_responsive_test_boxesoverlap",
       "confidence_score": 1.0
     },
     {
@@ -67048,5 +67082,5 @@
       "source_file": "docs/monetization-decision.md"
     }
   ],
-  "built_at_commit": "98cb2fe947bcf79a9cb81146c97c7ddf94b24c7b"
+  "built_at_commit": "62a51bcc2985d530fda42a568905cb44dadce412"
 }
