@@ -148,11 +148,20 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
 
         async function assertLastContentClearsBottomNav(contentSelector) {
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-          await page.waitForTimeout(300);
-          const navBox = await page.locator('.bottom-nav').boundingBox();
-          const lastChildBox = await page.locator(`${contentSelector} > :last-child`).last().boundingBox();
-          expect(lastChildBox).not.toBeNull();
-          expect(boxesOverlap(lastChildBox, navBox)).toBe(false);
+          // A fixed wait after scrolling was flaky under CI's resource-constrained,
+          // 2-worker-parallel runners specifically — a heavy 484-topic dashboard/
+          // progress page hadn't always finished its post-scroll reflow within a
+          // flat 300ms there, even though the same measurement is correct and
+          // stable locally. expect.poll() re-scrolls and re-measures until the
+          // real, settled layout is captured (or the timeout genuinely proves a
+          // regression) instead of gambling on one fixed delay.
+          await expect.poll(async () => {
+            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+            const navBox = await page.locator('.bottom-nav').boundingBox();
+            const lastChildBox = await page.locator(`${contentSelector} > :last-child`).last().boundingBox();
+            if (!navBox || !lastChildBox) return null;
+            return boxesOverlap(lastChildBox, navBox);
+          }, { timeout: 5_000, intervals: [200, 300, 500] }).toBe(false);
         }
 
         await page.goto('/#/signin');
