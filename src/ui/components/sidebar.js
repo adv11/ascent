@@ -190,6 +190,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
   node._cleanup = () => {
     identity._cleanup?.();
     themeToggleBtn._cleanup?.();
+    guestRiskIndicator?._tooltipCleanup?.();
   };
   return node;
 }
