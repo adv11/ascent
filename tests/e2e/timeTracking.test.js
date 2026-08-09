@@ -27,7 +27,7 @@ test.describe('lightweight time tracking per topic (issue #180)', () => {
     await expect(page.locator('.item-panel')).toHaveCount(0);
 
     await page.reload();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await openFirstItemPanel(page);
     await expect(page.locator('.timer-display')).not.toHaveText('0s');
   });

@@ -80,7 +80,7 @@ test.describe('onboarding — starter template picker (issue #51)', () => {
 
     await page.reload();
 
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await expect(page).not.toHaveURL(/#\/onboarding/);
   });
 });

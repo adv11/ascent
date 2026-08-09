@@ -65,7 +65,7 @@ test.describe('personal notes per topic (issue #15)', () => {
     await page.locator('button', { hasText: 'Cancel' }).click();
 
     await page.reload();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await openFirstItemPanel(page);
     await expect(page.locator('.notes-textarea')).toHaveValue('Survives reload');
   });

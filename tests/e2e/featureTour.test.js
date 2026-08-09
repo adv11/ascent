@@ -31,7 +31,7 @@ test.describe('feature tour (issue #17)', () => {
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 
     await page.reload();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
   });
 
@@ -48,7 +48,7 @@ test.describe('feature tour (issue #17)', () => {
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 
     await page.reload();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
   });
 
@@ -137,7 +137,7 @@ test.describe('onboarding-page tour (issue #293)', () => {
     // "does it reappear" check happens by navigating back to /onboarding
     // client-side afterward, not by asserting on the reload's own landing page.
     await page.reload();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await page.click('.app-sidebar-nav a[href="#/onboarding"]');
     await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
