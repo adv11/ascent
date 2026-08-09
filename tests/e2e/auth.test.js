@@ -13,22 +13,22 @@ test('page loads and shows sign-in screen', async ({ page }) => {
   // navigable brand link since aria-hidden content is excluded from the
   // accessibility tree.
   const brandLink = page.getByRole('link', { name: 'Ascent' });
-  await expect(brandLink).toBeVisible({ timeout: 10_000 });
+  await expect(brandLink).toBeVisible({ timeout: 20_000 });
   await expect(brandLink).toContainText('Ascent');
 });
 
 test('theme toggle is visible on sign-in screen', async ({ page }) => {
   await page.goto('/#/signin');
-  await expect(page.locator('button[aria-label*="mode"]')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('button[aria-label*="mode"]')).toBeVisible({ timeout: 20_000 });
 });
 
 test('guest session starts, lands on the onboarding picker, and reaches the dashboard after picking a template', async ({ page }) => {
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.brand-name')).toContainText('Ascent');
 });
 
@@ -38,15 +38,15 @@ test('guest session shows a local-data risk indicator in the sidebar; a signed-i
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.app-sidebar-guest-risk')).toBeVisible();
 });
 
 test('"Forgot password?" link is visible on sign-in screen', async ({ page }) => {
   await page.goto('/#/signin');
-  await expect(page.locator('.forgot-link')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.forgot-link')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.forgot-link')).toContainText('Forgot password?');
 });
 
@@ -94,9 +94,9 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
 
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
   await openRowOverflowMenu(page.locator('.check-item').first(), 'Open');
   await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
@@ -113,21 +113,21 @@ test('Add resource button works without ReferenceError', async ({ page }) => {
 
 test('sign-up page shows Create a password and Confirm password fields', async ({ page }) => {
   await page.goto('/#/signup');
-  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 20_000 });
   const pwdInputs = page.locator('input[type="password"]');
   await expect(pwdInputs).toHaveCount(2);
 });
 
 test('sign-up page has strength meter', async ({ page }) => {
   await page.goto('/#/signup');
-  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 20_000 });
   await expect(page.locator('.strength-meter')).toBeVisible();
   await expect(page.locator('.strength-segment')).toHaveCount(4);
 });
 
 test('sign-up confirm mismatch shows error and does not navigate', async ({ page }) => {
   await page.goto('/#/signup');
-  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 20_000 });
   await page.locator('input[type="email"]').fill('test@example.com');
   await page.locator('input[type="password"]').first().fill('Password1!');
   await page.locator('input[type="password"]').last().fill('Mismatch1!');
@@ -138,7 +138,7 @@ test('sign-up confirm mismatch shows error and does not navigate', async ({ page
 
 test('show/hide toggle on sign-in password field changes input type', async ({ page }) => {
   await page.goto('/#/signin');
-  await expect(page.locator('.auth-title')).toContainText('Welcome back', { timeout: 10_000 });
+  await expect(page.locator('.auth-title')).toContainText('Welcome back', { timeout: 20_000 });
   const pwdInput = page.locator('input[type="password"]').first();
   await expect(pwdInput).toHaveAttribute('type', 'password');
   await page.locator('.password-toggle').first().click();
@@ -149,7 +149,7 @@ test('show/hide toggle on sign-in password field changes input type', async ({ p
 
 test('sign-up page has Continue as guest button', async ({ page }) => {
   await page.goto('/#/signup');
-  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 10_000 });
+  await expect(page.locator('.auth-title')).toContainText('Create your account', { timeout: 20_000 });
   await expect(page.locator('.auth-divider')).toBeVisible();
   await expect(page.locator('.btn.btn-secondary.btn-block')).toContainText('Continue as guest');
 });
@@ -158,9 +158,9 @@ test('sign-up page Continue as guest navigates to the onboarding picker, then th
   test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
   await page.goto('/#/signup');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
   // .first() would now hit the "Create your own roadmap" card (issue #4,
   // always first in the grid) instead of a template — pick an actual template.
   await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 });

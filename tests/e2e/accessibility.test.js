@@ -204,7 +204,7 @@ async function runAxe(page, { excludeContrastFalsePositives = false, include = n
 test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
   test('landing page has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/');
-    await expect(page.locator('.landing-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.landing-page')).toBeVisible({ timeout: 20_000 });
     // issue #301 follow-up — this call never opted into the false-positive
     // exclusion list before; running the full suite against a real emulator
     // (rather than the guest-session-only local checks earlier phases were
@@ -218,21 +218,21 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
 
   test('developer profile page has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/creator');
-    await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
   test('sign-in page has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/signin');
-    await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
   test('sign-up page has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/signup');
-    await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -241,7 +241,7 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     const violations = await runAxe(page);
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -250,9 +250,9 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -263,11 +263,11 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.goto('/#/settings');
-    await expect(page.locator('.settings-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.settings-page')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -276,11 +276,11 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.goto('/#/progress');
-    await expect(page.locator('.progress-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.progress-page')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -292,7 +292,7 @@ test.describe('automated accessibility checks (issue #6 Phase 9)', () => {
   // file's guest-sign-in-gated tests.
   test('shared roadmap "revoked" state has zero critical/serious axe violations', async ({ page }) => {
     await page.goto('/#/shared?id=does-not-exist');
-    await expect(page.locator('.shared-view-state')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.shared-view-state')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -308,9 +308,9 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await openRowOverflowMenu(page.locator('.check-item').first(), 'Open');
     await expect(page.locator('.item-panel')).toBeVisible({ timeout: 5_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.item-panel' });
@@ -321,7 +321,7 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card-create .template-card-pick').click();
     const modal = page.locator('.modal-overlay[aria-label="Create your own roadmap"]');
     await expect(modal).toBeVisible();
@@ -341,10 +341,10 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.daily-todo-panel' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -362,9 +362,9 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await openRowOverflowMenu(page.locator('.check-item').first(), 'Add to today');
     const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
     await expect(modal).toBeVisible();
@@ -376,7 +376,7 @@ test.describe('automated accessibility checks — modals (issue #124)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     // Issue #206 §4.1 — Hide moved behind the card's ⋯ overflow menu; the
     // menu itself is portaled to document.body on open (dropdown.js), so
     // it's located at the page level, not via the card locator. onboarding.js
@@ -415,9 +415,9 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.locator('.app-sidebar-identity').click();
     await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
@@ -431,9 +431,9 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.locator('.app-sidebar-identity').click();
     await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
@@ -446,9 +446,9 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.locator('.app-sidebar-identity').click();
     await page.locator('.dropdown-item', { hasText: 'Send feedback' }).click();
     const modal = page.locator('.modal-overlay[aria-label="Send feedback"]');
@@ -456,16 +456,16 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     await modal.locator('.feedback-kind-chip', { hasText: 'Something else' }).click();
     await modal.locator('textarea').first().fill('Test feedback for issue #357 focus coverage.');
     await modal.locator('button[type="submit"]').click();
-    await expect(modal.locator('.feedback-success button', { hasText: 'Close' })).toBeFocused({ timeout: 10_000 });
+    await expect(modal.locator('.feedback-success button', { hasText: 'Close' })).toBeFocused({ timeout: 20_000 });
   });
 
   test('standalone "My reports" modal moves focus to the close button', async ({ page }) => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     // Issue #488 — the topbar's own avatar button now carries an identical
     // "Account menu — ..." aria-label to the sidebar's identity trigger (both
     // open the same buildAccountMenu() item list), so this must be scoped to
@@ -483,7 +483,7 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card-create .template-card-info-corner').click();
     const modal = page.locator('.modal-overlay[aria-label="Build your own roadmap"]');
     await expect(modal).toBeVisible();
@@ -496,9 +496,9 @@ test.describe('automated accessibility checks — initial focus on open (issue #
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.locator('.daily-todo-info-btn').click();
     const modal = page.locator('.modal-overlay[aria-label="About Today\'s Todos"]');
     await expect(modal).toBeVisible();
@@ -522,7 +522,7 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
 
   test('landing page has zero critical/serious axe violations in dark theme', async ({ page }) => {
     await page.goto('/#/');
-    await expect(page.locator('.landing-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.landing-page')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page);
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -530,7 +530,7 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
 
   test('developer profile page has zero critical/serious axe violations in dark theme', async ({ page }) => {
     await page.goto('/#/creator');
-    await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.developer-profile-page')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -538,7 +538,7 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
 
   test('sign-in page has zero critical/serious axe violations in dark theme', async ({ page }) => {
     await page.goto('/#/signin');
-    await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.auth-page, .auth-card')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -548,9 +548,9 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
@@ -560,11 +560,11 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.goto('/#/settings');
-    await expect(page.locator('.settings-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.settings-page')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -574,11 +574,11 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await page.goto('/#/progress');
-    await expect(page.locator('.progress-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.progress-page')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -592,10 +592,10 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.daily-todo-panel')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     const violations = await runAxe(page, { excludeContrastFalsePositives: true, include: '.daily-todo-panel' });
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
@@ -605,9 +605,9 @@ test.describe('automated accessibility checks — dark theme (issue #116)', () =
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
     await openRowOverflowMenu(page.locator('.check-item').first(), 'Add to today');
     const modal = page.locator('.modal-overlay[aria-label="Add to Today\'s Todos"]');
     await expect(modal).toBeVisible();

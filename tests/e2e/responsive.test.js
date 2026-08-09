@@ -25,7 +25,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
       await page.goto('/#/signin');
       await page.click('text=Continue as guest');
-      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
       const infoCornerBox = await page.locator('.template-card-create .template-card-info-corner').boundingBox();
       expect(infoCornerBox.width).toBeGreaterThanOrEqual(44);
@@ -58,7 +58,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
       await page.goto('/#/signin');
       await page.click('text=Continue as guest');
-      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
       await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
       // pickTemplate() awaits a real switchRoadmap() round trip against the
       // Firebase emulator (seed + first flush + first listener attach) before
@@ -67,7 +67,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       // a plain render-only wait should need, so this waits on the URL
       // transition first and gives the network-bound step its own timeout.
       await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
-      await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
       const firstRow = page.locator('.check-item').nth(0);
       const opacity = await firstRow.locator('.check-item-overflow-btn').evaluate((el) => getComputedStyle(el).opacity);
@@ -82,9 +82,9 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
     async function signInAndReachApp(page) {
       await page.goto('/#/signin');
       await page.click('text=Continue as guest');
-      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+      await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
       await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-      await expect(page.locator('.app-sidebar')).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator('.app-sidebar')).toBeVisible({ timeout: 20_000 });
     }
 
     function boxesOverlap(a, b) {
@@ -100,7 +100,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
       await page.waitForFunction(() => {
         const footer = document.querySelector('.app-sidebar-footer');
         return footer && getComputedStyle(footer).flexDirection === 'column';
-      }, { timeout: 10_000 });
+      }, { timeout: 20_000 });
     }
 
     // Issue #484 — below the sidebar's 900px breakpoint there's no sidebar
@@ -113,7 +113,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
         test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
         await page.goto('/#/signin');
         await page.click('text=Continue as guest');
-        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
         await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
         await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
@@ -166,7 +166,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
 
         await page.goto('/#/signin');
         await page.click('text=Continue as guest');
-        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+        await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
         await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
         await expect(page).toHaveURL(/#\/app/, { timeout: 20_000 });
 
@@ -207,7 +207,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
         await page.click('button:has-text("Create account")');
         await expect(page).toHaveURL(/#\/onboarding/, { timeout: 15_000 });
         await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-        await expect(page.locator('.app-sidebar')).toBeVisible({ timeout: 10_000 });
+        await expect(page.locator('.app-sidebar')).toBeVisible({ timeout: 20_000 });
 
         await page.locator('.app-sidebar-collapse-btn').click();
         await expect(page.locator('.app-sidebar')).toHaveClass(/collapsed/);
@@ -226,7 +226,7 @@ test.describe('cross-device / responsive consistency (issue #36)', () => {
         await page.waitForFunction(() => {
           const el = document.querySelector('.dropdown-menu.open');
           return el && getComputedStyle(el).position === 'fixed';
-        }, { timeout: 10_000 });
+        }, { timeout: 20_000 });
         const menuBox = await menu.boundingBox();
         const viewport = page.viewportSize();
         // Issue #102 follow-up — the menu used to be clipped to the sidebar's

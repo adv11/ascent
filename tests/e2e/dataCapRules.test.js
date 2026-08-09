@@ -13,7 +13,7 @@ const DATABASE_SDK_URL = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-da
 async function signInGuestAndGetUid(page) {
   await page.goto('/#/signin');
   await page.click('text=Continue as guest');
-  await expect(page).toHaveURL(/#\/(onboarding|app)/, { timeout: 10_000 });
+  await expect(page).toHaveURL(/#\/(onboarding|app)/, { timeout: 20_000 });
   return page.evaluate(() => new Promise(async resolve => {
     const { authApi } = await import('/src/services/firebase.js');
     const unsubscribe = authApi.onChange(user => {

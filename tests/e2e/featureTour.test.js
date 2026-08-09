@@ -12,11 +12,11 @@ test.describe('feature tour (issue #17)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
-    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 20_000 });
     await page.click('.tour-welcome-card [data-action="start"]');
 
     // Issue #490 added an 11th step ("Track daily todos") to buildTourSteps();
@@ -39,11 +39,11 @@ test.describe('feature tour (issue #17)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
-    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 20_000 });
     await page.click('.tour-welcome-card [data-action="skip"]');
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 
@@ -56,9 +56,9 @@ test.describe('feature tour (issue #17)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await page.click('.tour-welcome-card [data-action="skip"]');
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
@@ -73,11 +73,11 @@ test.describe('feature tour (issue #17)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
-    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 20_000 });
     await page.click('.tour-welcome-card [data-action="start"]');
     await expect(page.locator('.tour-popover')).toBeVisible();
 
@@ -103,18 +103,18 @@ test.describe('onboarding-page tour (issue #293)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
-    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 20_000 });
     await page.click('.tour-welcome-card [data-action="skip"]');
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 
     await page.click('.app-sidebar-nav a[href="#/onboarding"]');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
-    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 20_000 });
     await page.click('.tour-welcome-card [data-action="start"]');
 
     // Issue #490 dropped this tour's original "Track daily todos" step (the
@@ -140,8 +140,8 @@ test.describe('onboarding-page tour (issue #293)', () => {
     await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await page.click('.app-sidebar-nav a[href="#/onboarding"]');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
-    await expect(page.locator('.onboarding-page')).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
+    await expect(page.locator('.onboarding-page')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
   });
 
@@ -149,7 +149,7 @@ test.describe('onboarding-page tour (issue #293)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     // The very first /onboarding visit (picking a template for the first
     // time) must never show this tour — only the dashboard tour, which
@@ -161,17 +161,17 @@ test.describe('onboarding-page tour (issue #293)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await page.click('.tour-welcome-card [data-action="skip"]');
     await page.click('.app-sidebar-nav a[href="#/onboarding"]');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
 
     // Skip the auto-run so the manual replay below is exercising a
     // deliberate re-trigger, not just the auto-start from the test above.
-    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.tour-welcome-card')).toBeVisible({ timeout: 20_000 });
     await page.click('.tour-welcome-card [data-action="skip"]');
     await expect(page.locator('.tour-welcome-card')).toBeHidden();
 

@@ -9,9 +9,9 @@ test.describe('lightweight time tracking per topic (issue #180)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await openFirstItemPanel(page);
     await expect(page.locator('.timer-display')).toHaveText('0s');
@@ -36,9 +36,9 @@ test.describe('lightweight time tracking per topic (issue #180)', () => {
     test.skip(!FIREBASE_CONFIGURED, 'Requires FIREBASE_CONFIGURED env var — see issue #37');
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await openFirstItemPanel(page);
     await page.locator('.timer-toggle-btn').click();

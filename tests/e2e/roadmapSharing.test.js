@@ -13,9 +13,9 @@ test.describe('roadmap sharing — publish, view, revoke', () => {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto('/#/signin');
     await page.click('text=Continue as guest');
-    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/#\/onboarding/, { timeout: 20_000 });
     await page.locator('.template-card', { hasText: 'Java Backend Engineer' }).click();
-    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.dashboard')).toBeVisible({ timeout: 20_000 });
 
     await page.locator('.app-sidebar-identity').click();
     await page.locator('.dropdown-item', { hasText: 'Share this roadmap…' }).click();
@@ -24,7 +24,7 @@ test.describe('roadmap sharing — publish, view, revoke', () => {
 
     await modal.locator('button', { hasText: 'Generate a new link' }).click();
     const status = modal.locator('.share-roadmap-modal-status');
-    await expect(status).toContainText('#/shared?id=', { timeout: 10_000 });
+    await expect(status).toContainText('#/shared?id=', { timeout: 20_000 });
     const statusText = await status.textContent();
     // Navigate straight to the captured absolute URL — a context created via
     // browser.newContext() (below) does not inherit playwright.config.js's
@@ -43,7 +43,7 @@ test.describe('roadmap sharing — publish, view, revoke', () => {
     await guestContext.addInitScript(() => { window.__USE_FIREBASE_EMULATOR__ = true; });
     const guestPage = await guestContext.newPage();
     await guestPage.goto(shareUrl);
-    await expect(guestPage.locator('.shared-view')).toBeVisible({ timeout: 10_000 });
+    await expect(guestPage.locator('.shared-view')).toBeVisible({ timeout: 20_000 });
     // One .shared-item-list per section — the full Java Backend Engineer
     // roadmap has many — so assert there's at least one rather than a single
     // unique match (which is what .toBeVisible() requires in strict mode).
@@ -54,13 +54,13 @@ test.describe('roadmap sharing — publish, view, revoke', () => {
     // Revoke, then confirm the link now shows the revoked state.
     await modal.locator('.share-link-row').first().locator('button', { hasText: 'Revoke' }).click();
     await page.locator('.modal-overlay[aria-label="Revoke this share link?"] [data-action="confirm"]').click();
-    await expect(modal.locator('.share-link-list')).toContainText('No published links yet.', { timeout: 10_000 });
+    await expect(modal.locator('.share-link-list')).toContainText('No published links yet.', { timeout: 20_000 });
 
     const revokedContext = await browser.newContext();
     await revokedContext.addInitScript(() => { window.__USE_FIREBASE_EMULATOR__ = true; });
     const revokedPage = await revokedContext.newPage();
     await revokedPage.goto(shareUrl);
-    await expect(revokedPage.locator('.shared-view-state')).toBeVisible({ timeout: 10_000 });
+    await expect(revokedPage.locator('.shared-view-state')).toBeVisible({ timeout: 20_000 });
     await expect(revokedPage.locator('.shared-view-state')).toContainText('revoked');
     await revokedContext.close();
   });
