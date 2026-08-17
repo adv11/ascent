@@ -814,8 +814,12 @@ describe('stale listener guard (issue #58)', () => {
 // This is sharply more exposed since issue #58, because every not-yet-started
 // template switch now repeats the exact "fresh seed + first write" sequence
 // that used to happen at most once per account.
-describe('out-of-order echo guard — recentFlushedStrs (issue #58 hardening)', () => {
-  it('ignores a late echo of an older flush that arrives after a newer flush already completed', async () => {
+describe('remote-snapshot guards (issue #58 hardening, revised by issue #550)', () => {
+  // The real protection for an unflushed local edit is the `dirty` guard, not
+  // content matching: queueSave() sets dirty synchronously, and flush() only
+  // clears it once the write is acknowledged, so any snapshot arriving during
+  // that window is dropped regardless of what it contains.
+  it('ignores any remote snapshot while a local edit is still unflushed (dirty)', async () => {
     let capturedCallback;
     dbApi.listenRoadmap.mockImplementation((_uid, _templateId, callback) => {
       capturedCallback = callback;
@@ -823,26 +827,49 @@ describe('out-of-order echo guard — recentFlushedStrs (issue #58 hardening)', 
     });
 
     const store = createRoadmapStore();
-    await store.setUser({ uid: 'out-of-order-echo-test' });
+    await store.setUser({ uid: 'dirty-guard-test' });
+    await store.flush();
 
-    // First flush: the untouched seed.
+    const seedItems = { ...store.getSnapshot().allItems };
+    const firstId = Object.keys(seedItems)[0];
+
+    // Local edit, deliberately NOT flushed — the store is now dirty.
+    store.updateItem(firstId, { done: true });
+    expect(store.getSnapshot().dirty).toBe(true);
+
+    // A stale snapshot arrives mid-flight. It must not clobber the pending edit.
+    capturedCallback({ version: 3, templateId: 'java-backend', items: seedItems });
+
+    expect(store.getSnapshot().allItems[firstId].done).toBe(true);
+  });
+
+  // Issue #550 regression: the old recentFlushedStrs buffer dropped this,
+  // because unticking on another device reproduces content this device itself
+  // flushed earlier. Two devices then stayed diverged forever.
+  it('applies another device\'s untick even though we flushed that same content earlier', async () => {
+    let capturedCallback;
+    dbApi.listenRoadmap.mockImplementation((_uid, _templateId, callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const store = createRoadmapStore();
+    await store.setUser({ uid: 'cross-device-untick-test' });
+
+    // Flush #1: the untouched seed (this exact content enters our flush history).
     const seedItems = { ...store.getSnapshot().allItems };
     await store.flush();
 
-    // Second flush: an edit, superseding the first.
-    const firstId = Object.keys(store.getSnapshot().allItems)[0];
+    // Flush #2: tick a topic.
+    const firstId = Object.keys(seedItems)[0];
     store.updateItem(firstId, { done: true });
     await store.flush();
+    expect(store.getSnapshot().allItems[firstId].done).toBe(true);
 
-    const versionBeforeStaleEcho = store.getSnapshot().structuralVersion;
-
-    // The FIRST flush's echo (the stale, unchecked seed) arrives late, after
-    // the second flush has already completed and moved local state forward.
+    // Another device unticks it — Firebase pushes content equal to flush #1.
     capturedCallback({ version: 3, templateId: 'java-backend', items: seedItems });
 
-    const snapshot = store.getSnapshot();
-    expect(snapshot.allItems[firstId].done).toBe(true); // the newer edit must survive
-    expect(snapshot.structuralVersion).toBe(versionBeforeStaleEcho); // not misclassified as a structural change
+    expect(store.getSnapshot().allItems[firstId].done).toBe(false);
   });
 
   it('still applies a genuine remote update that was never one of our own recent flushes', async () => {
@@ -2146,12 +2173,31 @@ describe('applyRemoteSnapshot (issue #53)', () => {
     return JSON.stringify(value);
   }
 
-  it('returns null (a no-op) when the remote payload matches a recent flush of our own', () => {
+  // Issue #550 — an echo is recognized by comparing against our *current*
+  // in-memory state, never against a buffer of recently-flushed content
+  // strings. A true echo is byte-identical to what we already hold, so it
+  // resolves structuralVersionBumped: false and nothing re-renders (this is
+  // the whole flicker guard). It deliberately no longer returns null.
+  it('does not flag a structural change when the remote payload equals current state (echo)', () => {
     const items = { a: { id: 'a', title: 'A' } };
     const phases = [{ id: 'p1', title: 'Phase 1' }];
-    const flushedStr = stableStringify({ items, phases });
-    const result = applyRemoteSnapshot({ items, phases }, {}, [], [flushedStr]);
-    expect(result).toBeNull();
+    const result = applyRemoteSnapshot({ items, phases }, items, phases);
+    expect(result).not.toBeNull();
+    expect(result.structuralVersionBumped).toBe(false);
+  });
+
+  // The regression this issue exists to prevent: another device unticks a
+  // topic, producing content byte-identical to a state this device itself
+  // flushed earlier. That must still be applied — the old recent-flush buffer
+  // dropped it, leaving the two devices permanently diverged.
+  it('applies a remote revert whose content matches a state this device flushed earlier', () => {
+    const phases = [];
+    const notDone = { i1: { id: 'i1', title: 'T', done: false } };
+    const done = { i1: { id: 'i1', title: 'T', done: true } };
+    const result = applyRemoteSnapshot({ items: notDone, phases }, done, phases);
+    expect(result).not.toBeNull();
+    expect(result.items.i1.done).toBe(false);
+    expect(result.structuralVersionBumped).toBe(true);
   });
 
   it('flags structuralVersionBumped when remote items differ from current items', () => {

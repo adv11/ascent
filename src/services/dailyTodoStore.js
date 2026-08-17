@@ -56,8 +56,6 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
   let items = {};
   let dirty = false;
   let saveTimer = null;
-  let recentFlushedStrs = [];
-  const MAX_RECENT_FLUSHES = 8;
   // Same stale-call guard as roadmapStore's setUser — a quick sign-out
   // followed by a fresh sign-in must never let the older call's result
   // clobber the newer one after it resolves.
@@ -95,12 +93,19 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
         notify({ saveState: 'synced' });
         return;
       }
+      // Echo suppression is the comparison against our *current* in-memory
+      // state below — deliberately NOT a buffer of recently-flushed content
+      // strings (issue #550). Content cannot distinguish "a delayed echo of a
+      // write we made" from "a genuine write by another device that happens to
+      // reproduce a state we held earlier", and toggling a todo is inherently a
+      // return to a previously-held state: every tick-then-untick from a second
+      // device reproduces a string this device flushed moments ago. Matching on
+      // content therefore dropped real cross-device updates permanently, with
+      // no error and no self-healing. Comparing against current state is both
+      // necessary and sufficient here: a true echo equals what we already hold
+      // and no-ops, while anything else is new information worth applying.
       const remoteItems = remote || {};
       const remoteStr = stableStringify(remoteItems);
-      if (recentFlushedStrs.includes(remoteStr)) {
-        notify({ saveState: 'synced' });
-        return;
-      }
       if (remoteStr !== stableStringify(items)) {
         items = remoteItems;
         dirty = false;
@@ -119,10 +124,7 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
       notify({ saveState: 'local' });
       return;
     }
-    const flushedStr = stableStringify(items);
     await adapter.saveDailyTodos(uid, items);
-    recentFlushedStrs.push(flushedStr);
-    if (recentFlushedStrs.length > MAX_RECENT_FLUSHES) recentFlushedStrs.shift();
     dirty = false;
     persistLocal();
     notify({ saveState: 'saved' });
@@ -183,7 +185,6 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
     clearLocal();
     items = {};
     dirty = false;
-    recentFlushedStrs = [];
   }
 
   // Resolves what `items`/`dirty` should become from the local fallback blob
@@ -219,7 +220,6 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
 
     if (isStale()) return;
 
-    recentFlushedStrs = [];
     attachListener();
     if (dirty) queueSave();
     notify({ saveState: 'synced' });

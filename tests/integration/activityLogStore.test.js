@@ -270,3 +270,66 @@ describe('Firebase echo guard', () => {
     expect(store.getSnapshot().entries['1999-01-01']).toBeUndefined();
   });
 });
+
+// Issue #550 — same content-equality echo-guard flaw as roadmapStore/
+// dailyTodoStore. A day's completion count legitimately returns to a previous
+// value (complete an item, uncheck it, complete it again), so a real remote
+// update could reproduce a string this device flushed earlier and be dropped.
+describe('cross-device sync (issue #550)', () => {
+  it('applies a remote entries update matching a state this device flushed earlier', async () => {
+    let emit;
+    dbApi.listenActivityLog.mockImplementation((_uid, onData) => {
+      emit = onData;
+      onData(null);
+      return () => {};
+    });
+
+    const store = createActivityLogStore();
+    await store.setUser({ uid: 'u1' });
+
+    // Flush #1 — one completion recorded.
+    store.recordCompletion();
+    await store.flush();
+    const afterFirst = { ...store.getSnapshot().entries };
+
+    // Flush #2 — a second completion, so current state differs from flush #1.
+    store.recordCompletion();
+    await store.flush();
+
+    // Another device removes one; Firebase pushes content equal to flush #1.
+    emit(afterFirst);
+
+    expect(store.getSnapshot().entries).toEqual(afterFirst);
+  });
+
+  it('applies a remote streak-freezes update matching an earlier local flush', async () => {
+    vi.useFakeTimers();
+    let emit;
+    dbApi.listenStreakFreezes.mockImplementation((_uid, onData) => {
+      emit = onData;
+      onData(null);
+      return () => {};
+    });
+
+    const store = createActivityLogStore();
+    await store.setUser({ uid: 'u1' });
+    // setUser establishes a baseline grant, leaving freezesDirty true — let the
+    // debounced save flush so the listener's dirty guard stops short-circuiting.
+    await vi.advanceTimersByTimeAsync(600);
+
+    const stateA = { available: 1, usedDates: ['2026-01-01'], lastGrantedAt: 123 };
+    const stateB = { available: 0, usedDates: ['2026-01-01', '2026-01-02'], lastGrantedAt: 456 };
+
+    emit(stateA);
+    expect(store.getSnapshot().streakFreezes).toEqual(stateA);
+
+    emit(stateB);
+    expect(store.getSnapshot().streakFreezes).toEqual(stateB);
+
+    // Back to stateA — content this device has already seen and persisted.
+    // The old buffer-based guard is exactly what would drop this.
+    emit(stateA);
+    expect(store.getSnapshot().streakFreezes).toEqual(stateA);
+    vi.useRealTimers();
+  });
+});

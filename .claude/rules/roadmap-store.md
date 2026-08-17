@@ -1259,11 +1259,48 @@ testing against live Firebase (not caught by the mocked unit/integration suite, 
 can't reproduce genuine network-timing non-determinism) — reproduced most easily by
 switching to a template that hasn't been started yet and immediately checking an item,
 since seeding + first flush + first listener attach all happen in that same narrow
-window. Also keeps a small bounded history of recently-flushed content strings
-(`recentFlushedStrs`, not just the single latest one) so an out-of-order echo of an
-*already-confirmed* older flush (arriving once `dirty` is back to `false`) is still
-recognized as our own and doesn't cause a spurious `structuralVersion` bump. See the
-"out-of-order echo guard" describe block in `tests/integration/roadmapStore.test.js`.
+window.
+
+**It used to also keep a bounded history of recently-flushed content strings
+(`recentFlushedStrs`) and drop any incoming snapshot matching one of them. That was
+removed in issue #550 — it was the direct cause of a live-reported, permanent
+cross-device divergence, and it must never be reintroduced.** Content equality cannot
+distinguish "a delayed echo of a write we made" from "a genuine write by another device
+that happens to reproduce a state we also held earlier" — the two are byte-identical by
+construction. Toggling is inherently a *return to a previously-held state*, so unticking
+a topic (or a Daily Todo) on device B produces exactly the content device A flushed when
+that item was last unticked; device A matched it against its own buffer, classified a
+real remote update as its own echo, and discarded it. The two devices then stayed
+diverged indefinitely, with no error, no retry, and no self-healing. Reproduced with
+failing tests against both `dailyTodoStore` and `applyRemoteSnapshot()` before the fix.
+
+**What actually guards each concern now:**
+- *Unflushed local edits* — the `dirty` check above, unchanged. `queueSave()` sets
+  `dirty` synchronously before the debounce and `flush()` only clears it once the write
+  is acknowledged, so any snapshot arriving in that window is dropped whatever it holds.
+  This is the guard the live E2E finding above actually established.
+- *Checklist flicker* — `applyRemoteSnapshot()`'s `structuralVersionBumped` comparison
+  against **current in-memory state**, which was always the real flicker protection and
+  is untouched. A genuine echo equals what we already hold, so it resolves `false`,
+  `dashboard.js` takes its `patchDoneStates()` fast path, and nothing re-renders.
+  `applyRemoteSnapshot()` therefore no longer returns `null` for an echo; it returns the
+  resolved snapshot with `structuralVersionBumped: false`.
+
+The one case the removed buffer covered that current-state comparison does not is a
+genuinely *out-of-order* delivery — an echo of an older write arriving after a newer one
+has already been acknowledged. That is not reachable through the `dirty` window, and
+distinguishing it correctly is not possible from content at all: it needs **write
+identity** (a per-session writer id, or a monotonic revision, stored alongside the data),
+which requires a schema change on three Firebase paths plus matching `.validate` rules —
+`dailyTodos/$todoId` has an `$other: false` catch-all, so a sibling `lastWriter` key at
+the todo-map level would be validated as a todo and rejected. If out-of-order delivery is
+ever actually observed in the wild, that is the fix to build; do not reach back for
+content matching, which trades a confirmed everyday data-consistency bug for a
+hypothetical one. See the "remote-snapshot guards" and "cross-device sync (issue #550)"
+describe blocks in `tests/integration/roadmapStore.test.js`,
+`tests/integration/dailyTodoStore.test.js`, and
+`tests/integration/activityLogStore.test.js` — all of them fail against the pre-#550
+code, verified by reverting.
 The same hazard existed on the initial-load path too (issue #67): `resolveRoadmapItems`
 used to prefer a successful remote read over the local blob unconditionally, so a page
 reload that beat the debounced `flush()` could let a stale remote snapshot silently
