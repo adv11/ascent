@@ -97,8 +97,6 @@ export function createActivityLogStore() {
   let entries = {};
   let dirty = false;
   let saveTimer = null;
-  let recentFlushedStrs = [];
-  const MAX_RECENT_FLUSHES = 8;
   // Streak freeze / grace day (issue #179) — see .claude/rules/roadmap-store.md.
   // Same debounced-save shape as `entries`/`dirty`/`saveTimer` above, kept as
   // its own independent pair since it lives on a separate Firebase path
@@ -107,7 +105,6 @@ export function createActivityLogStore() {
   let streakFreezes = { ...DEFAULT_STREAK_FREEZES };
   let freezesDirty = false;
   let freezesSaveTimer = null;
-  let recentFlushedFreezeStrs = [];
   // Set to the just-frozen date whenever maybeAutoApplyStreakFreeze() spends
   // a token during this setUser() call, so the UI (progress.js) can show a
   // one-shot toast confirming it happened. Consumed once via
@@ -148,12 +145,12 @@ export function createActivityLogStore() {
         notify({ saveState: 'synced' });
         return;
       }
+      // Comparing against current in-memory state is the whole echo guard —
+      // no recently-flushed-content buffer (issue #550). See
+      // roadmapStore.js's applyRemoteSnapshot() for why content equality
+      // cannot distinguish our own echo from a real remote write.
       const remoteEntries = remote || {};
       const remoteStr = stableStringify(remoteEntries);
-      if (recentFlushedStrs.includes(remoteStr)) {
-        notify({ saveState: 'synced' });
-        return;
-      }
       if (remoteStr !== stableStringify(entries)) {
         entries = remoteEntries;
         dirty = false;
@@ -175,10 +172,6 @@ export function createActivityLogStore() {
       }
       const remoteFreezes = remote || { ...DEFAULT_STREAK_FREEZES };
       const remoteStr = stableStringify(remoteFreezes);
-      if (recentFlushedFreezeStrs.includes(remoteStr)) {
-        notify({ saveState: 'synced' });
-        return;
-      }
       if (remoteStr !== stableStringify(streakFreezes)) {
         streakFreezes = remoteFreezes;
         freezesDirty = false;
@@ -197,10 +190,7 @@ export function createActivityLogStore() {
       notify({ saveState: 'local' });
       return;
     }
-    const flushedStr = stableStringify(entries);
     await adapter.saveActivityLog(uid, entries);
-    recentFlushedStrs.push(flushedStr);
-    if (recentFlushedStrs.length > MAX_RECENT_FLUSHES) recentFlushedStrs.shift();
     dirty = false;
     persistLocal();
     notify({ saveState: 'saved' });
@@ -212,10 +202,7 @@ export function createActivityLogStore() {
       notify({ saveState: 'local' });
       return;
     }
-    const flushedStr = stableStringify(streakFreezes);
     await adapter.saveStreakFreezes(uid, streakFreezes);
-    recentFlushedFreezeStrs.push(flushedStr);
-    if (recentFlushedFreezeStrs.length > MAX_RECENT_FLUSHES) recentFlushedFreezeStrs.shift();
     freezesDirty = false;
     persistLocalFreezes();
     notify({ saveState: 'saved' });
@@ -330,10 +317,8 @@ export function createActivityLogStore() {
     clearLocal();
     entries = {};
     dirty = false;
-    recentFlushedStrs = [];
     streakFreezes = { ...DEFAULT_STREAK_FREEZES };
     freezesDirty = false;
-    recentFlushedFreezeStrs = [];
   }
 
   // Detaches both Firebase listeners before setUser re-attaches them for the
@@ -387,8 +372,6 @@ export function createActivityLogStore() {
 
     if (isStale()) return;
 
-    recentFlushedStrs = [];
-    recentFlushedFreezeStrs = [];
     attachListener();
     attachFreezesListener();
     queuePendingSaves();

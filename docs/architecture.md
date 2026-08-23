@@ -5965,3 +5965,43 @@ files — every change is to an existing component/page:
   the sole carrier of meaning at any existing call site) and needed no change.
 
 `CACHE_VERSION` bumped 119 → 120.
+
+### 2026-08-17 — Issue #550 — Content-based Firebase echo suppression removed from all three synced stores
+
+A live cross-device report (same account on a laptop and a phone: ticking propagated,
+unticking did not) traced to a shared flaw in how `roadmapStore.js`,
+`dailyTodoStore.js`, and `activityLogStore.js` recognised an echo of their own write.
+
+Each store kept `recentFlushedStrs` — a rolling buffer of the last 8 **content strings**
+it had flushed — and dropped any incoming Firebase snapshot matching one of them. That
+is unsound: content cannot distinguish a delayed echo of our own write from a genuine
+write by another device that happens to reproduce a state we also held earlier, because
+the two are byte-identical. Toggling is inherently a return to a previously-held state,
+so every cross-device untick reproduced a string the receiving device had flushed
+moments before and was silently discarded — leaving the two devices diverged with no
+error, no retry, and no self-healing. `activityLogStore.js` carried the same construct
+twice (entries and streak freezes), extending the exposure to heatmap/streak data.
+
+The buffer is removed from all three stores. Echo detection is now solely the comparison
+against **current in-memory state**, which was always the mechanism actually preventing
+the checklist flicker the guard was originally introduced for: a real echo is identical
+to what the store already holds, so `structuralVersionBumped` resolves `false`,
+`dashboard.js` takes its `patchDoneStates()` fast path, and nothing re-renders. Unflushed
+local edits remain protected by the pre-existing `dirty` guard, which is what the
+original live-Firebase finding actually established. `applyRemoteSnapshot()` loses its
+fourth parameter and no longer returns `null` for an echo — it returns the resolved
+snapshot with `structuralVersionBumped: false`.
+
+The one scenario the buffer covered that this does not is genuinely out-of-order
+delivery (an echo of an older write arriving after a newer one is acknowledged), which
+is unreachable through the `dirty` window and cannot be resolved from content at all —
+it needs write identity (a per-session writer id or monotonic revision) stored alongside
+the data, which would require a schema change plus `.validate` updates on three Firebase
+paths. Deliberately deferred rather than bundled into a critical fix; see
+`.claude/rules/roadmap-store.md` for the full reasoning and the explicit instruction not
+to reintroduce content matching.
+
+Regression coverage added to all three stores' integration suites, each verified to fail
+against the pre-fix code by reverting locally.
+
+`CACHE_VERSION` bumped 125 → 126.

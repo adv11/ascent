@@ -429,3 +429,84 @@ describe('Firebase echo guard', () => {
     expect(store.getSnapshot().todos[0].title).toBe('Local edit');
   });
 });
+
+// Issue #550 — the live-reported bug: the same account on a laptop and a
+// phone. Ticking on one device propagated, but unticking on the other did
+// not, and the two devices then stayed diverged indefinitely.
+//
+// Root cause: the echo guard matched incoming snapshots against a buffer of
+// content strings this device had recently flushed. Unticking a todo returns
+// it to exactly the state this device flushed when the todo was created, so a
+// genuine remote untick was indistinguishable from our own echo and was
+// silently discarded. These tests drive the real store through that sequence.
+describe('cross-device sync (issue #550)', () => {
+  function attachCapturingListener() {
+    let emit;
+    dbApi.listenDailyTodos.mockImplementation((_uid, onData) => {
+      emit = onData;
+      onData(null);
+      return () => {};
+    });
+    return () => emit;
+  }
+
+  it('applies a remote untick whose content equals a state this device flushed earlier', async () => {
+    const getEmit = attachCapturingListener();
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+
+    // Flush #1 — todo created, done:false. This content enters the flush history.
+    store.addTodo({ title: 'DSA', durationMs: 3 * 60 * 60 * 1000 });
+    await store.flush();
+    const id = store.getSnapshot().todos[0].id;
+
+    // Flush #2 — ticked on this device.
+    store.setDone(id, true);
+    await store.flush();
+    expect(store.getSnapshot().todos[0].done).toBe(true);
+
+    // The other device unticks it; Firebase pushes the resulting snapshot,
+    // whose content is byte-identical to flush #1.
+    getEmit()({ [id]: { ...store.getSnapshot().todos[0], done: false, doneAt: null } });
+
+    expect(store.getSnapshot().todos[0].done).toBe(false);
+  });
+
+  it('stays consistent across a repeated tick/untick cycle from the other device', async () => {
+    const getEmit = attachCapturingListener();
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+
+    store.addTodo({ title: 'DSA', durationMs: 3 * 60 * 60 * 1000 });
+    await store.flush();
+    const id = store.getSnapshot().todos[0].id;
+    const base = store.getSnapshot().todos[0];
+
+    // Several full round trips must not get "stuck" in either state — the old
+    // buffer held the last 8 flushed strings, so repeated toggling was exactly
+    // the pattern that filled it with states the other device would resend.
+    for (let i = 0; i < 4; i += 1) {
+      store.setDone(id, true);
+      await store.flush();
+      expect(store.getSnapshot().todos[0].done).toBe(true);
+
+      getEmit()({ [id]: { ...base, done: false, doneAt: null } });
+      expect(store.getSnapshot().todos[0].done).toBe(false);
+    }
+  });
+
+  it('still no-ops on a true echo (remote identical to current state)', async () => {
+    const getEmit = attachCapturingListener();
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+
+    store.addTodo({ title: 'DSA', durationMs: 3 * 60 * 60 * 1000 });
+    await store.flush();
+
+    const before = store.getSnapshot().todos;
+    const id = before[0].id;
+    getEmit()({ [id]: { ...before[0] } });
+
+    expect(store.getSnapshot().todos).toEqual(before);
+  });
+});

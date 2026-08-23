@@ -64,7 +64,7 @@ function normalizeStringArray(value) {
 // returns either `null` (nothing to apply — no items, or a confirmed echo of
 // one of our own recent flushes) or the resolved `{ items, phases,
 // structuralVersionBumped }` for the caller to assign onto its own state.
-export function applyRemoteSnapshot(remote, currentItems, currentPhases, recentFlushedStrs) {
+export function applyRemoteSnapshot(remote, currentItems, currentPhases) {
   if (!remote?.items) return null;
   // Phases are folded into the same echo/structural comparison as items
   // (rather than checked separately) so a custom roadmap's user-added
@@ -73,11 +73,20 @@ export function applyRemoteSnapshot(remote, currentItems, currentPhases, recentF
   // here, so this is a no-op for them.
   const remotePhases = normalizeStringArray(remote.phases) || currentPhases;
   const remoteStr = stableStringify({ items: remote.items, phases: remotePhases });
-  if (recentFlushedStrs.includes(remoteStr)) {
-    // Confirmed echo of one of our own recent writes (possibly not the latest
-    // one, if it arrived out of order) — nothing new to apply.
-    return null;
-  }
+  // `structuralVersionBumped` is the *entire* echo guard, and the only thing
+  // protecting against the checklist flicker this comparison was originally
+  // added for: a genuine echo is byte-identical to what we already hold, so it
+  // resolves `false`, dashboard.js takes its patchDoneStates() fast path, and
+  // nothing re-renders. There is deliberately no separate check against a
+  // buffer of recently-flushed content strings (removed in issue #550) — that
+  // buffer could not tell "an echo of our own older write" apart from "another
+  // device legitimately reverting to a state we also held earlier", because
+  // both are byte-identical by construction. Since unticking a topic returns it
+  // to exactly the state this device flushed when it was last unticked, every
+  // cross-device untick matched the buffer and was silently discarded, leaving
+  // two devices permanently diverged. Never reintroduce content-equality echo
+  // suppression here; if genuinely out-of-order delivery ever needs handling,
+  // it needs write identity (a per-session writer id), not content.
   const structuralVersionBumped = remoteStr !== stableStringify({ items: currentItems, phases: currentPhases });
   return { items: remote.items, phases: remotePhases, structuralVersionBumped };
 }
@@ -319,8 +328,7 @@ export function freshStateForNewUid() {
     onboardingTourDone: null,
     roadmapCache: {},
     pendingCustomSeeds: {},
-    dirty: false,
-    recentFlushedStrs: []
+    dirty: false
   };
 }
 
@@ -626,17 +634,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
   let dirty = false;
   let saveTimer = null;
   let structuralVersion = 0;
-  // Content strings of our own recent flushes (most recent last, capped),
-  // used to recognize an echo of *any* write we made recently — not just the
-  // latest one. A single `lastFlushedStr` isn't enough: Firebase can deliver
-  // an older write's echo *after* a newer local edit has already flushed and
-  // moved lastFlushedStr forward, which would make the stale echo fail the
-  // match and get misapplied as "genuinely newer" data, clobbering the more
-  // recent edit. This is most exposed right when a not-yet-started template
-  // is first seeded and flushed (issue #58) and then edited again within the
-  // next flush cycle, before that first echo has necessarily arrived.
-  let recentFlushedStrs = [];
-  const MAX_RECENT_FLUSHES = 8;
   // Bumped at the start of every setUser()/switchRoadmap() call. Firebase's
   // onAuthStateChanged can fire in quick succession (e.g. delete-account
   // followed immediately by a fresh sign-up with the same email), and a user
@@ -784,7 +781,7 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
         notify({ saveState: 'synced' });
         return;
       }
-      const applied = applyRemoteSnapshot(remote, items, templatePhases, recentFlushedStrs);
+      const applied = applyRemoteSnapshot(remote, items, templatePhases);
       if (applied) {
         if (applied.structuralVersionBumped) structuralVersion += 1;
         items = applied.items;
@@ -819,7 +816,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     // behavior, only what the post-await bookkeeping reads.
     const flushedItems = items;
     const flushedPhases = templatePhases;
-    const flushedStr = stableStringify({ items: flushedItems, phases: flushedPhases });
     const payload = {
       version: ROADMAP_VERSION,
       updatedAt: adapter.now(),
@@ -828,8 +824,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
       phases: flushedPhases
     };
     await adapter.saveRoadmap(uid, templateId, payload);
-    recentFlushedStrs.push(flushedStr);
-    if (recentFlushedStrs.length > MAX_RECENT_FLUSHES) recentFlushedStrs.shift();
     // Only touch the live in-memory state if we're still flushing the
     // currently-active template — if a switch happened mid-flight, the live
     // `items`/`dirty` now belong to a different template and must be left
@@ -1165,7 +1159,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     roadmapCache = fresh.roadmapCache;
     pendingCustomSeeds = fresh.pendingCustomSeeds;
     dirty = fresh.dirty;
-    recentFlushedStrs = fresh.recentFlushedStrs;
     structuralVersion += 1;
   }
 
@@ -1247,7 +1240,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     items = resolved.items;
     templatePhases = resolved.phases;
     dirty = resolved.dirty;
-    recentFlushedStrs = [];
     persistLocal();
     roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
 
@@ -1378,7 +1370,6 @@ export function createRoadmapStore({ onCompletionToggle = () => {} } = {}) {
     templatePhases = resolved.phases;
     items = resolved.items;
     dirty = resolved.dirty;
-    recentFlushedStrs = [];
     onboardingDone = true;
     roadmapCache[activeTemplateId] = { items, phases: templatePhases, dirty };
     structuralVersion += 1;

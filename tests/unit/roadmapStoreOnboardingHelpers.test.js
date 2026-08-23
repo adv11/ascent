@@ -49,7 +49,6 @@ describe('freshStateForNewUid', () => {
     expect(fresh.roadmapCache).toEqual({});
     expect(fresh.pendingCustomSeeds).toEqual({});
     expect(fresh.dirty).toBe(false);
-    expect(fresh.recentFlushedStrs).toEqual([]);
     expect(fresh.tourDone).toBeNull();
     expect(Object.keys(fresh.items).length).toBeGreaterThan(0);
   });
