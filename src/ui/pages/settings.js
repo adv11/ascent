@@ -23,6 +23,7 @@ import { createSelect } from '../components/select.js';
 import { priorityLabel } from '../utils/priorityLabels.js';
 import { createTabs } from '../components/tabs.js';
 import { getTextSize, setTextSize, getAnimationsOff, setAnimationsOff } from '../../services/uiPreferences.js';
+import { BRAND_NAME } from '../components/brand.js';
 
 const TEXT_SIZE_OPTIONS = [
   { value: 'default', label: 'Default' },
@@ -324,7 +325,7 @@ function buildInstallRow() {
       const outcome = await promptInstall();
       setButtonLoading(installBtn, false);
       if (outcome === 'accepted') {
-        showToast('Ascent installed.', 'success');
+        showToast(`${BRAND_NAME} installed.`, 'success');
       } else if (outcome === 'unavailable' || outcome === null) {
         showToast('Could not open the install dialog. Reload the page and try again.', 'error');
       }
@@ -334,10 +335,10 @@ function buildInstallRow() {
   const installRow = el('div', { className: 'settings-row', hidden: !isInstallable() }, [
     el('div', { className: 'settings-row-main' }, [
       el('span', { className: 'settings-row-label-group' }, [
-        el('span', { className: 'settings-row-label', text: 'Install Ascent' }),
+        el('span', { className: 'settings-row-label', text: `Install ${BRAND_NAME}` }),
         createFeatureBadge('pwa-install')
       ].filter(Boolean)),
-      el('span', { className: 'settings-row-value', text: 'Add Ascent to your device for offline access.' }),
+      el('span', { className: 'settings-row-value', text: `Add ${BRAND_NAME} to your device for offline access.` }),
       installBtn
     ])
   ]);
@@ -385,7 +386,7 @@ function buildPreferencesSection() {
 
   const section = el('section', { className: 'settings-section' }, [
     el('h2', { className: 'settings-section-title', text: 'Preferences' }),
-    el('p', { className: 'settings-section-subtitle', text: 'How Ascent looks and what it shows you first.' }),
+    el('p', { className: 'settings-section-subtitle', text: `How ${BRAND_NAME} looks and what it shows you first.` }),
     el('div', { className: 'settings-row' }, [
       el('div', { className: 'settings-row-main' }, [
         el('span', { className: 'settings-row-label', text: 'Theme' }),

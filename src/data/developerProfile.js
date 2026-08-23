@@ -14,6 +14,8 @@
 // Every `links[].url` still passes through isValidUrl() at render time (root
 // CLAUDE.md's URL-validation rule) even though this file is static and
 // owner-controlled — no special-cased trust path for this data source.
+import { BRAND_NAME } from '../core/brandName.js';
+
 export const DEVELOPER_PROFILE = {
   name: 'Akash Deep Vishwakarma',
   tagline: 'Full stack developer — Java, Spring Boot, and GenAI',
@@ -23,7 +25,7 @@ export const DEVELOPER_PROFILE = {
   // bump this if the photo file itself is ever replaced.
   avatarUrl: '/public/developer-avatar.webp?v=1',
   links: [
-    { id: 'github', label: 'GitHub', description: 'The Ascent source code and other projects.', url: 'https://github.com/adv11', icon: 'github' },
+    { id: 'github', label: 'GitHub', description: `The ${BRAND_NAME} source code and other projects.`, url: 'https://github.com/adv11', icon: 'github' },
     { id: 'linkedin', label: 'LinkedIn', description: 'Work history and professional background.', url: 'https://linkedin.com/in/adv11', icon: 'linkedin' },
     { id: 'x', label: 'X', description: 'Occasional build logs and updates.', url: 'https://twitter.com/adv2612', icon: 'x' },
     { id: 'leetcode', label: 'LeetCode', description: 'Practice problems and solutions.', url: 'https://leetcode.com/u/adv01/', icon: 'leetcode' },

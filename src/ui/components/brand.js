@@ -1,11 +1,19 @@
 import { el } from '../dom.js';
 import { svgEl } from '../utils/svg.js';
 
-// Exported (not just module-local) so a canvas-drawing call site — which
+// Re-exported (not just module-local) so a canvas-drawing call site — which
 // needs the raw string for `ctx.fillText()`, not a DOM node — can still get
 // the product name without introducing a second hardcoded 'Ascent' literal
 // (issue #8's share card, src/ui/components/shareCard.js).
-export const BRAND_NAME = 'Ascent';
+//
+// The literal itself now lives in `src/core/brandName.js`, a module with no
+// imports at all, because this file pulls in `el()`/`svgEl()` and so can't be
+// imported from `src/core/**` (pure by contract) or the pure data modules.
+// Re-exporting here keeps every existing `from './brand.js'` import working.
+// Imported *and* re-exported: `export { X } from '…'` alone would not create a
+// local binding, and createBrandWordmark() below reads BRAND_NAME directly.
+import { BRAND_NAME } from '../../core/brandName.js';
+export { BRAND_NAME };
 
 // Filled with currentColor so `.brand-mark`'s CSS color (white) still controls
 // it, rather than hardcoding a color here.

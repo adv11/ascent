@@ -1,6 +1,6 @@
 import { el } from '../dom.js';
 import { navigate } from '../router.js';
-import { createBrandMark } from './brand.js';
+import { createBrandMark, BRAND_NAME } from './brand.js';
 import { createAvatar } from './avatar.js';
 import { createDropdown } from './dropdown.js';
 import { createIcon } from './icons.js';
@@ -171,7 +171,7 @@ export function createSidebar({ activeRoute, user, store, dailyTodoStore, onDele
   ]);
 
   const node = el('aside', { className: 'app-sidebar', 'aria-label': 'Sidebar' }, [
-    el('a', { className: 'brand app-sidebar-brand', href: '#/onboarding', 'aria-label': 'Ascent — all roadmaps' }, createBrandMark()),
+    el('a', { className: 'brand app-sidebar-brand', href: '#/onboarding', 'aria-label': `${BRAND_NAME} — all roadmaps` }, createBrandMark()),
     navEl,
     el('div', { className: 'app-sidebar-spacer' }),
     collapseBtn,

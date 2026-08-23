@@ -1,4 +1,5 @@
 import { MAX_TITLE_LENGTH, MAX_RESOURCE_LABEL_LENGTH, MAX_RESOURCE_URL_LENGTH } from '../core/roadmap/limits.js';
+import { BRAND_NAME } from '../core/brandName.js';
 
 // Versioned so a future schema change never breaks a prompt a user already
 // copied and saved somewhere — bump this and add a new adapter in
@@ -37,7 +38,7 @@ export function buildImportPrompt(topic, options) {
   const topicLine = (topic || '').trim() || '[describe what this roadmap should cover]';
   const optionLines = buildOptionLines(options);
   const optionsBlock = optionLines.length ? `\n${optionLines.join('\n')}` : '';
-  return `You are generating an Ascent roadmap JSON file.
+  return `You are generating an ${BRAND_NAME} roadmap JSON file.
 Output ONLY valid JSON — no markdown fences, no commentary.
 Follow this exact schema (version ${IMPORT_PROMPT_VERSION}):
 

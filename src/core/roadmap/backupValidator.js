@@ -6,6 +6,7 @@
 // version unrelated JSON formats.
 import { EXPORT_SCHEMA_VERSION } from './backupSchema.js';
 import { MAX_TITLE_LENGTH } from './limits.js';
+import { BRAND_NAME } from '../brandName.js';
 
 export const SUPPORTED_BACKUP_SCHEMA_VERSION = EXPORT_SCHEMA_VERSION;
 
@@ -16,7 +17,7 @@ export function parseBackupJson(rawText) {
   try {
     return { data: JSON.parse(rawText), error: null };
   } catch {
-    return { data: null, error: "That file isn't valid JSON — make sure you're uploading an unmodified Ascent backup export." };
+    return { data: null, error: `That file isn't valid JSON — make sure you're uploading an unmodified ${BRAND_NAME} backup export.` };
   }
 }
 

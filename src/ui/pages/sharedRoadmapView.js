@@ -1,5 +1,5 @@
 import { el } from '../dom.js';
-import { createBrandMark, createBrandIcon } from '../components/brand.js';
+import { createBrandMark, createBrandIcon, BRAND_NAME } from '../components/brand.js';
 import { createIcon } from '../components/icons.js';
 import { createThemeToggle } from '../components/themeToggle.js';
 import { createSkeletonCard, createSkeletonText } from '../components/skeleton.js';
@@ -52,7 +52,7 @@ function renderRevoked() {
       text: "The roadmap's owner turned off sharing, or the link never existed. Either way, there's nothing wrong on your end."
     }),
     el('div', { className: 'shared-view-state-actions' }, [
-      el('a', { href: '#/', className: 'btn btn-secondary', text: 'Go to Ascent' }),
+      el('a', { href: '#/', className: 'btn btn-secondary', text: `Go to ${BRAND_NAME}` }),
       el('a', { href: '#/signup', className: 'btn btn-primary', text: 'Create your own roadmap' })
     ])
   ]);
@@ -186,7 +186,7 @@ function renderSnapshot(snapshot) {
     el('footer', { className: 'shared-view-footer' }, [
       el('a', { href: '#/', className: 'shared-view-attribution' }, [
         createBrandIcon(),
-        el('span', { text: 'Made with Ascent' })
+        el('span', { text: `Made with ${BRAND_NAME}` })
       ]),
       el('span', { className: 'shared-view-footer-note', text: 'Shared roadmaps are read-only and hold no personal details.' })
     ])

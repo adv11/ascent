@@ -3,6 +3,7 @@
 // on demand — the event only fires once and must be stashed, since the
 // browser won't re-fire it just because a component mounted later wants it.
 import { KEYS } from './localStorageKeys.js';
+import { BRAND_NAME } from '../core/brandName.js';
 
 let deferredPrompt = null;
 const listeners = new Set();
@@ -16,7 +17,7 @@ window.addEventListener('beforeinstallprompt', event => {
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   localStorage.setItem(KEYS.PWA_INSTALL_DISMISSED, 'true');
-  console.warn('Ascent installed as a PWA.');
+  console.warn(`${BRAND_NAME} installed as a PWA.`);
   listeners.forEach(fn => fn(false));
 });
 
