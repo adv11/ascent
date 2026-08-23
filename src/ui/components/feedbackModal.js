@@ -11,6 +11,7 @@ import { getRoute } from '../router.js';
 import { createField, createSystemInfoCheckbox, debounce } from './feedbackForm.js';
 import { buildMyReportsView } from './myReports.js';
 import { createIcon } from './icons.js';
+import { BRAND_NAME } from './brand.js';
 
 // Issue #505 — redesigned onto the E5 design reference's single-screen
 // "kind chips + one textarea" shape, replacing the old two-step type-select
@@ -20,7 +21,7 @@ import { createIcon } from './icons.js';
 // everywhere else.
 const REPORT_TYPE_META = {
   bug: { label: 'Something is broken', placeholder: 'What happened, and what were you doing when it did?' },
-  feature: { label: 'An idea', placeholder: 'What would you like to see in Ascent?' },
+  feature: { label: 'An idea', placeholder: `What would you like to see in ${BRAND_NAME}?` },
   feedback: { label: 'Something else', placeholder: 'What happened?' }
 };
 
@@ -278,7 +279,7 @@ export function openFeedbackModal({ user }) {
       el('div', { className: 'feedback-success' }, [
         el('div', { className: 'feedback-success-icon', 'aria-hidden': 'true' }, [createIcon('check', { size: 'lg' })]),
         el('h2', { className: 'modal-title', text: 'Report received' }),
-        el('p', { className: 'form-message', text: "Thanks for helping improve Ascent! We'll review your report and may follow up if we need more details." }),
+        el('p', { className: 'form-message', text: `Thanks for helping improve ${BRAND_NAME}! We'll review your report and may follow up if we need more details.` }),
         el('p', { className: 'feedback-reference', text: `Reference: #${reference}` }),
         el('div', { className: 'feedback-form-actions' }, [
           el('button', { type: 'button', className: 'btn btn-secondary', text: 'Send another', onClick: renderMain }),

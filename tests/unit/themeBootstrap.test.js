@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { KEYS } from '../../src/services/localStorageKeys.js';
 
 // Load the bootstrap source once — we eval it per-test via Function() so each
 // test gets a fresh execution against the jsdom globals set up in tests/setup.js.
@@ -107,5 +108,32 @@ describe('themeBootstrap — text size and animations-off (issue #495)', () => {
   it('leaves data-animations-off unset by default', () => {
     runBootstrap();
     expect(document.documentElement.hasAttribute('data-animations-off')).toBe(false);
+  });
+});
+
+// themeBootstrap.js is a classic (non-module) script by design — it must run
+// synchronously before CSS loads, so it cannot `import { KEYS }` and has to
+// inline its localStorage key strings as literals (see .claude/rules/
+// ui-styling.md's "Theming" note on why it must not become a module).
+//
+// That inlining is the whole risk: nothing otherwise ties those literals to
+// KEYS. Renaming KEYS.THEME would repoint theme.js's writes while the
+// bootstrap kept reading the old key — the no-FOUC guarantee would break
+// silently, with every test in this file still passing, because the rest of
+// this suite hardcodes the same literals the bootstrap does. These assertions
+// are the only thing connecting the two.
+describe('themeBootstrap — localStorage keys must stay in sync with KEYS', () => {
+  it.each([
+    ['THEME', KEYS.THEME],
+    ['TEXT_SIZE', KEYS.TEXT_SIZE],
+    ['ANIMATIONS_OFF', KEYS.ANIMATIONS_OFF],
+  ])('reads the exact key KEYS.%s resolves to (%s)', (_name, key) => {
+    expect(bootstrapSrc).toContain(`'${key}'`);
+  });
+
+  it('reads the pre-rename fallback key so a first post-rename load never flashes', () => {
+    // Intentionally still a literal: the old prefix predates KEYS and is
+    // deliberately not represented there (migration.js owns that mapping).
+    expect(bootstrapSrc).toContain("'switchprep-theme'");
   });
 });

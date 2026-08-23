@@ -6005,3 +6005,65 @@ Regression coverage added to all three stores' integration suites, each verified
 against the pre-fix code by reverting locally.
 
 `CACHE_VERSION` bumped 125 → 126.
+
+### 2026-08-23 — Codebase audit — Four dead CSS custom properties, brand-string drift, and three new CI guards
+
+A deep audit against this repo's own documented conventions, run after #551 merged.
+Every existing gate was already green (0 ESLint errors, `lint-theme`/`lint-icons` OK,
+1569 unit/integration tests passing), so the findings are all in classes nothing was
+checking. Three structural changes came out of it.
+
+**1. `src/core/brandName.js` (new module).** Root `CLAUDE.md`'s brand rule — the literal
+product name may only appear in the brand module and `index.html` — had drifted to 16
+hardcoded occurrences across 12 files (user-facing toasts, `aria-label`s, Settings copy,
+the public shared-roadmap view's "Made with …" footer, the ICS export's `PRODID`, the AI
+import prompt), against only 3 files importing the `BRAND_NAME` constant correctly. That
+rule exists specifically so a rename or a white-labeled build is a one-file change
+(issue #7, ADR-004), and it was no longer true.
+
+The constant could not simply be imported from `src/ui/components/brand.js` where it
+lived: that module imports `el()`/`svgEl()`, so pulling it into `src/core/**` (pure by
+contract — no DOM, no store, no Firebase) or the pure data modules would have dragged a
+DOM chain in with it. This is the same problem `src/core/roadmap/limits.js` was extracted
+to solve, and it takes the same shape: `brandName.js` has zero imports, and `brand.js`
+now imports *and* re-exports it (a bare `export { X } from` would not have created the
+local binding `createBrandWordmark()` needs). Every call site is now an interpolated
+template literal; since `BRAND_NAME === 'Ascent'`, rendered output is byte-identical and
+no test copy changed.
+
+**2. Four dead CSS custom properties, fixed.** `--surface-glass` and `--border-glass`
+(x3) were deleted along with the rest of the v1 glass token set in #302 when v2
+"Modernist" retired glass wholesale — their call sites were never repointed. An
+undefined `var()` with no fallback makes the whole declaration invalid at
+computed-value time, so the property silently reverts to its initial value with no
+console warning and no CSS parse error. Confirmed live via `getComputedStyle()` on a
+synthetic probe rather than by reading the stylesheet: `.template-card-overflow-btn`,
+`.template-card-info-corner`, and `.daily-todo-overflow-btn` each computed to
+`border-style: none; border-width: 0px` (the circular icon buttons rendered with no
+border ring at all), and `.template-card-picking-overlay` computed to
+`rgba(0, 0, 0, 0)` — the "Opening…"/"Importing…" spinner scrim on the onboarding cards
+was fully transparent. The three buttons are content-surface controls and now read
+`--color-border` (this file's standard control border, value-identical to
+`--color-divider` in both themes); the overlay is a genuine overlay and now reads
+`hsl(var(--v3-surface) / 0.9)`, matching `.dropdown-menu`'s established glass recipe per
+design-system.md §4 and faithful to the original 0.92/0.88 alpha. Verified in both
+themes. Note these survived *two* full design-system rewrites (v2 #302, v3 #416)
+undetected — the same failure mode as #506's `--space-5`/`--space-10`, which was found
+only by a live `getComputedStyle()` check during browser review.
+
+**3. Three new regression guards, each verified to fail before it passes.**
+`scripts/lint-css-tokens.mjs` and `scripts/lint-brand.mjs` follow `lint-theme.mjs`/
+`lint-icons.mjs`'s existing shape exactly (dependency-free static scan, `process.exitCode
+= 1`, actionable error text) and are wired into the same `lint` CI job. Both blank out
+comments while preserving line numbers, so the many "this used to be `var(--x)`"
+explanatory comments in `app.css` — and prose naming the product — are never flagged;
+`lint-css-tokens` also deliberately allows `var(--x, fallback)` even for an undefined
+token, since an explicit fallback is a valid pattern (`--confetti-x` is set inline from
+JS at runtime and is correctly absent from the stylesheet). Separately,
+`tests/unit/themeBootstrap.test.js` gained a drift guard: `themeBootstrap.js` is a
+classic non-module script by design and must inline its localStorage keys as literals,
+but nothing tied those literals to `KEYS` — and the rest of that suite hardcodes the same
+strings, so a `KEYS.THEME` rename would have repointed `theme.js`'s writes while the
+bootstrap kept reading the old key, silently breaking the no-FOUC guarantee with every
+test still green. Each guard was confirmed to fail against the real pre-fix state
+(reintroduced deliberately) and pass after, not merely to pass once written.

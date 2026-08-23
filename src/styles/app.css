@@ -1536,7 +1536,17 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--surface-glass);
+  /* Was `var(--surface-glass)` — that token was deleted with the rest of the
+     v1 glass set in #302 (v2 "Modernist" retired glass wholesale), but this
+     call site was never updated, so the declaration has been invalid at
+     computed-value time ever since and the overlay painted fully transparent
+     (verified live: getComputedStyle() reported `rgba(0, 0, 0, 0)`). The
+     "Opening…"/"Importing…" spinner therefore sat directly on unscrimmed card
+     content. v3 reintroduced glass under new token names — this matches
+     `.dropdown-menu`'s established overlay recipe (design-system.md §4:
+     genuine overlays keep the glass treatment), and 0.9 alpha is faithful to
+     the original 0.92/0.88. */
+  background: hsl(var(--v3-surface) / 0.9);
   backdrop-filter: blur(2px);
   border-radius: var(--radius-lg);
   font-size: var(--text-base);
@@ -1744,7 +1754,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid var(--border-glass);
+  /* Was `var(--border-glass)` — deleted with the v1 glass token set in #302
+     and never repointed here, so this shorthand was invalid at computed-value
+     time and the button rendered with no border at all (verified live:
+     border-style `none`, border-width `0px`). `--color-border` is this file's
+     standard content-surface control border and is value-identical to
+     `--color-divider` in both themes. */
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-muted);
   font-size: 13px;
@@ -1790,7 +1806,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid var(--border-glass);
+  /* Was `var(--border-glass)` — deleted with the v1 glass token set in #302
+     and never repointed here, so this shorthand was invalid at computed-value
+     time and the button rendered with no border at all (verified live:
+     border-style `none`, border-width `0px`). `--color-border` is this file's
+     standard content-surface control border and is value-identical to
+     `--color-divider` in both themes. */
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-muted);
   cursor: pointer;
@@ -4123,7 +4145,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid var(--border-glass);
+  /* Was `var(--border-glass)` — deleted with the v1 glass token set in #302
+     and never repointed here, so this shorthand was invalid at computed-value
+     time and the button rendered with no border at all (verified live:
+     border-style `none`, border-width `0px`). `--color-border` is this file's
+     standard content-surface control border and is value-identical to
+     `--color-divider` in both themes. */
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-muted);
   cursor: pointer;

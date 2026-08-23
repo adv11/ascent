@@ -4,6 +4,8 @@
 // MAX_ACTIVE_TODOS already uses (isExpired() in ../../ui/utils/dailyTodo.js)
 // — since a done/missed todo has no forward-looking calendar meaning.
 
+import { BRAND_NAME } from '../brandName.js';
+
 // A todo has a deadline (`expiresAt`) but no start time, so it's represented
 // as a short block ending at the deadline rather than a zero-duration event
 // (some calendar apps render zero-duration VEVENTs poorly/invisibly on a
@@ -79,7 +81,7 @@ export function buildTodosIcs(todos, now = Date.now()) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Ascent//Daily Todos//EN',
+    `PRODID:-//${BRAND_NAME}//Daily Todos//EN`,
     'CALSCALE:GREGORIAN',
     ...events,
     'END:VCALENDAR'

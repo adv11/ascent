@@ -1,7 +1,7 @@
 import { el } from '../dom.js';
 import { navigate } from '../router.js';
 import { createThemeToggle } from '../components/themeToggle.js';
-import { createBrandMark } from '../components/brand.js';
+import { createBrandMark, BRAND_NAME } from '../components/brand.js';
 import { createAvatar } from '../components/avatar.js';
 import { createDropdown } from '../components/dropdown.js';
 import { openDeleteAccountModal } from '../components/deleteAccountModal.js';
@@ -767,7 +767,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     el('div', { className: 'auth-page-bg' }),
     el('div', { className: 'onboarding-inner' }, [
       el('div', { className: 'auth-top-row' }, [
-        el('a', { className: 'brand', href: '#/onboarding', 'aria-label': 'Ascent — all roadmaps' }, createBrandMark()),
+        el('a', { className: 'brand', href: '#/onboarding', 'aria-label': `${BRAND_NAME} — all roadmaps` }, createBrandMark()),
         el('div', { className: 'onboarding-top-actions' }, [themeToggleBtn, accountDropdown, importInput, signOutBtn])
       ]),
       backBtn,

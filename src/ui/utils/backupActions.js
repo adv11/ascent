@@ -8,6 +8,7 @@ import { openImportBackupModal } from '../components/importBackupModal.js';
 import { showToast } from '../components/toast.js';
 import { markBackupTaken } from './backupReminder.js';
 import { resolveRoadmapTitle } from './printRoadmap.js';
+import { BRAND_NAME } from '../components/brand.js';
 
 // Shared export/import handlers (issue #18, extracted in a follow-up so both
 // sidebar.js's account dropdown and backupReminderBanner.js's "Download
@@ -88,7 +89,7 @@ export async function importBackupFromFile(store, file) {
 
   const result = validateBackupText(text);
   if (!result.valid) {
-    showToast(result.errors[0] || 'That file is not a valid Ascent backup.', 'error');
+    showToast(result.errors[0] || `That file is not a valid ${BRAND_NAME} backup.`, 'error');
     return;
   }
 

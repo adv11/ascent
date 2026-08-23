@@ -368,6 +368,11 @@ transition) — same convention as v2, just with more surfaces now animating.
 
 - [ ] No new hex values outside the token sheet (HSL-components-plus-alpha only)
 - [ ] Radius uses one of `--radius-sm/md/lg` — never `0` and never an arbitrary value
+- [ ] `node scripts/lint-css-tokens.mjs` passes — no `var(--token)` without a fallback
+      referencing a token that isn't defined. An undefined one makes the whole
+      declaration invalid at computed-value time and the property silently reverts to
+      its initial value (no border, transparent background), with no browser warning —
+      this shipped four times across two design-system rewrites before CI caught it
 - [ ] Gradients/glows/blur limited to genuine overlays per §4's "Flat content, elevated
       overlays" rule — never applied to a card-like content surface
 - [ ] Paragraph-size accent text in light mode uses `--color-accent-ink`, verified
