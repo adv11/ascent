@@ -6111,3 +6111,15 @@ guard, unlike the explicit sign-out flow. `main.js` now does a best-effort
 `visibilitychange`/`pagehide` for all three synced stores. See `.claude/rules/
 roadmap-store.md`'s "Sign-out contract" section for the full writeup and why this is a
 narrowing of the loss window, not a hard guarantee.
+
+### 2026-08-25 — PR #559 — Onboarding Daily Todos widget width fix (issue #558, follow-up to #555/#556)
+
+Found live via a screenshot review taken *after* #556 had already merged — the fix was
+prepared and verified on that PR's now-closed branch, which meant it never reached
+`main` on its own and needed this separate follow-up PR. One-line CSS fix:
+`.onboarding-inner > .daily-todo-panel`'s override (added in #556) reset `margin`/
+`width` but not the base `.daily-todo-panel` rule's own `max-width: 1160px` (tuned for
+`dashboard.js`) — on any viewport where `.onboarding-inner` itself grows past that (the
+existing `≥1600px`/`≥2200px` ultra-wide tiers, up to 1500px), the widget rendered
+visibly narrower than the template-card grid beside it. Verified numerically
+(`getBoundingClientRect()` at 2000px and 2400px viewports) and visually before filing.

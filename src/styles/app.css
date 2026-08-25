@@ -1488,8 +1488,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
    `--dashboard-gutter-x`) is reset here since `.onboarding-inner`'s `gap`
    already spaces every sibling uniformly — without this override the panel
    sat narrower than (and with extra space below) every other child, the one
-   visually inconsistent element on the page. */
-.onboarding-inner > .daily-todo-panel { margin: 0; width: 100%; }
+   visually inconsistent element on the page. `max-width` must be reset too,
+   not just `margin`/`width` — real, reported bug (screenshot): the base rule's
+   `max-width: 1160px` (dashboard.js's own cap) silently won on any viewport
+   where `.onboarding-inner` itself grows past 1160px (the >=1600px/>=2200px
+   ultra-wide tiers below, up to 1500px), leaving the panel visibly narrower
+   than the template-card grid beside it — that grid has no such cap. */
+.onboarding-inner > .daily-todo-panel { margin: 0; width: 100%; max-width: none; }
 
 .template-grid-heading {
   display: flex;
