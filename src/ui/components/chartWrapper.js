@@ -152,7 +152,13 @@ const barValueLabelsPlugin = {
 // buildVelocitySeries() always ends the window on today) renders at full
 // opacity; every other bar renders at 45%, so today reads as the
 // highlighted point in the series.
-export async function createBarChart(canvas, { labels, counts, rollingAverage }) {
+// `label`/`averageLabel` (issue #555) — defaults preserve progress.js's
+// existing "Items completed"/"7-day avg" text exactly, so that call site
+// needed no change. A second caller (todoStats.js's "Missed per day" chart)
+// passes its own labels instead — Chart.js's default tooltip reads the
+// dataset's own `label`, so reusing this component unlabeled would show
+// "Items completed: N" over data that isn't completions at all.
+export async function createBarChart(canvas, { labels, counts, rollingAverage, label = 'Items completed', averageLabel = '7-day avg' }) {
   const Chart = await loadChartModule();
   const accentColor = cssVarHsl('--v3-accent', cssVar('--color-accent', '#0CB656'));
   const accentMutedColor = cssVarHsl('--v3-accent-muted', cssVar('--color-accent-700', '#AE1800'));
@@ -166,13 +172,13 @@ export async function createBarChart(canvas, { labels, counts, rollingAverage })
       datasets: [
         {
           type: 'bar',
-          label: 'Items completed',
+          label,
           data: counts,
           backgroundColor: barColors
         },
         {
           type: 'line',
-          label: '7-day avg',
+          label: averageLabel,
           data: rollingAverage,
           borderColor: accentMutedColor,
           backgroundColor: accentMutedColor,

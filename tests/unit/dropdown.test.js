@@ -73,6 +73,42 @@ describe('createDropdown', () => {
     expect(items[1].classList.contains('dropdown-item-danger')).toBe(true);
   });
 
+  // Issue #555 — dailyTodoPanel.js's Set/Started/Completed info block, an
+  // arbitrary non-interactive node rendered above the item list.
+  it('renders a `leading` node above the items, and it never counts as a menu item', () => {
+    const t = trigger();
+    const leadingNode = document.createElement('div');
+    leadingNode.className = 'my-leading-content';
+    leadingNode.textContent = 'Some info';
+    const wrap = createDropdown(t, [{ text: 'One', onClick: () => {} }], { leading: leadingNode });
+    document.body.append(wrap);
+
+    t.click();
+    const menu = document.querySelector('.dropdown-menu');
+    expect(menu.querySelector('.my-leading-content').textContent).toBe('Some info');
+    expect(menu.querySelectorAll('[role="menuitem"]')).toHaveLength(1);
+    // Arrow-down from the trigger still lands on the one real item, not the
+    // leading content — confirms `itemEls` (keyboard nav) is unaffected.
+    document.querySelector('[role="menuitem"]').focus();
+    expect(document.activeElement.textContent).toBe('One');
+  });
+
+  it('accepts an array of `leading` nodes, rendered in order', () => {
+    const t = trigger();
+    const a = document.createElement('div');
+    a.className = 'leading-a';
+    const b = document.createElement('div');
+    b.className = 'leading-b';
+    const wrap = createDropdown(t, [{ text: 'One', onClick: () => {} }], { leading: [a, b] });
+    document.body.append(wrap);
+
+    t.click();
+    const menu = document.querySelector('.dropdown-menu');
+    const children = [...menu.children];
+    expect(children.indexOf(a)).toBeLessThan(children.indexOf(b));
+    expect(children.indexOf(b)).toBeLessThan(children.findIndex(c => c.getAttribute('role') === 'menuitem'));
+  });
+
   it('closes on outside click', () => {
     const t = trigger();
     const wrap = createDropdown(t, [{ text: 'One', onClick: () => {} }]);

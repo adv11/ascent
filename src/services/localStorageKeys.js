@@ -62,6 +62,15 @@ export const KEYS = {
   // component, never cleared on sign-out) rather than UI_STATE's per-account
   // pattern (owned by roadmapStore.js, cleared by clearLocal() on sign-out).
   DAILY_TODOS_COLLAPSED: 'ascent-daily-todos-collapsed',
+  // Collapse/expand state of the compact Daily Todos widget on onboarding.js
+  // (issue #555) — deliberately a *separate* key from DAILY_TODOS_COLLAPSED
+  // above, not a shared one: the onboarding widget defaults to collapsed
+  // (see createDailyTodoPanel's defaultCollapsed param) while the dashboard
+  // panel defaults to expanded, and sharing one key would mean toggling
+  // either instance also flips the other's default the next time it mounts.
+  // Same device-level, never-cleared-on-sign-out pattern as
+  // DAILY_TODOS_COLLAPSED.
+  ONBOARDING_DAILY_TODOS_COLLAPSED: 'ascent-onboarding-daily-todos-collapsed',
   // Manual desktop icon-rail collapse for .app-sidebar (issue #6 Phase 2) — a
   // device-level cosmetic preference, same pattern as DAILY_TODOS_COLLAPSED
   // above (not per-account, never cleared on sign-out). Independent of the

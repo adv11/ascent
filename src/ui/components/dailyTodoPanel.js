@@ -5,7 +5,7 @@ import { confirmDialog } from './confirmDialog.js';
 import { openDailyTodoGuide } from './dailyTodoGuide.js';
 import { createSelect } from './select.js';
 import { createDropdown } from './dropdown.js';
-import { isExpired, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
+import { isExpired, isRecentlyMissed, remainingMs, formatRemaining, remainingBand } from '../utils/dailyTodo.js';
 import { MAX_TODO_TITLE_LENGTH, MAX_ACTIVE_TODOS, DURATION_PRESETS, MIN_DURATION_MS, MAX_DURATION_MS } from '../../core/dailyTodo/limits.js';
 import { getTemplate } from '../../data/templates/index.js';
 import { KEYS } from '../../services/localStorageKeys.js';
@@ -27,12 +27,19 @@ const TIMER_TICK_MS = 1000;
 // the row's one meta line: countdown (or "Done") · time tracked · optional
 // "via <roadmap>" badge, in that order.
 function buildRowMeta(todo, ms, band, roadmapName) {
+  // Issue #555 fix — formatRemaining(ms) returns the bare status label
+  // "Missed" once ms <= 0 (no " left" suffix to strip), so a missed row must
+  // render that label as-is rather than prefixing it with "Due in ", which
+  // used to produce the literal text "Due in Missed".
+  const isMissed = !todo.done && ms <= 0;
   const children = [
     todo.done
       ? el('span', { className: 'daily-todo-remaining done', text: 'Done' })
-      // Reuses formatRemaining()'s own "Xh Ym"/"<1m" text, stripping its
-      // " left" suffix — "Due in " already carries that meaning.
-      : el('span', { className: `daily-todo-remaining ${band}`, text: `Due in ${formatRemaining(ms).replace(/ left$/, '')}` }),
+      : isMissed
+        ? el('span', { className: `daily-todo-remaining ${band}`, text: 'Missed' })
+        // Reuses formatRemaining()'s own "Xh Ym"/"<1m" text, stripping its
+        // " left" suffix — "Due in " already carries that meaning.
+        : el('span', { className: `daily-todo-remaining ${band}`, text: `Due in ${formatRemaining(ms).replace(/ left$/, '')}` }),
     el('span', { className: 'daily-todo-meta-sep', text: ' · ' }),
     // Time tracking (issue #180) — Start/pause only makes sense for a
     // still-active, not-yet-done todo; a done or missed row shows its
@@ -48,6 +55,35 @@ function buildRowMeta(todo, ms, band, roadmapName) {
     );
   }
   return children;
+}
+
+// Issue #555 — formats a timestamp for the overflow menu's Set/Started/
+// Completed info section below. Same short "Mon D, h:mm AM/PM" shape as
+// myReports.js's own date formatting, plus a time component since a todo's
+// whole lifecycle is hour-scale (15 min - 7 days), unlike a report's
+// day-scale timeline.
+function formatDateTime(ts) {
+  return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+// Issue #555 — a non-interactive info block at the top of the overflow menu
+// (buildOverflowMenu below), giving every todo a persistent, keyboard/touch-
+// accessible record of when it was set, when work on it started, and when it
+// was completed (or is/was due) — deliberately not a fourth visible row-meta
+// line, which would break the two-line row rule (issue #486 B1), and not a
+// hover-only tooltip, which touch devices can't reach.
+function buildTodoInfoSection(todo) {
+  const rows = [
+    ['Set', formatDateTime(todo.createdAt)],
+    ['Started', todo.startedAt ? formatDateTime(todo.startedAt) : 'Not started yet'],
+    todo.done ? ['Completed', formatDateTime(todo.doneAt)] : ['Due', formatDateTime(todo.expiresAt)]
+  ];
+  return el('div', { className: 'dropdown-info daily-todo-info-section' },
+    rows.map(([label, value]) => el('div', { className: 'dropdown-info-row' }, [
+      el('span', { className: 'dropdown-info-label', text: `${label}:` }),
+      el('span', { className: 'dropdown-info-value', text: value })
+    ]))
+  );
 }
 
 // Resolves a templateId to a display name for the confirm dialog/toast/row
@@ -73,7 +109,14 @@ function resolveRoadmapName(roadmapStore, templateId) {
 // exist standalone (no linkedTemplateId/linkedItemId) and never needs it;
 // it's only consulted when completing/reverting a todo that was created via
 // a roadmap topic's "add to Today's Todos" button (dashboard.js).
-export function createDailyTodoPanel(store, roadmapStore) {
+// Issue #555 — `collapsedStorageKey`/`defaultCollapsed` let a second mount of
+// this same, already-tested component (onboarding.js's compact widget) start
+// collapsed by default under its own, independent localStorage key, without
+// changing dashboard.js's existing call site or its default-expanded
+// behavior at all (both options default to exactly what this file already
+// did). See onboarding.js's own mount site for why a separate key, not the
+// shared KEYS.DAILY_TODOS_COLLAPSED, is used there.
+export function createDailyTodoPanel(store, roadmapStore, { collapsedStorageKey = KEYS.DAILY_TODOS_COLLAPSED, defaultCollapsed = false } = {}) {
   // Issue #6 Phase 9 — axe-core flagged both fields as missing an accessible
   // name; a placeholder alone doesn't count as one (it vanishes on input and
   // most screen readers don't reliably announce it as a label anyway).
@@ -157,6 +200,12 @@ export function createDailyTodoPanel(store, roadmapStore) {
   });
   const missedList = el('div', { className: 'daily-todo-missed-list' });
   missedList.hidden = true;
+  // Issue #555 — discoverability for the 48h missed-visibility window above:
+  // a todo missed longer ago than that hasn't vanished, it's just no longer
+  // listed here. Hidden whenever there isn't one, so a panel with nothing
+  // older than 48h missed renders identically to before this change.
+  const olderMissedLink = el('a', { className: 'daily-todo-older-missed-link', href: '#/todo-stats' });
+  olderMissedLink.hidden = true;
 
   let missedOpen = false;
   missedToggle.addEventListener('click', () => {
@@ -272,6 +321,11 @@ export function createDailyTodoPanel(store, roadmapStore) {
       return;
     }
     runningTimers[todo.id] = Date.now();
+    // Issue #555 — stamps the todo's first-ever start, a no-op past the
+    // first call (markStarted() itself guards this); does not gate/await
+    // anything, same fire-and-forget shape as every other store mutation
+    // this handler already makes.
+    store.markStarted(todo.id);
     ensureTimerTick();
     render();
   }
@@ -313,7 +367,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
     }, [createIcon('overflow', { size: 'xs' })]);
     const overflowMenu = createDropdown(overflowTrigger, [
       { text: 'Delete', danger: true, onClick: () => handleDelete(todo) }
-    ]);
+    ], { leading: buildTodoInfoSection(todo) });
     rowDropdownEls.push(overflowMenu);
     return overflowMenu;
   }
@@ -358,7 +412,8 @@ export function createDailyTodoPanel(store, roadmapStore) {
   // returning user's first visit on a new device) reads as `false` —
   // expanded — so first sign-in always shows the full panel, never
   // pre-collapsed.
-  let collapsed = localStorage.getItem(KEYS.DAILY_TODOS_COLLAPSED) === 'true';
+  const storedCollapsed = localStorage.getItem(collapsedStorageKey);
+  let collapsed = storedCollapsed === null ? defaultCollapsed : storedCollapsed === 'true';
 
   // Opt-in local reminder toggle (issue #132) — off by default, never
   // requested on page load. requestPermission() must come from a real click.
@@ -395,7 +450,7 @@ export function createDailyTodoPanel(store, roadmapStore) {
     className: 'daily-todo-collapse-btn',
     onClick: () => {
       collapsed = !collapsed;
-      localStorage.setItem(KEYS.DAILY_TODOS_COLLAPSED, String(collapsed));
+      localStorage.setItem(collapsedStorageKey, String(collapsed));
       applyCollapsedState();
     }
   }, [el('span', { className: 'chevron' }, [createIcon('chevron', { size: 'sm' })])]);
@@ -423,6 +478,14 @@ export function createDailyTodoPanel(store, roadmapStore) {
     const active = todos.filter(t => !t.done && !isExpired(t, now)).sort((a, b) => a.expiresAt - b.expiresAt);
     const done = todos.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
     const missed = todos.filter(t => !t.done && isExpired(t, now)).sort((a, b) => b.expiresAt - a.expiresAt);
+    // Issue #555 — the Missed section only ever renders/counts a todo missed
+    // within the last MISSED_VISIBLE_MS (48h); this is a render-time filter
+    // only, not a deletion (see MISSED_VISIBLE_MS's own doc comment) — an
+    // older missed todo is still in `missed` above, still in the store, and
+    // still counted on /todo-stats. `olderMissedLink` below is how a user
+    // discovers it hasn't actually vanished.
+    const recentlyMissed = missed.filter(t => isRecentlyMissed(t, now));
+    const olderMissedCount = missed.length - recentlyMissed.length;
 
     // Done todos still render in the same list (not their own bucket — see
     // the doc comment above) so completing one doesn't make it disappear;
@@ -445,11 +508,16 @@ export function createDailyTodoPanel(store, roadmapStore) {
       displayList.forEach(todo => activeList.append(renderRow(todo, now)));
     }
 
-    missedToggle.textContent = `▸ Missed (${missed.length})`;
-    missedToggle.hidden = missed.length === 0;
+    missedToggle.textContent = `▸ Missed (${recentlyMissed.length})`;
+    missedToggle.hidden = recentlyMissed.length === 0;
     missedList.replaceChildren();
-    missed.forEach(todo => missedList.append(renderRow(todo, now)));
-    if (!missed.length) missedList.hidden = true;
+    recentlyMissed.forEach(todo => missedList.append(renderRow(todo, now)));
+    if (!recentlyMissed.length) missedList.hidden = true;
+
+    olderMissedLink.hidden = olderMissedCount === 0;
+    olderMissedLink.textContent = olderMissedCount === 1
+      ? '1 missed earlier — see Todo stats'
+      : `${olderMissedCount} missed earlier — see Todo stats`;
 
     // Only rendered while collapsed (see CSS) — shown so shrinking the panel
     // never fully hides whether there's anything to come back for.
@@ -474,12 +542,22 @@ export function createDailyTodoPanel(store, roadmapStore) {
         title: "About Today's Todos",
         onClick: () => openDailyTodoGuide()
       }, [createIcon('info', { size: 'sm' })]),
+      // Issue #555 — reaches the new /todo-stats page from wherever this
+      // panel renders (dashboard.js and, per its own mount site, the compact
+      // onboarding.js widget) without adding a bottom-nav tab.
+      el('a', {
+        className: 'daily-todo-stats-btn',
+        href: '#/todo-stats',
+        'aria-label': 'Todo stats',
+        title: 'Todo stats'
+      }, [createIcon('trendingUp', { size: 'sm' })]),
       collapseBtn
     ]),
     addForm,
     activeList,
     missedToggle,
-    missedList
+    missedList,
+    olderMissedLink
   ]);
 
   applyCollapsedState();

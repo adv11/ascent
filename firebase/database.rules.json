@@ -137,6 +137,7 @@
             "expiresAt": { ".validate": "newData.isNumber()" },
             "done": { ".validate": "newData.isBoolean()" },
             "doneAt": { ".validate": "newData.isNumber() || newData.val() === null" },
+            "startedAt": { ".validate": "newData.isNumber() || newData.val() === null" },
             "linkedTemplateId": { ".validate": "newData.isString() || newData.val() === null" },
             "linkedItemId": { ".validate": "newData.isString() || newData.val() === null" },
             "linkedItemTitle": { ".validate": "newData.isString() || newData.val() === null" },
