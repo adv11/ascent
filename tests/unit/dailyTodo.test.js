@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isExpired, remainingMs, formatRemaining, remainingBand } from '../../src/ui/utils/dailyTodo.js';
-import { clampDurationMs, MIN_DURATION_MS, MAX_DURATION_MS } from '../../src/core/dailyTodo/limits.js';
+import { isExpired, isRecentlyMissed, remainingMs, formatRemaining, remainingBand } from '../../src/ui/utils/dailyTodo.js';
+import { clampDurationMs, MIN_DURATION_MS, MAX_DURATION_MS, MISSED_VISIBLE_MS } from '../../src/core/dailyTodo/limits.js';
 
 describe('isExpired', () => {
   it('is not expired when now < expiresAt', () => {
@@ -13,6 +13,35 @@ describe('isExpired', () => {
 
   it('a done item is never expired regardless of time', () => {
     expect(isExpired({ done: true, expiresAt: 1000 }, 999999)).toBe(false);
+  });
+});
+
+describe('isRecentlyMissed', () => {
+  it('false for an active (not yet expired) todo', () => {
+    expect(isRecentlyMissed({ done: false, expiresAt: 2000 }, 1000)).toBe(false);
+  });
+
+  it('false for a done todo, however long ago it expired', () => {
+    expect(isRecentlyMissed({ done: true, expiresAt: 0 }, MISSED_VISIBLE_MS * 10)).toBe(false);
+  });
+
+  it('true just after expiring', () => {
+    expect(isRecentlyMissed({ done: false, expiresAt: 1000 }, 1001)).toBe(true);
+  });
+
+  it('true right at the edge of the visible window', () => {
+    const expiresAt = 1000;
+    expect(isRecentlyMissed({ done: false, expiresAt }, expiresAt + MISSED_VISIBLE_MS)).toBe(true);
+  });
+
+  it('false just past the visible window', () => {
+    const expiresAt = 1000;
+    expect(isRecentlyMissed({ done: false, expiresAt }, expiresAt + MISSED_VISIBLE_MS + 1)).toBe(false);
+  });
+
+  it('false long after expiring', () => {
+    const expiresAt = 1000;
+    expect(isRecentlyMissed({ done: false, expiresAt }, expiresAt + MISSED_VISIBLE_MS * 10)).toBe(false);
   });
 });
 

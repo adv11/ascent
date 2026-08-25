@@ -541,6 +541,20 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* Issue #555 — a real, live-verified bug this fixes app-wide: the `hidden`
+   attribute's presentational hint (`[hidden] { display: none }`) is a
+   low-specificity UA-stylesheet rule, which any author rule declaring
+   `display` at equal-or-higher specificity silently overrides — e.g.
+   `.daily-todo-missed-toggle { display: block; }` (dailyTodoPanel.js's own
+   Missed toggle) left it visibly showing "▸ Missed (0)" even while its own
+   `el.hidden = true` was correctly set, confirmed live via
+   `getComputedStyle(el).display` returning `'block'` with `el.hidden ===
+   true`. This is the standard normalize.css/sanitize.css fix — restoring the
+   guarantee that setting `.hidden = true` (or the `hidden` attribute) always
+   hides an element, regardless of what any class rule elsewhere declares for
+   `display`. Never rely on `!important`-free `display` overrides to coexist
+   with `hidden` elsewhere in this file; this rule is the backstop. */
+[hidden] { display: none !important; }
 
 html { scroll-behavior: smooth; }
 html, body { min-height: 100%; }
@@ -1469,6 +1483,13 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 
 .onboarding-head { text-align: center; display: grid; gap: 8px; justify-items: center; }
 .onboarding-back { justify-self: start; }
+/* Issue #555 — the compact Daily Todos widget mounted between the header and
+   the template grid. .daily-todo-panel's own margin (dashboard.js's gutter,
+   `--dashboard-gutter-x`) is reset here since `.onboarding-inner`'s `gap`
+   already spaces every sibling uniformly — without this override the panel
+   sat narrower than (and with extra space below) every other child, the one
+   visually inconsistent element on the page. */
+.onboarding-inner > .daily-todo-panel { margin: 0; width: 100%; }
 
 .template-grid-heading {
   display: flex;
@@ -2273,6 +2294,22 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
   white-space: nowrap;
 }
 .dropdown-header-subtitle { font-size: var(--text-base); color: var(--color-text-muted); }
+/* Issue #555 — dailyTodoPanel.js's Set/Started/Completed info block, a
+   `leading` node (dropdown.js) rather than a menu item — same box model as
+   .dropdown-header immediately above (purely presentational, never a
+   role="menuitem"), just a label/value row list instead of a title/subtitle
+   pair. */
+.dropdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid hsl(var(--v3-divider) / 0.6);
+}
+.dropdown-info-row { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--text-base); }
+.dropdown-info-label { color: var(--color-text-muted); }
+.dropdown-info-value { color: var(--color-text); text-align: right; }
 /* Issue #507 — 48px rows per the account-menu design reference, matching
    this app's own --tap-min touch-target floor rather than inventing a
    separate row height. */
@@ -3954,6 +3991,31 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .daily-todo-info-btn:hover { color: var(--color-warning); border-color: var(--color-warning); }
 .daily-todo-info-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
+/* Issue #555 — links to /todo-stats; same 24x24/'sm'-icon box as
+   .daily-todo-info-btn/.daily-todo-reminder-btn/.daily-todo-collapse-btn
+   (the "Two same-row circular icon-buttons" rule), an <a> rather than a
+   <button> so it composes with the app's plain hash-router links, which
+   means color/text-decoration must be set explicitly (issue #116 — nothing
+   here to inherit from). */
+.daily-todo-stats-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  line-height: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.daily-todo-stats-btn:hover { color: var(--color-warning); border-color: var(--color-warning); }
+.daily-todo-stats-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
 /* Local reminder opt-in toggle (issue #132) — same 24x24/'sm'-icon box as
    .daily-todo-info-btn/.daily-todo-collapse-btn above (see the "Two same-row
    circular icon-buttons" rule). .active marks reminders as currently on. */
@@ -4024,7 +4086,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .daily-todo-panel > .daily-todo-add-row,
 .daily-todo-panel > .daily-todo-list,
 .daily-todo-panel > .daily-todo-missed-toggle,
-.daily-todo-panel > .daily-todo-missed-list {
+.daily-todo-panel > .daily-todo-missed-list,
+.daily-todo-panel > .daily-todo-older-missed-link {
   background: transparent;
   border: none;
 }
@@ -4036,7 +4099,8 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 .daily-todo-panel.collapsed > .daily-todo-add-row,
 .daily-todo-panel.collapsed > .daily-todo-list,
 .daily-todo-panel.collapsed > .daily-todo-missed-toggle,
-.daily-todo-panel.collapsed > .daily-todo-missed-list {
+.daily-todo-panel.collapsed > .daily-todo-missed-list,
+.daily-todo-panel.collapsed > .daily-todo-older-missed-link {
   display: none;
 }
 .daily-todo-panel.collapsed .daily-todo-heading-row { margin-bottom: 0; }
@@ -4181,6 +4245,23 @@ a.brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 
 }
 .daily-todo-missed-list .daily-todo-item { opacity: 0.75; }
 .daily-todo-missed-list .daily-todo-title { text-decoration: line-through; }
+
+/* Issue #555 — discoverability line for the 48h missed-visibility window:
+   a todo missed longer than that no longer renders above, but isn't
+   deleted (see MISSED_VISIBLE_MS's own doc comment) — this links to where
+   it's still counted. Muted/small so it never competes with the real
+   Missed toggle right above it; hidden by default (JS toggles it). */
+.daily-todo-older-missed-link {
+  display: block;
+  padding: 6px 0 2px;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+.daily-todo-older-missed-link:hover, .daily-todo-older-missed-link:focus-visible {
+  color: var(--color-warning);
+  text-decoration: underline;
+}
 
 .dashboard-content {
   flex: 1;
@@ -5764,6 +5845,19 @@ html[data-scrolling] .dropdown-menu {
 }
 .progress-range-toggle { display: flex; gap: var(--space-2); }
 
+/* Issue #555 — Todo stats page (/todo-stats). Same box model as
+   .progress-content immediately above — a distinct page, so a separate
+   class rather than reusing .progress-content's name on foreign content,
+   matching this app's existing per-page-content-class convention
+   (.dashboard-content/.settings-content/.progress-content each define their
+   own near-identical rule rather than sharing one). */
+.todo-stats-content { padding: var(--space-6); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); max-width: 1160px; margin: 0 auto; width: 100%; align-content: start; }
+.todo-stats-header { display: grid; gap: 4px; }
+.todo-stats-title { margin: 0; font-size: var(--text-2xl); font-weight: 700; }
+.todo-stats-subtitle { margin: 0; color: var(--color-text-muted); font-size: var(--text-base); }
+.todo-stats-body { display: grid; gap: var(--space-6); }
+.todo-stats-turnaround { margin: 0; color: var(--color-text-muted); font-size: var(--text-base); }
+
 /* v3 (issue #416 Phase 4 — #428): wires the .card glass primitive (#420)
    into the Progress page's stat/heatmap/chart/table cards — same
    surface-recolor pattern .phase-card (Phase 2) used, not the shared .card
@@ -7207,7 +7301,7 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
   .btn-sm { min-height: 46px; }
   .filter-chip { min-height: 46px; }
   .check-item { min-height: 46px; }
-  .daily-todo-overflow-btn, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn { width: 46px; height: 46px; }
+  .daily-todo-overflow-btn, .daily-todo-info-btn, .daily-todo-collapse-btn, .daily-todo-reminder-btn, .daily-todo-stats-btn { width: 46px; height: 46px; }
   .template-card-info-corner, .template-card-overflow-btn { width: 46px; height: 46px; }
   /* issue #435 — same border-clip bug as the base rule above, at the touch
      tier: the group must grow to actually fit a real touch target (var(--tap-min)
@@ -7530,7 +7624,13 @@ textarea.feedback-field-input { min-height: 88px; resize: vertical; }
    page's last content element measured directly against the bottom nav's
    own top edge), not just eyeballed. */
 @media (max-width: 899px) {
-  .progress-content, .settings-content {
+  /* .todo-stats-content (issue #555) — the new Todo stats page has the exact
+     same .app-content + bottom-nav shell as .progress-content/.settings-content
+     and its own bottom-resetting padding shorthand, so it needed the same
+     reassert-last fix from day one; live-reported (screenshot) rather than
+     caught in review — the "Missed per day" chart's bottom edge sat under
+     the fixed bottom nav on a real phone. */
+  .progress-content, .settings-content, .todo-stats-content {
     padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + var(--space-4));
   }
 }

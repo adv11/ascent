@@ -81,6 +81,12 @@ export function buildAccountMenu({ user, store, dailyTodoStore, identityTrigger,
     { text: 'Print roadmap…', icon: createIcon('note', { size: 'sm' }), onClick: () => triggerRoadmapPrint(store) }
   );
   if (dailyTodoStore) {
+    // Issue #555 — reaches /todo-stats from every page's account menu, not
+    // just wherever dailyTodoPanel.js's own heading-row link happens to be
+    // rendered (dashboard.js and, per its own mount, onboarding.js's compact
+    // widget). Same tier as "My reports"/"Take a tour" above — deliberately
+    // not a bottomNav.js tab.
+    dropdownItems.push({ text: 'Todo stats', icon: createIcon('trendingUp', { size: 'sm' }), onClick: () => navigate('/todo-stats') });
     dropdownItems.push({ text: 'Export to calendar (.ics)', icon: createIcon('timer', { size: 'sm' }), onClick: () => exportTodosIcs(dailyTodoStore) });
   }
   // Issue #507 — the account-menu design reference includes "Sign out" as a

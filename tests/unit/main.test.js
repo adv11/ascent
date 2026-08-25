@@ -31,6 +31,8 @@ vi.mock('../../src/services/theme.js', () => ({ initTheme: vi.fn() }));
 vi.mock('../../src/services/migration.js', () => ({ migrateLocalStorageKeys: vi.fn() }));
 vi.mock('../../src/services/serviceWorkerRegistration.js', () => ({ registerServiceWorker: vi.fn() }));
 vi.mock('../../src/services/reminderScheduler.js', () => ({ initReminderScheduler: vi.fn() }));
+const flushDirtyStoresMock = vi.fn().mockResolvedValue(true);
+vi.mock('../../src/ui/utils/signOut.js', () => ({ flushDirtyStores: flushDirtyStoresMock }));
 vi.mock('../../src/ui/components/toast.js', () => ({ showToast: vi.fn() }));
 vi.mock('../../src/ui/pages/landing.js', () => ({ renderLanding: vi.fn() }));
 vi.mock('../../src/ui/pages/sharedRoadmapView.js', () => ({ renderSharedRoadmapView: vi.fn() }));
@@ -63,6 +65,7 @@ beforeEach(() => {
   renderOnboarding.mockClear();
   roadmapStoreSetUser.mockReset().mockImplementation(() => Promise.resolve());
   dashboardImportGate = null;
+  flushDirtyStoresMock.mockClear();
   document.body.innerHTML = '<div id="app"></div>';
   window.location.hash = '';
 });
@@ -275,5 +278,70 @@ describe('main.js lazy route registration (issue #137)', () => {
     // The real page render function must never be called for a superseded
     // route — that's the only way to guarantee it can't mutate the DOM.
     expect(renderDashboard).not.toHaveBeenCalled();
+  });
+});
+
+// Issue #555 — a real, reported data-loss bug: closing a laptop lid or
+// switching tabs within queueSave()'s 500ms debounce window could leave an
+// edit stuck `dirty: true` in localStorage forever, never reaching Firebase,
+// invisible to every other device signed into the same account. See
+// main.js's own comment above this wiring for the full writeup.
+describe('best-effort flush on page hide (issue #555)', () => {
+  function setVisibility(state) {
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+  }
+
+  it('flushes every dirty store when the page becomes hidden', async () => {
+    window.location.hash = '#/signin';
+    await import('../../src/main.js');
+    await vi.waitFor(() => expect(renderSignIn).toHaveBeenCalled());
+
+    setVisibility('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    // Not toHaveBeenCalledTimes(1) — this file's own main.js re-import
+    // pattern (vi.resetModules() + dynamic import per test, this file's
+    // hashchange-listener comment documents the identical shape of issue)
+    // means earlier tests' still-attached listeners also fire here; every
+    // one of them closes over its own freshly-created three-store array,
+    // so the shape assertion below still meaningfully verifies the wiring.
+    expect(flushDirtyStoresMock).toHaveBeenCalled();
+    expect(flushDirtyStoresMock.mock.calls.at(-1)[0]).toHaveLength(3);
+  });
+
+  it('does not flush when visibility changes to visible (only hidden)', async () => {
+    window.location.hash = '#/signin';
+    await import('../../src/main.js');
+    await vi.waitFor(() => expect(renderSignIn).toHaveBeenCalled());
+
+    setVisibility('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(flushDirtyStoresMock).not.toHaveBeenCalled();
+  });
+
+  it('also flushes on pagehide, independent of visibilitychange', async () => {
+    window.location.hash = '#/signin';
+    await import('../../src/main.js');
+    await vi.waitFor(() => expect(renderSignIn).toHaveBeenCalled());
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(flushDirtyStoresMock).toHaveBeenCalled();
+  });
+
+  it('logs, rather than throws, if the flush itself rejects', async () => {
+    flushDirtyStoresMock.mockRejectedValueOnce(new Error('boom'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    window.location.hash = '#/signin';
+    await import('../../src/main.js');
+    await vi.waitFor(() => expect(renderSignIn).toHaveBeenCalled());
+
+    setVisibility('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.waitFor(() => expect(consoleSpy).toHaveBeenCalled());
+
+    consoleSpy.mockRestore();
   });
 });

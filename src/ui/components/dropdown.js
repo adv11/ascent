@@ -13,8 +13,15 @@ import { el } from '../dom.js';
 // header: optional { title, subtitle } rendered above the item list (the
 // design's email + "Signed in · synced" identity block) — purely
 // presentational, never itself a menu item.
+// leading (issue #555): optional node or array of nodes rendered after
+// `header` and before the item list — purely presentational, same as
+// `header`, for content that doesn't fit a title/subtitle pair (e.g.
+// dailyTodoPanel.js's multi-row Set/Started/Completed info block). Never
+// focusable/interactive — `itemEls` (keyboard nav, initial focus) only ever
+// tracks the real `role="menuitem"` buttons below, so inserting extra
+// non-interactive markup here doesn't affect that.
 // Returns the wrapping node; caller must call node._cleanup() on teardown.
-export function createDropdown(trigger, items, { align = 'end', header = null } = {}) {
+export function createDropdown(trigger, items, { align = 'end', header = null, leading = null } = {}) {
   const menu = el('div', {
     className: `dropdown-menu dropdown-${align}`,
     role: 'menu'
@@ -24,6 +31,9 @@ export function createDropdown(trigger, items, { align = 'end', header = null } 
       el('span', { className: 'dropdown-header-title', text: header.title }),
       header.subtitle ? el('span', { className: 'dropdown-header-subtitle', text: header.subtitle }) : null
     ].filter(Boolean)));
+  }
+  if (leading) {
+    (Array.isArray(leading) ? leading : [leading]).forEach(node => menu.append(node));
   }
   const itemEls = items.map(item => {
     const btn = el('button', {

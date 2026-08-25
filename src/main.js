@@ -11,6 +11,7 @@ import { renderDeveloperProfile } from './ui/pages/developerProfile.js';
 import { renderSharedRoadmapView } from './ui/pages/sharedRoadmapView.js';
 import { registerServiceWorker } from './services/serviceWorkerRegistration.js';
 import { initReminderScheduler } from './services/reminderScheduler.js';
+import { flushDirtyStores } from './ui/utils/signOut.js';
 import { showToast } from './ui/components/toast.js';
 // Eager, side-effect-only import (issue #261) — registers pwaInstall.js's
 // module-top-level `beforeinstallprompt`/`appinstalled` listeners at app
@@ -51,6 +52,39 @@ const dailyTodoStore = createDailyTodoStore({
 });
 // App-lifetime, never unmounted (issue #132).
 initReminderScheduler(dailyTodoStore);
+
+// Issue #555 — a real, reported data-loss bug: closing a laptop lid,
+// switching apps, or backgrounding the tab within queueSave()'s 500ms
+// debounce window (or before the network round trip it kicks off actually
+// completes) meant a just-made edit could sit `dirty: true` in localStorage
+// forever, never reaching Firebase — invisible to every other device signed
+// into the same account, since nothing was ever written for them to receive.
+// The explicit-sign-out flow (confirmAndSignOut, signOut.js) already solved
+// this for one specific trigger; nothing covered the far more common
+// implicit one (just closing the lid/switching tabs mid-edit, no sign-out
+// involved at all). `visibilitychange` firing `hidden` is the standard,
+// reliable "the page is about to be backgrounded or closed" signal (see
+// web.dev's Page Lifecycle API guidance) — far more dependable across
+// mobile/desktop than `beforeunload`/`unload`, neither of which fires
+// consistently on iOS Safari or Android Chrome's task-switcher backgrounding.
+// `pagehide` is a second, narrower trigger for the same intent (a real full
+// navigation/unload) some browsers fire without a preceding `visibilitychange`.
+// This does not *guarantee* delivery — nothing can, over Firebase's
+// WebSocket-based protocol, if the OS suspends the process before the write
+// leaves the device — but it removes the artificial debounce delay in
+// exactly the moment it matters most, which is the actual, fixable gap here.
+// Every store already exposes `flush()`/`getSnapshot().dirty`; this is a
+// fire-and-forget best-effort attempt, not a blocking confirmation dialog
+// (unlike sign-out) — there's no user-facing action to gate here.
+function flushAllDirtyStoresBestEffort() {
+  flushDirtyStores([store, dailyTodoStore, activityLogStore]).catch(error => {
+    console.error('Best-effort flush on page hide failed', error);
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushAllDirtyStoresBestEffort();
+});
+window.addEventListener('pagehide', flushAllDirtyStoresBestEffort);
 
 let currentUser = null;
 let routeCleanup = null;
@@ -269,6 +303,7 @@ registerRoute('/onboarding', lazyGuard(() => import('./ui/pages/onboarding.js'),
 registerRoute('/app', lazyGuard(() => import('./ui/pages/dashboard.js'), 'renderDashboard'));
 registerRoute('/settings', lazyGuard(() => import('./ui/pages/settings.js'), 'renderSettings'));
 registerRoute('/progress', lazyGuard(() => import('./ui/pages/progress.js'), 'renderProgress'));
+registerRoute('/todo-stats', lazyGuard(() => import('./ui/pages/todoStats.js'), 'renderTodoStats'));
 // Wildcard prefix match ('/shared*') — unauthenticated-reachable, not routed
 // through guardApp, since it renders someone else's published snapshot, not
 // the current user's own data (see router.js's matchRoute for the pattern).

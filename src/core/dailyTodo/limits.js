@@ -35,6 +35,20 @@ export const DURATION_PRESETS = [
 // caps from this same module.
 export const REMINDER_LEAD_MS = 15 * 60 * 1000; // 15 minutes
 
+// Issue #555 — how long a missed (expired, not done) todo keeps rendering in
+// dailyTodoPanel.js's "Missed" section before it stops appearing there. This
+// is a display window only, never a deletion: dailyTodoStore.js's own
+// documented convention is that deletion is always an explicit, confirmed
+// user action (see removeTodo's doc comment) — nothing here auto-deletes a
+// todo. A todo older than this window simply stops rendering in the Missed
+// list; it's still present in the store, still manually deletable via the
+// existing overflow-menu Delete action, and still counted by
+// src/core/analytics/dailyTodoAnalytics.js's stats. This exists because
+// nothing previously bounded how long the Missed section could grow — a
+// todo missed weeks ago rendered identically to one missed an hour ago,
+// which is what caused the reported "todo card keeps getting taller" bug.
+export const MISSED_VISIBLE_MS = 48 * 60 * 60 * 1000; // 48 hours
+
 export function clampDurationMs(ms) {
   if (!Number.isFinite(ms)) return null;
   return Math.min(Math.max(ms, MIN_DURATION_MS), MAX_DURATION_MS);

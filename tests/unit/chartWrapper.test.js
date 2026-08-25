@@ -83,6 +83,29 @@ describe('createBarChart', () => {
     expect(chart.destroyed).toBe(true);
   });
 
+  // Issue #555 — a second caller (todoStats.js's "Missed per day" chart)
+  // needs its own dataset label, since the default "Items completed" text
+  // would otherwise mislabel a chart of a different kind of count entirely.
+  it('defaults dataset labels to "Items completed"/"7-day avg" (progress.js unchanged)', async () => {
+    const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
+    const chart = await createBarChart(fakeCanvas(), { labels: ['Jul 1'], counts: [4], rollingAverage: [2.5] });
+    expect(chart.config.data.datasets[0].label).toBe('Items completed');
+    expect(chart.config.data.datasets[1].label).toBe('7-day avg');
+  });
+
+  it('accepts a custom label/averageLabel', async () => {
+    const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
+    const chart = await createBarChart(fakeCanvas(), {
+      labels: ['Jul 1'],
+      counts: [2],
+      rollingAverage: [1],
+      label: 'Missed',
+      averageLabel: '7-day avg'
+    });
+    expect(chart.config.data.datasets[0].label).toBe('Missed');
+    expect(chart.config.data.datasets[1].label).toBe('7-day avg');
+  });
+
   it('falls back to the light-theme default colors when a token is unset', async () => {
     const { createBarChart } = await import('../../src/ui/components/chartWrapper.js');
     const chart = await createBarChart(fakeCanvas(), { labels: ['Jul 1'], counts: [4], rollingAverage: [2.5] });

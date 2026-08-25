@@ -315,6 +315,65 @@ describe('addTimeSpent (issue #180)', () => {
   });
 });
 
+describe('markStarted (issue #555)', () => {
+  it('a fresh todo has startedAt: null', async () => {
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    expect(store.getSnapshot().todos[0].startedAt).toBeNull();
+  });
+
+  it('sets startedAt to the current time', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+
+    expect(store.markStarted(id)).toBe(true);
+    expect(store.getSnapshot().todos[0].startedAt).toBe(1_000_000);
+    vi.useRealTimers();
+  });
+
+  it('is first-start-only — a second call does not move startedAt forward', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+
+    store.markStarted(id);
+    vi.setSystemTime(2_000_000);
+    expect(store.markStarted(id)).toBe(false);
+    expect(store.getSnapshot().todos[0].startedAt).toBe(1_000_000);
+    vi.useRealTimers();
+  });
+
+  it('is a no-op (returns false) for a missing todo id', async () => {
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    expect(store.markStarted('nonexistent')).toBe(false);
+  });
+
+  it('persists startedAt through the same debounced save path as every other field', async () => {
+    vi.useFakeTimers();
+    const store = createDailyTodoStore();
+    await store.setUser({ uid: 'u1' });
+    store.addTodo({ title: 'Task', durationMs: 60000 * 60 });
+    const id = store.getSnapshot().todos[0].id;
+
+    store.markStarted(id);
+    await vi.advanceTimersByTimeAsync(600);
+
+    expect(dbApi.saveDailyTodos).toHaveBeenCalled();
+    const lastCallItems = dbApi.saveDailyTodos.mock.calls.at(-1)[1];
+    expect(lastCallItems[id].startedAt).toBeTypeOf('number');
+    vi.useRealTimers();
+  });
+});
+
 describe('removeTodo', () => {
   it('permanently removes a todo', async () => {
     const store = createDailyTodoStore();

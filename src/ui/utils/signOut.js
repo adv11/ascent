@@ -12,7 +12,10 @@ import { confirmDialog } from '../components/confirmDialog.js';
 // nothing went wrong, authApi.signOut() ran anyway, and roadmapStore.js's
 // own uid-transition guard then wiped local storage right after — the edit
 // was gone from both places with zero signal to the user).
-async function flushDirtyStores(stores) {
+// Exported (issue #555 follow-up) — main.js's own visibility/pagehide flush
+// (below signOut's own usage) reuses this instead of a second copy of the
+// identical "flush every dirty store concurrently, log failures" logic.
+export async function flushDirtyStores(stores) {
   const dirtyStores = stores.filter(target => !!target?.getSnapshot().dirty);
   if (!dirtyStores.length) return true;
   const results = await Promise.allSettled(dirtyStores.map(target => target.flush()));

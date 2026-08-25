@@ -182,3 +182,42 @@ describe('confirmAndSignOut', () => {
     expect(todoFlush).not.toHaveBeenCalled();
   });
 });
+
+// Issue #555 — exported so main.js's own best-effort flush-on-hide (a real,
+// reported data-loss fix — see that file's own comment) can reuse this
+// exact "flush every dirty store concurrently, log failures" logic instead
+// of a second copy of it.
+describe('flushDirtyStores (exported for reuse, issue #555)', () => {
+  it('flushes only the dirty stores, concurrently, and resolves true on success', async () => {
+    const { flushDirtyStores } = await import('../../src/ui/utils/signOut.js');
+    const cleanFlush = vi.fn().mockResolvedValue(undefined);
+    const dirtyFlush = vi.fn().mockResolvedValue(undefined);
+    const result = await flushDirtyStores([fakeStore(false, cleanFlush), fakeStore(true, dirtyFlush)]);
+    expect(cleanFlush).not.toHaveBeenCalled();
+    expect(dirtyFlush).toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it('resolves true immediately (no-op) when nothing is dirty', async () => {
+    const { flushDirtyStores } = await import('../../src/ui/utils/signOut.js');
+    expect(await flushDirtyStores([fakeStore(false), fakeStore(false)])).toBe(true);
+  });
+
+  it('ignores a null/undefined store in the list', async () => {
+    const { flushDirtyStores } = await import('../../src/ui/utils/signOut.js');
+    const dirtyFlush = vi.fn().mockResolvedValue(undefined);
+    expect(await flushDirtyStores([null, undefined, fakeStore(true, dirtyFlush)])).toBe(true);
+    expect(dirtyFlush).toHaveBeenCalled();
+  });
+
+  it('resolves false (not throw) when a flush rejects, and still attempts every other dirty store', async () => {
+    const { flushDirtyStores } = await import('../../src/ui/utils/signOut.js');
+    const failingFlush = vi.fn().mockRejectedValue(new Error('network down'));
+    const succeedingFlush = vi.fn().mockResolvedValue(undefined);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = await flushDirtyStores([fakeStore(true, failingFlush), fakeStore(true, succeedingFlush)]);
+    expect(result).toBe(false);
+    expect(succeedingFlush).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+});

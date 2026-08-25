@@ -20,6 +20,8 @@ import { resolveCustomRoadmapIcon, setCustomRoadmapIconOverride, CUSTOM_ROADMAP_
 import { openIconPickerModal } from '../components/decorativeIcon.js';
 import { createIcon } from '../components/icons.js';
 import { createDecorativeIcon } from '../components/decorativeIcon.js';
+import { createDailyTodoPanel } from '../components/dailyTodoPanel.js';
+import { KEYS } from '../../services/localStorageKeys.js';
 
 // Issue #327 — extracted out of handleCreate() to keep its own complexity
 // under the ESLint gate (root CLAUDE.md); builds the info-toast copy for
@@ -748,12 +750,32 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
     { text: 'Print roadmap…', onClick: () => triggerRoadmapPrint(store) }
   ];
   if (dailyTodoStore) {
+    // Issue #555 — mirrors sidebar.js's buildAccountMenu() so this page's
+    // own rebuilt account menu (see the "no app-shell sidebar" note above)
+    // offers the identical item list.
+    accountDropdownItems.push({ text: 'Todo stats', onClick: () => navigate('/todo-stats') });
     accountDropdownItems.push({ text: 'Export to calendar (.ics)', onClick: () => exportTodosIcs(dailyTodoStore) });
   }
   if (!user.isAnonymous) {
     accountDropdownItems.push({ text: 'Delete account', danger: true, onClick: () => openDeleteAccountModal() });
   }
   const accountDropdown = createDropdown(accountTrigger, accountDropdownItems, { align: 'end' });
+
+  // Issue #555 — a compact, collapsed-by-default Daily Todos widget so a
+  // todo can be jotted down (or checked off) without first opening a
+  // roadmap, without repeating issue #490's already-reverted experiment of
+  // putting the *full* panel here (see .claude/rules/roadmap-store.md's
+  // "Placement" note): this reuses the exact same, already-tested
+  // dailyTodoPanel.js component the dashboard uses, just parameterized to
+  // start collapsed under its own storage key so it never dominates this
+  // roadmap-agnostic page the way the full always-expanded panel did before.
+  const dailyTodoPanel = dailyTodoStore
+    ? createDailyTodoPanel(dailyTodoStore, store, {
+      collapsedStorageKey: KEYS.ONBOARDING_DAILY_TODOS_COLLAPSED,
+      defaultCollapsed: true
+    })
+    : null;
+
   const backBtn = isSwitchingTemplate
     ? el('button', {
       type: 'button',
@@ -780,6 +802,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
             : 'Choose a template to get started. You can add, edit, or remove topics anytime, and start more templates later without losing progress.'
         })
       ]),
+      dailyTodoPanel,
       // Issue #493 — "Pick one to switch to" + the "N of your own · M
       // ready-made" meta text, matching the design reference screenshot.
       // Only shown once there's a real grid of roadmaps to switch between
@@ -842,6 +865,7 @@ export function renderOnboarding(app, { user, store, dailyTodoStore }) {
   return () => {
     themeToggleBtn._cleanup?.();
     accountDropdown._cleanup?.();
+    dailyTodoPanel?._cleanup?.();
     dropdownEls.forEach(dropdown => dropdown._cleanup?.());
     activeTourCleanup?.();
     unsubStore();

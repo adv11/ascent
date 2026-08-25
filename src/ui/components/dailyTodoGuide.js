@@ -1,6 +1,11 @@
 import { el } from '../dom.js';
 import { attachFocusTrap } from './modal.js';
-import { MAX_ACTIVE_TODOS } from '../../core/dailyTodo/limits.js';
+import { MAX_ACTIVE_TODOS, MISSED_VISIBLE_MS } from '../../core/dailyTodo/limits.js';
+
+// Issue #555 — MISSED_VISIBLE_MS is in milliseconds; this guide always talks
+// in hours, so it's converted once here rather than hardcoding "48" as a
+// second, disconnected literal that could drift from the real constant.
+const MISSED_VISIBLE_HOURS = MISSED_VISIBLE_MS / (60 * 60 * 1000);
 
 // Informational modal reachable from the Daily Todos card's corner ℹ button
 // (issue #56 follow-up) — same pattern as buildYourOwnGuide.js. Explains a
@@ -44,7 +49,9 @@ export function openDailyTodoGuide() {
         el('p', { className: 'build-guide-body' }, [
           'Check it off when done — it stays, struck through. If time runs out first, it moves to the collapsed ',
           el('strong', { text: 'Missed' }),
-          ' section on its own; nothing else changes. The ',
+          ` section for ${MISSED_VISIBLE_HOURS} hours, then stops showing there — it's still counted on the `,
+          el('strong', { text: 'Todo stats' }),
+          ' page, never deleted for you. The ',
           el('strong', { text: '×' }),
           ' button deletes a todo at any point — active, done, or missed — which is also how you undo one added by mistake. Up to ',
           el('strong', { text: String(MAX_ACTIVE_TODOS) }),

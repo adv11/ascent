@@ -259,6 +259,10 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
       expiresAt: now + clampedDuration,
       done: false,
       doneAt: null,
+      // Issue #555 — first-start timestamp, set once by markStarted() below.
+      // null means "never started" (either never timed, or started but this
+      // field predates the todo — see backward-compat note there).
+      startedAt: null,
       linkedTemplateId: isLinked ? linkedTemplateId : null,
       linkedItemId: isLinked ? linkedItemId : null,
       linkedItemTitle: isLinked ? (linkedItemTitle || trimmedTitle) : null
@@ -289,6 +293,24 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
     items[id] = { ...todo, done, doneAt: done ? Date.now() : null };
     if (done !== wasDone) onCompletionToggle(done ? 1 : -1);
     queueSave();
+  }
+
+  // Issue #555 — stamps a todo's first-ever timer start, for the row's
+  // Set/Started/Completed info panel (dailyTodoPanel.js's overflow menu).
+  // First-start-only: a no-op once startedAt is already set, since this is
+  // meant to answer "when did work on this actually begin", not "when was
+  // the timer most recently (re)started" — a paused-then-resumed session
+  // shouldn't move it forward. Missing/undefined todo.startedAt (a todo
+  // created before this field existed) is treated the same as null.
+  // Returns false (mutating nothing) for a missing todo or one that's
+  // already been started, same "callers must check the return value"
+  // convention as addTodo/removeTodo/addTimeSpent.
+  function markStarted(id) {
+    const todo = items[id];
+    if (!todo || todo.startedAt) return false;
+    items[id] = { ...todo, startedAt: Date.now() };
+    queueSave();
+    return true;
   }
 
   // Adds elapsed session seconds to a todo's cumulative timeSpentSeconds
@@ -331,6 +353,7 @@ export function createDailyTodoStore({ onCompletionToggle = () => {} } = {}) {
     removeTodo,
     addTodo,
     setDone,
+    markStarted,
     addTimeSpent,
     flush
   };

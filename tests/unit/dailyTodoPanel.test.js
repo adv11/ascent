@@ -42,6 +42,14 @@ function createFakeStore(initialTodos = []) {
       todos = todos.map(t => (t.id === id ? { ...t, timeSpentSeconds: current + Math.floor(seconds) } : t));
       notify();
       return true;
+    },
+    // Issue #555 — mirrors the real store's first-start-only markStarted().
+    markStarted(id) {
+      const todo = todos.find(t => t.id === id);
+      if (!todo || todo.startedAt) return false;
+      todos = todos.map(t => (t.id === id ? { ...t, startedAt: Date.now() } : t));
+      notify();
+      return true;
     }
   };
 }
@@ -133,6 +141,92 @@ describe('createDailyTodoPanel', () => {
     toggle.click();
     expect(node.querySelector('.daily-todo-missed-list').hidden).toBe(false);
     expect(node.querySelector('.daily-todo-missed-list .daily-todo-title').textContent).toBe('Missed task');
+    node._cleanup();
+  });
+
+  it('a missed row shows the plain label "Missed", not "Due in Missed" (issue #555 fix)', () => {
+    const now = Date.now();
+    const store = createFakeStore([
+      { id: 'a', title: 'Missed task', createdAt: now - 2000, expiresAt: now - 1000, done: false, doneAt: null }
+    ]);
+    const node = createDailyTodoPanel(store);
+
+    node.querySelector('.daily-todo-missed-toggle').click();
+    const remaining = node.querySelector('.daily-todo-missed-list .daily-todo-remaining');
+    expect(remaining.textContent).toBe('Missed');
+    node._cleanup();
+  });
+
+  it('a todo missed more than 48h ago stops appearing in the Missed section, but is not deleted (issue #555)', () => {
+    const now = Date.now();
+    const HOUR = 60 * 60 * 1000;
+    const store = createFakeStore([
+      { id: 'recent', title: 'Recently missed', createdAt: now - 3 * HOUR, expiresAt: now - HOUR, done: false, doneAt: null },
+      { id: 'old', title: 'Missed long ago', createdAt: now - 100 * HOUR, expiresAt: now - 49 * HOUR, done: false, doneAt: null }
+    ]);
+    const node = createDailyTodoPanel(store);
+
+    const toggle = node.querySelector('.daily-todo-missed-toggle');
+    expect(toggle.textContent).toContain('Missed (1)');
+    toggle.click();
+    const titles = [...node.querySelectorAll('.daily-todo-missed-list .daily-todo-title')].map(el => el.textContent);
+    expect(titles).toEqual(['Recently missed']);
+
+    // Still in the store — not deleted, just no longer listed here.
+    expect(store.getSnapshot().todos).toHaveLength(2);
+
+    const olderLink = node.querySelector('.daily-todo-older-missed-link');
+    expect(olderLink.hidden).toBe(false);
+    expect(olderLink.textContent).toContain('1 missed earlier');
+    node._cleanup();
+  });
+
+  it('the older-missed link is hidden when nothing is missed beyond the 48h window', () => {
+    const now = Date.now();
+    const store = createFakeStore([
+      { id: 'recent', title: 'Recently missed', createdAt: now - 3000, expiresAt: now - 1000, done: false, doneAt: null }
+    ]);
+    const node = createDailyTodoPanel(store);
+    expect(node.querySelector('.daily-todo-older-missed-link').hidden).toBe(true);
+    node._cleanup();
+  });
+
+  it('starting the timer calls store.markStarted', () => {
+    const store = createFakeStore();
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+    const id = store.getSnapshot().todos[0].id;
+    const markStartedSpy = vi.spyOn(store, 'markStarted');
+    const node = createDailyTodoPanel(store);
+
+    node.querySelector('.daily-todo-timer-btn').click();
+    expect(markStartedSpy).toHaveBeenCalledWith(id);
+    node._cleanup();
+  });
+
+  it("the overflow menu's info section shows Set/Started/Due, and Started before the timer is used", () => {
+    const store = createFakeStore();
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+    const node = createDailyTodoPanel(store);
+
+    node.querySelector('.daily-todo-overflow-btn').click();
+    const rows = [...document.querySelectorAll('.dropdown-menu .dropdown-info-row')];
+    const labels = rows.map(row => row.querySelector('.dropdown-info-label').textContent);
+    expect(labels).toEqual(['Set:', 'Started:', 'Due:']);
+    expect(rows[1].querySelector('.dropdown-info-value').textContent).toBe('Not started yet');
+    node._cleanup();
+  });
+
+  it("the overflow menu's info section shows Completed once a todo is done", () => {
+    const store = createFakeStore();
+    store.addTodo({ title: 'Task', durationMs: 60 * 60 * 1000 });
+    const id = store.getSnapshot().todos[0].id;
+    store.setDone(id, true);
+    const node = createDailyTodoPanel(store);
+
+    node.querySelector('.daily-todo-overflow-btn').click();
+    const rows = [...document.querySelectorAll('.dropdown-menu .dropdown-info-row')];
+    const labels = rows.map(row => row.querySelector('.dropdown-info-label').textContent);
+    expect(labels).toEqual(['Set:', 'Started:', 'Completed:']);
     node._cleanup();
   });
 
@@ -433,6 +527,30 @@ describe('createDailyTodoPanel — linked-topic completion (issue #56 follow-up)
       expect(node.classList.contains('collapsed')).toBe(true);
       expect(node.querySelector('.daily-todo-collapse-btn').getAttribute('aria-expanded')).toBe('false');
       node._cleanup();
+    });
+
+    // Issue #555 — the onboarding.js compact widget's own collapse default,
+    // parameterized rather than a second component. Every test above this
+    // one calls createDailyTodoPanel with no third arg at all, confirming
+    // dashboard.js's exact existing behavior (default-expanded, shared
+    // KEYS.DAILY_TODOS_COLLAPSED key) is unchanged by adding these options.
+    it('a custom defaultCollapsed option starts the panel collapsed with no stored preference', () => {
+      const node = createDailyTodoPanel(createFakeStore(), null, { defaultCollapsed: true });
+      expect(node.classList.contains('collapsed')).toBe(true);
+      node._cleanup();
+    });
+
+    it('a custom collapsedStorageKey persists independently of KEYS.DAILY_TODOS_COLLAPSED', () => {
+      const customKey = 'ascent-test-collapsed-key';
+      localStorage.removeItem(customKey);
+      const node = createDailyTodoPanel(createFakeStore(), null, { collapsedStorageKey: customKey, defaultCollapsed: true });
+
+      node.querySelector('.daily-todo-collapse-btn').click(); // expand
+      expect(node.classList.contains('collapsed')).toBe(false);
+      expect(localStorage.getItem(customKey)).toBe('false');
+      expect(localStorage.getItem(KEYS.DAILY_TODOS_COLLAPSED)).toBeNull();
+      node._cleanup();
+      localStorage.removeItem(customKey);
     });
 
     it('shows an active-todo count badge that stays in sync as todos are added', () => {

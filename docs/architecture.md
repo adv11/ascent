@@ -6067,3 +6067,47 @@ strings, so a `KEYS.THEME` rename would have repointed `theme.js`'s writes while
 bootstrap kept reading the old key, silently breaking the no-FOUC guarantee with every
 test still green. Each guard was confirmed to fail against the real pre-fix state
 (reintroduced deliberately) and pass after, not merely to pass once written.
+
+### 2026-08-25 — PR #556 — Daily Todos: 48h missed window, Todo stats page, onboarding widget, per-todo timestamps, plus a real cross-device data-loss fix (issue #555)
+
+Four requested Daily Todos enhancements plus fixes found along the way. **Missed
+visibility**: `dailyTodoPanel.js`'s Missed section now only renders a todo missed
+within the last 48h (`MISSED_VISIBLE_MS`, `core/dailyTodo/limits.js`) — a display
+filter only, never a delete, matching this store's existing "deletion is always an
+explicit user action" convention; an older missed todo just stops listing there, with a
+link to the new stats page. **New page**: `src/ui/pages/todoStats.js` (route
+`/todo-stats`) + `src/core/analytics/dailyTodoAnalytics.js` (pure `computeDailyTodoStats()`,
+computed live from `dailyTodoStore`'s current todos, no new persisted counter) —
+completed/missed/active counts, completion rate, avg. time tracked, avg. turnaround,
+and two 30-day bar charts, reusing `chartWrapper.js`'s `createBarChart()` (now takes
+optional `label`/`averageLabel` params so a second, non-"Items completed" series
+doesn't mislabel its tooltip). Reachable from the account menu and a new icon-button on
+the Daily Todos panel itself — deliberately not added to `bottomNav.js`'s fixed tab set.
+**Onboarding widget**: `createDailyTodoPanel()` gained `collapsedStorageKey`/
+`defaultCollapsed` options (both default to today's exact dashboard behavior) so
+`onboarding.js` can mount the same, already-tested component collapsed-by-default under
+its own storage key, without repeating issue #490's already-reverted "full panel on
+onboarding" experiment. **Timestamps**: a new persisted `startedAt` field +
+`markStarted()` (first-start-only), surfaced via `dropdown.js`'s new `leading` option
+(a non-interactive info block above the item list) rather than a third row-meta line,
+which would break the two-line row rule (#486 B1).
+
+**Two bugs found live during manual verification, both fixed in this PR**: (1) any
+element hidden via `.hidden = true` stayed visible if its own CSS class also declared
+`display` (`[hidden]`'s UA-stylesheet rule losing to equal/higher-specificity author
+CSS) — fixed with a global `[hidden] { display: none !important; }` reset, the standard
+normalize.css fix, not a one-off patch on the element that surfaced it
+(`dailyTodoPanel.js`'s own "Missed (0)" toggle). (2) `.todo-stats-content` was missing
+from the shared reassert-last `padding-bottom` rule `.progress-content`/
+`.settings-content` already needed for the fixed bottom nav bar — same bug class,
+different page, caught via a live screenshot report.
+
+**A third, unrelated but user-reported bug fixed in the same PR**: a todo (or roadmap
+edit) made right before closing the laptop lid or switching tabs could be silently lost
+forever, invisible to every other device on the same account — `queueSave()`'s 500ms
+debounce plus its network round trip is a real window with no flush-before-close
+guard, unlike the explicit sign-out flow. `main.js` now does a best-effort
+`flushDirtyStores()` (exported from `signOut.js`, reused rather than duplicated) on
+`visibilitychange`/`pagehide` for all three synced stores. See `.claude/rules/
+roadmap-store.md`'s "Sign-out contract" section for the full writeup and why this is a
+narrowing of the loss window, not a hard guarantee.

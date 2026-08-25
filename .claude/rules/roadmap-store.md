@@ -197,6 +197,82 @@ cleanup" rule (root `CLAUDE.md`) as everything else with a subscription or timer
 
 **Local "Remind me" reminders — Phase A only, no server push (issue #132).** `dailyTodoPanel.js`'s heading row has a bell toggle (`.daily-todo-reminder-btn`, matching the info/collapse buttons' box+icon size) that requests `Notification` permission on click — never on page load, since an unprompted permission dialog is a well-known dark pattern users reflexively deny. Whether reminders are on is a single boolean, `KEYS.DAILY_TODO_REMINDERS_ENABLED` (`localStorageKeys.js`), device-level like `DAILY_TODOS_COLLAPSED` — this is deliberately a **single-device, best-effort** reminder, not a synced preference, matching this feature's existing "no Firebase Cloud Messaging or cross-device push precedent" note above. `src/core/dailyTodo/reminderScheduling.js` (`computeReminderFireAt`/`shouldScheduleReminder`) is the pure math — fire time is always `expiresAt - REMINDER_LEAD_MS` (15 minutes, `src/core/dailyTodo/limits.js`), null/false for a done, already-expired, or already-past-its-lead-time todo. `src/services/reminderScheduler.js`'s `initReminderScheduler(store)` is the one stateful piece: it subscribes to `dailyTodoStore` (called once at app startup in `main.js`, app-lifetime, never unmounted) and reconciles one live `setTimeout` per active, reminder-eligible todo on every store snapshot — a todo that becomes done, gets deleted, or was never eligible has its timer cancelled in the same pass, so a notification can never arrive for a todo that's already been resolved. When a timer fires, it calls `navigator.serviceWorker.ready` then `registration.showNotification()` — `sw.js`'s own `notificationclick` handler (a plain `self.clients.matchAll()`/`openWindow()` pair, with the client-selection/target-URL logic pulled into a pure, testable `src/services/sw/notificationHelpers.js` module, same "pure helper next to the actual service worker" pattern `cacheStrategies.js` established for issue #19) focuses an already-open app window or opens a new one at `/#/onboarding` — the Daily Todos panel's own placement, per the "Placement" note above. **There is no server-side piece here at all** — no Cloud Functions, no FCM device-token registration, no scheduled backend job scanning deadlines across users. If a "notify me even with the app/browser fully closed" push is ever built, that's Phase B, a materially different backend-architecture decision requiring its own issue — do not bolt FCM registration onto this module as an incremental addition; see the issue's own scoping writeup for why.
 
+**48-hour missed-visibility window — a display filter, never a delete (issue #555).**
+Real feedback: the Missed section had no bound at all, so it grew taller the longer a
+user kept the app, eventually dominating the panel. `MISSED_VISIBLE_MS` (48 hours,
+`src/core/dailyTodo/limits.js`) plus `isRecentlyMissed(todo, now)`
+(`src/ui/utils/dailyTodo.js` — `isExpired(todo, now) && (now - todo.expiresAt) <=
+MISSED_VISIBLE_MS`) bound *what dailyTodoPanel.js's Missed section renders*, not what
+the store holds — this deliberately does not contradict `removeTodo(id)`'s own "deletion
+is always an explicit, confirmed user action" contract above. A todo missed longer ago
+than the window just stops appearing in the Missed list; it's still in the store, still
+manually deletable via the existing ✕ overflow action, and still counted by
+`computeDailyTodoStats()` below. `render()` computes `olderMissedCount = missed.length -
+recentlyMissed.length` and shows a small link ("N missed earlier — see Todo stats",
+`.daily-todo-older-missed-link`) whenever it's nonzero, so the data hasn't silently
+vanished from the user's perspective, only from that one list.
+
+**`/todo-stats` — a new page, computed live, no new persisted counter (issue #555).**
+`src/core/analytics/dailyTodoAnalytics.js`'s `computeDailyTodoStats(todos, now)` is pure
+(no DOM/store access, same convention as every other `src/core/analytics/` module) and
+reads directly from `dailyTodoStore.getSnapshot().todos` — total/done/missed/active
+counts, a completion rate (done ÷ (done + missed), `null` until at least one todo has
+resolved either way — an active-only list never contributes to this rate), average
+`timeSpentSeconds` across todos that actually tracked any, average turnaround
+(`doneAt - createdAt` across done todos), and a 30-day `{ date, created, done, missed }`
+series (reusing `dateKey()` from `src/core/analytics/dateKey.js`, bucketing a done todo
+by its `doneAt` day and a missed one by its `expiresAt` day). Deliberately **not** a
+second `activityLogStore`-shaped persisted aggregate: since a todo is never
+auto-deleted (see the 48h window above), the live todos array already has everything
+needed — the one honestly-labeled limitation is that a *manually* deleted todo stops
+counting, the same live-computed-not-ledgered tradeoff `/progress`'s own "Time tracked"
+stat already accepts. `src/ui/pages/todoStats.js` follows `progress.js`'s structural
+pattern (sidebar/topbar/guestBanner/bottomNav shell, `.kpi-tile`/`.kpi-tile-hero` stat
+cards, `chartWrapper.js`'s `createBarChart()` for the two 30-day charts) — that
+function gained optional `label`/`averageLabel` params (defaulting to progress.js's
+existing "Items completed"/"7-day avg" text unchanged) specifically so a second,
+differently-labeled series (here, "Missed") doesn't inherit a misleading tooltip.
+Reachable via a new "Todo stats" item in `sidebar.js`'s `buildAccountMenu()` (mirrored
+in `onboarding.js`'s own separately-rebuilt account dropdown) and a small icon-button
+on `dailyTodoPanel.js`'s heading row — deliberately **not** added to `bottomNav.js`'s
+fixed four-tab set, same tier as "My reports"/"Take a tour."
+
+**Compact Daily Todos widget on `onboarding.js` — a parameterization of the existing
+collapse mechanism, not a second component (issue #555).** The "Placement" note above
+documents why the *full* panel was moved off this page in issue #490 (it read as "the
+first thing you see when you only wanted to switch roadmaps," on a page most users visit
+rarely) — re-adding it wholesale would repeat that mistake. `dailyTodoPanel.js` already
+had a complete collapse/expand mechanism (`.daily-todo-panel.collapsed`, hides the
+add-form/list/Missed section down to a heading row + active-count badge), used by
+`dashboard.js`, defaulting to *expanded* and persisted under `KEYS.DAILY_TODOS_COLLAPSED`.
+`createDailyTodoPanel(store, roadmapStore, { collapsedStorageKey, defaultCollapsed } =
+{})` — both new, optional, defaulting to exactly that existing behavior, so
+`dashboard.js`'s call site is unchanged in every way. `onboarding.js` mounts the same
+component with `{ collapsedStorageKey: KEYS.ONBOARDING_DAILY_TODOS_COLLAPSED,
+defaultCollapsed: true }` — a **separate** storage key, deliberately not the shared
+`DAILY_TODOS_COLLAPSED` one, so collapsing/expanding the dashboard's instance never
+affects the onboarding instance's own default or vice versa. Rendered between the page
+header and the template grid; `dailyTodoStore` was already threaded into
+`renderOnboarding()` for the sign-out flush/ICS export, so no new prop plumbing was
+needed. `.onboarding-inner > .daily-todo-panel { margin: 0; width: 100%; }` (`app.css`)
+resets the panel's own dashboard-tuned gutter margin so it aligns with every other child
+of `.onboarding-inner`'s own `gap`-based spacing instead of adding extra, inconsistent
+space.
+
+**Per-todo Set/Started/Completed timestamps — `startedAt`, first-start-only (issue
+#555).** A new persisted field, `startedAt: number | null` (missing/`null` both mean
+"never started" — same backward-compat convention as every other optional field in this
+file), set once by `markStarted(id)` the first time a todo's timer is started
+(`dailyTodoPanel.js`'s `handleToggleTimer()`, on start only, never on pause/resume) —
+a no-op past the first call, since this answers "when did work on this actually begin,"
+not "when was the timer most recently (re)started." Surfaced in the row's ⋮ overflow
+menu via `dropdown.js`'s new `leading` option (an arbitrary non-interactive node
+rendered above the item list, same "purely presentational" contract as that component's
+existing `header` option) rather than a third visible row-meta line, which would break
+the two-line row rule (issue #486 B1). `firebase/database.rules.json`'s
+`dailyTodos/$todoId` rule validates it the same way as `doneAt` (`isNumber() ||
+val() === null`).
+
 **Linking a roadmap topic to a Daily Todo, and completing either one from the other
 (issue #56 follow-up).** Every checklist row (`renderItemRow`, `dashboard.js`) has a ⏱
 button, next to Edit, opening `openAddToDailyTodoModal()`
@@ -1377,6 +1453,31 @@ button (which already had a `dailyTodoStore` reference for its Daily Todos panel
 same one. If you add a fifth store with the same debounced-write shape, wire it into
 `confirmAndSignOut()` the same way rather than leaving it as a documented-but-unfixed gap
 again.
+
+**Every fix above covers the explicit "Sign out" click — nothing covered the far more
+common *implicit* trigger: closing the laptop lid, switching tabs, or backgrounding the
+app mid-edit, with no sign-out involved at all. This was a real, reported cross-device
+data-loss bug (issue #555): a todo set on one device never appeared on another signed
+into the same account.** `queueSave()`'s 500ms debounce, plus the network round trip the
+resulting `flush()` kicks off, is a real window in which the write simply hasn't reached
+Firebase yet — closing the device within that window (a very ordinary action, not an
+edge case) meant the edit sat `dirty: true` in `localStorage` on that one device only,
+with nothing to re-queue the save until the app happened to be reopened there again.
+`main.js` now calls `flushDirtyStores([store, dailyTodoStore, activityLogStore])`
+(`signOut.js`'s existing helper, exported rather than duplicated) on two triggers:
+`document.visibilitychange` firing `hidden`, and `window.pagehide` — the standard,
+cross-platform "the page is about to be backgrounded or closed" signals (see web.dev's
+Page Lifecycle API guidance), deliberately **not** `beforeunload`/`unload`, neither of
+which fires reliably on iOS Safari or Android Chrome's task-switcher backgrounding, the
+exact scenario ("closed the laptop lid") this bug report described. This is a
+**best-effort narrowing of the loss window, not a hard delivery guarantee** — nothing
+can guarantee a WebSocket write completes if the OS suspends the process immediately
+after the visibility signal fires — but it replaces "wait out an artificial 500ms debounce
+then hope the round trip finishes before the device sleeps" with "try immediately the
+moment backgrounding starts," which is the actual, fixable gap here. Unlike
+`confirmAndSignOut()`'s flush, this one is silent/fire-and-forget (`.catch()` only
+`console.error`s) — there's no dialog to gate on, and blocking the page-hide transition
+on a network call is neither possible nor desirable.
 
 **A related latent bug found during the issue #143 investigation: `switchRoadmap()` could
 leave a dirty template's edit with no timer ever queued to flush it.** `flushOutgoingRoadmap()`

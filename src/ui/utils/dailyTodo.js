@@ -7,8 +7,18 @@
 // CLAUDE.md's "Deploying"/static-hosting notes) rather than a stored/mutated
 // state that would need a background job.
 
+import { MISSED_VISIBLE_MS } from '../../core/dailyTodo/limits.js';
+
 export function isExpired(todo, now = Date.now()) {
   return !todo.done && now > todo.expiresAt;
+}
+
+// Issue #555 — a missed todo is only shown in dailyTodoPanel.js's Missed
+// section while it's inside this window; see MISSED_VISIBLE_MS's own doc
+// comment for why this is a display filter, not a deletion. `false` for an
+// active or done todo (isExpired() already covers that half).
+export function isRecentlyMissed(todo, now = Date.now()) {
+  return isExpired(todo, now) && (now - todo.expiresAt) <= MISSED_VISIBLE_MS;
 }
 
 export function remainingMs(todo, now = Date.now()) {
